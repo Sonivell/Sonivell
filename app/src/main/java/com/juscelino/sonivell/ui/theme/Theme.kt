@@ -1,0 +1,104 @@
+package com.juscelino.sonivell.ui.theme
+
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.juscelino.sonivell.R
+
+/** Paleta do mockup: grafite + um único acento. */
+@Immutable
+data class SonivellColors(
+    val background: Color = Color(0xFF0E0F11),
+    val surface: Color = Color(0xFF1A1C20),
+    val surfaceLow: Color = Color(0xFF16181B),
+    val surfaceHigh: Color = Color(0xFF24272C),
+    val outline: Color = Color(0xFF2E3137),
+    val track: Color = Color(0xFF2A2D33),
+    val textPrimary: Color = Color(0xFFF2F3F5),
+    val textSecondary: Color = Color(0xFF9BA1A9),
+    val textTertiary: Color = Color(0xFFC9CDD3),
+    val accent: Color = Accents.Lima,
+    val onAccent: Color = Color(0xFF0E0F11),
+)
+
+object Accents {
+    val Lima = Color(0xFFC8F04A)
+    val Azul = Color(0xFF7CC4FF)
+    val Laranja = Color(0xFFFF9F5A)
+    val Lilas = Color(0xFFE8A6FF)
+}
+
+/** Tons das capas geradas quando a faixa não tem arte embutida. */
+object ArtTones {
+    val backgrounds = listOf(
+        Color(0xFF1B2A26), Color(0xFF1D2433), Color(0xFF2E221A), Color(0xFF2A1D30),
+    )
+    val rings = listOf(
+        Color(0xFF3B6457), Color(0xFF3A4A6B), Color(0xFF6B4A33), Color(0xFF5A3D66),
+    )
+    val cores = listOf(Accents.Lima, Accents.Azul, Accents.Laranja, Accents.Lilas)
+}
+
+@OptIn(ExperimentalTextApi::class)
+private fun manrope(weight: Int) = Font(
+    resId = R.font.manrope,
+    weight = FontWeight(weight),
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight)),
+)
+
+val Manrope = FontFamily(
+    manrope(400), manrope(500), manrope(600), manrope(700), manrope(800),
+)
+
+private val SonivellTypography = Typography(
+    displaySmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, letterSpacing = (-0.6).sp),
+    headlineSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, letterSpacing = (-0.5).sp),
+    titleLarge = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp),
+    titleMedium = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 15.sp),
+    titleSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+    bodyLarge = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Medium, fontSize = 15.sp),
+    bodyMedium = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Medium, fontSize = 13.sp),
+    labelLarge = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 14.sp),
+    labelMedium = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.SemiBold, fontSize = 12.sp),
+    labelSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.4.sp),
+)
+
+val LocalSonivellColors = staticCompositionLocalOf { SonivellColors() }
+
+object SonivellTheme {
+    val colors: SonivellColors
+        @Composable get() = LocalSonivellColors.current
+}
+
+@Composable
+fun SonivellTheme(
+    accent: Color = Accents.Lima,
+    content: @Composable () -> Unit,
+) {
+    val colors = SonivellColors(accent = accent)
+    val scheme = darkColorScheme(
+        primary = colors.accent,
+        onPrimary = colors.onAccent,
+        background = colors.background,
+        onBackground = colors.textPrimary,
+        surface = colors.background,
+        onSurface = colors.textPrimary,
+        surfaceVariant = colors.surface,
+        onSurfaceVariant = colors.textSecondary,
+        outline = colors.outline,
+    )
+    androidx.compose.runtime.CompositionLocalProvider(LocalSonivellColors provides colors) {
+        MaterialTheme(colorScheme = scheme, typography = SonivellTypography, content = content)
+    }
+}

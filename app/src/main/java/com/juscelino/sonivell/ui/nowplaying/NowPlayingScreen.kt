@@ -1,0 +1,281 @@
+package com.juscelino.sonivell.ui.nowplaying
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material.icons.rounded.MoreHoriz
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.juscelino.sonivell.data.Track
+import com.juscelino.sonivell.data.formatDuration
+import com.juscelino.sonivell.playback.PlayerState
+import com.juscelino.sonivell.playback.RepeatMode
+import com.juscelino.sonivell.ui.components.AlbumArt
+import com.juscelino.sonivell.ui.components.IconBtn
+import com.juscelino.sonivell.ui.theme.SonivellTheme
+
+data class NowPlayingActions(
+    val onClose: () -> Unit,
+    val onMore: () -> Unit,
+    val onTogglePlay: () -> Unit,
+    val onNext: () -> Unit,
+    val onPrevious: () -> Unit,
+    val onSeek: (Long) -> Unit,
+    val onShuffle: () -> Unit,
+    val onRepeat: () -> Unit,
+    val onFavorite: () -> Unit,
+    val onLyrics: () -> Unit,
+    val onQueue: () -> Unit,
+)
+
+@Composable
+fun NowPlayingScreen(
+    track: Track,
+    state: PlayerState,
+    isFavorite: Boolean,
+    sourceLabel: String,
+    actions: NowPlayingActions,
+) {
+    val c = SonivellTheme.colors
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(c.background)
+            .safeDrawingPadding()
+            .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(22.dp),
+    ) {
+        // Topo
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBtn(Icons.Rounded.KeyboardArrowDown, "Fechar player", actions.onClose, background = c.surface)
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("TOCANDO DE", style = MaterialTheme.typography.labelSmall.copy(fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.92f), color = c.textSecondary)
+                Text(sourceLabel, style = MaterialTheme.typography.titleSmall, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            IconBtn(Icons.Rounded.MoreHoriz, "Mais opções", actions.onMore, background = c.surface)
+        }
+
+        // Capa
+        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            AlbumArt(
+                track,
+                Modifier.widthIn(max = 420.dp).fillMaxWidth().aspectRatio(1f),
+                corner = 28.dp,
+                detailed = true,
+            )
+        }
+
+        // Título + curtir
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(track.title, style = MaterialTheme.typography.headlineSmall, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    listOf(track.artist, track.album).filter { it.isNotBlank() }.joinToString(" · "),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = c.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            IconBtn(
+                if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                if (isFavorite) "Remover dos favoritos" else "Curtir",
+                actions.onFavorite,
+                tint = if (isFavorite) c.accent else c.textSecondary,
+                iconSize = 24.dp,
+            )
+        }
+
+        // Progresso
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SeekBar(
+                positionMs = state.positionMs,
+                durationMs = state.durationMs.takeIf { it > 0 } ?: track.durationMs,
+                onSeek = actions.onSeek,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TimeText(formatDuration(state.positionMs))
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    track.formatLabel?.let { fmt ->
+                        Text(
+                            fmt,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = c.textTertiary,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(c.surface)
+                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                        )
+                    }
+                }
+                TimeText(formatDuration(state.durationMs.takeIf { it > 0 } ?: track.durationMs))
+            }
+        }
+
+        // Controles
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconBtn(
+                Icons.Rounded.Shuffle,
+                if (state.shuffle) "Desativar aleatório" else "Ativar aleatório",
+                actions.onShuffle,
+                tint = if (state.shuffle) c.accent else c.textSecondary,
+            )
+            IconBtn(Icons.Rounded.SkipPrevious, "Anterior", actions.onPrevious, size = 56.dp, iconSize = 34.dp)
+            IconBtn(
+                if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                if (state.isPlaying) "Pausar" else "Tocar",
+                actions.onTogglePlay,
+                size = 76.dp,
+                iconSize = 36.dp,
+                background = c.accent,
+                tint = c.onAccent,
+            )
+            IconBtn(Icons.Rounded.SkipNext, "Próxima", actions.onNext, size = 56.dp, iconSize = 34.dp)
+            IconBtn(
+                if (state.repeat == RepeatMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                when (state.repeat) {
+                    RepeatMode.OFF -> "Repetir: desligado"
+                    RepeatMode.ALL -> "Repetir: todas"
+                    RepeatMode.ONE -> "Repetir: uma"
+                },
+                actions.onRepeat,
+                tint = if (state.repeat == RepeatMode.OFF) c.textSecondary else c.accent,
+            )
+        }
+
+        // Barra inferior
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(c.surfaceLow)
+                .padding(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                Modifier.weight(1f).height(44.dp).padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(Icons.Rounded.PhoneAndroid, null, Modifier.size(18.dp), tint = c.textTertiary)
+                Text("Este telefone", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textTertiary)
+            }
+            IconBtn(Icons.Rounded.Lyrics, "Letra", actions.onLyrics, tint = c.textTertiary, iconSize = 20.dp)
+            Spacer(Modifier.size(4.dp))
+            Box(
+                Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(c.surfaceHigh)
+                    .clickable(onClickLabel = "Abrir fila", onClick = actions.onQueue)
+                    .semantics { contentDescription = "Abrir fila" },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(20.dp), tint = c.textPrimary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeText(text: String) {
+    Text(text, style = MaterialTheme.typography.labelMedium, color = SonivellTheme.colors.textSecondary)
+}
+
+/** Barra fina do mockup (4 dp) com bolinha; aceita toque e arrasto. */
+@Composable
+private fun SeekBar(positionMs: Long, durationMs: Long, onSeek: (Long) -> Unit) {
+    val c = SonivellTheme.colors
+    var dragFraction by remember { mutableStateOf<Float?>(null) }
+    val fraction = dragFraction
+        ?: if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
+
+    BoxWithConstraints(
+        Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .semantics { contentDescription = "Posição da música" }
+            .pointerInput(durationMs) {
+                detectTapGestures { o ->
+                    if (durationMs > 0) onSeek((o.x / size.width * durationMs).toLong())
+                }
+            }
+            .pointerInput(durationMs) {
+                detectHorizontalDragGestures(
+                    onDragStart = { o -> dragFraction = (o.x / size.width).coerceIn(0f, 1f) },
+                    onHorizontalDrag = { change, _ ->
+                        dragFraction = (change.position.x / size.width).coerceIn(0f, 1f)
+                    },
+                    onDragEnd = {
+                        dragFraction?.let { if (durationMs > 0) onSeek((it * durationMs).toLong()) }
+                        dragFraction = null
+                    },
+                    onDragCancel = { dragFraction = null },
+                )
+            },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        val width = maxWidth
+        Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.track))
+        Box(Modifier.fillMaxWidth(fraction).height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.textPrimary))
+        val knob = if (dragFraction != null) 18.dp else 14.dp
+        Box(
+            Modifier
+                .offset(x = (width * fraction) - knob / 2)
+                .size(knob)
+                .clip(CircleShape)
+                .background(c.textPrimary)
+        )
+    }
+}
