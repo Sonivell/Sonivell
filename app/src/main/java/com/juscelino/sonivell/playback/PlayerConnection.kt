@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.playback
 
+import com.juscelino.sonivell.R
 import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
@@ -213,14 +214,14 @@ fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
     .build()
 
 /** Reconstrói uma Track a partir do item da fila (o MediaController preserva os metadados). */
-fun MediaItem.toTrack(): Track {
+fun MediaItem.toTrack(context: Context): Track {
     val md = mediaMetadata
     val extras = md.extras
     return Track(
         id = mediaId.toLongOrNull() ?: 0L,
         uri = localConfiguration?.uri ?: "".toUri(),
-        title = md.title?.toString() ?: "Sem título",
-        artist = md.artist?.toString() ?: "Artista desconhecido",
+        title = md.title?.toString() ?: context.getString(R.string.unknown_title),
+        artist = md.artist?.toString() ?: context.getString(R.string.unknown_artist),
         album = md.albumTitle?.toString() ?: "",
         albumId = extras?.getLong(EXTRA_ALBUM_ID) ?: 0L,
         durationMs = extras?.getLong(EXTRA_DURATION) ?: 0L,

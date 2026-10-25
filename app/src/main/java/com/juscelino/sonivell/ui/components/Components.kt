@@ -1,5 +1,7 @@
 package com.juscelino.sonivell.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.juscelino.sonivell.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -151,13 +153,14 @@ fun MiniPlayer(
     modifier: Modifier = Modifier,
 ) {
     val c = SonivellTheme.colors
+    val openPlayer = stringResource(R.string.cd_open_player)
     Column(modifier.padding(horizontal = 12.dp)) {
         Row(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(18.dp))
                 .background(Color(0xFF1E2125))
-                .clickable(onClickLabel = "Abrir player", onClick = onOpen)
+                .clickable(onClickLabel = openPlayer, onClick = onOpen)
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -169,7 +172,7 @@ fun MiniPlayer(
             }
             IconBtn(
                 icon = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                contentDescription = if (isPlaying) "Pausar" else "Tocar",
+                contentDescription = stringResource(if (isPlaying) R.string.cd_pause else R.string.cd_play),
                 onClick = onTogglePlay,
                 background = c.accent,
                 tint = c.onAccent,

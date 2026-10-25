@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.data
 
+import com.juscelino.sonivell.R
 import android.content.ContentUris
 import android.content.Context
 import android.os.Build
@@ -64,11 +65,11 @@ class MusicRepository(private val context: Context) {
                 tracks += Track(
                     id = id,
                     uri = ContentUris.withAppendedId(collection, id),
-                    title = c.getString(titleCol)?.takeIf { it.isNotBlank() } ?: "Sem título",
+                    title = c.getString(titleCol)?.takeIf { it.isNotBlank() } ?: context.getString(R.string.unknown_title),
                     artist = c.getString(artistCol)
                         ?.takeIf { it.isNotBlank() && it != MediaStore.UNKNOWN_STRING }
-                        ?: "Artista desconhecido",
-                    album = c.getString(albumCol)?.takeIf { it.isNotBlank() } ?: "Álbum desconhecido",
+                        ?: context.getString(R.string.unknown_artist),
+                    album = c.getString(albumCol)?.takeIf { it.isNotBlank() } ?: context.getString(R.string.unknown_album),
                     albumId = c.getLong(albumIdCol),
                     durationMs = c.getLong(durCol),
                     mimeType = c.getString(mimeCol),

@@ -1,5 +1,8 @@
 package com.juscelino.sonivell.ui
 
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
+import com.juscelino.sonivell.R
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -83,12 +86,12 @@ private object Routes {
     const val QUEUE = "fila"
 }
 
-private data class Tab(val route: String, val label: String, val icon: ImageVector)
+private data class Tab(val route: String, @StringRes val label: Int, val icon: ImageVector)
 
 private val tabs = listOf(
-    Tab(Routes.HOME, "Início", Icons.Rounded.Home),
-    Tab(Routes.SEARCH, "Buscar", Icons.Rounded.Search),
-    Tab(Routes.LIBRARY, "Biblioteca", Icons.Rounded.LibraryMusic),
+    Tab(Routes.HOME, R.string.nav_home, Icons.Rounded.Home),
+    Tab(Routes.SEARCH, R.string.nav_search, Icons.Rounded.Search),
+    Tab(Routes.LIBRARY, R.string.nav_library, Icons.Rounded.LibraryMusic),
 )
 
 private fun audioPermission() =
@@ -134,10 +137,14 @@ private fun MainContent(vm: MainViewModel) {
     val current by vm.currentTrack.collectAsStateWithLifecycle()
     val favorites by vm.favorites.collectAsStateWithLifecycle()
 
-    var source by rememberSaveable { mutableStateOf("Biblioteca") }
+    val defaultSource = stringResource(R.string.nav_library)
+    var source by rememberSaveable { mutableStateOf(defaultSource) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val soon: () -> Unit = { scope.launch { snackbar.showSnackbar("Chega numa próxima versão do Sonivell") } }
+    val comingSoon = stringResource(R.string.coming_soon)
+    val shuffleSource = stringResource(R.string.source_shuffle)
+    val context = LocalContext.current
+    val soon: () -> Unit = { scope.launch { snackbar.showSnackbar(comingSoon) } }
 
     val libraryActions = LibraryActions(
         onQuery = vm::setQuery,
@@ -149,7 +156,7 @@ private fun MainContent(vm: MainViewModel) {
             vm.player.play(tracks, index)
         },
         onShuffleAll = {
-            source = "Aleatório"
+            source = shuffleSource
             vm.playAllShuffled()
         },
     )
@@ -248,7 +255,7 @@ private fun MainContent(vm: MainViewModel) {
             ) {
                 val byId = remember(library.allTracks) { library.allTracks.associateBy { it.id } }
                 val upNext = player.upNext.map { iv ->
-                    IndexedValue(iv.index, byId[iv.value.mediaId.toLongOrNull()] ?: iv.value.toTrack())
+                    IndexedValue(iv.index, byId[iv.value.mediaId.toLongOrNull()] ?: iv.value.toTrack(context))
                 }
                 QueueScreen(
                     current = current,
@@ -288,7 +295,7 @@ private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
             ) {
                 Icon(tab.icon, null, Modifier.size(22.dp), tint = color)
                 Text(
-                    tab.label,
+                    stringResource(tab.label),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
                     color = color,
@@ -311,9 +318,9 @@ private fun PermissionScreen(onRequest: () -> Unit) {
                 seed = 0,
                 modifier = Modifier.size(160.dp).clip(RoundedCornerShape(28.dp)),
             )
-            Text("Sonivell", style = MaterialTheme.typography.displaySmall, color = c.textPrimary)
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall, color = c.textPrimary)
             Text(
-                "Para tocar suas músicas, o Sonivell precisa de acesso aos arquivos de áudio do aparelho. Nada sai do seu celular.",
+                stringResource(R.string.permission_message),
                 style = MaterialTheme.typography.bodyLarge,
                 color = c.textSecondary,
                 textAlign = TextAlign.Center,
@@ -328,7 +335,7 @@ private fun PermissionScreen(onRequest: () -> Unit) {
                     .padding(horizontal = 28.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("Permitir acesso", style = MaterialTheme.typography.labelLarge, color = c.onAccent)
+                Text(stringResource(R.string.permission_allow), style = MaterialTheme.typography.labelLarge, color = c.onAccent)
             }
         }
     }

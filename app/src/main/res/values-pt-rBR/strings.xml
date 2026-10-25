@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Português do Brasil -->
+<resources>
+    <!-- Navegação -->
+    <string name="nav_home">Início</string>
+    <string name="nav_search">Buscar</string>
+    <string name="nav_library">Biblioteca</string>
+
+    <!-- Abas e ordenação da biblioteca -->
+    <string name="tab_songs">Músicas</string>
+    <string name="tab_albums">Álbuns</string>
+    <string name="tab_artists">Artistas</string>
+    <string name="tab_folders">Pastas</string>
+    <string name="sort_title">Título</string>
+    <string name="sort_artist">Artista</string>
+    <string name="sort_recent">Adicionadas</string>
+    <string name="cd_sort_by">Ordenar por: %1$s</string>
+
+    <!-- Quando a música não tem metadados -->
+    <string name="unknown_title">Sem título</string>
+    <string name="unknown_artist">Artista desconhecido</string>
+    <string name="unknown_album">Álbum desconhecido</string>
+
+    <!-- Biblioteca -->
+    <string name="cd_refresh">Atualizar biblioteca</string>
+    <string name="library_empty">Nenhuma música encontrada no aparelho. Copie arquivos de áudio para o celular e toque em atualizar.</string>
+    <string name="recent">Recentes</string>
+    <string name="all_songs">Todas as músicas · %1$d</string>
+    <string name="shuffle_all">Tocar tudo no aleatório</string>
+    <string name="recently_added">Adicionadas recentemente</string>
+    <string name="liked_count">Curtidas · %1$d</string>
+    <string name="search_hint">Músicas, artistas, álbuns</string>
+    <string name="cd_search">Buscar na biblioteca</string>
+    <string name="cd_clear_search">Limpar busca</string>
+    <plurals name="songs_count">
+        <item quantity="one">%d música</item>
+        <item quantity="other">%d músicas</item>
+    </plurals>
+    <plurals name="albums_count">
+        <item quantity="one">%d álbum</item>
+        <item quantity="other">%d álbuns</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="one">%d resultado</item>
+        <item quantity="other">%d resultados</item>
+    </plurals>
+
+    <!-- De onde a reprodução começou ("Tocando de …") -->
+    <string name="source_shuffle">Aleatório</string>
+    <string name="source_search">Busca</string>
+    <string name="source_liked">Curtidas</string>
+
+    <!-- Tocando agora -->
+    <string name="playing_from">Tocando de</string>
+    <string name="this_phone">Este telefone</string>
+    <string name="cd_close_player">Fechar player</string>
+    <string name="cd_open_player">Abrir player</string>
+    <string name="cd_more_options">Mais opções</string>
+    <string name="cd_like">Curtir</string>
+    <string name="cd_unlike">Remover dos favoritos</string>
+    <string name="cd_shuffle_on">Ativar aleatório</string>
+    <string name="cd_shuffle_off">Desativar aleatório</string>
+    <string name="cd_previous">Anterior</string>
+    <string name="cd_play">Tocar</string>
+    <string name="cd_pause">Pausar</string>
+    <string name="cd_next">Próxima</string>
+    <string name="cd_repeat_off">Repetir: desligado</string>
+    <string name="cd_repeat_all">Repetir: todas</string>
+    <string name="cd_repeat_one">Repetir: uma</string>
+    <string name="cd_lyrics">Letra</string>
+    <string name="cd_open_queue">Abrir fila</string>
+    <string name="cd_seek">Posição da música</string>
+
+    <!-- Fila -->
+    <string name="queue_title">Fila</string>
+    <string name="queue_clear">Limpar</string>
+    <string name="now_playing">Tocando agora</string>
+    <string name="up_next">A seguir</string>
+    <plurals name="queue_tracks">
+        <item quantity="one">%d faixa</item>
+        <item quantity="other">%d faixas</item>
+    </plurals>
+    <string name="queue_summary">%1$s · %2$d min</string>
+    <string name="queue_empty">Nada na fila. Toque numa música da biblioteca para começar.</string>
+    <string name="cd_back_to_player">Voltar ao player</string>
+    <string name="cd_drag_reorder">Arrastar para reordenar %1$s</string>
+    <string name="shuffle">Embaralhar</string>
+    <string name="save_playlist">Salvar playlist</string>
+
+    <!-- Geral -->
+    <string name="coming_soon">Chega numa próxima versão do Sonivell</string>
+    <string name="permission_message">Para tocar suas músicas, o Sonivell precisa de acesso aos arquivos de áudio do aparelho. Nada sai do seu celular.</string>
+    <string name="permission_allow">Permitir acesso</string>
+</resources>

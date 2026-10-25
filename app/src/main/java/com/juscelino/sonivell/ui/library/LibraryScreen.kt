@@ -1,5 +1,8 @@
 package com.juscelino.sonivell.ui.library
 
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.juscelino.sonivell.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -62,6 +65,9 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 
 enum class LibraryMode { Inicio, Buscar, Biblioteca }
 
+/** Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
+private data class LibraryLabels(val search: String, val library: String, val liked: String)
+
 data class LibraryActions(
     val onQuery: (String) -> Unit,
     val onTab: (LibraryTab) -> Unit,
@@ -82,6 +88,11 @@ fun LibraryScreen(
 ) {
     val c = SonivellTheme.colors
     val focus = remember { FocusRequester() }
+    val labels = LibraryLabels(
+        search = stringResource(R.string.source_search),
+        library = stringResource(R.string.nav_library),
+        liked = stringResource(R.string.source_liked),
+    )
     LaunchedEffect(mode) { if (mode == LibraryMode.Buscar) runCatching { focus.requestFocus() } }
 
     LazyColumn(
@@ -98,16 +109,18 @@ fun LibraryScreen(
         item(key = "header") {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
                 Text(
-                    when (mode) {
-                        LibraryMode.Inicio -> "Início"
-                        LibraryMode.Buscar -> "Buscar"
-                        LibraryMode.Biblioteca -> "Biblioteca"
-                    },
+                    stringResource(
+                        when (mode) {
+                            LibraryMode.Inicio -> R.string.nav_home
+                            LibraryMode.Buscar -> R.string.nav_search
+                            LibraryMode.Biblioteca -> R.string.nav_library
+                        }
+                    ),
                     style = MaterialTheme.typography.displaySmall,
                     color = c.textPrimary,
                     modifier = Modifier.weight(1f),
                 )
-                IconBtn(Icons.Rounded.Refresh, "Atualizar biblioteca", actions.onRefresh, background = c.surface, iconSize = 20.dp)
+                IconBtn(Icons.Rounded.Refresh, stringResource(R.string.cd_refresh), actions.onRefresh, background = c.surface, iconSize = 20.dp)
             }
         }
 
@@ -129,7 +142,7 @@ fun LibraryScreen(
         if (state.allTracks.isEmpty()) {
             item(key = "empty") {
                 Text(
-                    "Nenhuma música encontrada no aparelho. Copie arquivos de áudio para o celular e toque em atualizar.",
+                    stringResource(R.string.library_empty),
                     style = MaterialTheme.typography.bodyLarge,
                     color = c.textSecondary,
                     modifier = Modifier.padding(vertical = 32.dp),
@@ -139,8 +152,8 @@ fun LibraryScreen(
         }
 
         when (mode) {
-            LibraryMode.Inicio -> homeContent(state, favorites, currentId, actions)
-            LibraryMode.Buscar -> trackList(state.tracks, currentId, "Busca", state.query.isNotBlank(), actions)
+            LibraryMode.Inicio -> homeContent(state, favorites, currentId, labels, actions)
+            LibraryMode.Buscar -> trackList(state.tracks, currentId, labels.search, state.query.isNotBlank(), actions)
             LibraryMode.Biblioteca -> {
                 item(key = "chips") {
                     Row(
@@ -148,41 +161,41 @@ fun LibraryScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         LibraryTab.entries.forEach { t ->
-                            Chip(t.label, selected = state.tab == t, onClick = { actions.onTab(t) })
+                            Chip(stringResource(t.label), selected = state.tab == t, onClick = { actions.onTab(t) })
                         }
                     }
                 }
                 when (state.tab) {
                     LibraryTab.Musicas -> {
                         if (state.query.isBlank() && state.recentAlbums.isNotEmpty()) {
-                            item(key = "recent-label") { SectionLabel("Recentes", Modifier.padding(bottom = 12.dp)) }
+                            item(key = "recent-label") { SectionLabel(stringResource(R.string.recent), Modifier.padding(bottom = 12.dp)) }
                             item(key = "recent") { AlbumGrid(state.recentAlbums.take(3), actions, Modifier.padding(bottom = 20.dp)) }
                         }
                         item(key = "all-label") {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                SectionLabel("Todas as músicas · ${state.tracks.size}", Modifier.weight(1f))
-                                Text(state.sort.label, style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
-                                IconBtn(Icons.Rounded.SwapVert, "Ordenar por: ${state.sort.label}", actions.onSort, tint = c.textSecondary, iconSize = 18.dp)
+                                SectionLabel(stringResource(R.string.all_songs, state.tracks.size), Modifier.weight(1f))
+                                Text(stringResource(state.sort.label), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
+                                IconBtn(Icons.Rounded.SwapVert, stringResource(R.string.cd_sort_by, stringResource(state.sort.label)), actions.onSort, tint = c.textSecondary, iconSize = 18.dp)
                             }
                         }
-                        trackList(state.tracks, currentId, "Biblioteca", false, actions)
+                        trackList(state.tracks, currentId, labels.library, false, actions)
                     }
                     LibraryTab.Albuns -> {
-                        item(key = "albums-label") { SectionLabel("${state.albums.size} álbuns", Modifier.padding(bottom = 12.dp)) }
+                        item(key = "albums-label") { SectionLabel(pluralStringResource(R.plurals.albums_count, state.albums.size, state.albums.size), Modifier.padding(bottom = 12.dp)) }
                         state.albums.chunked(3).forEachIndexed { i, row ->
                             item(key = "albums-$i") { AlbumGrid(row, actions, Modifier.padding(bottom = 12.dp)) }
                         }
                     }
                     LibraryTab.Artistas -> {
                         items(state.artists, key = { "ar-" + it.name }) { a ->
-                            GroupRow(Icons.Rounded.Person, a.name, "${a.albumCount} álbuns · ${a.tracks.size} músicas") {
+                            GroupRow(Icons.Rounded.Person, a.name, pluralStringResource(R.plurals.albums_count, a.albumCount, a.albumCount) + " · " + pluralStringResource(R.plurals.songs_count, a.tracks.size, a.tracks.size)) {
                                 actions.onPlay(a.tracks, 0, a.name)
                             }
                         }
                     }
                     LibraryTab.Pastas -> {
                         items(state.folders, key = { "f-" + it.path }) { f ->
-                            GroupRow(Icons.Rounded.Folder, f.name, "${f.tracks.size} músicas · ${f.path}") {
+                            GroupRow(Icons.Rounded.Folder, f.name, pluralStringResource(R.plurals.songs_count, f.tracks.size, f.tracks.size) + " · " + f.path) {
                                 actions.onPlay(f.tracks, 0, f.name)
                             }
                         }
@@ -201,7 +214,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.trackList(
     actions: LibraryActions,
 ) {
     if (showCount) item(key = "count") {
-        SectionLabel("${tracks.size} resultados", Modifier.padding(bottom = 8.dp))
+        SectionLabel(pluralStringResource(R.plurals.results_count, tracks.size, tracks.size), Modifier.padding(bottom = 8.dp))
     }
     itemsIndexed(tracks, key = { _, t -> t.id }) { i, t ->
         TrackRow(t, onClick = { actions.onPlay(tracks, i, source) }, highlighted = t.id == currentId)
@@ -212,6 +225,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
     state: LibraryState,
     favorites: Set<Long>,
     currentId: Long?,
+    labels: LibraryLabels,
     actions: LibraryActions,
 ) {
     item(key = "shuffle-all") {
@@ -229,22 +243,22 @@ private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
         ) {
             Icon(Icons.Rounded.Shuffle, null, Modifier.size(28.dp), tint = c.onAccent)
             Column(Modifier.weight(1f)) {
-                Text("Tocar tudo no aleatório", style = MaterialTheme.typography.titleMedium, color = c.onAccent)
-                Text("${state.allTracks.size} músicas", style = MaterialTheme.typography.bodyMedium, color = c.onAccent)
+                Text(stringResource(R.string.shuffle_all), style = MaterialTheme.typography.titleMedium, color = c.onAccent)
+                Text(pluralStringResource(R.plurals.songs_count, state.allTracks.size, state.allTracks.size), style = MaterialTheme.typography.bodyMedium, color = c.onAccent)
             }
         }
     }
     if (state.recentAlbums.isNotEmpty()) {
-        item(key = "home-recent-label") { SectionLabel("Adicionadas recentemente", Modifier.padding(bottom = 12.dp)) }
+        item(key = "home-recent-label") { SectionLabel(stringResource(R.string.recently_added), Modifier.padding(bottom = 12.dp)) }
         state.recentAlbums.chunked(3).forEachIndexed { i, row ->
             item(key = "home-recent-$i") { AlbumGrid(row, actions, Modifier.padding(bottom = 12.dp)) }
         }
     }
     val favs = state.allTracks.filter { it.id in favorites }
     if (favs.isNotEmpty()) {
-        item(key = "fav-label") { SectionLabel("Curtidas · ${favs.size}", Modifier.padding(top = 12.dp, bottom = 4.dp)) }
+        item(key = "fav-label") { SectionLabel(stringResource(R.string.liked_count, favs.size), Modifier.padding(top = 12.dp, bottom = 4.dp)) }
         itemsIndexed(favs, key = { _, t -> "fav-${t.id}" }) { i, t ->
-            TrackRow(t, onClick = { actions.onPlay(favs, i, "Curtidas") }, highlighted = t.id == currentId)
+            TrackRow(t, onClick = { actions.onPlay(favs, i, labels.liked) }, highlighted = t.id == currentId)
         }
     }
 }
@@ -252,6 +266,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
 @Composable
 private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
+    val searchLabel = stringResource(R.string.cd_search)
     Row(
         modifier
             .fillMaxWidth()
@@ -265,7 +280,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Mod
         Icon(Icons.Rounded.Search, null, Modifier.size(18.dp), tint = c.textSecondary)
         Box(Modifier.weight(1f)) {
             if (value.isEmpty()) {
-                Text("Músicas, artistas, álbuns", style = MaterialTheme.typography.bodyLarge, color = c.textSecondary)
+                Text(stringResource(R.string.search_hint), style = MaterialTheme.typography.bodyLarge, color = c.textSecondary)
             }
             BasicTextField(
                 value = value,
@@ -273,11 +288,11 @@ private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Mod
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = c.textPrimary),
                 cursorBrush = SolidColor(c.accent),
-                modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Buscar na biblioteca" },
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = searchLabel },
             )
         }
         if (value.isNotEmpty()) {
-            IconBtn(Icons.Rounded.Close, "Limpar busca", { onChange("") }, tint = c.textSecondary, iconSize = 18.dp)
+            IconBtn(Icons.Rounded.Close, stringResource(R.string.cd_clear_search), { onChange("") }, tint = c.textSecondary, iconSize = 18.dp)
         }
     }
 }

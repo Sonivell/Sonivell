@@ -1,5 +1,8 @@
 package com.juscelino.sonivell.ui.nowplaying
 
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.juscelino.sonivell.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -94,12 +97,12 @@ fun NowPlayingScreen(
     ) {
         // Topo
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconBtn(Icons.Rounded.KeyboardArrowDown, "Fechar player", actions.onClose, background = c.surface)
+            IconBtn(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.cd_close_player), actions.onClose, background = c.surface)
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("TOCANDO DE", style = MaterialTheme.typography.labelSmall.copy(fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.92f), color = c.textSecondary)
+                Text(stringResource(R.string.playing_from).uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp), color = c.textSecondary)
                 Text(sourceLabel, style = MaterialTheme.typography.titleSmall, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            IconBtn(Icons.Rounded.MoreHoriz, "Mais opções", actions.onMore, background = c.surface)
+            IconBtn(Icons.Rounded.MoreHoriz, stringResource(R.string.cd_more_options), actions.onMore, background = c.surface)
         }
 
         // Capa
@@ -126,7 +129,7 @@ fun NowPlayingScreen(
             }
             IconBtn(
                 if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                if (isFavorite) "Remover dos favoritos" else "Curtir",
+                stringResource(if (isFavorite) R.string.cd_unlike else R.string.cd_like),
                 actions.onFavorite,
                 tint = if (isFavorite) c.accent else c.textSecondary,
                 iconSize = 24.dp,
@@ -167,28 +170,30 @@ fun NowPlayingScreen(
         ) {
             IconBtn(
                 Icons.Rounded.Shuffle,
-                if (state.shuffle) "Desativar aleatório" else "Ativar aleatório",
+                stringResource(if (state.shuffle) R.string.cd_shuffle_off else R.string.cd_shuffle_on),
                 actions.onShuffle,
                 tint = if (state.shuffle) c.accent else c.textSecondary,
             )
-            IconBtn(Icons.Rounded.SkipPrevious, "Anterior", actions.onPrevious, size = 56.dp, iconSize = 34.dp)
+            IconBtn(Icons.Rounded.SkipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 56.dp, iconSize = 34.dp)
             IconBtn(
                 if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                if (state.isPlaying) "Pausar" else "Tocar",
+                stringResource(if (state.isPlaying) R.string.cd_pause else R.string.cd_play),
                 actions.onTogglePlay,
                 size = 76.dp,
                 iconSize = 36.dp,
                 background = c.accent,
                 tint = c.onAccent,
             )
-            IconBtn(Icons.Rounded.SkipNext, "Próxima", actions.onNext, size = 56.dp, iconSize = 34.dp)
+            IconBtn(Icons.Rounded.SkipNext, stringResource(R.string.cd_next), actions.onNext, size = 56.dp, iconSize = 34.dp)
             IconBtn(
                 if (state.repeat == RepeatMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
-                when (state.repeat) {
-                    RepeatMode.OFF -> "Repetir: desligado"
-                    RepeatMode.ALL -> "Repetir: todas"
-                    RepeatMode.ONE -> "Repetir: uma"
-                },
+                stringResource(
+                    when (state.repeat) {
+                        RepeatMode.OFF -> R.string.cd_repeat_off
+                        RepeatMode.ALL -> R.string.cd_repeat_all
+                        RepeatMode.ONE -> R.string.cd_repeat_one
+                    }
+                ),
                 actions.onRepeat,
                 tint = if (state.repeat == RepeatMode.OFF) c.textSecondary else c.accent,
             )
@@ -209,17 +214,18 @@ fun NowPlayingScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(Icons.Rounded.PhoneAndroid, null, Modifier.size(18.dp), tint = c.textTertiary)
-                Text("Este telefone", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textTertiary)
+                Text(stringResource(R.string.this_phone), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textTertiary)
             }
-            IconBtn(Icons.Rounded.Lyrics, "Letra", actions.onLyrics, tint = c.textTertiary, iconSize = 20.dp)
+            IconBtn(Icons.Rounded.Lyrics, stringResource(R.string.cd_lyrics), actions.onLyrics, tint = c.textTertiary, iconSize = 20.dp)
             Spacer(Modifier.size(4.dp))
+            val openQueue = stringResource(R.string.cd_open_queue)
             Box(
                 Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(c.surfaceHigh)
-                    .clickable(onClickLabel = "Abrir fila", onClick = actions.onQueue)
-                    .semantics { contentDescription = "Abrir fila" },
+                    .clickable(onClickLabel = openQueue, onClick = actions.onQueue)
+                    .semantics { contentDescription = openQueue },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(20.dp), tint = c.textPrimary)
@@ -237,6 +243,7 @@ private fun TimeText(text: String) {
 @Composable
 private fun SeekBar(positionMs: Long, durationMs: Long, onSeek: (Long) -> Unit) {
     val c = SonivellTheme.colors
+    val seekLabel = stringResource(R.string.cd_seek)
     var dragFraction by remember { mutableStateOf<Float?>(null) }
     val fraction = dragFraction
         ?: if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
@@ -245,7 +252,7 @@ private fun SeekBar(positionMs: Long, durationMs: Long, onSeek: (Long) -> Unit) 
         Modifier
             .fillMaxWidth()
             .height(24.dp)
-            .semantics { contentDescription = "Posição da música" }
+            .semantics { contentDescription = seekLabel }
             .pointerInput(durationMs) {
                 detectTapGestures { o ->
                     if (durationMs > 0) onSeek((o.x / size.width * durationMs).toLong())

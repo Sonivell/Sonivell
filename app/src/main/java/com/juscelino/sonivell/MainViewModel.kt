@@ -1,5 +1,6 @@
 package com.juscelino.sonivell
 
+import androidx.annotation.StringRes
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
@@ -21,8 +22,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class LibraryTab(val label: String) { Musicas("Músicas"), Albuns("Álbuns"), Artistas("Artistas"), Pastas("Pastas") }
-enum class SortOrder(val label: String) { Titulo("Título"), Artista("Artista"), Recentes("Adicionadas") }
+enum class LibraryTab(@StringRes val label: Int) {
+    Musicas(R.string.tab_songs), Albuns(R.string.tab_albums), Artistas(R.string.tab_artists), Pastas(R.string.tab_folders)
+}
+enum class SortOrder(@StringRes val label: Int) {
+    Titulo(R.string.sort_title), Artista(R.string.sort_artist), Recentes(R.string.sort_recent)
+}
 
 data class LibraryState(
     val loading: Boolean = true,
@@ -91,7 +96,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val currentTrack: StateFlow<Track?> = combine(playerState, allTracks) { st, all ->
         val item = st.current ?: return@combine null
         val id = item.mediaId.toLongOrNull()
-        all?.firstOrNull { it.id == id } ?: item.toTrack()
+        all?.firstOrNull { it.id == id } ?: item.toTrack(getApplication<Application>())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun onPermissionGranted() {

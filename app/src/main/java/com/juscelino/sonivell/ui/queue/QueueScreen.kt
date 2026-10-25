@@ -1,5 +1,8 @@
 package com.juscelino.sonivell.ui.queue
 
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.juscelino.sonivell.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,8 +90,8 @@ fun QueueScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconBtn(Icons.Rounded.KeyboardArrowDown, "Voltar ao player", actions.onClose, background = c.surface)
-            Text("Fila", style = MaterialTheme.typography.titleLarge, color = c.textPrimary, modifier = Modifier.weight(1f).padding(start = 12.dp))
+            IconBtn(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.cd_back_to_player), actions.onClose, background = c.surface)
+            Text(stringResource(R.string.queue_title), style = MaterialTheme.typography.titleLarge, color = c.textPrimary, modifier = Modifier.weight(1f).padding(start = 12.dp))
             Box(
                 Modifier
                     .height(44.dp)
@@ -97,13 +100,13 @@ fun QueueScreen(
                     .padding(horizontal = 14.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("Limpar", style = MaterialTheme.typography.labelLarge, color = if (upNext.isNotEmpty()) c.accent else c.textSecondary)
+                Text(stringResource(R.string.queue_clear), style = MaterialTheme.typography.labelLarge, color = if (upNext.isNotEmpty()) c.accent else c.textSecondary)
             }
         }
 
         if (current != null) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SectionLabel("Tocando agora")
+                SectionLabel(stringResource(R.string.now_playing))
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -131,17 +134,17 @@ fun QueueScreen(
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SectionLabel("A seguir", Modifier.weight(1f))
+                SectionLabel(stringResource(R.string.up_next), Modifier.weight(1f))
                 val total = upNext.sumOf { it.value.durationMs }
                 Text(
-                    "${upNext.size} faixas · ${total / 60_000} min",
+                    stringResource(R.string.queue_summary, pluralStringResource(R.plurals.queue_tracks, upNext.size, upNext.size), (total / 60_000).toInt()),
                     style = MaterialTheme.typography.labelMedium,
                     color = c.textSecondary,
                 )
             }
             if (upNext.isEmpty()) {
                 Text(
-                    "Nada na fila. Toque numa música da biblioteca para começar.",
+                    stringResource(R.string.queue_empty),
                     style = MaterialTheme.typography.bodyLarge,
                     color = c.textSecondary,
                     modifier = Modifier.padding(top = 16.dp),
@@ -163,6 +166,7 @@ fun QueueScreen(
                     val (queueIndex, track) = iv
                     val latestIndex by rememberUpdatedState(queueIndex)
                     val isDragging = dragging == queueIndex
+                    val dragLabel = stringResource(R.string.cd_drag_reorder, track.title)
                     Row(
                         Modifier
                             .zIndex(if (isDragging) 1f else 0f)
@@ -189,7 +193,7 @@ fun QueueScreen(
                         Box(
                             Modifier
                                 .size(44.dp)
-                                .semantics { contentDescription = "Arrastar para reordenar ${track.title}" }
+                                .semantics { contentDescription = dragLabel }
                                 .pointerInput(itemKey) {
                                     detectVerticalDragGestures(
                                         onDragStart = { dragging = latestIndex; dragOffset = 0f },
@@ -222,10 +226,10 @@ fun QueueScreen(
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             WideButton(
-                "Embaralhar", Icons.Rounded.Shuffle, actions.onShuffle, filled = false,
+                stringResource(R.string.shuffle), Icons.Rounded.Shuffle, actions.onShuffle, filled = false,
                 active = shuffle, modifier = Modifier.weight(1f),
             )
-            WideButton("Salvar playlist", Icons.Rounded.Add, actions.onSavePlaylist, filled = true, modifier = Modifier.weight(1f))
+            WideButton(stringResource(R.string.save_playlist), Icons.Rounded.Add, actions.onSavePlaylist, filled = true, modifier = Modifier.weight(1f))
         }
     }
 }

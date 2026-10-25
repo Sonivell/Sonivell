@@ -1,4 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Default strings (English). Used when the device language has no translation.
+    Translations live in values-<lang>/strings.xml, e.g. values-pt-rBR.
+    To add a language: copy this file to values-<code>/strings.xml and translate.
+-->
 <resources>
-    <string name="app_name">Sonivell</string>
+    <string name="app_name" translatable="false">Sonivell</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_library">Library</string>
+
+    <!-- Library tabs and sorting -->
+    <string name="tab_songs">Songs</string>
+    <string name="tab_albums">Albums</string>
+    <string name="tab_artists">Artists</string>
+    <string name="tab_folders">Folders</string>
+    <string name="sort_title">Title</string>
+    <string name="sort_artist">Artist</string>
+    <string name="sort_recent">Date added</string>
+    <string name="cd_sort_by">Sort by: %1$s</string>
+
+    <!-- Fallbacks for missing metadata -->
+    <string name="unknown_title">Untitled</string>
+    <string name="unknown_artist">Unknown artist</string>
+    <string name="unknown_album">Unknown album</string>
+
+    <!-- Library -->
+    <string name="cd_refresh">Refresh library</string>
+    <string name="library_empty">No music found on this device. Copy audio files to your phone and tap refresh.</string>
+    <string name="recent">Recent</string>
+    <string name="all_songs">All songs · %1$d</string>
+    <string name="shuffle_all">Shuffle all</string>
+    <string name="recently_added">Recently added</string>
+    <string name="liked_count">Liked · %1$d</string>
+    <string name="search_hint">Songs, artists, albums</string>
+    <string name="cd_search">Search library</string>
+    <string name="cd_clear_search">Clear search</string>
+    <plurals name="songs_count">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+    <plurals name="albums_count">
+        <item quantity="one">%d album</item>
+        <item quantity="other">%d albums</item>
+    </plurals>
+    <plurals name="results_count">
+        <item quantity="one">%d result</item>
+        <item quantity="other">%d results</item>
+    </plurals>
+
+    <!-- Where playback started from (shown as "Playing from …") -->
+    <string name="source_shuffle">Shuffle</string>
+    <string name="source_search">Search</string>
+    <string name="source_liked">Liked</string>
+
+    <!-- Now playing -->
+    <string name="playing_from">Playing from</string>
+    <string name="this_phone">This phone</string>
+    <string name="cd_close_player">Close player</string>
+    <string name="cd_open_player">Open player</string>
+    <string name="cd_more_options">More options</string>
+    <string name="cd_like">Like</string>
+    <string name="cd_unlike">Remove from liked</string>
+    <string name="cd_shuffle_on">Turn on shuffle</string>
+    <string name="cd_shuffle_off">Turn off shuffle</string>
+    <string name="cd_previous">Previous</string>
+    <string name="cd_play">Play</string>
+    <string name="cd_pause">Pause</string>
+    <string name="cd_next">Next</string>
+    <string name="cd_repeat_off">Repeat: off</string>
+    <string name="cd_repeat_all">Repeat: all</string>
+    <string name="cd_repeat_one">Repeat: one</string>
+    <string name="cd_lyrics">Lyrics</string>
+    <string name="cd_open_queue">Open queue</string>
+    <string name="cd_seek">Song position</string>
+
+    <!-- Queue -->
+    <string name="queue_title">Queue</string>
+    <string name="queue_clear">Clear</string>
+    <string name="now_playing">Now playing</string>
+    <string name="up_next">Up next</string>
+    <plurals name="queue_tracks">
+        <item quantity="one">%d track</item>
+        <item quantity="other">%d tracks</item>
+    </plurals>
+    <string name="queue_summary">%1$s · %2$d min</string>
+    <string name="queue_empty">Nothing in the queue. Tap a song in your library to start.</string>
+    <string name="cd_back_to_player">Back to player</string>
+    <string name="cd_drag_reorder">Drag to reorder %1$s</string>
+    <string name="shuffle">Shuffle</string>
+    <string name="save_playlist">Save playlist</string>
+
+    <!-- General -->
+    <string name="coming_soon">Coming in a future version of Sonivell</string>
+    <string name="permission_message">To play your music, Sonivell needs access to the audio files on this device. Nothing leaves your phone.</string>
+    <string name="permission_allow">Allow access</string>
 </resources>
