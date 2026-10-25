@@ -8,6 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.juscelino.sonivell.data.Album
 import com.juscelino.sonivell.data.Artist
 import com.juscelino.sonivell.data.Folder
+import com.juscelino.sonivell.data.ListenEvent
+import com.juscelino.sonivell.data.ListenSessionTracker
+import com.juscelino.sonivell.data.ListeningHistory
 import com.juscelino.sonivell.data.MusicRepository
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.playback.PlayerConnection
@@ -16,7 +19,11 @@ import com.juscelino.sonivell.playback.toTrack
 import com.juscelino.sonivell.smart.SmartEngine
 import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.smart.createSmartEngine
+import com.juscelino.sonivell.data.ForYou
+import com.juscelino.sonivell.data.ForYouState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -64,6 +71,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private var planningJob: Job? = null
     /** Última faixa a partir da qual o SMART não achou continuação: evita pedir de novo em loop. */
     private var exhaustedSeedId: Long? = null
+
+    /** Histórico de escuta local: alimenta o SMART e a tela Para você. */
+    val history = ListeningHistory(app)
+    private val session = ListenSessionTracker()
 
     private val allTracks = MutableStateFlow<List<Track>?>(null)
     private val query = MutableStateFlow("")
@@ -114,6 +125,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         all?.firstOrNull { it.id == id } ?: item.toTrack(getApplication<Application>())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    /** Tela Para você: recalculada a cada escuta registrada, curtida ou mudança na biblioteca. */
+    val forYou: StateFlow<ForYouState> = combine(allTracks, _favorites, history.revision) { all, favs, _ ->
+        if (all == null) ForYouState()
+        else ForYou.compute(all, history.recent(), favs, withMixes = smart.isAvailable)
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ForYouState())
+
     val shuffleMode: StateFlow<ShuffleMode> = combine(playerState, smartMode) { st, isSmart ->
         when {
             isSmart -> ShuffleMode.SMART
@@ -126,6 +144,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // Fila SMART "infinita": quando faltam poucas faixas, o motor planeja mais.
         viewModelScope.launch {
             playerState.collect { st ->
+                // Registra cada escuta quando a reprodução sai da faixa.
+                session.observe(
+                    currentId = st.current?.mediaId?.toLongOrNull(),
+                    positionMs = st.positionMs,
+                    durationMs = st.durationMs,
+                    isPlaying = st.isPlaying,
+                    nowMs = System.currentTimeMillis(),
+                )?.let { event -> onListenFinished(event, st) }
+
                 if (smartMode.value && st.hasMedia && st.upNext.size < SMART_TOP_UP_BELOW &&
                     planningJob?.isActive != true
                 ) {
@@ -186,6 +213,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Mix pelo som: fila SMART a partir de [seed], mesmo com o aleatório SMART desligado. */
+    fun playMix(seed: Track) {
+        player.play(listOf(seed), 0)
+        planningJob?.cancel()
+        planningJob = viewModelScope.launch {
+            player.append(planSmart(seed, excluding = setOf(seed.id)))
+        }
+    }
+
     /** Desligado → aleatório → SMART (edição smart) → desligado. */
     fun cycleShuffle() {
         when (shuffleMode.value) {
@@ -217,6 +253,32 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private fun onListenFinished(event: ListenEvent, st: PlayerState) {
+        viewModelScope.launch { history.record(event) }
+        // Pulou no modo SMART: o motor refaz o "a seguir" levando o pulo em conta, como no
+        // LatentJam. (Se uma fila nova já está sendo montada, ela ganha.)
+        if (smartMode.value && event.skipped && planningJob?.isActive != true) replanAfterSkip(st)
+    }
+
+    private fun replanAfterSkip(st: PlayerState) {
+        val queueIds = st.queue.mapNotNull { it.mediaId.toLongOrNull() }
+        val currentIndex = st.currentIndex.takeIf { it in queueIds.indices } ?: return
+        val byId = allTracks.value.orEmpty().associateBy { it.id }
+        val seed = byId[queueIds[currentIndex]] ?: return
+        val playedOrCurrent = queueIds.take(currentIndex + 1).toSet()
+        planningJob = viewModelScope.launch {
+            val ids = smart.continueQueue(
+                seed = seed,
+                library = allTracks.value.orEmpty().filter { it.id !in playedOrCurrent },
+                length = SMART_PLAN_LENGTH,
+                preceding = queueIds.take(currentIndex).takeLast(SMART_PLAN_LENGTH),
+                history = history.recent(SMART_HISTORY_LIMIT),
+            )
+            val planned = ids.mapNotNull(byId::get)
+            if (planned.isNotEmpty()) player.replaceUpNext(planned)
+        }
+    }
+
     private fun topUpSmartQueue(st: PlayerState) {
         val queueIds = st.queue.mapNotNull { it.mediaId.toLongOrNull() }
         val lastId = queueIds.lastOrNull() ?: return
@@ -230,6 +292,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 library = allTracks.value.orEmpty().filter { it.id !in queued },
                 length = SMART_PLAN_LENGTH,
                 preceding = queueIds.dropLast(1).takeLast(SMART_PLAN_LENGTH),
+                history = history.recent(SMART_HISTORY_LIMIT),
             )
             val more = ids.mapNotNull(byId::get)
             if (more.isEmpty()) exhaustedSeedId = lastId
@@ -240,7 +303,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun planSmart(seed: Track, excluding: Set<Long>): List<Track> {
         val all = allTracks.value.orEmpty()
         val byId = all.associateBy { it.id }
-        return smart.startQueue(seed, all, SMART_PLAN_LENGTH)
+        return smart.startQueue(seed, all, SMART_PLAN_LENGTH, history.recent(SMART_HISTORY_LIMIT))
             .filter { it !in excluding }
             .mapNotNull(byId::get)
     }
@@ -248,6 +311,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private companion object {
         const val SMART_PLAN_LENGTH = 25
         const val SMART_TOP_UP_BELOW = 5
+        const val SMART_HISTORY_LIMIT = 2_000
     }
 
     override fun onCleared() {

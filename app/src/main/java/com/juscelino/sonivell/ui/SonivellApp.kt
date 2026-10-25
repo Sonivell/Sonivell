@@ -139,6 +139,7 @@ private fun MainContent(vm: MainViewModel) {
     val favorites by vm.favorites.collectAsStateWithLifecycle()
     val shuffleMode by vm.shuffleMode.collectAsStateWithLifecycle()
     val smartProgress by vm.smartProgress.collectAsStateWithLifecycle()
+    val forYou by vm.forYou.collectAsStateWithLifecycle()
     val smartSource = stringResource(R.string.source_smart)
 
     val defaultSource = stringResource(R.string.nav_library)
@@ -158,6 +159,10 @@ private fun MainContent(vm: MainViewModel) {
         onPlay = { tracks, index, src ->
             source = if (shuffleMode == ShuffleMode.SMART) smartSource else src
             vm.playFrom(tracks, index)
+        },
+        onPlayMix = { seed ->
+            source = smartSource
+            vm.playMix(seed)
         },
         onShuffleAll = {
             source = if (shuffleMode == ShuffleMode.SMART) smartSource else shuffleSource
@@ -218,6 +223,7 @@ private fun MainContent(vm: MainViewModel) {
                         ),
                         actions = libraryActions,
                         smartProgress = smartProgress,
+                        forYou = forYou,
                     )
                 }
             }

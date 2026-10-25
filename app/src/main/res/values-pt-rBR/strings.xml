@@ -2,7 +2,7 @@
 <!-- Português do Brasil -->
 <resources>
     <!-- Navegação -->
-    <string name="nav_home">Início</string>
+    <string name="nav_home">Para você</string>
     <string name="nav_search">Buscar</string>
     <string name="nav_library">Biblioteca</string>
 
@@ -97,4 +97,16 @@
     <string name="smart_analysing">Analisando o som das suas músicas</string>
     <string name="smart_progress">%1$d de %2$d</string>
     <string name="smart_on_hint">SMART ligado: escolha uma música e a fila segue o som dela.</string>
+    <string name="smart_channel">Análise das músicas</string>
+    <!-- Para você -->
+    <string name="fy_pick">Redescubra</string>
+    <string name="fy_pick_never">Você nunca ouviu esta</string>
+    <string name="fy_pick_long">Faz tempo que você não ouve</string>
+    <string name="fy_unfinished">Ficou pela metade</string>
+    <string name="fy_this_hour">Costuma tocar a esta hora</string>
+    <string name="fy_forgotten">Favoritas esquecidas</string>
+    <string name="fy_mixes">Mixes pelo som</string>
+    <string name="fy_mix_of">Mix de %1$s</string>
+    <string name="fy_mix_from">A partir de “%1$s”</string>
+    <string name="fy_empty_hint">Ouça um pouco e esta página se enche com as suas músicas.</string>
 </resources>

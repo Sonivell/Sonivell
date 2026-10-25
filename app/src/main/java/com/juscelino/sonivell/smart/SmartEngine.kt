@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.smart
 
+import com.juscelino.sonivell.data.ListenEvent
 import com.juscelino.sonivell.data.Track
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,22 +32,38 @@ interface SmartEngine {
     /** Analisa (ou continua analisando) a biblioteca em segundo plano. Chamadas repetidas são baratas. */
     fun analyse(library: List<Track>)
 
-    /** Nova fila a partir de [seed]: ids em ordem de reprodução, sem o próprio seed. Vazia se o SMART não puder rodar. */
-    suspend fun startQueue(seed: Track, library: List<Track>, length: Int): List<Long>
+    /**
+     * Nova fila a partir de [seed]: ids em ordem de reprodução, sem o próprio seed. Vazia se o SMART não puder rodar.
+     * [history]: escutas recentes, da mais antiga para a mais nova — o motor usa os pulos e as escutas completas
+     * da sessão para ajustar a fila.
+     */
+    suspend fun startQueue(seed: Track, library: List<Track>, length: Int, history: List<ListenEvent>): List<Long>
 
     /**
      * Continua uma fila SMART a partir da última faixa planejada [seed].
      * [library] só traz o que pode entrar (sem o que já está na fila); [preceding] são as
      * faixas da fila antes de [seed], da mais antiga para a mais recente.
      */
-    suspend fun continueQueue(seed: Track, library: List<Track>, length: Int, preceding: List<Long>): List<Long>
+    suspend fun continueQueue(
+        seed: Track,
+        library: List<Track>,
+        length: Int,
+        preceding: List<Long>,
+        history: List<ListenEvent>,
+    ): List<Long>
 }
 
 object NoSmartEngine : SmartEngine {
     override val isAvailable = false
     override val progress: StateFlow<SmartProgress> = MutableStateFlow(SmartProgress())
     override fun analyse(library: List<Track>) = Unit
-    override suspend fun startQueue(seed: Track, library: List<Track>, length: Int) = emptyList<Long>()
-    override suspend fun continueQueue(seed: Track, library: List<Track>, length: Int, preceding: List<Long>) =
+    override suspend fun startQueue(seed: Track, library: List<Track>, length: Int, history: List<ListenEvent>) =
         emptyList<Long>()
+    override suspend fun continueQueue(
+        seed: Track,
+        library: List<Track>,
+        length: Int,
+        preceding: List<Long>,
+        history: List<ListenEvent>,
+    ) = emptyList<Long>()
 }

@@ -27,6 +27,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import com.juscelino.sonivell.data.ForYouState
 import androidx.compose.material.icons.rounded.Close
 import com.juscelino.sonivell.smart.SmartProgress
 import androidx.compose.material.icons.rounded.Folder
@@ -68,7 +73,7 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 enum class LibraryMode { Inicio, Buscar, Biblioteca }
 
 /** Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
-private data class LibraryLabels(val search: String, val library: String, val liked: String)
+private data class LibraryLabels(val search: String, val library: String, val liked: String, val forYou: String)
 
 data class LibraryActions(
     val onQuery: (String) -> Unit,
@@ -77,6 +82,7 @@ data class LibraryActions(
     val onRefresh: () -> Unit,
     val onPlay: (tracks: List<Track>, index: Int, source: String) -> Unit,
     val onShuffleAll: () -> Unit,
+    val onPlayMix: (Track) -> Unit = {},
 )
 
 @Composable
@@ -88,6 +94,7 @@ fun LibraryScreen(
     contentPadding: PaddingValues,
     actions: LibraryActions,
     smartProgress: SmartProgress = SmartProgress(),
+    forYou: ForYouState = ForYouState(),
 ) {
     val c = SonivellTheme.colors
     val focus = remember { FocusRequester() }
@@ -95,6 +102,7 @@ fun LibraryScreen(
         search = stringResource(R.string.source_search),
         library = stringResource(R.string.nav_library),
         liked = stringResource(R.string.source_liked),
+        forYou = stringResource(R.string.nav_home),
     )
     LaunchedEffect(mode) { if (mode == LibraryMode.Buscar) runCatching { focus.requestFocus() } }
 
@@ -155,7 +163,7 @@ fun LibraryScreen(
         }
 
         when (mode) {
-            LibraryMode.Inicio -> homeContent(state, favorites, currentId, labels, actions, smartProgress)
+            LibraryMode.Inicio -> homeContent(state, favorites, currentId, labels, actions, smartProgress, forYou)
             LibraryMode.Buscar -> trackList(state.tracks, currentId, labels.search, state.query.isNotBlank(), actions)
             LibraryMode.Biblioteca -> {
                 item(key = "chips") {
@@ -231,6 +239,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
     labels: LibraryLabels,
     actions: LibraryActions,
     smartProgress: SmartProgress,
+    forYou: ForYouState,
 ) {
     if (smartProgress.running && smartProgress.total > 0) {
         item(key = "smart-progress") { SmartAnalysisCard(smartProgress) }
@@ -255,6 +264,29 @@ private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
             }
         }
     }
+    forYou.pick?.let { pick ->
+        item(key = "fy-pick") {
+            PickCard(pick, forYou.pickNeverPlayed) { actions.onPlay(listOf(pick), 0, labels.forYou) }
+        }
+    }
+    if (forYou.mixSeeds.isNotEmpty()) {
+        item(key = "fy-mixes") {
+            MixRow(stringResource(R.string.fy_mixes), forYou.mixSeeds, actions.onPlayMix)
+        }
+    }
+    trackRow("fy-unfinished", R.string.fy_unfinished, forYou.unfinished, labels.forYou, actions)
+    trackRow("fy-hour", R.string.fy_this_hour, forYou.thisHour, labels.forYou, actions)
+    trackRow("fy-forgotten", R.string.fy_forgotten, forYou.forgottenFavorites, labels.forYou, actions)
+    if (forYou.isEmpty) {
+        item(key = "fy-hint") {
+            Text(
+                stringResource(R.string.fy_empty_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = SonivellTheme.colors.textSecondary,
+                modifier = Modifier.padding(bottom = 24.dp),
+            )
+        }
+    }
     if (state.recentAlbums.isNotEmpty()) {
         item(key = "home-recent-label") { SectionLabel(stringResource(R.string.recently_added), Modifier.padding(bottom = 12.dp)) }
         state.recentAlbums.chunked(3).forEachIndexed { i, row ->
@@ -267,6 +299,117 @@ private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
         itemsIndexed(favs, key = { _, t -> "fav-${t.id}" }) { i, t ->
             TrackRow(t, onClick = { actions.onPlay(favs, i, labels.liked) }, highlighted = t.id == currentId)
         }
+    }
+}
+
+/** Uma linha horizontal de faixas, com título; some quando está vazia. */
+private fun androidx.compose.foundation.lazy.LazyListScope.trackRow(
+    key: String,
+    @StringRes title: Int,
+    tracks: List<Track>,
+    source: String,
+    actions: LibraryActions,
+) {
+    if (tracks.isEmpty()) return
+    item(key = key) {
+        Column(Modifier.padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            SectionLabel(stringResource(title))
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                itemsIndexed(tracks, key = { _, t -> t.id }) { i, t ->
+                    TrackCard(t, subtitle = t.artist) { actions.onPlay(tracks, i, source) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TrackCard(track: Track, subtitle: String, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    Column(
+        Modifier
+            .width(128.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        AlbumArt(track, Modifier.size(128.dp), corner = 14.dp)
+        Column {
+            Text(track.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(subtitle, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+/** Mixes pelo som (edição SMART): cada cartão começa uma fila SMART a partir de uma faixa. */
+@Composable
+private fun MixRow(title: String, seeds: List<Track>, onPlayMix: (Track) -> Unit) {
+    val c = SonivellTheme.colors
+    Column(Modifier.padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(14.dp), tint = c.accent)
+            SectionLabel(title)
+        }
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(seeds, key = { "mix-" + it.id }) { seed ->
+                Column(
+                    Modifier
+                        .width(148.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(c.surface)
+                        .clickable { onPlayMix(seed) }
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    AlbumArt(seed, Modifier.fillMaxWidth().aspectRatio(1f), corner = 12.dp, detailed = true)
+                    Text(
+                        stringResource(R.string.fy_mix_of, seed.artist),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = c.textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        stringResource(R.string.fy_mix_from, seed.title),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = c.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Destaque do dia: uma faixa para redescobrir. */
+@Composable
+private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
+    val c = SonivellTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(c.surface)
+            .clickable(onClick = onPlay)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        AlbumArt(track, Modifier.size(84.dp), corner = 14.dp, detailed = true)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            SectionLabel(stringResource(R.string.fy_pick))
+            Text(track.title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(track.artist, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                stringResource(if (neverPlayed) R.string.fy_pick_never else R.string.fy_pick_long),
+                style = MaterialTheme.typography.labelMedium,
+                color = c.accent,
+            )
+        }
+        IconBtn(Icons.Rounded.PlayArrow, stringResource(R.string.cd_play), onPlay, background = c.accent, tint = c.onAccent)
     }
 }
 

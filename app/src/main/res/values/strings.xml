@@ -8,7 +8,7 @@
     <string name="app_name" translatable="false">Sonivell</string>
 
     <!-- Navigation -->
-    <string name="nav_home">Home</string>
+    <string name="nav_home">For you</string>
     <string name="nav_search">Search</string>
     <string name="nav_library">Library</string>
 
@@ -104,4 +104,16 @@
     <string name="smart_analysing">Analyzing how your music sounds</string>
     <string name="smart_progress">%1$d of %2$d</string>
     <string name="smart_on_hint">SMART is on: pick a song and the queue follows its sound.</string>
+    <string name="smart_channel">Music analysis</string>
+    <!-- For You -->
+    <string name="fy_pick">Rediscover</string>
+    <string name="fy_pick_never">You have never played this one</string>
+    <string name="fy_pick_long">Not played in a while</string>
+    <string name="fy_unfinished">Left unfinished</string>
+    <string name="fy_this_hour">Usually at this hour</string>
+    <string name="fy_forgotten">Favorites gone quiet</string>
+    <string name="fy_mixes">Mixes by sound</string>
+    <string name="fy_mix_of">%1$s mix</string>
+    <string name="fy_mix_from">From “%1$s”</string>
+    <string name="fy_empty_hint">Listen for a while and this page fills up with your own music.</string>
 </resources>

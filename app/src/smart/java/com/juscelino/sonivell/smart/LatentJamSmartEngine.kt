@@ -2,10 +2,12 @@ package com.juscelino.sonivell.smart
 
 import android.content.Context
 import android.util.Log
+import com.juscelino.sonivell.data.ListenEvent
 import com.juscelino.sonivell.data.Track
 import io.github.nikitasud.latentjam.smart.EngineState
 import io.github.nikitasud.latentjam.smart.SimilarityEngine
 import io.github.nikitasud.latentjam.smart.SmartEngineConfig
+import io.github.nikitasud.latentjam.smart.SmartHistoryEvent
 import io.github.nikitasud.latentjam.smart.TrackDescriptor
 import io.github.nikitasud.latentjam.smart.TrackId
 import io.github.nikitasud.latentjam.smart.di.smartEngineModule
@@ -114,6 +116,9 @@ internal class LatentJamSmartEngine private constructor(context: Context) : Smar
             engine.persistPendingAnalysis()
             _progress.update { it.copy(metadataReady = true) }
 
+            // Há áudio por analisar: um serviço em primeiro plano segura o processo até o fim.
+            if (engine.missingFromIndex(ids) > 0) SmartAnalysisService.start(appContext)
+
             // 2) Áudio: o modelo "ouve" cada faixa. Espalhado pela biblioteca, para o SMART ficar
             //    representativo bem antes de terminar uma biblioteca grande.
             var batches = 0
@@ -138,26 +143,57 @@ internal class LatentJamSmartEngine private constructor(context: Context) : Smar
         }
     }
 
-    override suspend fun startQueue(seed: Track, library: List<Track>, length: Int): List<Long> =
-        plan {
-            engine.smartQueue(
-                seed = seed.toDescriptor(),
-                library = library.map { it.toDescriptor() },
-                length = length,
-            )
-        }
+    override suspend fun startQueue(
+        seed: Track,
+        library: List<Track>,
+        length: Int,
+        history: List<ListenEvent>,
+    ): List<Long> = plan {
+        engine.smartQueue(
+            seed = seed.toDescriptor(),
+            library = library.map { it.toDescriptor() },
+            length = length,
+            history = smartHistory(history, seed),
+        )
+    }
 
     override suspend fun continueQueue(
         seed: Track,
         library: List<Track>,
         length: Int,
         preceding: List<Long>,
+        history: List<ListenEvent>,
     ): List<Long> = plan {
         engine.continueSmartQueue(
             seed = seed.toDescriptor(),
             library = library.map { it.toDescriptor() },
             length = length,
+            history = smartHistory(history, seed),
             precedingTrackIds = preceding.map { TrackId(it.toString()) },
+        )
+    }
+
+    /**
+     * Histórico no formato do motor (igual ao smartHistoryFor do LatentJam). A faixa que está
+     * tocando ainda não virou escuta, então entra no fim como a intenção positiva mais recente.
+     */
+    private fun smartHistory(history: List<ListenEvent>, current: Track): List<SmartHistoryEvent> {
+        val observed = history.map {
+            SmartHistoryEvent(
+                trackId = TrackId(it.trackId.toString()),
+                startedAtMs = it.startedAtMs,
+                playedFraction = it.playedFraction,
+                completed = it.completed,
+                skipped = it.skipped,
+            )
+        }
+        val now = maxOf(System.currentTimeMillis(), (observed.lastOrNull()?.startedAtMs ?: Long.MIN_VALUE) + 1)
+        return observed + SmartHistoryEvent(
+            trackId = TrackId(current.id.toString()),
+            startedAtMs = now,
+            playedFraction = 1f,
+            completed = true,
+            skipped = false,
         )
     }
 

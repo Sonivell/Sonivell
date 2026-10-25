@@ -22,6 +22,10 @@ O **aleatório SMART** usa o motor do [LatentJam](https://github.com/Nikita-sud/
 
 Como usar: toque no botão de aleatório até aparecer o selo **SMART** e escolha uma música. Na primeira abertura a biblioteca é analisada em segundo plano (o progresso aparece em Início); o SMART já funciona com os metadados e melhora conforme a análise do áudio avança.
 
+O SMART também **aprende com a sessão**: pular uma música (ouvir menos de 30 s) refaz o "a seguir" levando o pulo em conta, e o histórico de escuta (só no aparelho) entra em cada fila nova. A análise continua com a tela desligada, com uma notificação de progresso que some ao terminar.
+
+**Para você** (as duas edições): um destaque do dia para redescobrir, músicas que ficaram pela metade, o que você costuma ouvir neste horário e favoritas esquecidas. Na edição SMART, também **mixes pelo som**, cada um começando de um artista que você ouve.
+
 As duas edições podem ficar instaladas ao mesmo tempo.
 
 ## Ainda por vir
