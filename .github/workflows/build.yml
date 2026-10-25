@@ -20,7 +20,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Compilar APKs de release (lite e SMART)
-        run: ./gradlew assembleLiteRelease assembleSmartRelease --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew assembleLiteRelease assembleSmartRelease 2>&1 | tee build.log || {
+            # Em caso de erro, destaca as mensagens como anotações (visíveis no resumo da execução).
+            grep -E "^e: |What went wrong|Execution failed|error:|Error:|Lint found" -A3 build.log | head -n 60 | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+            exit 1
+          }
 
       - uses: actions/upload-artifact@v4
         with:
