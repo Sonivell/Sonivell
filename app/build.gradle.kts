@@ -16,8 +16,21 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        // Chave de TESTE versionada no repositório. Para publicar de verdade, defina
+        // SONIVELL_KEYSTORE, SONIVELL_STORE_PASSWORD, SONIVELL_KEY_ALIAS e
+        // SONIVELL_KEY_PASSWORD (ex.: secrets do GitHub) com a chave real.
+        create("release") {
+            storeFile = file(System.getenv("SONIVELL_KEYSTORE") ?: "../keystore/sonivell-teste.jks")
+            storePassword = System.getenv("SONIVELL_STORE_PASSWORD") ?: "sonivell123"
+            keyAlias = System.getenv("SONIVELL_KEY_ALIAS") ?: "sonivell-teste"
+            keyPassword = System.getenv("SONIVELL_KEY_PASSWORD") ?: "sonivell123"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
