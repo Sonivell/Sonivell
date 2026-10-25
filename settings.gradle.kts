@@ -22,3 +22,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "Sonivell"
 include(":app")
+
+// Motor SMART, trazido do LatentJam (Apache 2.0) — usado só pela versão "smart" do app.
+include(":core:smart")
+include(":core:ort-ops")
+include(":core:map-native")

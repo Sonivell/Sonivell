@@ -66,6 +66,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.juscelino.sonivell.MainViewModel
+import com.juscelino.sonivell.ShuffleMode
 import com.juscelino.sonivell.playback.toTrack
 import com.juscelino.sonivell.ui.components.MiniPlayer
 import com.juscelino.sonivell.ui.library.LibraryActions
@@ -136,6 +137,9 @@ private fun MainContent(vm: MainViewModel) {
     val player by vm.playerState.collectAsStateWithLifecycle()
     val current by vm.currentTrack.collectAsStateWithLifecycle()
     val favorites by vm.favorites.collectAsStateWithLifecycle()
+    val shuffleMode by vm.shuffleMode.collectAsStateWithLifecycle()
+    val smartProgress by vm.smartProgress.collectAsStateWithLifecycle()
+    val smartSource = stringResource(R.string.source_smart)
 
     val defaultSource = stringResource(R.string.nav_library)
     var source by rememberSaveable { mutableStateOf(defaultSource) }
@@ -152,11 +156,11 @@ private fun MainContent(vm: MainViewModel) {
         onSort = vm::cycleSort,
         onRefresh = vm::refresh,
         onPlay = { tracks, index, src ->
-            source = src
-            vm.player.play(tracks, index)
+            source = if (shuffleMode == ShuffleMode.SMART) smartSource else src
+            vm.playFrom(tracks, index)
         },
         onShuffleAll = {
-            source = shuffleSource
+            source = if (shuffleMode == ShuffleMode.SMART) smartSource else shuffleSource
             vm.playAllShuffled()
         },
     )
@@ -213,6 +217,7 @@ private fun MainContent(vm: MainViewModel) {
                             bottom = padding.calculateBottomPadding(),
                         ),
                         actions = libraryActions,
+                        smartProgress = smartProgress,
                     )
                 }
             }
@@ -229,6 +234,8 @@ private fun MainContent(vm: MainViewModel) {
                     NowPlayingScreen(
                         track = t,
                         state = player,
+                        shuffleMode = shuffleMode,
+                        smartAvailable = vm.smart.isAvailable,
                         isFavorite = t.id in favorites,
                         sourceLabel = source,
                         actions = NowPlayingActions(
@@ -238,7 +245,7 @@ private fun MainContent(vm: MainViewModel) {
                             onNext = { vm.player.next() },
                             onPrevious = { vm.player.previous() },
                             onSeek = vm.player::seekTo,
-                            onShuffle = vm.player::toggleShuffle,
+                            onShuffle = vm::cycleShuffle,
                             onRepeat = vm.player::cycleRepeat,
                             onFavorite = { vm.toggleFavorite(t.id) },
                             onLyrics = soon,
@@ -260,13 +267,13 @@ private fun MainContent(vm: MainViewModel) {
                 QueueScreen(
                     current = current,
                     upNext = upNext,
-                    shuffle = player.shuffle,
+                    shuffle = shuffleMode != ShuffleMode.OFF,
                     actions = QueueActions(
                         onClose = { nav.popBackStack() },
                         onClear = vm.player::clearUpNext,
                         onPlayAt = vm.player::playAt,
                         onMove = vm.player::moveItem,
-                        onShuffle = vm.player::toggleShuffle,
+                        onShuffle = vm::cycleShuffle,
                         onSavePlaylist = soon,
                     ),
                 )

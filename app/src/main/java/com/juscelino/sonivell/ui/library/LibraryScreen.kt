@@ -26,7 +26,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Close
+import com.juscelino.sonivell.smart.SmartProgress
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Refresh
@@ -85,6 +87,7 @@ fun LibraryScreen(
     currentId: Long?,
     contentPadding: PaddingValues,
     actions: LibraryActions,
+    smartProgress: SmartProgress = SmartProgress(),
 ) {
     val c = SonivellTheme.colors
     val focus = remember { FocusRequester() }
@@ -152,7 +155,7 @@ fun LibraryScreen(
         }
 
         when (mode) {
-            LibraryMode.Inicio -> homeContent(state, favorites, currentId, labels, actions)
+            LibraryMode.Inicio -> homeContent(state, favorites, currentId, labels, actions, smartProgress)
             LibraryMode.Buscar -> trackList(state.tracks, currentId, labels.search, state.query.isNotBlank(), actions)
             LibraryMode.Biblioteca -> {
                 item(key = "chips") {
@@ -227,7 +230,11 @@ private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
     currentId: Long?,
     labels: LibraryLabels,
     actions: LibraryActions,
+    smartProgress: SmartProgress,
 ) {
+    if (smartProgress.running && smartProgress.total > 0) {
+        item(key = "smart-progress") { SmartAnalysisCard(smartProgress) }
+    }
     item(key = "shuffle-all") {
         val c = SonivellTheme.colors
         Row(
@@ -259,6 +266,40 @@ private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
         item(key = "fav-label") { SectionLabel(stringResource(R.string.liked_count, favs.size), Modifier.padding(top = 12.dp, bottom = 4.dp)) }
         itemsIndexed(favs, key = { _, t -> "fav-${t.id}" }) { i, t ->
             TrackRow(t, onClick = { actions.onPlay(favs, i, labels.liked) }, highlighted = t.id == currentId)
+        }
+    }
+}
+
+/** Cartão discreto com o progresso da análise do som (edição smart). */
+@Composable
+private fun SmartAnalysisCard(progress: SmartProgress) {
+    val c = SonivellTheme.colors
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(c.surface)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(18.dp), tint = c.accent)
+            Text(
+                stringResource(R.string.smart_analysing),
+                style = MaterialTheme.typography.titleSmall,
+                color = c.textPrimary,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                stringResource(R.string.smart_progress, progress.analysed, progress.total),
+                style = MaterialTheme.typography.labelMedium,
+                color = c.textSecondary,
+            )
+        }
+        val fraction = if (progress.total > 0) progress.analysed.toFloat() / progress.total else 0f
+        Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+            Box(Modifier.fillMaxWidth(fraction).height(4.dp).background(c.accent))
         }
     }
 }

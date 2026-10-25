@@ -13,6 +13,10 @@ import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.playback.PlayerConnection
 import com.juscelino.sonivell.playback.PlayerState
 import com.juscelino.sonivell.playback.toTrack
+import com.juscelino.sonivell.smart.SmartEngine
+import com.juscelino.sonivell.smart.SmartProgress
+import com.juscelino.sonivell.smart.createSmartEngine
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +32,9 @@ enum class LibraryTab(@StringRes val label: Int) {
 enum class SortOrder(@StringRes val label: Int) {
     Titulo(R.string.sort_title), Artista(R.string.sort_artist), Recentes(R.string.sort_recent)
 }
+
+/** Estado do botão de aleatório: desligado, aleatório comum ou SMART (só na edição smart). */
+enum class ShuffleMode { OFF, ON, SMART }
 
 data class LibraryState(
     val loading: Boolean = true,
@@ -49,6 +56,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val playerState: StateFlow<PlayerState> = player.state
 
     private val prefs = app.getSharedPreferences("sonivell", Context.MODE_PRIVATE)
+
+    /** Motor SMART: o do LatentJam na edição smart, um "nada" na lite. */
+    val smart: SmartEngine = createSmartEngine(app)
+    val smartProgress: StateFlow<SmartProgress> = smart.progress
+    private val smartMode = MutableStateFlow(smart.isAvailable && prefs.getBoolean("smart_mode", false))
+    private var planningJob: Job? = null
+    /** Última faixa a partir da qual o SMART não achou continuação: evita pedir de novo em loop. */
+    private var exhaustedSeedId: Long? = null
 
     private val allTracks = MutableStateFlow<List<Track>?>(null)
     private val query = MutableStateFlow("")
@@ -99,13 +114,38 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         all?.firstOrNull { it.id == id } ?: item.toTrack(getApplication<Application>())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    val shuffleMode: StateFlow<ShuffleMode> = combine(playerState, smartMode) { st, isSmart ->
+        when {
+            isSmart -> ShuffleMode.SMART
+            st.shuffle -> ShuffleMode.ON
+            else -> ShuffleMode.OFF
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, ShuffleMode.OFF)
+
+    init {
+        // Fila SMART "infinita": quando faltam poucas faixas, o motor planeja mais.
+        viewModelScope.launch {
+            playerState.collect { st ->
+                if (smartMode.value && st.hasMedia && st.upNext.size < SMART_TOP_UP_BELOW &&
+                    planningJob?.isActive != true
+                ) {
+                    topUpSmartQueue(st)
+                }
+            }
+        }
+    }
+
     fun onPermissionGranted() {
         player.connect()
         refresh()
     }
 
     fun refresh() {
-        viewModelScope.launch { allTracks.value = repository.loadTracks() }
+        viewModelScope.launch {
+            val tracks = repository.loadTracks()
+            allTracks.value = tracks
+            if (smart.isAvailable) smart.analyse(tracks)
+        }
     }
 
     fun setQuery(q: String) { query.value = q }
@@ -122,7 +162,92 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun playAllShuffled() {
         val all = allTracks.value.orEmpty()
-        if (all.isNotEmpty()) player.play(all, all.indices.random(), shuffle = true)
+        if (all.isEmpty()) return
+        if (smartMode.value) playFrom(all, all.indices.random())
+        else player.play(all, all.indices.random(), shuffle = true)
+    }
+
+    /**
+     * Toca [tracks] a partir de [index]. No modo SMART, só a faixa escolhida vem da lista:
+     * o resto da fila é montado pelo motor, com músicas que soam parecidas.
+     */
+    fun playFrom(tracks: List<Track>, index: Int) {
+        if (!smartMode.value) {
+            player.play(tracks, index)
+            return
+        }
+        val seed = tracks.getOrNull(index) ?: return
+        player.play(listOf(seed), 0)
+        planningJob?.cancel()
+        planningJob = viewModelScope.launch {
+            val planned = planSmart(seed, excluding = setOf(seed.id))
+            // Se o SMART ainda não tiver dados, segue a lista normal em vez de parar a música.
+            player.append(planned.ifEmpty { tracks.drop(index + 1) })
+        }
+    }
+
+    /** Desligado → aleatório → SMART (edição smart) → desligado. */
+    fun cycleShuffle() {
+        when (shuffleMode.value) {
+            ShuffleMode.OFF -> player.setShuffle(true)
+            ShuffleMode.ON -> if (smart.isAvailable) {
+                player.setShuffle(false)
+                setSmartMode(true)
+                replanFromCurrent()
+            } else {
+                player.setShuffle(false)
+            }
+            ShuffleMode.SMART -> setSmartMode(false)
+        }
+    }
+
+    private fun setSmartMode(on: Boolean) {
+        smartMode.value = on
+        prefs.edit().putBoolean("smart_mode", on).apply()
+        if (!on) planningJob?.cancel()
+    }
+
+    /** Ao ligar o SMART no meio da música, refaz o "a seguir" a partir da faixa atual. */
+    private fun replanFromCurrent() {
+        val current = currentTrack.value ?: return
+        planningJob?.cancel()
+        planningJob = viewModelScope.launch {
+            val planned = planSmart(current, excluding = setOf(current.id))
+            if (planned.isNotEmpty()) player.replaceUpNext(planned)
+        }
+    }
+
+    private fun topUpSmartQueue(st: PlayerState) {
+        val queueIds = st.queue.mapNotNull { it.mediaId.toLongOrNull() }
+        val lastId = queueIds.lastOrNull() ?: return
+        val byId = allTracks.value.orEmpty().associateBy { it.id }
+        val seed = byId[lastId] ?: return
+        if (lastId == exhaustedSeedId) return
+        planningJob = viewModelScope.launch {
+            val queued = queueIds.toSet()
+            val ids = smart.continueQueue(
+                seed = seed,
+                library = allTracks.value.orEmpty().filter { it.id !in queued },
+                length = SMART_PLAN_LENGTH,
+                preceding = queueIds.dropLast(1).takeLast(SMART_PLAN_LENGTH),
+            )
+            val more = ids.mapNotNull(byId::get)
+            if (more.isEmpty()) exhaustedSeedId = lastId
+            player.append(more)
+        }
+    }
+
+    private suspend fun planSmart(seed: Track, excluding: Set<Long>): List<Track> {
+        val all = allTracks.value.orEmpty()
+        val byId = all.associateBy { it.id }
+        return smart.startQueue(seed, all, SMART_PLAN_LENGTH)
+            .filter { it !in excluding }
+            .mapNotNull(byId::get)
+    }
+
+    private companion object {
+        const val SMART_PLAN_LENGTH = 25
+        const val SMART_TOP_UP_BELOW = 5
     }
 
     override fun onCleared() {

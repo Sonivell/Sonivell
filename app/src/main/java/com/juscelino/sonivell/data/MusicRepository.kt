@@ -24,7 +24,7 @@ class MusicRepository(private val context: Context) {
             @Suppress("DEPRECATION") MediaStore.Audio.Media.DATA
         }
 
-        val projection = arrayOf(
+        val projection = mutableListOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
@@ -33,8 +33,18 @@ class MusicRepository(private val context: Context) {
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.MIME_TYPE,
             MediaStore.Audio.Media.DATE_ADDED,
+            MediaStore.Audio.Media.DATE_MODIFIED,
+            MediaStore.Audio.Media.DISPLAY_NAME,
+            MediaStore.Audio.Media.SIZE,
+            MediaStore.Audio.Media.YEAR,
+            MediaStore.Audio.Media.TRACK,
             folderColumn,
-        )
+        ).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                add(MediaStore.Audio.Media.GENRE)
+                add(MediaStore.Audio.Media.ALBUM_ARTIST)
+            }
+        }.toTypedArray()
 
         val tracks = mutableListOf<Track>()
         context.contentResolver.query(
@@ -53,6 +63,17 @@ class MusicRepository(private val context: Context) {
             val mimeCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
             val addedCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
             val folderCol = c.getColumnIndexOrThrow(folderColumn)
+            val modifiedCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
+            val nameCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+            val sizeCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+            val yearCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
+            val trackCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
+            val genreCol = c.getColumnIndex("genre")
+            val albumArtistCol = c.getColumnIndex("album_artist")
+
+            fun text(col: Int): String? =
+                if (col < 0) null else c.getString(col)?.trim()?.takeIf { it.isNotEmpty() && it != MediaStore.UNKNOWN_STRING }
+            fun int(col: Int): Int? = if (col < 0 || c.isNull(col)) null else c.getInt(col)
 
             while (c.moveToNext()) {
                 val id = c.getLong(idCol)
@@ -62,6 +83,11 @@ class MusicRepository(private val context: Context) {
                 } else {
                     rawFolder.substringBeforeLast('/', rawFolder)
                 }
+                val rawTitle = text(titleCol)
+                val rawArtist = text(artistCol)
+                val rawAlbum = text(albumCol)
+                // MediaStore guarda disco e faixa juntos: 1003 = disco 1, faixa 3.
+                val trackField = int(trackCol)
                 tracks += Track(
                     id = id,
                     uri = ContentUris.withAppendedId(collection, id),
@@ -75,6 +101,17 @@ class MusicRepository(private val context: Context) {
                     mimeType = c.getString(mimeCol),
                     folder = folder,
                     dateAdded = c.getLong(addedCol),
+                    rawTitle = rawTitle,
+                    rawArtist = rawArtist,
+                    rawAlbum = rawAlbum,
+                    albumArtist = text(albumArtistCol),
+                    genre = text(genreCol),
+                    year = int(yearCol)?.takeIf { it > 0 },
+                    trackNumber = trackField?.rem(1000)?.takeIf { it > 0 },
+                    discNumber = trackField?.div(1000)?.takeIf { it > 0 },
+                    fileName = text(nameCol),
+                    sizeBytes = if (c.isNull(sizeCol)) null else c.getLong(sizeCol),
+                    dateModified = if (c.isNull(modifiedCol)) null else c.getLong(modifiedCol),
                 )
             }
         }

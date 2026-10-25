@@ -97,4 +97,11 @@
     <string name="coming_soon">Coming in a future version of Sonivell</string>
     <string name="permission_message">To play your music, Sonivell needs access to the audio files on this device. Nothing leaves your phone.</string>
     <string name="permission_allow">Allow access</string>
+    <!-- SMART (edição smart) -->
+    <string name="source_smart" translatable="false">SMART</string>
+    <string name="cd_shuffle_smart">Switch to SMART shuffle</string>
+    <string name="cd_smart_off">Turn off SMART shuffle</string>
+    <string name="smart_analysing">Analyzing how your music sounds</string>
+    <string name="smart_progress">%1$d of %2$d</string>
+    <string name="smart_on_hint">SMART is on: pick a song and the queue follows its sound.</string>
 </resources>

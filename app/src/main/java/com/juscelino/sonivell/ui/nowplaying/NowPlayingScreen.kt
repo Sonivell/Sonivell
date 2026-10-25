@@ -37,6 +37,8 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.AutoAwesome
+import com.juscelino.sonivell.ShuffleMode
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
@@ -82,6 +84,8 @@ data class NowPlayingActions(
 fun NowPlayingScreen(
     track: Track,
     state: PlayerState,
+    shuffleMode: ShuffleMode,
+    smartAvailable: Boolean,
     isFavorite: Boolean,
     sourceLabel: String,
     actions: NowPlayingActions,
@@ -168,12 +172,7 @@ fun NowPlayingScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconBtn(
-                Icons.Rounded.Shuffle,
-                stringResource(if (state.shuffle) R.string.cd_shuffle_off else R.string.cd_shuffle_on),
-                actions.onShuffle,
-                tint = if (state.shuffle) c.accent else c.textSecondary,
-            )
+            ShuffleButton(shuffleMode, smartAvailable, actions.onShuffle)
             IconBtn(Icons.Rounded.SkipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 56.dp, iconSize = 34.dp)
             IconBtn(
                 if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
@@ -284,5 +283,39 @@ private fun SeekBar(positionMs: Long, durationMs: Long, onSeek: (Long) -> Unit) 
                 .clip(CircleShape)
                 .background(c.textPrimary)
         )
+    }
+}
+
+/** Aleatório em três estados: desligado, comum e SMART (ícone de brilho + selo). */
+@Composable
+private fun ShuffleButton(mode: ShuffleMode, smartAvailable: Boolean, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    val label = stringResource(
+        when (mode) {
+            ShuffleMode.OFF -> R.string.cd_shuffle_on
+            ShuffleMode.ON -> if (smartAvailable) R.string.cd_shuffle_smart else R.string.cd_shuffle_off
+            ShuffleMode.SMART -> R.string.cd_smart_off
+        }
+    )
+    Box(contentAlignment = Alignment.Center) {
+        IconBtn(
+            if (mode == ShuffleMode.SMART) Icons.Rounded.AutoAwesome else Icons.Rounded.Shuffle,
+            label,
+            onClick,
+            tint = if (mode == ShuffleMode.OFF) c.textSecondary else c.accent,
+        )
+        if (mode == ShuffleMode.SMART) {
+            Text(
+                stringResource(R.string.source_smart),
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, letterSpacing = 0.6.sp),
+                color = c.onAccent,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = 6.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(c.accent)
+                    .padding(horizontal = 3.dp),
+            )
+        }
     }
 }

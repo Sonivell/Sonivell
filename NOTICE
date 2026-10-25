@@ -1,0 +1,12 @@
+Sonivell
+Copyright (c) 2026 Juscelino Be
+
+A edição SMART do Sonivell inclui o motor de recomendação do LatentJam
+(https://github.com/Nikita-sud/latentjam), Copyright (c) 2026 LatentJam Project,
+licenciado sob a Apache License 2.0 — veja core/LICENSE-LatentJam.txt e
+core/NOTICE-LatentJam.txt. Os módulos core/smart, core/ort-ops e core/map-native
+foram copiados do commit indicado em core/LATENTJAM_COMMIT, com o build reduzido
+ao alvo Android e sem os testes e o código iOS.
+
+Os modelos em app/src/smart/assets/ml/ vêm do mesmo projeto; as licenças e
+atribuições de cada arquivo estão em app/src/smart/assets/ml/LICENSE-MODEL.txt.

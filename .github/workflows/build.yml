@@ -19,15 +19,15 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Compilar APKs (debug e release)
-        run: ./gradlew assembleDebug assembleRelease --stacktrace
+      - name: Compilar APKs de release (lite e SMART)
+        run: ./gradlew assembleLiteRelease assembleSmartRelease --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sonivell-release-apk
-          path: app/build/outputs/apk/release/*.apk
+          name: sonivell-lite-apk
+          path: app/build/outputs/apk/lite/release/*.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sonivell-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: sonivell-smart-apk
+          path: app/build/outputs/apk/smart/release/*.apk

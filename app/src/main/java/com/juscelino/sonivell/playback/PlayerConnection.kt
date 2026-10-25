@@ -139,6 +139,22 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
         if (from < c.mediaItemCount) c.removeMediaItems(from, c.mediaItemCount)
     }
 
+    fun setShuffle(enabled: Boolean) {
+        controller?.shuffleModeEnabled = enabled
+    }
+
+    /** Coloca [tracks] no fim da fila. */
+    fun append(tracks: List<Track>) {
+        val c = controller ?: return
+        if (tracks.isNotEmpty()) c.addMediaItems(tracks.map { it.toMediaItem() })
+    }
+
+    /** Troca tudo que vem depois da faixa atual por [tracks]. */
+    fun replaceUpNext(tracks: List<Track>) {
+        clearUpNext()
+        append(tracks)
+    }
+
     fun addNext(track: Track) {
         val c = controller ?: return
         if (c.mediaItemCount == 0) return play(listOf(track), 0)

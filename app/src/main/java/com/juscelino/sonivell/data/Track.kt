@@ -15,6 +15,19 @@ data class Track(
     val mimeType: String?,
     val folder: String,
     val dateAdded: Long,
+    // Metadados extras: alimentam o motor SMART (gênero, ano, artista do álbum…).
+    // "raw*" guardam a tag original; null quando o arquivo não tem a tag.
+    val rawTitle: String? = null,
+    val rawArtist: String? = null,
+    val rawAlbum: String? = null,
+    val albumArtist: String? = null,
+    val genre: String? = null,
+    val year: Int? = null,
+    val trackNumber: Int? = null,
+    val discNumber: Int? = null,
+    val fileName: String? = null,
+    val sizeBytes: Long? = null,
+    val dateModified: Long? = null,
 ) {
     /** Arte do álbum guardada pelo MediaStore (pode não existir). */
     val artUri: Uri get() = Uri.parse("content://media/external/audio/albumart/$albumId")
