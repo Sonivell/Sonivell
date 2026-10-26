@@ -43,21 +43,25 @@ jobs:
       - name: Incluir o ffmpeg como dependência do pacote
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           deb=$(find desktop/build -name "*.deb" | head -n 1)
-          [ -n "$deb" ] || { echo "::error::nenhum .deb encontrado: $(find desktop/build -maxdepth 6 -name '*deb*' | head -5 | tr '\n' ' ')"; exit 1; }
+          [ -n "$deb" ] || { echo "::error::nenhum .deb encontrado"; exit 1; }
           work=$(mktemp -d)
-          dpkg-deb -R "$deb" "$work/pkg"
-          control="$work/pkg/DEBIAN/control"
-          if grep -q '^Depends:' "$control"; then
-            sed -i 's/^Depends:\(.*\)$/Depends:\1, ffmpeg/' "$control"
-          else
-            echo 'Depends: ffmpeg' >> "$control"
-          fi
-          fakeroot dpkg-deb -b "$work/pkg" "$deb"
-          dpkg-deb -I "$deb"
-          dpkg-deb -c "$deb" | head -n 30
-          mkdir -p dist && cp "$deb" dist/
+          {
+            dpkg-deb -R "$deb" "$work/pkg" &&
+            control="$work/pkg/DEBIAN/control" &&
+            cat "$control" &&
+            { if grep -q '^Depends:' "$control"; then sed -i 's/^Depends:\(.*\)$/Depends:\1, ffmpeg/' "$control"; else echo 'Depends: ffmpeg' >> "$control"; fi; } &&
+            chmod 0755 "$work/pkg/DEBIAN" &&
+            fakeroot dpkg-deb --root-owner-group -b "$work/pkg" "$work/out.deb" &&
+            cp "$work/out.deb" "$deb" &&
+            dpkg-deb -I "$deb" &&
+            mkdir -p dist && cp "$deb" dist/
+          } > "$work/log.txt" 2>&1 || {
+            tail -n 25 "$work/log.txt" | while IFS= read -r line; do echo "::error::${line}"; done
+            exit 1
+          }
+          cat "$work/log.txt"
 
       - name: Captura de tela (ambiente gráfico virtual)
         continue-on-error: true
