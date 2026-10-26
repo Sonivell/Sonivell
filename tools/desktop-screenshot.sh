@@ -9,11 +9,11 @@ export HOME="$DEMO_HOME"
 export XDG_CONFIG_HOME="$HOME/.config" XDG_DATA_HOME="$HOME/.local/share" XDG_CACHE_HOME="$HOME/.cache"
 mkdir -p "$HOME/Music" "$XDG_CONFIG_HOME/sonivell" "$HOME/covers"
 cat > "$XDG_CONFIG_HOME/sonivell/settings.properties" <<'PROPS'
-musicDirs=$HOME/Music
 theme=DARK
 accent=Lima
 darkBg=Grafite
 PROPS
+echo "musicDirs=$HOME/Music" >> "$XDG_CONFIG_HOME/sonivell/settings.properties"
 
 cover() { # nome corFundo corNucleo
   ffmpeg -loglevel error -y -f lavfi -i "color=c=0x$2:s=600x600,drawbox=x=150:y=150:w=300:h=300:color=0x$3@0.55:t=fill,drawbox=x=250:y=250:w=100:h=100:color=0x$3:t=fill" -frames:v 1 "$HOME/covers/$1.png"
@@ -51,20 +51,19 @@ sleep 2
 "$APP" > "$OUT/app.log" 2>&1 &
 APPPID=$!
 sleep 25
-xdotool search --name Sonivell windowmove 0 0 || true
-sleep 2
-shot() { import -window root -crop 1360x860+0+0 +repage "$OUT/$1.png"; }
+OX=48; OY=48
+shot() { import -window root -crop 1360x860+48+48 +repage "$OUT/$1.png"; }
 shot 1-para-voce
 # Biblioteca
-xdotool mousemove 110 195 click 1; sleep 3; shot 2-biblioteca
+xdotool mousemove $((110+OX)) $((195+OY)) click 1; sleep 3; shot 2-biblioteca
 # Toca a primeira música da tabela
-xdotool mousemove 520 290 click 1; sleep 4; shot 3-biblioteca-tocando
+xdotool mousemove $((520+OX)) $((290+OY)) click 1; sleep 4; shot 3-biblioteca-tocando
 # Player completo (clica na capa da barra inferior)
-xdotool mousemove 62 800 click 1; sleep 3; shot 4-player
+xdotool mousemove $((62+OX)) $((800+OY)) click 1; sleep 3; shot 4-player
 # Busca
-xdotool mousemove 110 148 click 1; sleep 1; xdotool type "sal"; sleep 2; shot 5-busca
+xdotool mousemove $((110+OX)) $((148+OY)) click 1; sleep 1; xdotool type "sal"; sleep 2; shot 5-busca
 # Ajustes
-xdotool mousemove 110 820 click 1; sleep 2; shot 6-ajustes
+xdotool mousemove $((110+OX)) $((820+OY)) click 1; sleep 2; shot 6-ajustes
 kill $APPPID || true
 kill $XVFB || true
 ls -la "$OUT"
