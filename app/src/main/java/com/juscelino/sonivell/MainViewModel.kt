@@ -41,6 +41,19 @@ import com.juscelino.sonivell.data.ForYou
 import com.juscelino.sonivell.data.ForYouState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import android.os.Build
+import android.provider.MediaStore
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import com.juscelino.sonivell.data.DuplicateGroup
+import com.juscelino.sonivell.data.MetadataIssues
+import com.juscelino.sonivell.data.Organize
+import com.juscelino.sonivell.data.PlayStats
+import com.juscelino.sonivell.data.RecommendationPrefs
+import com.juscelino.sonivell.data.Search
+import com.juscelino.sonivell.data.SmartPlaylist
+import com.juscelino.sonivell.data.SmartPlaylistStore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.transformLatest
 import com.juscelino.sonivell.data.LyricsRepository
@@ -123,6 +136,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val history = ListeningHistory(app)
     private val session = ListenSessionTracker()
 
+    /** O que o SMART e o Para você não devem sugerir; grupos marcados como "não são duplicatas". */
+    val recommendations = RecommendationPrefs(prefs)
+    val smartPlaylistStore = SmartPlaylistStore(app)
+
     /** Sessão salva: ao abrir o app, a fila e a posição voltam como estavam. */
     private val sessionStore = SessionStore(prefs)
     private var lastSessionSaveMs = 0L
@@ -155,11 +172,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     val library: StateFlow<LibraryState> = combine(allTracks, query, tab, sort) { all, q, t, s ->
         if (all == null) return@combine LibraryState(loading = true, query = q, tab = t, sort = s)
-        val filtered = if (q.isBlank()) all else all.filter {
-            it.title.contains(q, true) || it.artist.contains(q, true) || it.album.contains(q, true) ||
-                it.genre?.contains(q, true) == true || it.fileName?.contains(q, true) == true
-        }
-        val sorted = when (s) {
+        // Busca tolerante (sem acentos, fora de ordem, pequenos erros, anos/décadas).
+        val parsed = Search.parse(q)
+        val scored = if (parsed.isEmpty) null else all.mapNotNull { t -> Search.score(parsed, t).takeIf { it > 0 }?.let { t to it } }
+        val filtered = scored?.map { it.first } ?: all
+        val sorted = if (scored != null) scored.sortedByDescending { it.second }.map { it.first } else when (s) {
             SortOrder.Titulo -> filtered.sortedBy { it.title.lowercase() }
             SortOrder.Artista -> filtered.sortedWith(compareBy({ it.artist.lowercase() }, { it.album.lowercase() }))
             SortOrder.Album -> filtered.sortedWith(
@@ -203,9 +220,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     /** Tela Para você: recalculada a cada escuta registrada, curtida ou mudança na biblioteca. */
-    val forYou: StateFlow<ForYouState> = combine(allTracks, _favorites, history.revision) { all, favs, _ ->
+    val forYou: StateFlow<ForYouState> = combine(
+        allTracks, _favorites, history.revision, recommendations.blockedTracks, recommendations.blockedArtists,
+    ) { all, favs, _, _, _ ->
         if (all == null) ForYouState()
-        else ForYou.compute(all, history.recent(), favs, withMixes = smart.isAvailable)
+        else ForYou.compute(all.filterNot(recommendations::isBlocked), history.recent(), favs, withMixes = smart.isAvailable)
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ForYouState())
 
@@ -219,6 +238,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch { playlistStore.load() }
+        viewModelScope.launch { smartPlaylistStore.load() }
         smart.setArtistVariety(settings.value.artistVariety)
 
         // Restaura a sessão quando o player conectar e a biblioteca carregar (uma vez só).
@@ -594,7 +614,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         planningJob = viewModelScope.launch {
             val ids = smart.continueQueue(
                 seed = seed,
-                library = allTracks.value.orEmpty().filter { it.id !in playedOrCurrent },
+                library = recommendable().filter { it.id !in playedOrCurrent },
                 length = SMART_PLAN_LENGTH,
                 preceding = queueIds.take(currentIndex).takeLast(SMART_PLAN_LENGTH),
                 history = history.recent(SMART_HISTORY_LIMIT),
@@ -614,7 +634,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             val queued = queueIds.toSet()
             val ids = smart.continueQueue(
                 seed = seed,
-                library = allTracks.value.orEmpty().filter { it.id !in queued },
+                library = recommendable().filter { it.id !in queued },
                 length = SMART_PLAN_LENGTH,
                 preceding = queueIds.dropLast(1).takeLast(SMART_PLAN_LENGTH),
                 history = history.recent(SMART_HISTORY_LIMIT),
@@ -625,10 +645,62 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Biblioteca sem o que o usuário pediu para não recomendar. */
+    private fun recommendable(): List<Track> = allTracks.value.orEmpty().filterNot(recommendations::isBlocked)
+
+    // ---- Playlists inteligentes ----
+
+    val playStats: StateFlow<PlayStats> = history.revision
+        .map { PlayStats.from(history.recent()) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlayStats(emptyMap(), emptyMap()))
+
+    val smartPlaylists: StateFlow<List<SmartPlaylist>> = smartPlaylistStore.items
+
+    fun saveSmartPlaylist(p: SmartPlaylist, then: (Long) -> Unit = {}) {
+        viewModelScope.launch { then(smartPlaylistStore.save(p)) }
+    }
+
+    fun deleteSmartPlaylist(id: Long) { viewModelScope.launch { smartPlaylistStore.delete(id) } }
+
+    // ---- Busca pelo estilo (SMART) ----
+
+    @OptIn(kotlinx.coroutines.FlowPreview::class, ExperimentalCoroutinesApi::class)
+    val semanticResults: StateFlow<List<Track>> = query
+        .debounce(350)
+        .mapLatest { q ->
+            if (!smart.isAvailable || q.trim().length < 3) emptyList()
+            else {
+                val byId = allTracks.value.orEmpty().associateBy { it.id }
+                smart.semanticSearch(q.trim(), 30).mapNotNull(byId::get)
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // ---- Organizar: duplicatas e metadados ----
+
+    val duplicates: StateFlow<List<DuplicateGroup>> = combine(allTracks, recommendations.notDuplicates) { all, ignored ->
+        Organize.duplicates(all.orEmpty(), ignored)
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val metadataIssues: StateFlow<MetadataIssues> = allTracks
+        .map { Organize.issues(it.orEmpty()) }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MetadataIssues())
+
+    /**
+     * Pede ao Android para apagar os arquivos (o sistema mostra a confirmação).
+     * Devolve null quando o aparelho (Android 10 ou anterior) não oferece esse pedido.
+     */
+    fun deleteRequest(tracks: List<Track>): android.content.IntentSender? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || tracks.isEmpty()) return null
+        return MediaStore.createDeleteRequest(getApplication<Application>().contentResolver, tracks.map { it.uri }).intentSender
+    }
+
     private suspend fun planSmart(seed: Track, excluding: Set<Long>): List<Track> {
         val all = allTracks.value.orEmpty()
         val byId = all.associateBy { it.id }
-        return smart.startQueue(seed, all, SMART_PLAN_LENGTH, history.recent(SMART_HISTORY_LIMIT))
+        return smart.startQueue(seed, recommendable(), SMART_PLAN_LENGTH, history.recent(SMART_HISTORY_LIMIT))
             .filter { it !in excluding }
             .mapNotNull(byId::get)
     }

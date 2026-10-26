@@ -54,6 +54,12 @@ interface SmartEngine {
 
     /** Quanto o SMART evita várias músicas seguidas do mesmo artista: 0 (nada) a 4 (muito). */
     fun setArtistVariety(level: Int) = Unit
+
+    /**
+     * Busca pelo sentido, não pelas letras exatas ("músicas animadas", "rock dos anos 90"),
+     * usando o codificador de texto do SMART. Ids do mais ao menos parecido.
+     */
+    suspend fun semanticSearch(query: String, limit: Int): List<Long> = emptyList()
 }
 
 object NoSmartEngine : SmartEngine {

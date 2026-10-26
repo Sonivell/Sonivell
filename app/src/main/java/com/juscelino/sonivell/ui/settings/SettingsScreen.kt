@@ -23,6 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import com.juscelino.sonivell.data.Track
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -57,6 +59,9 @@ data class SettingsActions(
     val onExportHistory: () -> Unit,
     val onReset: () -> Unit,
     val onPickLyricsFolder: () -> Unit = {},
+    val onOpenOrganize: () -> Unit = {},
+    val onUnblockTrack: (Long) -> Unit = {},
+    val onUnblockArtist: (String) -> Unit = {},
 )
 
 @Composable
@@ -66,6 +71,8 @@ fun SettingsScreen(
     versionName: String,
     contentPadding: PaddingValues,
     actions: SettingsActions,
+    blockedTracks: List<Track> = emptyList(),
+    blockedArtists: List<String> = emptyList(),
 ) {
     val c = SonivellTheme.colors
     Column(
@@ -150,6 +157,19 @@ fun SettingsScreen(
             }
         }
 
+        Section(stringResource(R.string.not_recommended)) {
+            Text(stringResource(R.string.not_recommended_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+            if (blockedTracks.isEmpty() && blockedArtists.isEmpty()) {
+                Text(stringResource(R.string.not_recommended_none), style = MaterialTheme.typography.bodyLarge, color = c.textPrimary)
+            }
+            blockedArtists.forEach { name ->
+                RemovableRow(name, stringResource(R.string.tab_artists)) { actions.onUnblockArtist(name) }
+            }
+            blockedTracks.forEach { t ->
+                RemovableRow(t.title, t.artist) { actions.onUnblockTrack(t.id) }
+            }
+        }
+
         Section(stringResource(R.string.settings_history)) {
             LinkRow(stringResource(R.string.stats), stringResource(R.string.stats_hint), actions.onOpenStats)
             SwitchRow(
@@ -164,6 +184,7 @@ fun SettingsScreen(
         Section(stringResource(R.string.nav_library)) {
             LinkRow(stringResource(R.string.cd_refresh), stringResource(R.string.settings_refresh_hint), actions.onRefreshLibrary)
             LinkRow(stringResource(R.string.lyrics_pick_folder), stringResource(R.string.lyrics_folder_hint), actions.onPickLyricsFolder)
+            LinkRow(stringResource(R.string.organize), stringResource(R.string.organize_hint), actions.onOpenOrganize)
         }
 
         Section(stringResource(R.string.settings_about)) {
@@ -231,6 +252,18 @@ private fun SwitchRow(title: String, hint: String?, checked: Boolean, onChange: 
                 uncheckedBorderColor = c.outline,
             ),
         )
+    }
+}
+
+@Composable
+private fun RemovableRow(title: String, subtitle: String, onRemove: () -> Unit) {
+    val c = SonivellTheme.colors
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1)
+        }
+        IconBtn(Icons.Rounded.Close, stringResource(R.string.allow_again, title), onRemove, tint = c.textSecondary, iconSize = 18.dp)
     }
 }
 

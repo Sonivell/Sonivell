@@ -37,10 +37,14 @@ As duas edições podem ficar instaladas ao mesmo tempo.
 - Estatísticas de audição por período, com exportação do histórico em CSV.
 - Letras: embutidas no arquivo ou em .lrc (pasta escolhida por você), sincronizadas, com toque para pular e ajuste de sincronia.
 - Normalização de volume pelo ReplayGain das tags.
+- Playlists automáticas (mais/menos ouvidas, nunca tocadas, recentes, por década) e inteligentes, com regras combinadas, ordem e limite por quantidade ou duração.
+- Busca tolerante a erros de digitação e acentos, com anos e décadas ("anos 80", "1997"), resultados agrupados e, na edição SMART, busca pelo estilo.
+- Organizar biblioteca: duplicatas (com sugestão de qual manter e exclusão confirmada pelo Android) e músicas sem informação.
+- "Não recomendar" faixas ou artistas no SMART e no Para você.
 
 ## Ainda por vir
 
-Playlists inteligentes, busca aproximada, widgets e Android Auto.
+Widgets e Android Auto.
 
 ## Stack
 

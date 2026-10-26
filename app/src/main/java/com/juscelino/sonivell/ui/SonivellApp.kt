@@ -29,6 +29,21 @@ import androidx.navigation.navArgument
 import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.collection.CollectionActions
+import android.os.Build
+import androidx.activity.result.IntentSenderRequest
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.PersonOff
+import androidx.compose.material.icons.rounded.SaveAlt
+import androidx.compose.material.icons.rounded.Tune
+import com.juscelino.sonivell.data.RuleField
+import com.juscelino.sonivell.data.RuleOp
+import com.juscelino.sonivell.data.SmartPlaylist
+import com.juscelino.sonivell.data.SmartPlaylists
+import com.juscelino.sonivell.data.SmartRule
+import com.juscelino.sonivell.ui.organize.OrganizeActions
+import com.juscelino.sonivell.ui.organize.OrganizeScreen
+import com.juscelino.sonivell.ui.smartlist.SmartEditorActions
+import com.juscelino.sonivell.ui.smartlist.SmartPlaylistEditor
 import com.juscelino.sonivell.ui.lyrics.LyricsActions
 import com.juscelino.sonivell.ui.lyrics.LyricsScreen
 import com.juscelino.sonivell.ui.settings.EqualizerActions
@@ -45,7 +60,6 @@ import com.juscelino.sonivell.ui.components.OptionsSheet
 import com.juscelino.sonivell.ui.components.TrackHeader
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
@@ -134,8 +148,15 @@ private object Routes {
     const val EQUALIZER = "equalizador"
     const val STATS = "estatisticas"
     const val LYRICS = "letra"
+    const val AUTO = "auto/{key}"
+    const val SMARTLIST = "inteligente/{id}"
+    const val SMART_EDIT = "inteligente-editar/{id}"
+    const val ORGANIZE = "organizar"
+    fun auto(key: String) = "auto/$key"
+    fun smartlist(id: Long) = "inteligente/$id"
+    fun smartEdit(id: Long) = "inteligente-editar/$id"
     /** Telas de coleção: mostram o mini player e a barra de navegação. */
-    val COLLECTIONS = setOf(ALBUM, ARTIST, GENRE, FOLDER, PLAYLIST)
+    val COLLECTIONS = setOf(ALBUM, ARTIST, GENRE, FOLDER, PLAYLIST, AUTO, SMARTLIST, SMART_EDIT, ORGANIZE)
 
     fun album(id: Long) = "album/$id"
     fun artist(name: String) = "artista/" + Uri.encode(name)
@@ -199,6 +220,10 @@ private data class CollectionData(
     /** Só playlists: índice de cada faixa exibida na lista salva (faixas sumidas ficam de fora). */
     val storeIndices: List<Int>? = null,
     val playlist: Playlist? = null,
+    /** Playlist inteligente (regras), quando for o caso. */
+    val smart: SmartPlaylist? = null,
+    /** Automática (sem edição): oferece "Salvar como playlist". */
+    val automatic: Boolean = false,
 )
 
 @Composable
@@ -250,6 +275,20 @@ private fun MainContent(vm: MainViewModel) {
     val historyExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         if (uri != null) scope.launch {
             toast(res.getString(if (vm.exportHistory(uri)) R.string.history_exported else R.string.export_failed))
+        }
+    }
+    val smartPlaylists by vm.smartPlaylists.collectAsStateWithLifecycle()
+    val semanticResults by vm.semanticResults.collectAsStateWithLifecycle()
+    val duplicates by vm.duplicates.collectAsStateWithLifecycle()
+    val metadataIssues by vm.metadataIssues.collectAsStateWithLifecycle()
+    val playStats by vm.playStats.collectAsStateWithLifecycle()
+    val blockedTracks by vm.recommendations.blockedTracks.collectAsStateWithLifecycle()
+    val blockedArtists by vm.recommendations.blockedArtists.collectAsStateWithLifecycle()
+    var deletingSmart by remember { mutableStateOf<SmartPlaylist?>(null) }
+    val deleteLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            vm.refresh()
+            toast(res.getString(R.string.copies_deleted))
         }
     }
     val lyricsState by vm.lyrics.collectAsStateWithLifecycle()
@@ -312,6 +351,9 @@ private fun MainContent(vm: MainViewModel) {
         onNewPlaylist = { newPlaylistWith = emptyList() },
         onImportPlaylist = { importLauncher.launch(arrayOf("*/*")) },
         onOpenSettings = { nav.navigate(Routes.SETTINGS) },
+        onOpenAuto = { nav.navigate(Routes.auto(it)) },
+        onOpenSmartPlaylist = { nav.navigate(Routes.smartlist(it)) },
+        onNewSmartPlaylist = { nav.navigate(Routes.smartEdit(0)) },
     )
 
     val chromeRoutes = remember { tabs.map { it.route }.toSet() + Routes.COLLECTIONS + setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS) }
@@ -407,6 +449,8 @@ private fun MainContent(vm: MainViewModel) {
                         smartProgress = smartProgress,
                         forYou = forYou,
                         playlists = playlists,
+                        smartPlaylists = smartPlaylists,
+                        semanticResults = semanticResults,
                     )
                 }
             }
@@ -453,6 +497,75 @@ private fun MainContent(vm: MainViewModel) {
                 Collection(data)
             }
 
+            composable(Routes.AUTO) { entry ->
+                val key = entry.arguments?.getString("key").orEmpty()
+                val all = library.allTracks
+                val (title, tracks) = when {
+                    key.startsWith("decada-") -> {
+                        val start = key.removePrefix("decada-").toIntOrNull() ?: 0
+                        val label = if (start in 1900..1999) (start % 100).toString() else start.toString()
+                        stringResource(R.string.decade_label, label) to SmartPlaylists.decade(all, start)
+                    }
+                    else -> {
+                        val kind = when (key) {
+                            "mais-ouvidas" -> SmartPlaylists.Builtin.MaisOuvidas to R.string.auto_most
+                            "menos-ouvidas" -> SmartPlaylists.Builtin.MenosOuvidas to R.string.auto_least
+                            "nunca-tocadas" -> SmartPlaylists.Builtin.NuncaTocadas to R.string.auto_never
+                            "recentes" -> SmartPlaylists.Builtin.Recentes to R.string.auto_recent_added
+                            "ouvidas-recentemente" -> SmartPlaylists.Builtin.OuvidasRecentemente to R.string.auto_recent_played
+                            else -> SmartPlaylists.Builtin.Curtidas to R.string.source_liked
+                        }
+                        stringResource(kind.second) to SmartPlaylists.builtin(kind.first, all, playStats, favorites)
+                    }
+                }
+                Collection(CollectionData(title, stringResource(R.string.auto_playlists), tracks, automatic = true))
+            }
+            composable(Routes.SMARTLIST, arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->
+                val id = entry.arguments?.getLong("id")
+                val sp = smartPlaylists.firstOrNull { it.id == id }
+                if (sp == null && smartPlaylists.isEmpty()) return@composable
+                Collection(sp?.let {
+                    CollectionData(it.name, stringResource(R.string.smart_playlists), SmartPlaylists.evaluate(it, library.allTracks, playStats, favorites), smart = it)
+                })
+            }
+            composable(Routes.SMART_EDIT, arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->
+                val id = entry.arguments?.getLong("id") ?: 0L
+                val existing = smartPlaylists.firstOrNull { it.id == id }
+                val initial = existing ?: SmartPlaylist(0, "", listOf(SmartRule(RuleField.Genero, RuleOp.Contem)))
+                SmartPlaylistEditor(
+                    initial = initial,
+                    contentPadding = listPadding,
+                    actions = SmartEditorActions(
+                        onBack = { nav.popBackStack() },
+                        onSave = { p ->
+                            vm.saveSmartPlaylist(p) { newId ->
+                                nav.popBackStack()
+                                if (existing == null) nav.navigate(Routes.smartlist(newId))
+                            }
+                        },
+                        onDelete = existing?.let { e -> { deletingSmart = e } },
+                        preview = { p -> SmartPlaylists.evaluate(p, library.allTracks, playStats, favorites).size },
+                    ),
+                )
+            }
+            composable(Routes.ORGANIZE) {
+                OrganizeScreen(
+                    duplicates = duplicates,
+                    issues = metadataIssues,
+                    canDelete = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R,
+                    contentPadding = listPadding,
+                    actions = OrganizeActions(
+                        onBack = { nav.popBackStack() },
+                        onDeleteCopies = { copies ->
+                            vm.deleteRequest(copies)?.let { deleteLauncher.launch(IntentSenderRequest.Builder(it).build()) }
+                        },
+                        onNotDuplicate = { vm.recommendations.markNotDuplicate(it.key) },
+                        onPlay = { t -> vm.playFrom(listOf(t), 0) },
+                        onResetIgnored = vm.recommendations::clearNotDuplicates,
+                    ),
+                )
+            }
+
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     settings = settings,
@@ -469,7 +582,12 @@ private fun MainContent(vm: MainViewModel) {
                         onExportHistory = { historyExportLauncher.launch("sonivell-historico.csv") },
                         onReset = { confirmReset = true },
                         onPickLyricsFolder = { lyricsFolderLauncher.launch(null) },
+                        onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
+                        onUnblockTrack = { vm.recommendations.blockTrack(it, false) },
+                        onUnblockArtist = { vm.recommendations.blockArtist(it, false) },
                     ),
+                    blockedTracks = library.allTracks.filter { it.id in blockedTracks },
+                    blockedArtists = blockedArtists.sorted(),
                 )
             }
             composable(Routes.EQUALIZER) {
@@ -617,6 +735,15 @@ private fun MainContent(vm: MainViewModel) {
             add(MenuOption(Icons.Rounded.Album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) })
             add(MenuOption(Icons.Rounded.Person, stringResource(R.string.go_to_artist)) { openArtist(track.artist) })
             add(MenuOption(Icons.Rounded.Share, stringResource(R.string.share)) { share(track) })
+            val trackBlocked = track.id in blockedTracks
+            add(MenuOption(Icons.Rounded.Block, stringResource(if (trackBlocked) R.string.recommend_again else R.string.dont_recommend)) {
+                vm.recommendations.blockTrack(track.id, !trackBlocked)
+            })
+            if (track.rawArtist != null && track.artist !in blockedArtists) {
+                add(MenuOption(Icons.Rounded.PersonOff, stringResource(R.string.dont_recommend_artist, track.artist)) {
+                    vm.recommendations.blockArtist(track.artist, true)
+                })
+            }
         }
         OptionsSheet(options, onDismiss = { menuFor = null }, header = { TrackHeader(track) })
     }
@@ -630,6 +757,16 @@ private fun MainContent(vm: MainViewModel) {
             add(MenuOption(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.add_to_queue)) {
                 vm.addToQueue(data.tracks); toast(res.getString(R.string.added_to_queue))
             })
+            val smart = data.smart
+            if (smart != null) {
+                add(MenuOption(Icons.Rounded.Tune, stringResource(R.string.edit_rules)) { nav.navigate(Routes.smartEdit(smart.id)) })
+            }
+            if (smart != null || data.automatic) {
+                add(MenuOption(Icons.Rounded.SaveAlt, stringResource(R.string.save_as_playlist)) { newPlaylistWith = data.tracks })
+            }
+            if (smart != null) {
+                add(MenuOption(Icons.Rounded.DeleteOutline, stringResource(R.string.delete)) { deletingSmart = smart })
+            }
             if (playlist == null) {
                 add(MenuOption(Icons.AutoMirrored.Rounded.PlaylistAdd, stringResource(R.string.add_to_playlist)) {
                     addToPlaylist = data.tracks
@@ -731,6 +868,19 @@ private fun MainContent(vm: MainViewModel) {
                 if (route == Routes.PLAYLIST) nav.popBackStack()
             },
             onDismiss = { deleting = null },
+        )
+    }
+
+    deletingSmart?.let { sp ->
+        ConfirmDialog(
+            title = stringResource(R.string.delete_playlist_title),
+            message = stringResource(R.string.delete_playlist_message, sp.name),
+            confirmLabel = stringResource(R.string.delete),
+            onConfirm = {
+                vm.deleteSmartPlaylist(sp.id)
+                if (route == Routes.SMARTLIST || route == Routes.SMART_EDIT) nav.popBackStack()
+            },
+            onDismiss = { deletingSmart = null },
         )
     }
 

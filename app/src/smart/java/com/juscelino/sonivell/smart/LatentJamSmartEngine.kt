@@ -143,6 +143,10 @@ internal class LatentJamSmartEngine private constructor(context: Context) : Smar
         }
     }
 
+    override suspend fun semanticSearch(query: String, limit: Int): List<Long> = plan {
+        engine.semanticSearch(query, limit).map { it.trackId }
+    }
+
     override fun setArtistVariety(level: Int) {
         // Mesmos degraus do ajuste "Variedade de artistas" do LatentJam.
         val penalties = listOf(0f, 0.25f, 0.5f, 1f, 2f)

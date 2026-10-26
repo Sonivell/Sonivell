@@ -36,6 +36,9 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Category
 import com.juscelino.sonivell.data.Playlist
+import com.juscelino.sonivell.data.Search
+import com.juscelino.sonivell.data.SmartPlaylist
+import com.juscelino.sonivell.data.SmartPlaylists
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.smart.SmartProgress
 import androidx.compose.material.icons.rounded.Folder
@@ -96,6 +99,10 @@ data class LibraryActions(
     val onNewPlaylist: () -> Unit = {},
     val onImportPlaylist: () -> Unit = {},
     val onOpenSettings: () -> Unit = {},
+    /** Playlists automáticas: chave como "mais-ouvidas" ou "decada-1990". */
+    val onOpenAuto: (String) -> Unit = {},
+    val onOpenSmartPlaylist: (Long) -> Unit = {},
+    val onNewSmartPlaylist: () -> Unit = {},
 )
 
 @Composable
@@ -109,9 +116,12 @@ fun LibraryScreen(
     smartProgress: SmartProgress = SmartProgress(),
     forYou: ForYouState = ForYouState(),
     playlists: List<Playlist> = emptyList(),
+    smartPlaylists: List<SmartPlaylist> = emptyList(),
+    semanticResults: List<Track> = emptyList(),
 ) {
     val c = SonivellTheme.colors
     val trackById = remember(state.allTracks) { state.allTracks.associateBy { it.id } }
+    val decades = remember(state.allTracks) { SmartPlaylists.decades(state.allTracks) }
     val focus = remember { FocusRequester() }
     val labels = LibraryLabels(
         search = stringResource(R.string.source_search),
@@ -180,14 +190,50 @@ fun LibraryScreen(
         when (mode) {
             LibraryMode.Inicio -> homeContent(state, favorites, currentId, labels, actions, smartProgress, forYou)
             LibraryMode.Buscar -> {
-                val q = state.query.trim()
-                val matching = if (q.isEmpty()) emptyList() else playlists.filter { it.name.contains(q, ignoreCase = true) }
-                if (matching.isNotEmpty()) {
+                val parsed = Search.parse(state.query)
+                val searching = !parsed.isEmpty
+                // Resultados agrupados: artistas, álbuns e playlists que combinam pelo nome.
+                val artists = if (parsed.words.isEmpty()) emptyList() else state.artists.filter { Search.matchesText(parsed, it.name) }.take(5)
+                val albums = if (parsed.words.isEmpty()) emptyList() else state.albums.filter { Search.matchesText(parsed, it.title) }.take(6)
+                val foundPlaylists = if (parsed.words.isEmpty()) emptyList() else playlists.filter { Search.matchesText(parsed, it.name) }
+                if (artists.isNotEmpty()) {
+                    item(key = "s-artists-label") { SectionLabel(stringResource(R.string.tab_artists), Modifier.padding(bottom = 4.dp)) }
+                    items(artists, key = { "s-ar-" + it.name }) { a ->
+                        GroupRow(Icons.Rounded.Person, a.name, pluralStringResource(R.plurals.songs_count, a.tracks.size, a.tracks.size)) { actions.onOpenArtist(a.name) }
+                    }
+                    item(key = "s-artists-gap") { Box(Modifier.height(12.dp)) }
+                }
+                if (albums.isNotEmpty()) {
+                    item(key = "s-albums-label") { SectionLabel(stringResource(R.string.tab_albums), Modifier.padding(bottom = 8.dp)) }
+                    albums.chunked(3).forEachIndexed { i, row -> item(key = "s-albums-$i") { AlbumGrid(row, actions, Modifier.padding(bottom = 12.dp)) } }
+                }
+                if (foundPlaylists.isNotEmpty()) {
                     item(key = "pl-found-label") { SectionLabel(stringResource(R.string.tab_playlists), Modifier.padding(bottom = 4.dp)) }
-                    items(matching, key = { "pl-found-" + it.id }) { p -> PlaylistRow(p, trackById, actions) }
+                    items(foundPlaylists, key = { "pl-found-" + it.id }) { p -> PlaylistRow(p, trackById, actions) }
                     item(key = "pl-found-gap") { Box(Modifier.height(12.dp)) }
                 }
-                trackList(state.tracks, currentId, labels.search, q.isNotEmpty(), actions)
+                if (searching && artists.isNotEmpty() || albums.isNotEmpty() || foundPlaylists.isNotEmpty()) {
+                    item(key = "s-songs-label") { SectionLabel(stringResource(R.string.tab_songs), Modifier.padding(bottom = 4.dp)) }
+                }
+                trackList(state.tracks, currentId, labels.search, searching, actions)
+                if (searching && state.tracks.isEmpty() && semanticResults.isEmpty()) {
+                    item(key = "s-none") {
+                        Text(stringResource(R.string.search_none), style = MaterialTheme.typography.bodyLarge, color = c.textSecondary, modifier = Modifier.padding(vertical = 16.dp))
+                    }
+                }
+                // Busca pelo sentido (edição SMART): o que combina com a descrição, além das palavras.
+                val extra = semanticResults.filter { r -> state.tracks.none { it.id == r.id } }.take(15)
+                if (searching && extra.isNotEmpty()) {
+                    item(key = "s-sem-label") {
+                        Row(Modifier.padding(top = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(14.dp), tint = c.accent)
+                            SectionLabel(stringResource(R.string.search_semantic))
+                        }
+                    }
+                    itemsIndexed(extra, key = { _, t -> "sem-${t.id}" }) { i, t ->
+                        TrackRow(t, onClick = { actions.onPlay(extra, i, labels.search) }, highlighted = t.id == currentId, onMore = { actions.onTrackMenu(t) })
+                    }
+                }
             }
             LibraryMode.Biblioteca -> {
                 item(key = "chips") {
@@ -228,6 +274,34 @@ fun LibraryScreen(
                                 Chip(stringResource(R.string.import_playlist), selected = false, onClick = actions.onImportPlaylist)
                             }
                         }
+                        // Automáticas: se atualizam sozinhas com o histórico e a biblioteca.
+                        item(key = "auto-label") { SectionLabel(stringResource(R.string.auto_playlists), Modifier.padding(top = 4.dp, bottom = 4.dp)) }
+                        item(key = "auto-row") {
+                            val autos = listOf(
+                                "mais-ouvidas" to R.string.auto_most,
+                                "menos-ouvidas" to R.string.auto_least,
+                                "nunca-tocadas" to R.string.auto_never,
+                                "recentes" to R.string.auto_recent_added,
+                                "ouvidas-recentemente" to R.string.auto_recent_played,
+                                "curtidas" to R.string.source_liked,
+                            )
+                            Row(Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                autos.forEach { (key, label) -> Chip(stringResource(label), selected = false) { actions.onOpenAuto(key) } }
+                                decades.forEach { d -> Chip(decadeLabel(d), selected = false) { actions.onOpenAuto("decada-$d") } }
+                            }
+                        }
+                        item(key = "smart-label") {
+                            Row(Modifier.padding(top = 8.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                SectionLabel(stringResource(R.string.smart_playlists), Modifier.weight(1f))
+                                Chip(stringResource(R.string.new_smart_playlist), selected = false, onClick = actions.onNewSmartPlaylist)
+                            }
+                        }
+                        items(smartPlaylists, key = { "sp-" + it.id }) { sp ->
+                            GroupRow(Icons.Rounded.AutoAwesome, sp.name, pluralStringResource(R.plurals.rules_count, sp.rules.size, sp.rules.size)) {
+                                actions.onOpenSmartPlaylist(sp.id)
+                            }
+                        }
+                        item(key = "own-label") { SectionLabel(stringResource(R.string.your_playlists), Modifier.padding(top = 12.dp, bottom = 4.dp)) }
                         if (playlists.isEmpty()) {
                             item(key = "pl-empty") {
                                 Text(
@@ -561,6 +635,11 @@ private fun AlbumGrid(albums: List<Album>, actions: LibraryActions, modifier: Mo
         repeat(3 - albums.size) { Spacer(Modifier.weight(1f)) }
     }
 }
+
+/** "Anos 90" (ou "Anos 2000"). */
+@Composable
+private fun decadeLabel(start: Int): String =
+    stringResource(R.string.decade_label, if (start in 1900..1999) (start % 100).toString() else start.toString())
 
 /** Linha de playlist: capa (primeira faixa), nome e total. */
 @Composable
