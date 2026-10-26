@@ -1,5 +1,10 @@
 package com.juscelino.sonivell.ui.nowplaying
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -244,26 +249,57 @@ private fun BottomPanel(
 ) {
     val c = SonivellTheme.colors
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    // Começa minimizado: só a alça e as abas. Tocar numa aba (ou arrastar para cima) abre;
+    // tocar na aba aberta, na alça ou arrastar para baixo fecha.
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val toggleLabel = stringResource(if (expanded) R.string.cd_collapse_panel else R.string.cd_expand_panel)
     Column(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp))
             .background(c.surface)
+            .pointerInput(Unit) {
+                var drag = 0f
+                detectVerticalDragGestures(
+                    onDragStart = { drag = 0f },
+                    onVerticalDrag = { _, dy -> drag += dy },
+                    onDragEnd = {
+                        if (drag < -24f) expanded = true
+                        if (drag > 24f) expanded = false
+                    },
+                )
+            }
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(start = 20.dp, end = 12.dp, top = 10.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .animateContentSize(tween(220))
+            .padding(start = 20.dp, end = 12.dp, top = 4.dp, bottom = if (expanded) 16.dp else 6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(Modifier.align(Alignment.CenterHorizontally).width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.outline))
+        Box(
+            Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(width = 64.dp, height = 20.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .clickable(role = Role.Button, onClickLabel = toggleLabel) { expanded = !expanded }
+                .semantics { contentDescription = toggleLabel },
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.outline))
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 listOf(R.string.lyrics_label, R.string.tab_up_next, R.string.tab_why).forEachIndexed { i, label ->
-                    val on = tab == i
+                    val on = expanded && tab == i
                     Box(
                         Modifier
-                            .height(32.dp)
+                            .height(36.dp)
                             .clip(RoundedCornerShape(10.dp))
                             .background(if (on) c.surfaceHigh else Color.Transparent)
-                            .clickable(role = Role.Tab) { tab = i }
+                            .clickable(role = Role.Tab) {
+                                if (on) expanded = false else {
+                                    tab = i
+                                    expanded = true
+                                }
+                            }
                             .semantics { selected = on }
                             .padding(horizontal = 12.dp),
                         contentAlignment = Alignment.Center,
@@ -280,11 +316,13 @@ private fun BottomPanel(
             }
             SleepButton(sleepTimer, actions.onSleepTimer)
         }
-        Box(Modifier.fillMaxWidth().heightIn(min = 76.dp).padding(end = 8.dp)) {
-            when (tab) {
-                0 -> LyricsPeek(state, lyrics, lyricsOffsetMs, actions.onLyrics)
-                1 -> UpNextPeek(upNext, actions.onQueue)
-                else -> WhyPeek(reason, sourceLabel)
+        if (expanded) {
+            Box(Modifier.fillMaxWidth().heightIn(min = 76.dp).padding(top = 4.dp, end = 8.dp)) {
+                when (tab) {
+                    0 -> LyricsPeek(state, lyrics, lyricsOffsetMs, actions.onLyrics)
+                    1 -> UpNextPeek(upNext, actions.onQueue)
+                    else -> WhyPeek(reason, sourceLabel)
+                }
             }
         }
     }

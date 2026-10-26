@@ -402,4 +402,6 @@
     <string name="layout_classic">Clássica</string>
     <string name="layout_classic_hint">O visual da primeira versão</string>
     <string name="icon_style_line">Traço</string>
+    <string name="cd_expand_panel">Abrir painel</string>
+    <string name="cd_collapse_panel">Minimizar painel</string>
 </resources>

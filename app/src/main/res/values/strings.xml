@@ -409,4 +409,6 @@
     <string name="layout_classic">Classic</string>
     <string name="layout_classic_hint">The look of the first version</string>
     <string name="icon_style_line">Line</string>
+    <string name="cd_expand_panel">Expand panel</string>
+    <string name="cd_collapse_panel">Collapse panel</string>
 </resources>
