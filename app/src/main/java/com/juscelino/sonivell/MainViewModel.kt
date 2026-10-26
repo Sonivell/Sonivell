@@ -27,6 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import com.juscelino.sonivell.data.ListenEvent
+import com.juscelino.sonivell.data.TasteModel
 import com.juscelino.sonivell.data.ListenSessionTracker
 import com.juscelino.sonivell.data.ListeningHistory
 import com.juscelino.sonivell.data.MusicRepository
@@ -67,6 +68,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 
 enum class LibraryTab(@StringRes val label: Int) {
     Tudo(R.string.tab_all),
@@ -158,6 +160,68 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Ajustes do app (tema, cor, comportamento). */
     private val settingsStore = SettingsStore(prefs)
     val settings: StateFlow<AppSettings> = settingsStore.settings
+
+    /** O gosto aprendido no celular (edição smart): perfil + previsor de pulo. */
+    private val taste = TasteModel(java.io.File(app.filesDir, "gosto.bin"))
+    val tasteStatus: StateFlow<TasteModel.Status> = taste.status
+    private var trainJob: Job? = null
+
+    private val _tasteBoosts = MutableStateFlow<Map<Long, Int>>(emptyMap())
+
+    /** Faixas que subiram na fila por combinarem com o seu gosto → período do dia (0 madrugada … 3 noite). */
+    val tasteBoosts: StateFlow<Map<Long, Int>> = _tasteBoosts
+
+    private val vectorLock = kotlinx.coroutines.sync.Mutex()
+    private val vectorCache = object : LinkedHashMap<Long, FloatArray>(256, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, FloatArray>?) = size > 1500
+    }
+
+    /** Vetores de som, com cache (o motor só devolve os das faixas já analisadas). */
+    private suspend fun vectorsFor(ids: List<Long>): Map<Long, FloatArray> {
+        val missing = vectorLock.withLock { ids.filter { it !in vectorCache } }
+        val fetched = if (missing.isEmpty()) emptyMap() else smart.embeddings(missing)
+        return vectorLock.withLock {
+            vectorCache.putAll(fetched)
+            ids.mapNotNull { id -> vectorCache[id]?.let { id to it } }.toMap()
+        }
+    }
+
+    /** Treina de novo quando há escutas novas o bastante (ou quando [force]). Roda em segundo plano. */
+    fun maybeTrainTaste(force: Boolean = false) {
+        if (!smart.isAvailable || !settings.value.learnTaste) return
+        if (trainJob?.isActive == true) return
+        trainJob = viewModelScope.launch(Dispatchers.Default) {
+            val events = history.recent()
+            val fresh = events.size - taste.examplesSeen
+            val due = force || (!taste.status.value.trained && events.size >= 10) || fresh >= RETRAIN_EVERY ||
+                System.currentTimeMillis() - taste.status.value.trainedAtMs > RETRAIN_AFTER_MS && fresh > 0
+            if (due) runCatching { taste.train(events, _favorites.value, ::vectorsFor) }
+        }
+    }
+
+    fun forgetTaste() {
+        trainJob?.cancel()
+        taste.forget()
+        _tasteBoosts.value = emptyMap()
+    }
+
+    /** Reordena uma fila do SMART pelo gosto aprendido (sem mexer se ainda não há modelo). */
+    private suspend fun personalize(planned: List<Track>, prev: Track?): List<Track> {
+        if (planned.size < 2 || !settings.value.learnTaste || !taste.status.value.trained) return planned
+        val vectors = vectorsFor(planned.map { it.id } + listOfNotNull(prev?.id))
+        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        val (ordered, boosted) = taste.rerank(planned, vectors, prev?.let { vectors[it.id] }, hour)
+        if (boosted.isNotEmpty()) {
+            val part = TasteModel.daypart(hour)
+            _tasteBoosts.update { old ->
+                val next = LinkedHashMap(old)
+                boosted.forEach { id -> if (vectors[id]?.let { taste.matchesDaypart(it, hour) } == true) next[id] = part else next[id] = -1 }
+                if (next.size > 600) next.keys.take(next.size - 600).forEach(next::remove)
+                next
+            }
+        }
+        return ordered
+    }
 
     private val _sleepTimer = MutableStateFlow(SleepTimer())
     val sleepTimer: StateFlow<SleepTimer> = _sleepTimer.asStateFlow()
@@ -522,7 +586,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val tracks = repository.loadTracks()
             allTracks.value = tracks
-            if (smart.isAvailable) smart.analyse(tracks)
+            if (smart.isAvailable) {
+                smart.analyse(tracks)
+                // Dá tempo de o motor carregar os vetores já salvos antes de treinar.
+                delay(8_000)
+                maybeTrainTaste()
+            }
         }
     }
 
@@ -625,7 +694,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun onListenFinished(event: ListenEvent, st: PlayerState) {
-        if (!settings.value.historyPaused) viewModelScope.launch { history.record(event) }
+        if (!settings.value.historyPaused) viewModelScope.launch {
+            history.record(event)
+            maybeTrainTaste()
+        }
         // Pulou no modo SMART: o motor refaz o "a seguir" levando o pulo em conta, como no
         // LatentJam. (Se uma fila nova já está sendo montada, ela ganha.)
         if (smartMode.value && event.skipped && planningJob?.isActive != true) replanAfterSkip(st)
@@ -645,7 +717,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 preceding = queueIds.take(currentIndex).takeLast(SMART_PLAN_LENGTH),
                 history = history.recent(SMART_HISTORY_LIMIT),
             )
-            val planned = ids.mapNotNull(byId::get)
+            val planned = personalize(ids.mapNotNull(byId::get), seed)
             noteSmartSeed(planned, seed)
             if (planned.isNotEmpty()) player.replaceUpNext(planned)
         }
@@ -666,7 +738,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 preceding = queueIds.dropLast(1).takeLast(SMART_PLAN_LENGTH),
                 history = history.recent(SMART_HISTORY_LIMIT),
             )
-            val more = ids.mapNotNull(byId::get)
+            val more = personalize(ids.mapNotNull(byId::get), seed)
             noteSmartSeed(more, seed)
             if (more.isEmpty()) exhaustedSeedId = lastId
             player.append(more)
@@ -731,6 +803,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         return smart.startQueue(seed, recommendable(), SMART_PLAN_LENGTH, history.recent(SMART_HISTORY_LIMIT))
             .filter { it !in excluding }
             .mapNotNull(byId::get)
+            .let { personalize(it, seed) }
             .also { noteSmartSeed(it, seed) }
     }
 
@@ -747,6 +820,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private companion object {
         const val SMART_PLAN_LENGTH = 25
+        const val RETRAIN_EVERY = 15
+        const val RETRAIN_AFTER_MS = 24L * 60 * 60 * 1000
         const val SMART_TOP_UP_BELOW = 5
         const val SMART_HISTORY_LIMIT = 2_000
         const val SESSION_SAVE_EVERY_MS = 5_000L

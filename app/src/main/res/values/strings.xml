@@ -411,4 +411,20 @@
     <string name="icon_style_line">Line</string>
     <string name="cd_expand_panel">Expand panel</string>
     <string name="cd_collapse_panel">Collapse panel</string>
+    <string name="taste_section">What SMART learned</string>
+    <string name="taste_learn">Learn my taste</string>
+    <string name="taste_learn_hint">Trains a small model on this phone with what you finish and what you skip. SMART queues lean towards your taste. Nothing leaves the device.</string>
+    <string name="taste_not_yet">Still learning: listen to a few songs (finish some, skip others) and the first training runs by itself.</string>
+    <string name="taste_trained">Trained on %1$d listens %2$s</string>
+    <string name="taste_accuracy">gets %1$d%% of recent skips right</string>
+    <string name="taste_profile_only">taste profile only (it needs more skips to predict them)</string>
+    <string name="taste_train_now">Train now</string>
+    <string name="taste_train_now_hint">It also retrains by itself every 15 new listens.</string>
+    <string name="taste_forget">Forget what it learned</string>
+    <string name="taste_forget_hint">Deletes the model; your history stays.</string>
+    <string name="why_taste_0">And it moved up because it fits what you usually play late at night.</string>
+    <string name="why_taste_1">And it moved up because it fits what you usually play in the morning.</string>
+    <string name="why_taste_2">And it moved up because it fits what you usually play in the afternoon.</string>
+    <string name="why_taste_3">And it moved up because it fits what you usually play at night.</string>
+    <string name="why_taste_any">And it moved up because it fits your taste.</string>
 </resources>

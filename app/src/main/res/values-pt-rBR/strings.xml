@@ -404,4 +404,20 @@
     <string name="icon_style_line">Traço</string>
     <string name="cd_expand_panel">Abrir painel</string>
     <string name="cd_collapse_panel">Minimizar painel</string>
+    <string name="taste_section">O que o SMART aprendeu</string>
+    <string name="taste_learn">Aprender o meu gosto</string>
+    <string name="taste_learn_hint">Treina um modelo pequeno neste celular com o que você ouve até o fim e o que você pula. As filas do SMART puxam para o seu gosto. Nada sai do aparelho.</string>
+    <string name="taste_not_yet">Ainda aprendendo: ouça algumas músicas (umas até o fim, pule outras) e o primeiro treino acontece sozinho.</string>
+    <string name="taste_trained">Treinado com %1$d escutas %2$s</string>
+    <string name="taste_accuracy">acerta %1$d%% dos pulos recentes</string>
+    <string name="taste_profile_only">só o perfil de gosto (precisa de mais pulos para prevê-los)</string>
+    <string name="taste_train_now">Treinar agora</string>
+    <string name="taste_train_now_hint">Ele também retreina sozinho a cada 15 escutas novas.</string>
+    <string name="taste_forget">Esquecer o que aprendeu</string>
+    <string name="taste_forget_hint">Apaga o modelo; o seu histórico continua.</string>
+    <string name="why_taste_0">E subiu na fila porque combina com o que você costuma ouvir de madrugada.</string>
+    <string name="why_taste_1">E subiu na fila porque combina com o que você costuma ouvir de manhã.</string>
+    <string name="why_taste_2">E subiu na fila porque combina com o que você costuma ouvir à tarde.</string>
+    <string name="why_taste_3">E subiu na fila porque combina com o que você costuma ouvir à noite.</string>
+    <string name="why_taste_any">E subiu na fila porque combina com o seu gosto.</string>
 </resources>

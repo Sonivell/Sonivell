@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.AppSettings
+import com.juscelino.sonivell.data.TasteModel
 import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
@@ -61,6 +62,8 @@ data class SettingsActions(
     val onOpenOrganize: () -> Unit = {},
     val onUnblockTrack: (Long) -> Unit = {},
     val onUnblockArtist: (String) -> Unit = {},
+    val onRetrainTaste: () -> Unit = {},
+    val onForgetTaste: () -> Unit = {},
 )
 
 @Composable
@@ -72,6 +75,7 @@ fun SettingsScreen(
     actions: SettingsActions,
     blockedTracks: List<Track> = emptyList(),
     blockedArtists: List<String> = emptyList(),
+    tasteStatus: TasteModel.Status = TasteModel.Status(),
 ) {
     val c = SonivellTheme.colors
     Column(
@@ -189,6 +193,20 @@ fun SettingsScreen(
                                 actions.onUpdate { it.copy(artistVariety = level) }
                             }
                         }
+                }
+            }
+            Section(stringResource(R.string.taste_section)) {
+                SwitchRow(
+                    stringResource(R.string.taste_learn),
+                    stringResource(R.string.taste_learn_hint),
+                    settings.learnTaste,
+                ) { on -> actions.onUpdate { it.copy(learnTaste = on) } }
+                if (settings.learnTaste) {
+                    Text(tasteStatusText(tasteStatus), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+                    LinkRow(stringResource(R.string.taste_train_now), stringResource(R.string.taste_train_now_hint), actions.onRetrainTaste)
+                }
+                if (tasteStatus.trained) {
+                    LinkRow(stringResource(R.string.taste_forget), stringResource(R.string.taste_forget_hint), actions.onForgetTaste)
                 }
             }
         }
@@ -364,6 +382,21 @@ private fun RemovableRow(title: String, subtitle: String, onRemove: () -> Unit) 
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1)
         }
         IconBtn(SonivellTheme.icons.close, stringResource(R.string.allow_again, title), onRemove, tint = c.textSecondary, iconSize = 18.dp)
+    }
+}
+
+/** "Treinado com 320 escutas há 2 h · acerta 74% dos pulos" (ou o que falta para começar). */
+@Composable
+private fun tasteStatusText(st: TasteModel.Status): String {
+    if (!st.trained) return stringResource(R.string.taste_not_yet)
+    val ago = android.text.format.DateUtils.getRelativeTimeSpanString(
+        st.trainedAtMs, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS,
+    ).toString()
+    val base = stringResource(R.string.taste_trained, st.examples, ago)
+    return when {
+        st.profileOnly -> base + " · " + stringResource(R.string.taste_profile_only)
+        st.accuracy != null -> base + " · " + stringResource(R.string.taste_accuracy, (st.accuracy * 100).toInt())
+        else -> base
     }
 }
 

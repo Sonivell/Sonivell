@@ -60,6 +60,12 @@ interface SmartEngine {
      * usando o codificador de texto do SMART. Ids do mais ao menos parecido.
      */
     suspend fun semanticSearch(query: String, limit: Int): List<Long> = emptyList()
+
+    /**
+     * A "impressão digital" de som de cada faixa já ouvida pelo modelo (vetor do LatentJam).
+     * Faixas ainda não analisadas ficam de fora. É a base do aprendizado do gosto.
+     */
+    suspend fun embeddings(ids: List<Long>): Map<Long, FloatArray> = emptyMap()
 }
 
 object NoSmartEngine : SmartEngine {

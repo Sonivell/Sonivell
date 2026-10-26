@@ -70,7 +70,11 @@ import kotlinx.coroutines.delay
 /** Por que a faixa atual está tocando (aba "Por que tocou"). */
 sealed interface PlayReason {
     /** Escolhida pelo SMART por soar parecido com [seed]. */
-    data class Smart(val seed: Track) : PlayReason
+    data class Smart(
+        val seed: Track,
+        /** Subiu na fila pelo gosto aprendido: período do dia (0 madrugada … 3 noite), -1 = gosto geral, null = não. */
+        val taste: Int? = null,
+    ) : PlayReason
 
     /** É a faixa de onde o mix SMART partiu. */
     data object MixStart : PlayReason
@@ -419,6 +423,22 @@ private fun WhyPeek(reason: PlayReason, sourceLabel: String) {
                 color = c.textPrimary,
             )
             if (reason is PlayReason.Smart) {
+                reason.taste?.let { part ->
+                    Text(
+                        stringResource(
+                            when (part) {
+                                0 -> R.string.why_taste_0
+                                1 -> R.string.why_taste_1
+                                2 -> R.string.why_taste_2
+                                3 -> R.string.why_taste_3
+                                else -> R.string.why_taste_any
+                            }
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = c.accent,
+                    )
+                }
                 Text(stringResource(R.string.why_smart_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
             }
         }

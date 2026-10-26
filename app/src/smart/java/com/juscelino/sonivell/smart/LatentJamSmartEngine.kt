@@ -147,6 +147,23 @@ internal class LatentJamSmartEngine private constructor(context: Context) : Smar
         engine.semanticSearch(query, limit).map { it.trackId }
     }
 
+    override suspend fun embeddings(ids: List<Long>): Map<Long, FloatArray> = withContext(Dispatchers.Default) {
+        try {
+            ensureInitialized()
+            val out = HashMap<Long, FloatArray>(ids.size)
+            for (id in ids) {
+                currentCoroutineContext().ensureActive()
+                engine.embedding(TrackId(id.toString()))?.let { out[id] = it }
+            }
+            out
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            Log.w(TAG, "Vetores de som indisponíveis", failure)
+            emptyMap()
+        }
+    }
+
     override fun setArtistVariety(level: Int) {
         // Mesmos degraus do ajuste "Variedade de artistas" do LatentJam.
         val penalties = listOf(0f, 0.25f, 0.5f, 1f, 2f)

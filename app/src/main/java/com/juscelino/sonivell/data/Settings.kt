@@ -37,6 +37,8 @@ data class AppSettings(
     val artistVariety: Int = 2,
     /** Normalizar o volume entre faixas pelo ReplayGain das tags. */
     val normalize: Boolean = false,
+    /** O SMART aprende o seu gosto com o histórico (só na edição smart). */
+    val learnTaste: Boolean = true,
 )
 
 /** Ajustes do app, nas preferências locais. O serviço de reprodução lê as mesmas chaves. */
@@ -58,6 +60,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putBoolean(KEY_HISTORY_PAUSED, next.historyPaused)
             .putInt(KEY_ARTIST_VARIETY, next.artistVariety)
             .putBoolean(KEY_NORMALIZE, next.normalize)
+            .putBoolean(KEY_LEARN_TASTE, next.learnTaste)
             .apply()
     }
 
@@ -73,6 +76,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         historyPaused = prefs.getBoolean(KEY_HISTORY_PAUSED, false),
         artistVariety = prefs.getInt(KEY_ARTIST_VARIETY, 2),
         normalize = prefs.getBoolean(KEY_NORMALIZE, false),
+        learnTaste = prefs.getBoolean(KEY_LEARN_TASTE, true),
     )
 
     companion object {
@@ -86,5 +90,6 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_HISTORY_PAUSED = "history_paused"
         const val KEY_ARTIST_VARIETY = "artist_variety"
         const val KEY_NORMALIZE = "normalize"
+        const val KEY_LEARN_TASTE = "learn_taste"
     }
 }

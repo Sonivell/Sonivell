@@ -273,6 +273,8 @@ private fun MainContent(vm: MainViewModel) {
     var confirmReset by remember { mutableStateOf(false) }
     val settings by vm.settings.collectAsStateWithLifecycle()
     val smartSeeds by vm.smartSeeds.collectAsStateWithLifecycle()
+    val tasteStatus by vm.tasteStatus.collectAsStateWithLifecycle()
+    val tasteBoosts by vm.tasteBoosts.collectAsStateWithLifecycle()
     val uiStyle = settings.uiStyle
     val equalizer by vm.equalizer.collectAsStateWithLifecycle()
     val stats by vm.stats.collectAsStateWithLifecycle()
@@ -629,7 +631,10 @@ private fun MainContent(vm: MainViewModel) {
                         onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
                         onUnblockTrack = { vm.recommendations.blockTrack(it, false) },
                         onUnblockArtist = { vm.recommendations.blockArtist(it, false) },
+                        onRetrainTaste = { vm.maybeTrainTaste(force = true) },
+                        onForgetTaste = vm::forgetTaste,
                     ),
+                    tasteStatus = tasteStatus,
                     blockedTracks = library.allTracks.filter { it.id in blockedTracks },
                     blockedArtists = blockedArtists.sorted(),
                 )
@@ -693,7 +698,7 @@ private fun MainContent(vm: MainViewModel) {
                             val upNext = player.upNext.take(3).mapNotNull { iv -> byId[iv.value.mediaId.toLongOrNull()] }
                             val seed = smartSeeds[t.id]?.let(byId::get)
                             val reason = when {
-                                seed != null && seed.id != t.id -> PlayReason.Smart(seed)
+                                seed != null && seed.id != t.id -> PlayReason.Smart(seed, tasteBoosts[t.id])
                                 smartSeeds.values.contains(t.id) -> PlayReason.MixStart
                                 shuffleMode == ShuffleMode.ON -> PlayReason.Shuffle
                                 else -> PlayReason.Chosen
