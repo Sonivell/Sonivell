@@ -44,7 +44,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          deb=$(ls desktop/build/compose/binaries/main/deb/*.deb | head -n 1)
+          deb=$(find desktop/build -name "*.deb" | head -n 1)
+          [ -n "$deb" ] || { echo "::error::nenhum .deb encontrado: $(find desktop/build -maxdepth 6 -name '*deb*' | head -5 | tr '\n' ' ')"; exit 1; }
           work=$(mktemp -d)
           dpkg-deb -R "$deb" "$work/pkg"
           control="$work/pkg/DEBIAN/control"
