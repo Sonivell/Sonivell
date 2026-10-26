@@ -78,52 +78,24 @@ import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
 
-enum class LibraryMode { Inicio, Buscar, Biblioteca }
-
 /** Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
-private data class LibraryLabels(val search: String, val library: String, val liked: String, val forYou: String)
+private data class ContrasteLabels(val search: String, val library: String, val liked: String, val forYou: String)
 
-data class LibraryActions(
-    val onQuery: (String) -> Unit,
-    val onTab: (LibraryTab) -> Unit,
-    val onSort: () -> Unit,
-    val onRefresh: () -> Unit,
-    val onPlay: (tracks: List<Track>, index: Int, source: String) -> Unit,
-    val onShuffleAll: () -> Unit,
-    val onPlayMix: (Track) -> Unit = {},
-    val onTrackMenu: (Track) -> Unit = {},
-    val onOpenAlbum: (Long) -> Unit = {},
-    val onOpenArtist: (String) -> Unit = {},
-    val onOpenGenre: (String) -> Unit = {},
-    val onOpenFolder: (String) -> Unit = {},
-    val onOpenPlaylist: (Long) -> Unit = {},
-    val onNewPlaylist: () -> Unit = {},
-    val onImportPlaylist: () -> Unit = {},
-    val onOpenSettings: () -> Unit = {},
-    /** Playlists automáticas: chave como "mais-ouvidas" ou "decada-1990". */
-    val onOpenAuto: (String) -> Unit = {},
-    val onOpenSmartPlaylist: (Long) -> Unit = {},
-    val onNewSmartPlaylist: () -> Unit = {},
-    /** "Continuar ouvindo": toca a faixa a partir de onde parou. */
-    val onResume: (Track, Long) -> Unit = { _, _ -> },
-    val onOpenSearch: () -> Unit = {},
-)
-
-private enum class SymbolKind { Smart, Auto, Folder }
+private enum class ContrasteSymbol { Smart, Auto, Folder }
 
 /** Capa de um item da biblioteca: a de uma faixa, o coração das Curtidas ou um ícone. */
-private sealed interface ItemArt {
-    data class Of(val track: Track?) : ItemArt
-    data object Liked : ItemArt
-    data class Symbol(val kind: SymbolKind) : ItemArt
+private sealed interface ContrasteArt {
+    data class Of(val track: Track?) : ContrasteArt
+    data object Liked : ContrasteArt
+    data class Symbol(val kind: ContrasteSymbol) : ContrasteArt
 }
 
 /** Linha (ou bloco da grade) da Biblioteca e da Busca 2.0: capa, título e "Tipo · detalhe". */
-private data class LibItem(
+private data class ContrasteItem(
     val key: String,
     val title: String,
     val subtitle: String,
-    val art: ItemArt,
+    val art: ContrasteArt,
     val round: Boolean = false,
     val pinned: Boolean = false,
     val onClick: () -> Unit,
@@ -132,8 +104,9 @@ private data class LibItem(
 /** Roxo das Curtidas, como no mockup 2.0. */
 private val LikedTone = Color(0xFF3A2F7A)
 
+/** Layout Contraste (2.0). */
 @Composable
-fun LibraryScreen(
+fun LibraryScreenContraste(
     mode: LibraryMode,
     state: LibraryState,
     favorites: Set<Long>,
@@ -153,7 +126,7 @@ fun LibraryScreen(
     val focus = remember { FocusRequester() }
     var grid by rememberSaveable { mutableStateOf(false) }
     var showAllSongs by rememberSaveable(state.query) { mutableStateOf(false) }
-    val labels = LibraryLabels(
+    val labels = ContrasteLabels(
         search = stringResource(R.string.source_search),
         library = stringResource(R.string.nav_library),
         liked = stringResource(R.string.source_liked),
@@ -279,7 +252,7 @@ fun LibraryScreen(
                                 Spacer(Modifier.weight(1f))
                             }
                             IconBtn(
-                                if (grid) icons.queue else icons.album,
+                                if (grid) icons.list else icons.grid,
                                 stringResource(if (grid) R.string.cd_view_list else R.string.cd_view_grid),
                                 { grid = !grid },
                                 tint = c.textSecondary,
@@ -327,27 +300,27 @@ private fun buildLibraryItems(
     favorites: Set<Long>,
     decades: List<Int>,
     actions: LibraryActions,
-): List<LibItem> {
+): List<ContrasteItem> {
     val byId = state.allTracks.associateBy { it.id }
     val liked = state.allTracks.count { it.id in favorites }
-    val likedItem = LibItem(
+    val likedItem = ContrasteItem(
         key = "liked",
         title = res.getString(R.string.source_liked),
         subtitle = res.getString(R.string.kind_playlist, songs(res, liked)),
-        art = ItemArt.Liked,
+        art = ContrasteArt.Liked,
         pinned = true,
         onClick = { actions.onOpenAuto("curtidas") },
     )
     val smart = smartPlaylists.map { sp ->
-        LibItem("sp-${sp.id}", sp.name, res.getString(R.string.kind_smart), ItemArt.Symbol(SymbolKind.Smart), onClick = { actions.onOpenSmartPlaylist(sp.id) })
+        ContrasteItem("sp-${sp.id}", sp.name, res.getString(R.string.kind_smart), ContrasteArt.Symbol(ContrasteSymbol.Smart), onClick = { actions.onOpenSmartPlaylist(sp.id) })
     }
     val own = playlists.map { p ->
         val first = p.trackIds.firstNotNullOfOrNull(byId::get)
-        LibItem("pl-${p.id}", p.name, res.getString(R.string.kind_playlist, songs(res, p.trackIds.count { it in byId })), ItemArt.Of(first), onClick = { actions.onOpenPlaylist(p.id) })
+        ContrasteItem("pl-${p.id}", p.name, res.getString(R.string.kind_playlist, songs(res, p.trackIds.count { it in byId })), ContrasteArt.Of(first), onClick = { actions.onOpenPlaylist(p.id) })
     }
     val albums = state.albums.map { a -> albumItem(res, a, actions) }
     val artists = state.artists.map { a ->
-        LibItem("ar-${a.name}", a.name, res.getString(R.string.kind_artist), ItemArt.Of(a.tracks.firstOrNull()), round = true, onClick = { actions.onOpenArtist(a.name) })
+        ContrasteItem("ar-${a.name}", a.name, res.getString(R.string.kind_artist), ContrasteArt.Of(a.tracks.firstOrNull()), round = true, onClick = { actions.onOpenArtist(a.name) })
     }
     return when (state.tab) {
         LibraryTab.Tudo -> listOf(likedItem) + smart + own + albums + artists
@@ -359,56 +332,56 @@ private fun buildLibraryItems(
                 "recentes" to R.string.auto_recent_added,
                 "ouvidas-recentemente" to R.string.auto_recent_played,
             ).map { (key, label) ->
-                LibItem("auto-$key", res.getString(label), res.getString(R.string.kind_auto), ItemArt.Symbol(SymbolKind.Auto), onClick = { actions.onOpenAuto(key) })
+                ContrasteItem("auto-$key", res.getString(label), res.getString(R.string.kind_auto), ContrasteArt.Symbol(ContrasteSymbol.Auto), onClick = { actions.onOpenAuto(key) })
             } + decades.map { d ->
-                LibItem("auto-decada-$d", decadeText(res, d), res.getString(R.string.kind_auto), ItemArt.Symbol(SymbolKind.Auto), onClick = { actions.onOpenAuto("decada-$d") })
+                ContrasteItem("auto-decada-$d", decadeText(res, d), res.getString(R.string.kind_auto), ContrasteArt.Symbol(ContrasteSymbol.Auto), onClick = { actions.onOpenAuto("decada-$d") })
             }
             listOf(likedItem) + own + smart + autos
         }
         LibraryTab.Albuns -> albums
         LibraryTab.Artistas -> artists
         LibraryTab.Generos -> state.genres.map { g ->
-            LibItem("g-${g.name.lowercase()}", g.name, res.getString(R.string.kind_genre, songs(res, g.tracks.size)), ItemArt.Of(g.tracks.firstOrNull()), onClick = { actions.onOpenGenre(g.name) })
+            ContrasteItem("g-${g.name.lowercase()}", g.name, res.getString(R.string.kind_genre, songs(res, g.tracks.size)), ContrasteArt.Of(g.tracks.firstOrNull()), onClick = { actions.onOpenGenre(g.name) })
         }
         LibraryTab.Pastas -> state.folders.map { f ->
-            LibItem("f-${f.path}", f.name, res.getString(R.string.kind_folder, songs(res, f.tracks.size)), ItemArt.Symbol(SymbolKind.Folder), onClick = { actions.onOpenFolder(f.path) })
+            ContrasteItem("f-${f.path}", f.name, res.getString(R.string.kind_folder, songs(res, f.tracks.size)), ContrasteArt.Symbol(ContrasteSymbol.Folder), onClick = { actions.onOpenFolder(f.path) })
         }
         LibraryTab.Musicas -> emptyList()
     }
 }
 
 private fun albumItem(res: Resources, a: Album, actions: LibraryActions) =
-    LibItem("al-${a.id}", a.title, res.getString(R.string.kind_album, a.artist), ItemArt.Of(a.tracks.firstOrNull()), onClick = { actions.onOpenAlbum(a.id) })
+    ContrasteItem("al-${a.id}", a.title, res.getString(R.string.kind_album, a.artist), ContrasteArt.Of(a.tracks.firstOrNull()), onClick = { actions.onOpenAlbum(a.id) })
 
 /** O ícone vem do estilo escolhido (Fino ou Arredondado). */
 @Composable
-private fun symbolIcon(kind: SymbolKind): ImageVector {
+private fun symbolIcon(kind: ContrasteSymbol): ImageVector {
     val icons = SonivellTheme.icons
     return when (kind) {
-        SymbolKind.Smart -> icons.smart
-        SymbolKind.Auto -> icons.musicNote
-        SymbolKind.Folder -> icons.folder
+        ContrasteSymbol.Smart -> icons.smart
+        ContrasteSymbol.Auto -> icons.musicNote
+        ContrasteSymbol.Folder -> icons.folder
     }
 }
 
 @Composable
-private fun ItemArtBox(art: ItemArt, size: Dp?, round: Boolean, modifier: Modifier = Modifier) {
+private fun ContrasteArtBox(art: ContrasteArt, size: Dp?, round: Boolean, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
     val shape = if (round) CircleShape else RoundedCornerShape(8.dp)
     val sized = (if (size != null) modifier.size(size) else modifier.fillMaxWidth().aspectRatio(1f)).clip(shape)
     when (art) {
-        is ItemArt.Of -> AlbumArt(art.track, sized, corner = if (round) 999.dp else 8.dp)
-        ItemArt.Liked -> Box(sized.background(LikedTone), contentAlignment = Alignment.Center) {
+        is ContrasteArt.Of -> AlbumArt(art.track, sized, corner = if (round) 999.dp else 8.dp)
+        ContrasteArt.Liked -> Box(sized.background(LikedTone), contentAlignment = Alignment.Center) {
             Icon(SonivellTheme.icons.liked, null, Modifier.size(if (size != null) size * 0.4f else 36.dp), tint = Color.White)
         }
-        is ItemArt.Symbol -> Box(sized.background(c.surfaceHigh), contentAlignment = Alignment.Center) {
+        is ContrasteArt.Symbol -> Box(sized.background(c.surfaceHigh), contentAlignment = Alignment.Center) {
             Icon(symbolIcon(art.kind), null, Modifier.size(if (size != null) size * 0.38f else 32.dp), tint = c.textSecondary)
         }
     }
 }
 
 @Composable
-private fun ItemRow(item: LibItem) {
+private fun ItemRow(item: ContrasteItem) {
     val c = SonivellTheme.colors
     Row(
         Modifier
@@ -420,7 +393,7 @@ private fun ItemRow(item: LibItem) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        ItemArtBox(item.art, 64.dp, item.round)
+        ContrasteArtBox(item.art, 64.dp, item.round)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(item.title, style = MaterialTheme.typography.titleMedium, color = if (item.pinned) c.accent else c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(item.subtitle, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -429,7 +402,7 @@ private fun ItemRow(item: LibItem) {
 }
 
 @Composable
-private fun ItemGrid(row: List<LibItem>, modifier: Modifier = Modifier) {
+private fun ItemGrid(row: List<ContrasteItem>, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         row.forEach { item ->
@@ -438,7 +411,7 @@ private fun ItemGrid(row: List<LibItem>, modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.spacedBy(6.dp),
                 horizontalAlignment = if (item.round) Alignment.CenterHorizontally else Alignment.Start,
             ) {
-                ItemArtBox(item.art, null, item.round)
+                ContrasteArtBox(item.art, null, item.round)
                 Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = if (item.pinned) c.accent else c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(item.subtitle, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -474,7 +447,7 @@ private fun EmptyText(text: String) {
 private fun LazyListScope.homeContent(
     state: LibraryState,
     favorites: Set<Long>,
-    labels: LibraryLabels,
+    labels: ContrasteLabels,
     actions: LibraryActions,
     smartProgress: SmartProgress,
     forYou: ForYouState,
@@ -528,7 +501,7 @@ private fun LazyListScope.homeContent(
     }
 }
 
-private data class Quick(val key: String, val label: String, val art: ItemArt, val onClick: () -> Unit)
+private data class ContrasteQuick(val key: String, val label: String, val art: ContrasteArt, val onClick: () -> Unit)
 
 /** Atalhos 2×3: Curtidas, um mix, a década que mais aparece, nunca tocadas, recentes e um álbum. */
 @Composable
@@ -539,19 +512,19 @@ private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouS
         val byDecade = state.allTracks.groupBy { t -> t.year?.takeIf { it in 1900..2100 }?.let { it / 10 * 10 } }
         val topDecade = decades.maxByOrNull { byDecade[it]?.size ?: 0 }
         buildList {
-            add(Quick("liked", res.getString(R.string.source_liked), ItemArt.Liked) { actions.onOpenAuto("curtidas") })
+            add(ContrasteQuick("liked", res.getString(R.string.source_liked), ContrasteArt.Liked) { actions.onOpenAuto("curtidas") })
             forYou.mixSeeds.firstOrNull()?.let { seed ->
-                add(Quick("mix", res.getString(R.string.fy_mix_of, seed.artist), ItemArt.Of(seed)) { actions.onPlayMix(seed) })
-            } ?: add(Quick("most", res.getString(R.string.auto_most), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("mais-ouvidas") })
+                add(ContrasteQuick("mix", res.getString(R.string.fy_mix_of, seed.artist), ContrasteArt.Of(seed)) { actions.onPlayMix(seed) })
+            } ?: add(ContrasteQuick("most", res.getString(R.string.auto_most), ContrasteArt.Symbol(ContrasteSymbol.Auto)) { actions.onOpenAuto("mais-ouvidas") })
             topDecade?.let { d ->
-                add(Quick("dec", decadeText(res, d), ItemArt.Of(byDecade[d]?.firstOrNull())) { actions.onOpenAuto("decada-$d") })
+                add(ContrasteQuick("dec", decadeText(res, d), ContrasteArt.Of(byDecade[d]?.firstOrNull())) { actions.onOpenAuto("decada-$d") })
             }
-            add(Quick("never", res.getString(R.string.auto_never), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("nunca-tocadas") })
-            add(Quick("played", res.getString(R.string.auto_recent_played), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("ouvidas-recentemente") })
+            add(ContrasteQuick("never", res.getString(R.string.auto_never), ContrasteArt.Symbol(ContrasteSymbol.Auto)) { actions.onOpenAuto("nunca-tocadas") })
+            add(ContrasteQuick("played", res.getString(R.string.auto_recent_played), ContrasteArt.Symbol(ContrasteSymbol.Auto)) { actions.onOpenAuto("ouvidas-recentemente") })
             state.recentAlbums.firstOrNull()?.let { a ->
-                add(Quick("album", a.title, ItemArt.Of(a.tracks.firstOrNull())) { actions.onOpenAlbum(a.id) })
-            } ?: add(Quick("added", res.getString(R.string.auto_recent_added), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("recentes") })
-            if (size < 6) add(Quick("least", res.getString(R.string.auto_least), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("menos-ouvidas") })
+                add(ContrasteQuick("album", a.title, ContrasteArt.Of(a.tracks.firstOrNull())) { actions.onOpenAlbum(a.id) })
+            } ?: add(ContrasteQuick("added", res.getString(R.string.auto_recent_added), ContrasteArt.Symbol(ContrasteSymbol.Auto)) { actions.onOpenAuto("recentes") })
+            if (size < 6) add(ContrasteQuick("least", res.getString(R.string.auto_least), ContrasteArt.Symbol(ContrasteSymbol.Auto)) { actions.onOpenAuto("menos-ouvidas") })
         }.take(6)
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -587,15 +560,15 @@ private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouS
 }
 
 @Composable
-private fun QuickArt(art: ItemArt) {
+private fun QuickArt(art: ContrasteArt) {
     val c = SonivellTheme.colors
     val m = Modifier.size(56.dp)
     when (art) {
-        is ItemArt.Of -> AlbumArt(art.track, m, corner = 0.dp)
-        ItemArt.Liked -> Box(m.background(LikedTone), contentAlignment = Alignment.Center) {
+        is ContrasteArt.Of -> AlbumArt(art.track, m, corner = 0.dp)
+        ContrasteArt.Liked -> Box(m.background(LikedTone), contentAlignment = Alignment.Center) {
             Icon(SonivellTheme.icons.liked, null, Modifier.size(22.dp), tint = Color.White)
         }
-        is ItemArt.Symbol -> Box(m.background(c.surface), contentAlignment = Alignment.Center) {
+        is ContrasteArt.Symbol -> Box(m.background(c.surface), contentAlignment = Alignment.Center) {
             Icon(symbolIcon(art.kind), null, Modifier.size(22.dp), tint = c.accent)
         }
     }
@@ -756,7 +729,7 @@ private fun SmartAnalysisCard(progress: SmartProgress) {
 private fun LazyListScope.searchContent(
     state: LibraryState,
     currentId: Long?,
-    labels: LibraryLabels,
+    labels: ContrasteLabels,
     actions: LibraryActions,
     playlists: List<Playlist>,
     semanticResults: List<Track>,
@@ -848,7 +821,7 @@ private fun LazyListScope.searchContent(
     if (artists.isNotEmpty()) {
         item(key = "s-artists") {
             SearchGroup(stringResource(R.string.tab_artists), artists.map { a ->
-                LibItem("s-ar-${a.name}", a.name, stringResource(R.string.kind_artist), ItemArt.Of(a.tracks.firstOrNull()), round = true, onClick = { actions.onOpenArtist(a.name) })
+                ContrasteItem("s-ar-${a.name}", a.name, stringResource(R.string.kind_artist), ContrasteArt.Of(a.tracks.firstOrNull()), round = true, onClick = { actions.onOpenArtist(a.name) })
             })
         }
     }
@@ -863,7 +836,7 @@ private fun LazyListScope.searchContent(
             val byId = remember(state.allTracks) { state.allTracks.associateBy { it.id } }
             val r = LocalContext.current.resources
             SearchGroup(stringResource(R.string.tab_playlists), foundPlaylists.map { p ->
-                LibItem("s-pl-${p.id}", p.name, r.getString(R.string.kind_playlist, songs(r, p.trackIds.count { it in byId })), ItemArt.Of(p.trackIds.firstNotNullOfOrNull(byId::get)), onClick = { actions.onOpenPlaylist(p.id) })
+                ContrasteItem("s-pl-${p.id}", p.name, r.getString(R.string.kind_playlist, songs(r, p.trackIds.count { it in byId })), ContrasteArt.Of(p.trackIds.firstNotNullOfOrNull(byId::get)), onClick = { actions.onOpenPlaylist(p.id) })
             })
         }
     }
@@ -940,7 +913,7 @@ private fun InterpChip(text: String) {
 }
 
 @Composable
-private fun SearchGroup(title: String, items: List<LibItem>) {
+private fun SearchGroup(title: String, items: List<ContrasteItem>) {
     Column(Modifier.padding(top = 16.dp)) {
         SectionTitle(title, Modifier.padding(bottom = 4.dp))
         items.forEach { ItemRow(it) }
@@ -960,7 +933,7 @@ private fun BestCard(title: String, subtitle: String, track: Track?, round: Bool
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        ItemArtBox(ItemArt.Of(track), 72.dp, round)
+        ContrasteArtBox(ContrasteArt.Of(track), 72.dp, round)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(title, style = MaterialTheme.typography.titleLarge, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)

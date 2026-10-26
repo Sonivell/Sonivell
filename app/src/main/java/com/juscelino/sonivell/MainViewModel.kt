@@ -123,6 +123,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val player = PlayerConnection(app, viewModelScope)
     val playerState: StateFlow<PlayerState> = player.state
 
+    private val _smartSeeds = MutableStateFlow<Map<Long, Long>>(emptyMap())
+
+    /** Faixa escolhida pelo SMART → a faixa a partir da qual o motor a escolheu ("Por que tocou"). */
+    val smartSeeds: StateFlow<Map<Long, Long>> = _smartSeeds
+
     private val prefs = app.getSharedPreferences("sonivell", Context.MODE_PRIVATE)
 
     /** Motor SMART: o do LatentJam na edição smart, um "nada" na lite. */
@@ -583,6 +588,26 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Botões separados do layout Ondas: liga/desliga o SMART ou o aleatório comum. */
+    fun setShuffleMode(mode: ShuffleMode) {
+        if (mode == shuffleMode.value) return
+        when (mode) {
+            ShuffleMode.OFF -> {
+                player.setShuffle(false)
+                setSmartMode(false)
+            }
+            ShuffleMode.ON -> {
+                setSmartMode(false)
+                player.setShuffle(true)
+            }
+            ShuffleMode.SMART -> if (smart.isAvailable) {
+                player.setShuffle(false)
+                setSmartMode(true)
+                replanFromCurrent()
+            }
+        }
+    }
+
     private fun setSmartMode(on: Boolean) {
         smartMode.value = on
         prefs.edit().putBoolean("smart_mode", on).apply()
@@ -621,6 +646,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 history = history.recent(SMART_HISTORY_LIMIT),
             )
             val planned = ids.mapNotNull(byId::get)
+            noteSmartSeed(planned, seed)
             if (planned.isNotEmpty()) player.replaceUpNext(planned)
         }
     }
@@ -641,6 +667,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 history = history.recent(SMART_HISTORY_LIMIT),
             )
             val more = ids.mapNotNull(byId::get)
+            noteSmartSeed(more, seed)
             if (more.isEmpty()) exhaustedSeedId = lastId
             player.append(more)
         }
@@ -704,6 +731,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         return smart.startQueue(seed, recommendable(), SMART_PLAN_LENGTH, history.recent(SMART_HISTORY_LIMIT))
             .filter { it !in excluding }
             .mapNotNull(byId::get)
+            .also { noteSmartSeed(it, seed) }
+    }
+
+    private fun noteSmartSeed(planned: List<Track>, seed: Track) {
+        if (planned.isEmpty()) return
+        _smartSeeds.update { old ->
+            val next = LinkedHashMap(old)
+            planned.forEach { next.remove(it.id); next[it.id] = seed.id }
+            // Guarda só as mais recentes: o bastante para a fila atual.
+            if (next.size > 600) next.keys.take(next.size - 600).forEach(next::remove)
+            next
+        }
     }
 
     private companion object {

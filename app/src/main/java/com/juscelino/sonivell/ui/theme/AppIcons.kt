@@ -3,6 +3,7 @@ package com.juscelino.sonivell.ui.theme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.VolumeDown
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.LibraryMusic
@@ -63,6 +65,9 @@ enum class IconStyle {
 
     /** Material Icons Rounded, cheio e arredondado. */
     ARREDONDADO,
+
+    /** Os ícones dos mockups 2.0 e 3.0: traço redondo de 1,6, com a onda do Sonivell. */
+    TRACO,
 }
 
 /**
@@ -121,6 +126,12 @@ class SonivellIcons(
     val homeActive: ImageVector,
     val library: ImageVector,
     val libraryActive: ImageVector,
+    /** Aba Para você do layout Ondas. */
+    val forYou: ImageVector,
+    val forYouActive: ImageVector,
+    /** Alternar a Biblioteca entre grade e lista. */
+    val grid: ImageVector,
+    val list: ImageVector,
 )
 
 val RoundedIcons = SonivellIcons(
@@ -174,6 +185,10 @@ val RoundedIcons = SonivellIcons(
     homeActive = Icons.Rounded.Home,
     library = Icons.Rounded.LibraryMusic,
     libraryActive = Icons.Rounded.LibraryMusic,
+    forYou = Icons.Rounded.Home,
+    forYouActive = Icons.Rounded.Home,
+    grid = Icons.Rounded.GridView,
+    list = Icons.AutoMirrored.Rounded.List,
 )
 
 /** Monta um vetor a partir de um caminho do Material Symbols (viewBox "0 -960 960 960"). */
@@ -245,12 +260,17 @@ val FinoIcons: SonivellIcons by lazy {
         homeActive = symbol("homeActive", p.HOME_FILL),
         library = symbol("library", p.LIBRARY),
         libraryActive = symbol("libraryActive", p.LIBRARY_FILL),
+        forYou = symbol("forYou", p.HOME),
+        forYouActive = symbol("forYouActive", p.HOME_FILL),
+        grid = TracoIcons.grid,
+        list = TracoIcons.list,
     )
 }
 
 fun IconStyle.icons(): SonivellIcons = when (this) {
     IconStyle.FINO -> FinoIcons
     IconStyle.ARREDONDADO -> RoundedIcons
+    IconStyle.TRACO -> TracoIcons
 }
 
 val LocalSonivellIcons = staticCompositionLocalOf { RoundedIcons }

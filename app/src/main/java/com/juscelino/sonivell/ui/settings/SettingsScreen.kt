@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.AppSettings
+import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
@@ -92,6 +93,18 @@ fun SettingsScreen(
         }
 
         Section(stringResource(R.string.settings_appearance)) {
+            RowLabel(stringResource(R.string.settings_layout))
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
+                    Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
+                    Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
+                ).forEach { (style, name, hint) ->
+                    LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
+                        actions.onUpdate { it.copy(uiStyle = style) }
+                    }
+                }
+            }
             RowLabel(stringResource(R.string.settings_theme))
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
@@ -139,7 +152,7 @@ fun SettingsScreen(
                 }
             }
             RowLabel(stringResource(R.string.settings_icon_style))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconStyle.entries.forEach { style ->
                     IconStyleOption(
                         style = style,
@@ -222,7 +235,32 @@ fun SettingsScreen(
 }
 
 /** Nomes dos estilos de ícone, na ordem de [IconStyle]. */
-private val iconStyleNames = listOf(R.string.icon_style_fine, R.string.icon_style_rounded)
+private val iconStyleNames = listOf(R.string.icon_style_fine, R.string.icon_style_rounded, R.string.icon_style_line)
+
+/** Uma opção de layout: nome e uma linha do que muda; a escolhida ganha contorno na cor de destaque. */
+@Composable
+private fun LayoutOption(name: String, hint: String, selected: Boolean, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    val shape = RoundedCornerShape(16.dp)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(if (selected) c.surfaceHigh else c.surface)
+            .border(if (selected) 2.dp else 1.dp, if (selected) c.accent else c.outline, shape)
+            .clickable(role = Role.RadioButton, onClick = onClick)
+            .semantics { this.selected = selected }
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(name, style = MaterialTheme.typography.titleSmall, color = c.textPrimary)
+            Text(hint, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+        }
+        if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.accent)
+    }
+}
 
 /** Cartão com uma amostra dos ícones do estilo, para comparar antes de escolher. */
 @Composable
@@ -243,11 +281,11 @@ private fun IconStyleOption(
             .border(if (selected) 2.dp else 1.dp, if (selected) c.accent else c.outline, shape)
             .clickable(role = Role.RadioButton, onClick = onClick)
             .semantics { this.selected = selected }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 12.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            listOf(icons.play, icons.liked, icons.shuffle, icons.queue).forEach {
-                Icon(it, null, Modifier.size(22.dp), tint = if (selected) c.accent else c.textPrimary)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf(icons.play, icons.liked, icons.shuffle).forEach {
+                Icon(it, null, Modifier.size(20.dp), tint = if (selected) c.accent else c.textPrimary)
             }
         }
         Text(

@@ -76,27 +76,14 @@ import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import android.graphics.Color as AColor
 
-data class NowPlayingActions(
-    val onClose: () -> Unit,
-    val onMore: () -> Unit,
-    val onTogglePlay: () -> Unit,
-    val onNext: () -> Unit,
-    val onPrevious: () -> Unit,
-    val onSeek: (Long) -> Unit,
-    val onShuffle: () -> Unit,
-    val onRepeat: () -> Unit,
-    val onFavorite: () -> Unit,
-    val onLyrics: () -> Unit,
-    val onQueue: () -> Unit,
-    val onSleepTimer: () -> Unit = {},
-)
 
 /** Texto do player 2.0: sempre claro, sobre o fundo tingido pela capa. */
 private val OnTint = Color.White
 private val OnTintSoft = Color.White.copy(alpha = 0.78f)
 
+/** Player do layout Contraste (2.0). */
 @Composable
-fun NowPlayingScreen(
+fun NowPlayingScreenContraste(
     track: Track,
     state: PlayerState,
     shuffleMode: ShuffleMode,

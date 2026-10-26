@@ -53,6 +53,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -103,12 +107,20 @@ import androidx.navigation.compose.rememberNavController
 import com.juscelino.sonivell.MainViewModel
 import com.juscelino.sonivell.ShuffleMode
 import com.juscelino.sonivell.playback.toTrack
+import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.ui.components.MiniPlayer
+import com.juscelino.sonivell.ui.components.MiniPlayerClassica
+import com.juscelino.sonivell.ui.components.MiniPlayerOndas
 import com.juscelino.sonivell.ui.library.LibraryActions
 import com.juscelino.sonivell.ui.library.LibraryMode
-import com.juscelino.sonivell.ui.library.LibraryScreen
+import com.juscelino.sonivell.ui.library.LibraryScreenClassica
+import com.juscelino.sonivell.ui.library.LibraryScreenContraste
+import com.juscelino.sonivell.ui.library.LibraryScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingActions
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreen
+import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenClassica
+import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenContraste
+import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenOndas
+import com.juscelino.sonivell.ui.nowplaying.PlayReason
 import com.juscelino.sonivell.ui.queue.QueueActions
 import com.juscelino.sonivell.ui.queue.QueueScreen
 import com.juscelino.sonivell.ui.theme.SonivellIcons
@@ -152,10 +164,13 @@ private data class Tab(
     @StringRes val label: Int,
     val icon: (SonivellIcons) -> ImageVector,
     val activeIcon: (SonivellIcons) -> ImageVector,
+    /** Ícones no layout Ondas (o Para você usa a onda). */
+    val ondasIcon: (SonivellIcons) -> ImageVector = icon,
+    val ondasActiveIcon: (SonivellIcons) -> ImageVector = activeIcon,
 )
 
 private val tabs = listOf(
-    Tab(Routes.HOME, R.string.nav_home, { it.home }, { it.homeActive }),
+    Tab(Routes.HOME, R.string.nav_home, { it.home }, { it.homeActive }, { it.forYou }, { it.forYouActive }),
     Tab(Routes.SEARCH, R.string.nav_search, { it.search }, { it.searchActive }),
     Tab(Routes.LIBRARY, R.string.nav_library, { it.library }, { it.libraryActive }),
 )
@@ -257,6 +272,8 @@ private fun MainContent(vm: MainViewModel) {
     var confirmClearHistory by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }
     val settings by vm.settings.collectAsStateWithLifecycle()
+    val smartSeeds by vm.smartSeeds.collectAsStateWithLifecycle()
+    val uiStyle = settings.uiStyle
     val equalizer by vm.equalizer.collectAsStateWithLifecycle()
     val stats by vm.stats.collectAsStateWithLifecycle()
     val historyExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
@@ -365,22 +382,45 @@ private fun MainContent(vm: MainViewModel) {
             if (showChrome) {
                 Column(Modifier.background(SonivellTheme.colors.background).windowInsetsPadding(WindowInsets.navigationBars)) {
                     current?.let { t ->
-                        MiniPlayer(
-                            track = t,
-                            isPlaying = player.isPlaying,
-                            progress = if (player.durationMs > 0) player.positionMs.toFloat() / player.durationMs else 0f,
-                            onOpen = { nav.navigate(Routes.PLAYER) },
-                            onTogglePlay = vm.player::togglePlay,
-                            liked = t.id in favorites,
-                            onLike = { vm.toggleFavorite(t.id) },
-                        )
+                        val progress = if (player.durationMs > 0) player.positionMs.toFloat() / player.durationMs else 0f
+                        when (uiStyle) {
+                            UiStyle.ONDAS -> MiniPlayerOndas(
+                                track = t,
+                                isPlaying = player.isPlaying,
+                                progress = progress,
+                                onOpen = { nav.navigate(Routes.PLAYER) },
+                                onTogglePlay = vm.player::togglePlay,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                            UiStyle.CONTRASTE -> MiniPlayer(
+                                track = t,
+                                isPlaying = player.isPlaying,
+                                progress = progress,
+                                onOpen = { nav.navigate(Routes.PLAYER) },
+                                onTogglePlay = vm.player::togglePlay,
+                                liked = t.id in favorites,
+                                onLike = { vm.toggleFavorite(t.id) },
+                            )
+                            UiStyle.CLASSICA -> MiniPlayerClassica(
+                                track = t,
+                                isPlaying = player.isPlaying,
+                                progress = progress,
+                                onOpen = { nav.navigate(Routes.PLAYER) },
+                                onTogglePlay = vm.player::togglePlay,
+                            )
+                        }
                     }
-                    BottomNav(route) { r ->
+                    val onTab: (String) -> Unit = { r ->
                         nav.navigate(r) {
                             popUpTo(nav.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
+                    }
+                    when (uiStyle) {
+                        UiStyle.ONDAS -> BottomNavOndas(route, onTab)
+                        UiStyle.CONTRASTE -> BottomNav(route, onTab)
+                        UiStyle.CLASSICA -> BottomNavClassica(route, onTab)
                     }
                 }
             }
@@ -439,19 +479,23 @@ private fun MainContent(vm: MainViewModel) {
                 Routes.LIBRARY to LibraryMode.Biblioteca,
             ).forEach { (r, mode) ->
                 composable(r) {
-                    LibraryScreen(
-                        mode = mode,
-                        state = library,
-                        favorites = favorites,
-                        currentId = current?.id,
-                        contentPadding = listPadding,
-                        actions = libraryActions,
-                        smartProgress = smartProgress,
-                        forYou = forYou,
-                        playlists = playlists,
-                        smartPlaylists = smartPlaylists,
-                        semanticResults = semanticResults,
-                    )
+                    when (uiStyle) {
+                        UiStyle.ONDAS -> LibraryScreenOndas(
+                            mode = mode, state = library, favorites = favorites, currentId = current?.id,
+                            contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
+                            forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                        )
+                        UiStyle.CONTRASTE -> LibraryScreenContraste(
+                            mode = mode, state = library, favorites = favorites, currentId = current?.id,
+                            contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
+                            forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                        )
+                        UiStyle.CLASSICA -> LibraryScreenClassica(
+                            mode = mode, state = library, favorites = favorites, currentId = current?.id,
+                            contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
+                            forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                        )
+                    }
                 }
             }
 
@@ -628,31 +672,48 @@ private fun MainContent(vm: MainViewModel) {
                 if (t == null) {
                     LaunchedEffect(Unit) { nav.popBackStack() }
                 } else {
-                    NowPlayingScreen(
-                        track = t,
-                        state = player,
-                        shuffleMode = shuffleMode,
-                        smartAvailable = vm.smart.isAvailable,
-                        isFavorite = t.id in favorites,
-                        sourceLabel = source,
-                        sleepTimer = sleepTimer,
-                        lyrics = lyricsState,
-                        lyricsOffsetMs = lyricsOffset,
-                        actions = NowPlayingActions(
-                            onClose = { nav.popBackStack() },
-                            onMore = { playerMenu = true },
-                            onTogglePlay = vm.player::togglePlay,
-                            onNext = { vm.player.next() },
-                            onPrevious = { vm.player.previous() },
-                            onSeek = vm.player::seekTo,
-                            onShuffle = vm::cycleShuffle,
-                            onRepeat = vm.player::cycleRepeat,
-                            onFavorite = { vm.toggleFavorite(t.id) },
-                            onLyrics = { nav.navigate(Routes.LYRICS) },
-                            onQueue = { nav.navigate(Routes.QUEUE) },
-                            onSleepTimer = { timerSheet = true },
-                        ),
+                    val npActions = NowPlayingActions(
+                        onClose = { nav.popBackStack() },
+                        onMore = { playerMenu = true },
+                        onTogglePlay = vm.player::togglePlay,
+                        onNext = { vm.player.next() },
+                        onPrevious = { vm.player.previous() },
+                        onSeek = vm.player::seekTo,
+                        onShuffle = vm::cycleShuffle,
+                        onRepeat = vm.player::cycleRepeat,
+                        onFavorite = { vm.toggleFavorite(t.id) },
+                        onLyrics = { nav.navigate(Routes.LYRICS) },
+                        onQueue = { nav.navigate(Routes.QUEUE) },
+                        onSleepTimer = { timerSheet = true },
+                        onSetShuffle = vm::setShuffleMode,
                     )
+                    when (uiStyle) {
+                        UiStyle.ONDAS -> {
+                            val byId = remember(library.allTracks) { library.allTracks.associateBy { it.id } }
+                            val upNext = player.upNext.take(3).mapNotNull { iv -> byId[iv.value.mediaId.toLongOrNull()] }
+                            val seed = smartSeeds[t.id]?.let(byId::get)
+                            val reason = when {
+                                seed != null && seed.id != t.id -> PlayReason.Smart(seed)
+                                smartSeeds.values.contains(t.id) -> PlayReason.MixStart
+                                shuffleMode == ShuffleMode.ON -> PlayReason.Shuffle
+                                else -> PlayReason.Chosen
+                            }
+                            NowPlayingScreenOndas(
+                                track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
+                                isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, sleepTimer = sleepTimer,
+                                lyrics = lyricsState, lyricsOffsetMs = lyricsOffset, upNext = upNext, reason = reason,
+                            )
+                        }
+                        UiStyle.CONTRASTE -> NowPlayingScreenContraste(
+                            track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
+                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, sleepTimer = sleepTimer,
+                            lyrics = lyricsState, lyricsOffsetMs = lyricsOffset,
+                        )
+                        UiStyle.CLASSICA -> NowPlayingScreenClassica(
+                            track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
+                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, sleepTimer = sleepTimer,
+                        )
+                    }
                 }
             }
 
@@ -962,6 +1023,78 @@ private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
                     color = color,
                     modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
+    }
+}
+
+/** Navegação do layout Clássica (1.0): aba ativa na cor de destaque. */
+@Composable
+private fun BottomNavClassica(route: String?, onSelect: (String) -> Unit) {
+    val c = SonivellTheme.colors
+    Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp)) {
+        tabs.forEach { tab ->
+            val selected = tab.route == route
+            val color = if (selected) c.accent else c.textSecondary
+            Column(
+                Modifier
+                    .weight(1f)
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable(role = Role.Tab, onClick = { onSelect(tab.route) }),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                val icons = SonivellTheme.icons
+                Icon(if (selected) tab.activeIcon(icons) else tab.icon(icons), null, Modifier.size(22.dp), tint = color)
+                Text(
+                    stringResource(tab.label),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                    color = color,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
+    }
+}
+
+/** Navegação do layout Ondas: barra flutuante, a aba ativa preenchida na cor de destaque. */
+@Composable
+private fun BottomNavOndas(route: String?, onSelect: (String) -> Unit) {
+    val c = SonivellTheme.colors
+    val icons = SonivellTheme.icons
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)
+            .height(60.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(c.surface)
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        tabs.forEach { tab ->
+            val selected = tab.route == route
+            Row(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(if (selected) c.accent else Color.Transparent)
+                    .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(tab.route) }),
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val color = if (selected) c.onAccent else c.textSecondary
+                Icon(if (selected) tab.ondasActiveIcon(icons) else tab.ondasIcon(icons), null, Modifier.size(20.dp), tint = color)
+                Text(
+                    stringResource(tab.label),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                    fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+                    color = color,
+                    maxLines = 1,
                 )
             }
         }

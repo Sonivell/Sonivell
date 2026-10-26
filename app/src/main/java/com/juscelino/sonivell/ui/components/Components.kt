@@ -231,3 +231,53 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier, trailing: (@Compos
         trailing?.invoke()
     }
 }
+
+/** Mini player do layout Clássica (1.0): capa, título, play na cor de destaque e a barrinha de progresso. */
+@Composable
+fun MiniPlayerClassica(
+    track: Track,
+    isPlaying: Boolean,
+    progress: Float,
+    onOpen: () -> Unit,
+    onTogglePlay: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val c = SonivellTheme.colors
+    val openPlayer = stringResource(R.string.cd_open_player)
+    Column(modifier.padding(horizontal = 12.dp)) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(c.miniPlayer)
+                .clickable(onClickLabel = openPlayer, onClick = onOpen)
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            AlbumArt(track, Modifier.size(44.dp))
+            Column(Modifier.weight(1f)) {
+                Text(track.title, style = MaterialTheme.typography.titleSmall, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(track.artist, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            IconBtn(
+                icon = if (isPlaying) SonivellTheme.icons.pause else SonivellTheme.icons.play,
+                contentDescription = stringResource(if (isPlaying) R.string.cd_pause else R.string.cd_play),
+                onClick = onTogglePlay,
+                background = c.accent,
+                tint = c.onAccent,
+                iconSize = 20.dp,
+            )
+        }
+        Box(
+            Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .height(3.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(c.track)
+        ) {
+            Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(3.dp).background(c.accent))
+        }
+    }
+}
