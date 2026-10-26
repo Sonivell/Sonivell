@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Textos exclusivos da versão para PC. Os demais vêm do strings.xml do app Android. -->
+<resources>
+    <string name="desktop_music_folders">Music folders</string>
+    <string name="desktop_music_folders_hint">Sonivell reads the songs inside these folders, including subfolders.</string>
+    <string name="desktop_add_folder">Add folder</string>
+    <string name="desktop_remove_folder">Remove folder</string>
+    <string name="desktop_rescan">Rescan library</string>
+    <string name="desktop_scanning">Reading music… %1$d of %2$d</string>
+    <string name="desktop_scanning_plain">Reading music…</string>
+    <string name="desktop_no_tools">Sonivell needs ffmpeg to read and play your songs. Install it with: sudo apt install ffmpeg</string>
+    <string name="desktop_empty">No music found in your folders. Add a folder in Settings.</string>
+    <string name="desktop_audio_error">Audio problem: %1$s</string>
+    <string name="desktop_shortcuts">Space plays or pauses. Ctrl+Right and Ctrl+Left skip songs.</string>
+    <string name="desktop_open_player">Open full player</string>
+    <string name="desktop_show_queue">Show queue panel</string>
+    <string name="desktop_back">Back</string>
+    <string name="desktop_tracks_count">%1$d songs</string>
+    <string name="desktop_albums_count">%1$d albums</string>
+    <string name="desktop_artists_count">%1$d artists</string>
+    <string name="desktop_library_summary">%1$d songs · %2$d albums · %3$d artists</string>
+    <string name="desktop_section_songs">Songs</string>
+    <string name="desktop_section_albums">Albums</string>
+    <string name="desktop_section_artists">Artists</string>
+    <string name="desktop_col_number">#</string>
+    <string name="desktop_playing_now">Playing now</string>
+    <string name="desktop_sort_az">A to Z</string>
+</resources>

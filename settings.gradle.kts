@@ -27,3 +27,9 @@ include(":app")
 include(":core:smart")
 include(":core:ort-ops")
 include(":core:map-native")
+
+// Versão para PC (Linux): só entra no build quando pedida (-Psonivell.desktop=true),
+// para não interferir no build do app Android.
+if (providers.gradleProperty("sonivell.desktop").orNull == "true") {
+    include(":desktop")
+}
