@@ -1,8 +1,7 @@
 package com.juscelino.sonivell.ui.library
 
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import com.juscelino.sonivell.R
+import android.content.res.Resources
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -19,51 +18,65 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import com.juscelino.sonivell.data.ForYouState
-import com.juscelino.sonivell.data.Playlist
-import com.juscelino.sonivell.data.Search
-import com.juscelino.sonivell.data.SmartPlaylist
-import com.juscelino.sonivell.data.SmartPlaylists
-import com.juscelino.sonivell.data.formatDuration
-import com.juscelino.sonivell.smart.SmartProgress
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.LibraryState
 import com.juscelino.sonivell.LibraryTab
+import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Album
+import com.juscelino.sonivell.data.ForYouState
+import com.juscelino.sonivell.data.Playlist
+import com.juscelino.sonivell.data.Search
+import com.juscelino.sonivell.data.SmartPlaylist
+import com.juscelino.sonivell.data.SmartPlaylists
 import com.juscelino.sonivell.data.Track
+import com.juscelino.sonivell.data.formatDuration
+import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
-import com.juscelino.sonivell.ui.components.SectionLabel
+import com.juscelino.sonivell.ui.components.SectionTitle
 import com.juscelino.sonivell.ui.components.TrackRow
+import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import java.util.Calendar
 
 enum class LibraryMode { Inicio, Buscar, Biblioteca }
 
@@ -91,7 +104,33 @@ data class LibraryActions(
     val onOpenAuto: (String) -> Unit = {},
     val onOpenSmartPlaylist: (Long) -> Unit = {},
     val onNewSmartPlaylist: () -> Unit = {},
+    /** "Continuar ouvindo": toca a faixa a partir de onde parou. */
+    val onResume: (Track, Long) -> Unit = { _, _ -> },
+    val onOpenSearch: () -> Unit = {},
 )
+
+private enum class SymbolKind { Smart, Auto, Folder }
+
+/** Capa de um item da biblioteca: a de uma faixa, o coração das Curtidas ou um ícone. */
+private sealed interface ItemArt {
+    data class Of(val track: Track?) : ItemArt
+    data object Liked : ItemArt
+    data class Symbol(val kind: SymbolKind) : ItemArt
+}
+
+/** Linha (ou bloco da grade) da Biblioteca e da Busca 2.0: capa, título e "Tipo · detalhe". */
+private data class LibItem(
+    val key: String,
+    val title: String,
+    val subtitle: String,
+    val art: ItemArt,
+    val round: Boolean = false,
+    val pinned: Boolean = false,
+    val onClick: () -> Unit,
+)
+
+/** Roxo das Curtidas, como no mockup 2.0. */
+private val LikedTone = Color(0xFF3A2F7A)
 
 @Composable
 fun LibraryScreen(
@@ -108,9 +147,12 @@ fun LibraryScreen(
     semanticResults: List<Track> = emptyList(),
 ) {
     val c = SonivellTheme.colors
-    val trackById = remember(state.allTracks) { state.allTracks.associateBy { it.id } }
+    val icons = SonivellTheme.icons
+    val res = LocalContext.current.resources
     val decades = remember(state.allTracks) { SmartPlaylists.decades(state.allTracks) }
     val focus = remember { FocusRequester() }
+    var grid by rememberSaveable { mutableStateOf(false) }
+    var showAllSongs by rememberSaveable(state.query) { mutableStateOf(false) }
     val labels = LibraryLabels(
         search = stringResource(R.string.source_search),
         library = stringResource(R.string.nav_library),
@@ -119,38 +161,60 @@ fun LibraryScreen(
     )
     LaunchedEffect(mode) { if (mode == LibraryMode.Buscar) runCatching { focus.requestFocus() } }
 
+    // Itens da Biblioteca já montados (com textos traduzidos) para a aba atual.
+    val libItems = remember(mode, state, playlists, smartPlaylists, favorites, decades, res) {
+        if (mode != LibraryMode.Biblioteca) emptyList()
+        else buildLibraryItems(res, state, playlists, smartPlaylists, favorites, decades, actions)
+    }
+
     LazyColumn(
         Modifier.fillMaxSize().background(c.background),
         contentPadding = PaddingValues(
-            start = 24.dp,
-            end = 24.dp,
-            top = contentPadding.calculateTopPadding() + 12.dp,
+            start = 20.dp,
+            end = 20.dp,
+            top = contentPadding.calculateTopPadding() + 16.dp,
             bottom = contentPadding.calculateBottomPadding() + 16.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        // Cabeçalho
+        // Cabeçalho: cada aba tem o seu (a engrenagem fica só no Para você).
         item(key = "header") {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
-                Text(
-                    stringResource(
-                        when (mode) {
-                            LibraryMode.Inicio -> R.string.nav_home
-                            LibraryMode.Buscar -> R.string.nav_search
-                            LibraryMode.Biblioteca -> R.string.nav_library
+                Column(Modifier.weight(1f)) {
+                    if (mode == LibraryMode.Inicio) {
+                        Text(stringResource(greeting()), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textSecondary)
+                    }
+                    Text(
+                        stringResource(
+                            when (mode) {
+                                LibraryMode.Inicio -> R.string.nav_home
+                                LibraryMode.Buscar -> R.string.nav_search
+                                LibraryMode.Biblioteca -> R.string.nav_library
+                            }
+                        ),
+                        style = MaterialTheme.typography.displaySmall.copy(fontSize = 28.sp),
+                        color = c.textPrimary,
+                    )
+                }
+                when (mode) {
+                    LibraryMode.Inicio -> {
+                        if (state.allTracks.isNotEmpty()) {
+                            IconBtn(icons.shuffle, stringResource(R.string.cd_shuffle_all), actions.onShuffleAll)
                         }
-                    ),
-                    style = MaterialTheme.typography.displaySmall,
-                    color = c.textPrimary,
-                    modifier = Modifier.weight(1f),
-                )
-                IconBtn(SonivellTheme.icons.settings, stringResource(R.string.cd_settings), actions.onOpenSettings, background = c.surface, iconSize = 20.dp)
+                        IconBtn(icons.settings, stringResource(R.string.cd_settings), actions.onOpenSettings)
+                    }
+                    LibraryMode.Biblioteca -> {
+                        IconBtn(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
+                        IconBtn(icons.add, stringResource(R.string.cd_new_playlist), actions.onNewPlaylist, iconSize = 24.dp)
+                    }
+                    LibraryMode.Buscar -> Unit
+                }
             }
         }
 
-        if (mode != LibraryMode.Inicio) {
+        if (mode == LibraryMode.Buscar) {
             item(key = "search") {
-                SearchField(state.query, actions.onQuery, Modifier.focusRequester(focus).padding(bottom = 16.dp))
+                SearchField(state.query, actions.onQuery, Modifier.focusRequester(focus).padding(bottom = 12.dp))
             }
         }
 
@@ -176,157 +240,65 @@ fun LibraryScreen(
         }
 
         when (mode) {
-            LibraryMode.Inicio -> homeContent(state, favorites, currentId, labels, actions, smartProgress, forYou)
-            LibraryMode.Buscar -> {
-                val parsed = Search.parse(state.query)
-                val searching = !parsed.isEmpty
-                // Resultados agrupados: artistas, álbuns e playlists que combinam pelo nome.
-                val artists = if (parsed.words.isEmpty()) emptyList() else state.artists.filter { Search.matchesText(parsed, it.name) }.take(5)
-                val albums = if (parsed.words.isEmpty()) emptyList() else state.albums.filter { Search.matchesText(parsed, it.title) }.take(6)
-                val foundPlaylists = if (parsed.words.isEmpty()) emptyList() else playlists.filter { Search.matchesText(parsed, it.name) }
-                if (artists.isNotEmpty()) {
-                    item(key = "s-artists-label") { SectionLabel(stringResource(R.string.tab_artists), Modifier.padding(bottom = 4.dp)) }
-                    items(artists, key = { "s-ar-" + it.name }) { a ->
-                        GroupRow(SonivellTheme.icons.artist, a.name, pluralStringResource(R.plurals.songs_count, a.tracks.size, a.tracks.size)) { actions.onOpenArtist(a.name) }
-                    }
-                    item(key = "s-artists-gap") { Box(Modifier.height(12.dp)) }
-                }
-                if (albums.isNotEmpty()) {
-                    item(key = "s-albums-label") { SectionLabel(stringResource(R.string.tab_albums), Modifier.padding(bottom = 8.dp)) }
-                    albums.chunked(3).forEachIndexed { i, row -> item(key = "s-albums-$i") { AlbumGrid(row, actions, Modifier.padding(bottom = 12.dp)) } }
-                }
-                if (foundPlaylists.isNotEmpty()) {
-                    item(key = "pl-found-label") { SectionLabel(stringResource(R.string.tab_playlists), Modifier.padding(bottom = 4.dp)) }
-                    items(foundPlaylists, key = { "pl-found-" + it.id }) { p -> PlaylistRow(p, trackById, actions) }
-                    item(key = "pl-found-gap") { Box(Modifier.height(12.dp)) }
-                }
-                if (searching && artists.isNotEmpty() || albums.isNotEmpty() || foundPlaylists.isNotEmpty()) {
-                    item(key = "s-songs-label") { SectionLabel(stringResource(R.string.tab_songs), Modifier.padding(bottom = 4.dp)) }
-                }
-                trackList(state.tracks, currentId, labels.search, searching, actions)
-                if (searching && state.tracks.isEmpty() && semanticResults.isEmpty()) {
-                    item(key = "s-none") {
-                        Text(stringResource(R.string.search_none), style = MaterialTheme.typography.bodyLarge, color = c.textSecondary, modifier = Modifier.padding(vertical = 16.dp))
-                    }
-                }
-                // Busca pelo sentido (edição SMART): o que combina com a descrição, além das palavras.
-                val extra = semanticResults.filter { r -> state.tracks.none { it.id == r.id } }.take(15)
-                if (searching && extra.isNotEmpty()) {
-                    item(key = "s-sem-label") {
-                        Row(Modifier.padding(top = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(SonivellTheme.icons.smart, null, Modifier.size(14.dp), tint = c.accent)
-                            SectionLabel(stringResource(R.string.search_semantic))
-                        }
-                    }
-                    itemsIndexed(extra, key = { _, t -> "sem-${t.id}" }) { i, t ->
-                        TrackRow(t, onClick = { actions.onPlay(extra, i, labels.search) }, highlighted = t.id == currentId, onMore = { actions.onTrackMenu(t) })
-                    }
-                }
-            }
+            LibraryMode.Inicio -> homeContent(state, favorites, labels, actions, smartProgress, forYou, decades)
+            LibraryMode.Buscar -> searchContent(state, currentId, labels, actions, playlists, semanticResults, decades, showAllSongs) { showAllSongs = true }
             LibraryMode.Biblioteca -> {
                 item(key = "chips") {
                     Row(
-                        Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 20.dp),
+                        Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        LibraryTab.entries.forEach { t ->
+                        listOf(
+                            LibraryTab.Tudo, LibraryTab.Playlists, LibraryTab.Albuns, LibraryTab.Artistas,
+                            LibraryTab.Musicas, LibraryTab.Generos, LibraryTab.Pastas,
+                        ).forEach { t ->
                             Chip(stringResource(t.label), selected = state.tab == t, onClick = { actions.onTab(t) })
                         }
                     }
                 }
-                when (state.tab) {
-                    LibraryTab.Musicas -> {
-                        if (state.query.isBlank() && state.recentAlbums.isNotEmpty()) {
-                            item(key = "recent-label") { SectionLabel(stringResource(R.string.recent), Modifier.padding(bottom = 12.dp)) }
-                            item(key = "recent") { AlbumGrid(state.recentAlbums.take(3), actions, Modifier.padding(bottom = 20.dp)) }
-                        }
-                        item(key = "all-label") {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                SectionLabel(stringResource(R.string.all_songs, state.tracks.size), Modifier.weight(1f))
-                                Text(stringResource(state.sort.label), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
-                                IconBtn(SonivellTheme.icons.sort, stringResource(R.string.cd_sort_by, stringResource(state.sort.label)), actions.onSort, tint = c.textSecondary, iconSize = 18.dp)
-                            }
-                        }
-                        trackList(state.tracks, currentId, labels.library, false, actions)
-                    }
-                    LibraryTab.Albuns -> {
-                        item(key = "albums-label") { SectionLabel(pluralStringResource(R.plurals.albums_count, state.albums.size, state.albums.size), Modifier.padding(bottom = 12.dp)) }
-                        state.albums.chunked(3).forEachIndexed { i, row ->
-                            item(key = "albums-$i") { AlbumGrid(row, actions, Modifier.padding(bottom = 12.dp)) }
+                if (state.tab == LibraryTab.Musicas) {
+                    item(key = "sort") {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
+                            SortButton(stringResource(state.sort.label), actions.onSort)
+                            Spacer(Modifier.weight(1f))
+                            Text(pluralStringResource(R.plurals.songs_count, state.tracks.size, state.tracks.size), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
                         }
                     }
-                    LibraryTab.Playlists -> {
-                        item(key = "pl-actions") {
-                            Row(Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Chip(stringResource(R.string.new_playlist), selected = true, onClick = actions.onNewPlaylist)
-                                Chip(stringResource(R.string.import_playlist), selected = false, onClick = actions.onImportPlaylist)
+                    itemsIndexed(state.tracks, key = { _, t -> t.id }) { i, t ->
+                        TrackRow(t, onClick = { actions.onPlay(state.tracks, i, labels.library) }, highlighted = t.id == currentId, onMore = { actions.onTrackMenu(t) })
+                    }
+                } else {
+                    item(key = "view") {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (state.tab == LibraryTab.Playlists) {
+                                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Chip(stringResource(R.string.new_smart_playlist), selected = false, onClick = actions.onNewSmartPlaylist)
+                                    Chip(stringResource(R.string.import_playlist), selected = false, onClick = actions.onImportPlaylist)
+                                }
+                            } else {
+                                Spacer(Modifier.weight(1f))
                             }
-                        }
-                        // Automáticas: se atualizam sozinhas com o histórico e a biblioteca.
-                        item(key = "auto-label") { SectionLabel(stringResource(R.string.auto_playlists), Modifier.padding(top = 4.dp, bottom = 4.dp)) }
-                        item(key = "auto-row") {
-                            val autos = listOf(
-                                "mais-ouvidas" to R.string.auto_most,
-                                "menos-ouvidas" to R.string.auto_least,
-                                "nunca-tocadas" to R.string.auto_never,
-                                "recentes" to R.string.auto_recent_added,
-                                "ouvidas-recentemente" to R.string.auto_recent_played,
-                                "curtidas" to R.string.source_liked,
+                            IconBtn(
+                                if (grid) icons.queue else icons.album,
+                                stringResource(if (grid) R.string.cd_view_list else R.string.cd_view_grid),
+                                { grid = !grid },
+                                tint = c.textSecondary,
+                                iconSize = 20.dp,
                             )
-                            Row(Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                autos.forEach { (key, label) -> Chip(stringResource(label), selected = false) { actions.onOpenAuto(key) } }
-                                decades.forEach { d -> Chip(decadeLabel(d), selected = false) { actions.onOpenAuto("decada-$d") } }
-                            }
-                        }
-                        item(key = "smart-label") {
-                            Row(Modifier.padding(top = 8.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                                SectionLabel(stringResource(R.string.smart_playlists), Modifier.weight(1f))
-                                Chip(stringResource(R.string.new_smart_playlist), selected = false, onClick = actions.onNewSmartPlaylist)
-                            }
-                        }
-                        items(smartPlaylists, key = { "sp-" + it.id }) { sp ->
-                            GroupRow(SonivellTheme.icons.smart, sp.name, pluralStringResource(R.plurals.rules_count, sp.rules.size, sp.rules.size)) {
-                                actions.onOpenSmartPlaylist(sp.id)
-                            }
-                        }
-                        item(key = "own-label") { SectionLabel(stringResource(R.string.your_playlists), Modifier.padding(top = 12.dp, bottom = 4.dp)) }
-                        if (playlists.isEmpty()) {
-                            item(key = "pl-empty") {
-                                Text(
-                                    stringResource(R.string.playlists_empty),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = c.textSecondary,
-                                    modifier = Modifier.padding(vertical = 16.dp),
-                                )
-                            }
-                        }
-                        items(playlists, key = { "pl-" + it.id }) { p -> PlaylistRow(p, trackById, actions) }
-                    }
-                    LibraryTab.Artistas -> {
-                        items(state.artists, key = { "ar-" + it.name }) { a ->
-                            GroupRow(SonivellTheme.icons.artist, a.name, pluralStringResource(R.plurals.albums_count, a.albumCount, a.albumCount) + " · " + pluralStringResource(R.plurals.songs_count, a.tracks.size, a.tracks.size)) {
-                                actions.onOpenArtist(a.name)
-                            }
                         }
                     }
-                    LibraryTab.Generos -> {
-                        if (state.genres.isEmpty()) {
-                            item(key = "g-empty") {
-                                Text(stringResource(R.string.genres_empty), style = MaterialTheme.typography.bodyLarge, color = c.textSecondary, modifier = Modifier.padding(vertical = 16.dp))
-                            }
-                        }
-                        items(state.genres, key = { "g-" + it.name.lowercase() }) { g ->
-                            GroupRow(SonivellTheme.icons.genre, g.name, pluralStringResource(R.plurals.songs_count, g.tracks.size, g.tracks.size)) {
-                                actions.onOpenGenre(g.name)
-                            }
-                        }
+                    if (state.tab == LibraryTab.Generos && state.genres.isEmpty()) {
+                        item(key = "g-empty") { EmptyText(stringResource(R.string.genres_empty)) }
                     }
-                    LibraryTab.Pastas -> {
-                        items(state.folders, key = { "f-" + it.path }) { f ->
-                            GroupRow(SonivellTheme.icons.folder, f.name, pluralStringResource(R.plurals.songs_count, f.tracks.size, f.tracks.size) + " · " + f.path) {
-                                actions.onOpenFolder(f.path)
-                            }
+                    if (state.tab == LibraryTab.Playlists && playlists.isEmpty()) {
+                        item(key = "pl-empty") { EmptyText(stringResource(R.string.playlists_empty)) }
+                    }
+                    if (grid) {
+                        libItems.chunked(3).forEachIndexed { i, row ->
+                            item(key = "grid-$i-${row.first().key}") { ItemGrid(row, Modifier.padding(bottom = 14.dp)) }
                         }
+                    } else {
+                        items(libItems, key = { it.key }) { ItemRow(it) }
                     }
                 }
             }
@@ -334,93 +306,336 @@ fun LibraryScreen(
     }
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.trackList(
-    tracks: List<Track>,
-    currentId: Long?,
-    source: String,
-    showCount: Boolean,
+@StringRes
+private fun greeting(): Int = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+    in 5..11 -> R.string.greeting_morning
+    in 12..17 -> R.string.greeting_afternoon
+    else -> R.string.greeting_evening
+}
+
+private fun decadeText(res: Resources, start: Int): String =
+    res.getString(R.string.decade_label, if (start in 1900..1999) (start % 100).toString() else start.toString())
+
+private fun songs(res: Resources, n: Int): String = res.getQuantityString(R.plurals.songs_count, n, n)
+
+/** Monta a lista da aba atual da Biblioteca (fora da composição: textos via [Resources]). */
+private fun buildLibraryItems(
+    res: Resources,
+    state: LibraryState,
+    playlists: List<Playlist>,
+    smartPlaylists: List<SmartPlaylist>,
+    favorites: Set<Long>,
+    decades: List<Int>,
     actions: LibraryActions,
-) {
-    if (showCount) item(key = "count") {
-        SectionLabel(pluralStringResource(R.plurals.results_count, tracks.size, tracks.size), Modifier.padding(bottom = 8.dp))
+): List<LibItem> {
+    val byId = state.allTracks.associateBy { it.id }
+    val liked = state.allTracks.count { it.id in favorites }
+    val likedItem = LibItem(
+        key = "liked",
+        title = res.getString(R.string.source_liked),
+        subtitle = res.getString(R.string.kind_playlist, songs(res, liked)),
+        art = ItemArt.Liked,
+        pinned = true,
+        onClick = { actions.onOpenAuto("curtidas") },
+    )
+    val smart = smartPlaylists.map { sp ->
+        LibItem("sp-${sp.id}", sp.name, res.getString(R.string.kind_smart), ItemArt.Symbol(SymbolKind.Smart), onClick = { actions.onOpenSmartPlaylist(sp.id) })
     }
-    itemsIndexed(tracks, key = { _, t -> t.id }) { i, t ->
-        TrackRow(t, onClick = { actions.onPlay(tracks, i, source) }, highlighted = t.id == currentId, onMore = { actions.onTrackMenu(t) })
+    val own = playlists.map { p ->
+        val first = p.trackIds.firstNotNullOfOrNull(byId::get)
+        LibItem("pl-${p.id}", p.name, res.getString(R.string.kind_playlist, songs(res, p.trackIds.count { it in byId })), ItemArt.Of(first), onClick = { actions.onOpenPlaylist(p.id) })
+    }
+    val albums = state.albums.map { a -> albumItem(res, a, actions) }
+    val artists = state.artists.map { a ->
+        LibItem("ar-${a.name}", a.name, res.getString(R.string.kind_artist), ItemArt.Of(a.tracks.firstOrNull()), round = true, onClick = { actions.onOpenArtist(a.name) })
+    }
+    return when (state.tab) {
+        LibraryTab.Tudo -> listOf(likedItem) + smart + own + albums + artists
+        LibraryTab.Playlists -> {
+            val autos = listOf(
+                "mais-ouvidas" to R.string.auto_most,
+                "menos-ouvidas" to R.string.auto_least,
+                "nunca-tocadas" to R.string.auto_never,
+                "recentes" to R.string.auto_recent_added,
+                "ouvidas-recentemente" to R.string.auto_recent_played,
+            ).map { (key, label) ->
+                LibItem("auto-$key", res.getString(label), res.getString(R.string.kind_auto), ItemArt.Symbol(SymbolKind.Auto), onClick = { actions.onOpenAuto(key) })
+            } + decades.map { d ->
+                LibItem("auto-decada-$d", decadeText(res, d), res.getString(R.string.kind_auto), ItemArt.Symbol(SymbolKind.Auto), onClick = { actions.onOpenAuto("decada-$d") })
+            }
+            listOf(likedItem) + own + smart + autos
+        }
+        LibraryTab.Albuns -> albums
+        LibraryTab.Artistas -> artists
+        LibraryTab.Generos -> state.genres.map { g ->
+            LibItem("g-${g.name.lowercase()}", g.name, res.getString(R.string.kind_genre, songs(res, g.tracks.size)), ItemArt.Of(g.tracks.firstOrNull()), onClick = { actions.onOpenGenre(g.name) })
+        }
+        LibraryTab.Pastas -> state.folders.map { f ->
+            LibItem("f-${f.path}", f.name, res.getString(R.string.kind_folder, songs(res, f.tracks.size)), ItemArt.Symbol(SymbolKind.Folder), onClick = { actions.onOpenFolder(f.path) })
+        }
+        LibraryTab.Musicas -> emptyList()
     }
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
+private fun albumItem(res: Resources, a: Album, actions: LibraryActions) =
+    LibItem("al-${a.id}", a.title, res.getString(R.string.kind_album, a.artist), ItemArt.Of(a.tracks.firstOrNull()), onClick = { actions.onOpenAlbum(a.id) })
+
+/** O ícone vem do estilo escolhido (Fino ou Arredondado). */
+@Composable
+private fun symbolIcon(kind: SymbolKind): ImageVector {
+    val icons = SonivellTheme.icons
+    return when (kind) {
+        SymbolKind.Smart -> icons.smart
+        SymbolKind.Auto -> icons.musicNote
+        SymbolKind.Folder -> icons.folder
+    }
+}
+
+@Composable
+private fun ItemArtBox(art: ItemArt, size: Dp?, round: Boolean, modifier: Modifier = Modifier) {
+    val c = SonivellTheme.colors
+    val shape = if (round) CircleShape else RoundedCornerShape(8.dp)
+    val sized = (if (size != null) modifier.size(size) else modifier.fillMaxWidth().aspectRatio(1f)).clip(shape)
+    when (art) {
+        is ItemArt.Of -> AlbumArt(art.track, sized, corner = if (round) 999.dp else 8.dp)
+        ItemArt.Liked -> Box(sized.background(LikedTone), contentAlignment = Alignment.Center) {
+            Icon(SonivellTheme.icons.liked, null, Modifier.size(if (size != null) size * 0.4f else 36.dp), tint = Color.White)
+        }
+        is ItemArt.Symbol -> Box(sized.background(c.surfaceHigh), contentAlignment = Alignment.Center) {
+            Icon(symbolIcon(art.kind), null, Modifier.size(if (size != null) size * 0.38f else 32.dp), tint = c.textSecondary)
+        }
+    }
+}
+
+@Composable
+private fun ItemRow(item: LibItem) {
+    val c = SonivellTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 72.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClick = item.onClick)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        ItemArtBox(item.art, 64.dp, item.round)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(item.title, style = MaterialTheme.typography.titleMedium, color = if (item.pinned) c.accent else c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(item.subtitle, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+@Composable
+private fun ItemGrid(row: List<LibItem>, modifier: Modifier = Modifier) {
+    val c = SonivellTheme.colors
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        row.forEach { item ->
+            Column(
+                Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable(onClick = item.onClick),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = if (item.round) Alignment.CenterHorizontally else Alignment.Start,
+            ) {
+                ItemArtBox(item.art, null, item.round)
+                Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = if (item.pinned) c.accent else c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(item.subtitle, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+    }
+}
+
+@Composable
+private fun SortButton(label: String, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    Row(
+        Modifier
+            .height(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(onClickLabel = stringResource(R.string.cd_sort_by, label), onClick = onClick)
+            .padding(end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(SonivellTheme.icons.sort, null, Modifier.size(16.dp), tint = c.textPrimary)
+        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = c.textPrimary)
+    }
+}
+
+@Composable
+private fun EmptyText(text: String) {
+    Text(text, style = MaterialTheme.typography.bodyLarge, color = SonivellTheme.colors.textSecondary, modifier = Modifier.padding(vertical = 16.dp))
+}
+
+// ---------------------------------------------------------------- Para você
+
+private fun LazyListScope.homeContent(
     state: LibraryState,
     favorites: Set<Long>,
-    currentId: Long?,
     labels: LibraryLabels,
     actions: LibraryActions,
     smartProgress: SmartProgress,
     forYou: ForYouState,
+    decades: List<Int>,
 ) {
     if (smartProgress.running && smartProgress.total > 0) {
         item(key = "smart-progress") { SmartAnalysisCard(smartProgress) }
     }
-    item(key = "shuffle-all") {
-        val c = SonivellTheme.colors
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(c.accent)
-                .clickable(onClick = actions.onShuffleAll)
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Icon(SonivellTheme.icons.shuffle, null, Modifier.size(28.dp), tint = c.onAccent)
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.shuffle_all), style = MaterialTheme.typography.titleMedium, color = c.onAccent)
-                Text(pluralStringResource(R.plurals.songs_count, state.allTracks.size, state.allTracks.size), style = MaterialTheme.typography.bodyMedium, color = c.onAccent)
+    item(key = "quick") { QuickGrid(state, favorites, forYou, decades, actions) }
+
+    forYou.unfinished.firstOrNull()?.let { t ->
+        item(key = "fy-continue") {
+            Column(Modifier.padding(top = 18.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SectionTitle(stringResource(R.string.fy_continue))
+                ContinueCard(t, forYou.resumeAtMs[t.id] ?: 0L) { pos -> actions.onResume(t, pos) }
             }
         }
+    }
+    if (forYou.mixSeeds.isNotEmpty()) {
+        item(key = "fy-mixes") { MixRow(forYou.mixSeeds, actions.onPlayMix) }
     }
     forYou.pick?.let { pick ->
         item(key = "fy-pick") {
             PickCard(pick, forYou.pickNeverPlayed) { actions.onPlay(listOf(pick), 0, labels.forYou) }
         }
     }
-    if (forYou.mixSeeds.isNotEmpty()) {
-        item(key = "fy-mixes") {
-            MixRow(stringResource(R.string.fy_mixes), forYou.mixSeeds, actions.onPlayMix)
+    trackRow("fy-hour", R.string.fy_this_hour, forYou.thisHour, labels.forYou, actions)
+    trackRow("fy-unfinished", R.string.fy_unfinished, forYou.unfinished.drop(1), labels.forYou, actions)
+    trackRow("fy-forgotten", R.string.fy_forgotten, forYou.forgottenFavorites, labels.forYou, actions)
+    if (state.recentAlbums.isNotEmpty()) {
+        item(key = "home-recent") {
+            Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SectionTitle(stringResource(R.string.recently_added))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(state.recentAlbums, key = { "ra-" + it.id }) { a ->
+                        Card(a.tracks.firstOrNull(), a.title, a.artist) { actions.onOpenAlbum(a.id) }
+                    }
+                }
+            }
         }
     }
-    trackRow("fy-unfinished", R.string.fy_unfinished, forYou.unfinished, labels.forYou, actions)
-    trackRow("fy-hour", R.string.fy_this_hour, forYou.thisHour, labels.forYou, actions)
-    trackRow("fy-forgotten", R.string.fy_forgotten, forYou.forgottenFavorites, labels.forYou, actions)
-    if (forYou.isEmpty) {
+    if (forYou.isEmpty && forYou.mixSeeds.isEmpty()) {
         item(key = "fy-hint") {
             Text(
                 stringResource(R.string.fy_empty_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = SonivellTheme.colors.textSecondary,
-                modifier = Modifier.padding(bottom = 24.dp),
+                modifier = Modifier.padding(top = 24.dp),
             )
-        }
-    }
-    if (state.recentAlbums.isNotEmpty()) {
-        item(key = "home-recent-label") { SectionLabel(stringResource(R.string.recently_added), Modifier.padding(bottom = 12.dp)) }
-        state.recentAlbums.chunked(3).forEachIndexed { i, row ->
-            item(key = "home-recent-$i") { AlbumGrid(row, actions, Modifier.padding(bottom = 12.dp)) }
-        }
-    }
-    val favs = state.allTracks.filter { it.id in favorites }
-    if (favs.isNotEmpty()) {
-        item(key = "fav-label") { SectionLabel(stringResource(R.string.liked_count, favs.size), Modifier.padding(top = 12.dp, bottom = 4.dp)) }
-        itemsIndexed(favs, key = { _, t -> "fav-${t.id}" }) { i, t ->
-            TrackRow(t, onClick = { actions.onPlay(favs, i, labels.liked) }, highlighted = t.id == currentId, onMore = { actions.onTrackMenu(t) })
         }
     }
 }
 
+private data class Quick(val key: String, val label: String, val art: ItemArt, val onClick: () -> Unit)
+
+/** Atalhos 2×3: Curtidas, um mix, a década que mais aparece, nunca tocadas, recentes e um álbum. */
+@Composable
+private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouState, decades: List<Int>, actions: LibraryActions) {
+    val c = SonivellTheme.colors
+    val res = LocalContext.current.resources
+    val tiles = remember(state.allTracks, state.recentAlbums, favorites, forYou.mixSeeds, decades, res) {
+        val byDecade = state.allTracks.groupBy { t -> t.year?.takeIf { it in 1900..2100 }?.let { it / 10 * 10 } }
+        val topDecade = decades.maxByOrNull { byDecade[it]?.size ?: 0 }
+        buildList {
+            add(Quick("liked", res.getString(R.string.source_liked), ItemArt.Liked) { actions.onOpenAuto("curtidas") })
+            forYou.mixSeeds.firstOrNull()?.let { seed ->
+                add(Quick("mix", res.getString(R.string.fy_mix_of, seed.artist), ItemArt.Of(seed)) { actions.onPlayMix(seed) })
+            } ?: add(Quick("most", res.getString(R.string.auto_most), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("mais-ouvidas") })
+            topDecade?.let { d ->
+                add(Quick("dec", decadeText(res, d), ItemArt.Of(byDecade[d]?.firstOrNull())) { actions.onOpenAuto("decada-$d") })
+            }
+            add(Quick("never", res.getString(R.string.auto_never), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("nunca-tocadas") })
+            add(Quick("played", res.getString(R.string.auto_recent_played), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("ouvidas-recentemente") })
+            state.recentAlbums.firstOrNull()?.let { a ->
+                add(Quick("album", a.title, ItemArt.Of(a.tracks.firstOrNull())) { actions.onOpenAlbum(a.id) })
+            } ?: add(Quick("added", res.getString(R.string.auto_recent_added), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("recentes") })
+            if (size < 6) add(Quick("least", res.getString(R.string.auto_least), ItemArt.Symbol(SymbolKind.Auto)) { actions.onOpenAuto("menos-ouvidas") })
+        }.take(6)
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        tiles.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                pair.forEach { q ->
+                    Row(
+                        Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(c.surfaceHigh)
+                            .clickable(onClick = q.onClick),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        QuickArt(q.art)
+                        Text(
+                            q.label,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 16.sp),
+                            fontWeight = FontWeight.Bold,
+                            color = c.textPrimary,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(end = 8.dp),
+                        )
+                    }
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickArt(art: ItemArt) {
+    val c = SonivellTheme.colors
+    val m = Modifier.size(56.dp)
+    when (art) {
+        is ItemArt.Of -> AlbumArt(art.track, m, corner = 0.dp)
+        ItemArt.Liked -> Box(m.background(LikedTone), contentAlignment = Alignment.Center) {
+            Icon(SonivellTheme.icons.liked, null, Modifier.size(22.dp), tint = Color.White)
+        }
+        is ItemArt.Symbol -> Box(m.background(c.surface), contentAlignment = Alignment.Center) {
+            Icon(symbolIcon(art.kind), null, Modifier.size(22.dp), tint = c.accent)
+        }
+    }
+}
+
+@Composable
+private fun ContinueCard(track: Track, resumeAtMs: Long, onPlay: (Long) -> Unit) {
+    val c = SonivellTheme.colors
+    val duration = track.durationMs.coerceAtLeast(1L)
+    val fraction = (resumeAtMs.toFloat() / duration).coerceIn(0f, 1f)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(c.surface)
+            .clickable { onPlay(resumeAtMs) }
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        AlbumArt(track, Modifier.size(64.dp), corner = 10.dp)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(track.title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                stringResource(R.string.fy_time_left, track.artist, formatDuration((duration - resumeAtMs).coerceAtLeast(0L))),
+                style = MaterialTheme.typography.bodyMedium,
+                color = c.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Box(Modifier.padding(top = 4.dp).fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+                Box(Modifier.fillMaxWidth(fraction).height(3.dp).background(c.accent))
+            }
+        }
+        IconBtn(SonivellTheme.icons.play, stringResource(R.string.cd_continue, track.title), { onPlay(resumeAtMs) }, background = c.accent, tint = c.onAccent, iconSize = 20.dp)
+    }
+}
+
 /** Uma linha horizontal de faixas, com título; some quando está vazia. */
-private fun androidx.compose.foundation.lazy.LazyListScope.trackRow(
+private fun LazyListScope.trackRow(
     key: String,
     @StringRes title: Int,
     tracks: List<Track>,
@@ -429,11 +644,11 @@ private fun androidx.compose.foundation.lazy.LazyListScope.trackRow(
 ) {
     if (tracks.isEmpty()) return
     item(key = key) {
-        Column(Modifier.padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SectionLabel(stringResource(title))
+        Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            SectionTitle(stringResource(title))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 itemsIndexed(tracks, key = { _, t -> t.id }) { i, t ->
-                    TrackCard(t, subtitle = t.artist) { actions.onPlay(tracks, i, source) }
+                    Card(t, t.title, t.artist) { actions.onPlay(tracks, i, source) }
                 }
             }
         }
@@ -441,18 +656,15 @@ private fun androidx.compose.foundation.lazy.LazyListScope.trackRow(
 }
 
 @Composable
-private fun TrackCard(track: Track, subtitle: String, onClick: () -> Unit) {
+private fun Card(track: Track?, title: String, subtitle: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     Column(
-        Modifier
-            .width(128.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        Modifier.width(140.dp).clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        AlbumArt(track, Modifier.size(128.dp), corner = 14.dp)
-        Column {
-            Text(track.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        AlbumArt(track, Modifier.size(140.dp), corner = 12.dp, detailed = true)
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(subtitle, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -460,41 +672,15 @@ private fun TrackCard(track: Track, subtitle: String, onClick: () -> Unit) {
 
 /** Mixes pelo som (edição SMART): cada cartão começa uma fila SMART a partir de uma faixa. */
 @Composable
-private fun MixRow(title: String, seeds: List<Track>, onPlayMix: (Track) -> Unit) {
+private fun MixRow(seeds: List<Track>, onPlayMix: (Track) -> Unit) {
     val c = SonivellTheme.colors
-    Column(Modifier.padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(SonivellTheme.icons.smart, null, Modifier.size(14.dp), tint = c.accent)
-            SectionLabel(title)
+    Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SectionTitle(stringResource(R.string.fy_mixes)) {
+            Text(stringResource(R.string.source_smart), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textSecondary)
         }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(seeds, key = { "mix-" + it.id }) { seed ->
-                Column(
-                    Modifier
-                        .width(148.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(c.surface)
-                        .clickable { onPlayMix(seed) }
-                        .padding(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    AlbumArt(seed, Modifier.fillMaxWidth().aspectRatio(1f), corner = 12.dp, detailed = true)
-                    Text(
-                        stringResource(R.string.fy_mix_of, seed.artist),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = c.textPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        stringResource(R.string.fy_mix_from, seed.title),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = c.textSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+                Card(seed, stringResource(R.string.fy_mix_of, seed.artist), stringResource(R.string.fy_mix_from, seed.title)) { onPlayMix(seed) }
             }
         }
     }
@@ -504,29 +690,30 @@ private fun MixRow(title: String, seeds: List<Track>, onPlayMix: (Track) -> Unit
 @Composable
 private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
     val c = SonivellTheme.colors
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(bottom = 24.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(c.surface)
-            .clickable(onClick = onPlay)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        AlbumArt(track, Modifier.size(84.dp), corner = 14.dp, detailed = true)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            SectionLabel(stringResource(R.string.fy_pick))
-            Text(track.title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(track.artist, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                stringResource(if (neverPlayed) R.string.fy_pick_never else R.string.fy_pick_long),
-                style = MaterialTheme.typography.labelMedium,
-                color = c.accent,
-            )
+    Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SectionTitle(stringResource(R.string.fy_pick))
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(c.surface)
+                .clickable(onClick = onPlay)
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            AlbumArt(track, Modifier.size(64.dp), corner = 10.dp, detailed = true)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(track.title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(track.artist, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    stringResource(if (neverPlayed) R.string.fy_pick_never else R.string.fy_pick_long),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = c.accent,
+                )
+            }
+            IconBtn(SonivellTheme.icons.play, stringResource(R.string.cd_play), onPlay, background = c.accent, tint = c.onAccent, iconSize = 20.dp)
         }
-        IconBtn(SonivellTheme.icons.play, stringResource(R.string.cd_play), onPlay, background = c.accent, tint = c.onAccent)
     }
 }
 
@@ -564,118 +751,257 @@ private fun SmartAnalysisCard(progress: SmartProgress) {
     }
 }
 
+// ---------------------------------------------------------------- Busca
+
+private fun LazyListScope.searchContent(
+    state: LibraryState,
+    currentId: Long?,
+    labels: LibraryLabels,
+    actions: LibraryActions,
+    playlists: List<Playlist>,
+    semanticResults: List<Track>,
+    decades: List<Int>,
+    showAllSongs: Boolean,
+    onShowAll: () -> Unit,
+) {
+    val parsed = Search.parse(state.query)
+    if (parsed.isEmpty) {
+        browseContent(state, decades, actions)
+        return
+    }
+    val hasWords = parsed.words.isNotEmpty()
+    val artists = if (!hasWords) emptyList() else state.artists.filter { Search.matchesText(parsed, it.name) }.take(5)
+    val albums = if (!hasWords) emptyList() else state.albums.filter { Search.matchesText(parsed, it.title) }.take(6)
+    val foundPlaylists = if (!hasWords) emptyList() else playlists.filter { Search.matchesText(parsed, it.name) }
+    val genre = state.genres.firstOrNull { g -> parsed.words.any { w -> Search.matchesText(Search.Query(listOf(w), null), g.name) } }
+
+    // Como a busca foi entendida: período e gênero reconhecidos.
+    if (parsed.years != null || genre != null) {
+        item(key = "s-interp") {
+            Row(Modifier.padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                parsed.years?.let { InterpChip(stringResource(R.string.search_period, it.first, it.last)) }
+                genre?.let { InterpChip(stringResource(R.string.search_genre, it.name)) }
+            }
+        }
+    }
+
+    val tracks = state.tracks
+    val bestArtist = artists.firstOrNull()
+    val bestAlbum = albums.firstOrNull()
+    val bestTrack = tracks.firstOrNull()
+    if (bestArtist != null || bestAlbum != null || bestTrack != null) {
+        item(key = "s-best") {
+            val res = LocalContext.current.resources
+            Column(Modifier.padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SectionTitle(stringResource(R.string.search_best))
+                when {
+                    bestArtist != null -> BestCard(
+                        title = bestArtist.name,
+                        subtitle = res.getString(R.string.kind_artist) + " · " + songs(res, bestArtist.tracks.size),
+                        track = bestArtist.tracks.firstOrNull(),
+                        round = true,
+                        onOpen = { actions.onOpenArtist(bestArtist.name) },
+                        onPlay = { actions.onPlay(bestArtist.tracks, 0, bestArtist.name) },
+                    )
+                    bestAlbum != null -> BestCard(
+                        title = bestAlbum.title,
+                        subtitle = res.getString(R.string.kind_album, bestAlbum.artist),
+                        track = bestAlbum.tracks.firstOrNull(),
+                        round = false,
+                        onOpen = { actions.onOpenAlbum(bestAlbum.id) },
+                        onPlay = { actions.onPlay(bestAlbum.tracks, 0, bestAlbum.title) },
+                    )
+                    bestTrack != null -> BestCard(
+                        title = bestTrack.title,
+                        subtitle = bestTrack.artist,
+                        track = bestTrack,
+                        round = false,
+                        onOpen = { actions.onPlay(tracks, 0, labels.search) },
+                        onPlay = { actions.onPlay(tracks, 0, labels.search) },
+                    )
+                }
+            }
+        }
+    }
+
+    if (tracks.isNotEmpty()) {
+        item(key = "s-songs-title") { SectionTitle(stringResource(R.string.tab_songs), Modifier.padding(bottom = 4.dp)) }
+        val shown = if (showAllSongs) tracks else tracks.take(SONGS_PREVIEW)
+        itemsIndexed(shown, key = { _, t -> "s-t-${t.id}" }) { i, t ->
+            TrackRow(t, onClick = { actions.onPlay(tracks, i, labels.search) }, highlighted = t.id == currentId, onMore = { actions.onTrackMenu(t) })
+        }
+        if (!showAllSongs && tracks.size > SONGS_PREVIEW) {
+            item(key = "s-songs-all") {
+                Text(
+                    stringResource(R.string.search_show_all, tracks.size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = SonivellTheme.colors.textPrimary,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable(onClick = onShowAll)
+                        .padding(vertical = 10.dp),
+                )
+            }
+        }
+    }
+    if (artists.isNotEmpty()) {
+        item(key = "s-artists") {
+            SearchGroup(stringResource(R.string.tab_artists), artists.map { a ->
+                LibItem("s-ar-${a.name}", a.name, stringResource(R.string.kind_artist), ItemArt.Of(a.tracks.firstOrNull()), round = true, onClick = { actions.onOpenArtist(a.name) })
+            })
+        }
+    }
+    if (albums.isNotEmpty()) {
+        item(key = "s-albums") {
+            val r = LocalContext.current.resources
+            SearchGroup(stringResource(R.string.tab_albums), albums.map { albumItem(r, it, actions) })
+        }
+    }
+    if (foundPlaylists.isNotEmpty()) {
+        item(key = "s-playlists") {
+            val byId = remember(state.allTracks) { state.allTracks.associateBy { it.id } }
+            val r = LocalContext.current.resources
+            SearchGroup(stringResource(R.string.tab_playlists), foundPlaylists.map { p ->
+                LibItem("s-pl-${p.id}", p.name, r.getString(R.string.kind_playlist, songs(r, p.trackIds.count { it in byId })), ItemArt.Of(p.trackIds.firstNotNullOfOrNull(byId::get)), onClick = { actions.onOpenPlaylist(p.id) })
+            })
+        }
+    }
+    if (tracks.isEmpty() && artists.isEmpty() && albums.isEmpty() && semanticResults.isEmpty()) {
+        item(key = "s-none") { EmptyText(stringResource(R.string.search_none)) }
+    }
+    // Busca pelo sentido (edição SMART): o que combina com a descrição, além das palavras.
+    val extra = semanticResults.filter { r -> tracks.none { it.id == r.id } }.take(15)
+    if (extra.isNotEmpty()) {
+        item(key = "s-sem-label") {
+            Row(Modifier.padding(top = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(SonivellTheme.icons.smart, null, Modifier.size(18.dp), tint = SonivellTheme.colors.accent)
+                SectionTitle(stringResource(R.string.search_match_style))
+            }
+        }
+        itemsIndexed(extra, key = { _, t -> "sem-${t.id}" }) { i, t ->
+            TrackRow(t, onClick = { actions.onPlay(extra, i, labels.search) }, highlighted = t.id == currentId, onMore = { actions.onTrackMenu(t) })
+        }
+    }
+}
+
+private const val SONGS_PREVIEW = 4
+
+/** Busca vazia: blocos coloridos de gênero (e de década) para explorar a biblioteca. */
+private fun LazyListScope.browseContent(state: LibraryState, decades: List<Int>, actions: LibraryActions) {
+    item(key = "browse") {
+        val res = LocalContext.current.resources
+        val tiles = remember(state.genres, decades, res) {
+            state.genres.sortedByDescending { it.tracks.size }.take(12).map { g -> g.name to { actions.onOpenGenre(g.name) } } +
+                decades.map { d -> decadeText(res, d) to { actions.onOpenAuto("decada-$d") } }
+        }
+        if (tiles.isEmpty()) return@item
+        Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            SectionTitle(stringResource(R.string.search_browse), Modifier.padding(bottom = 2.dp))
+            tiles.chunked(2).forEachIndexed { row, pair ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    pair.forEachIndexed { col, (label, onClick) ->
+                        val tone = ArtTones.rings[(row * 2 + col) % ArtTones.rings.size]
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .height(92.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(tone)
+                                .clickable(onClick = onClick)
+                                .padding(14.dp),
+                        ) {
+                            Text(label, style = MaterialTheme.typography.titleMedium, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Box(
+                                Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(ArtTones.cores[(row * 2 + col) % ArtTones.cores.size])
+                            )
+                        }
+                    }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InterpChip(text: String) {
+    val c = SonivellTheme.colors
+    Box(
+        Modifier.height(30.dp).clip(RoundedCornerShape(15.dp)).background(c.surface).padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textPrimary)
+    }
+}
+
+@Composable
+private fun SearchGroup(title: String, items: List<LibItem>) {
+    Column(Modifier.padding(top = 16.dp)) {
+        SectionTitle(title, Modifier.padding(bottom = 4.dp))
+        items.forEach { ItemRow(it) }
+    }
+}
+
+@Composable
+private fun BestCard(title: String, subtitle: String, track: Track?, round: Boolean, onOpen: () -> Unit, onPlay: () -> Unit) {
+    val c = SonivellTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(c.surface)
+            .clickable(onClick = onOpen)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        ItemArtBox(ItemArt.Of(track), 72.dp, round)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.titleLarge, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        IconBtn(SonivellTheme.icons.play, stringResource(R.string.cd_play_item, title), onPlay, size = 48.dp, background = c.accent, tint = c.onAccent)
+    }
+}
+
+/** Campo de busca 2.0: cores invertidas (claro no tema escuro), como no mockup. */
 @Composable
 private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
+    val bg = c.textPrimary
+    val fg = c.background
     val searchLabel = stringResource(R.string.cd_search)
     Row(
         modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(c.surface)
-            .padding(start = 16.dp, end = 4.dp),
+            .clip(RoundedCornerShape(10.dp))
+            .background(bg)
+            .padding(start = 14.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Icon(SonivellTheme.icons.search, null, Modifier.size(18.dp), tint = c.textSecondary)
+        Icon(SonivellTheme.icons.search, null, Modifier.size(20.dp), tint = fg)
         Box(Modifier.weight(1f)) {
             if (value.isEmpty()) {
-                Text(stringResource(R.string.search_hint), style = MaterialTheme.typography.bodyLarge, color = c.textSecondary)
+                Text(stringResource(R.string.search_hint), style = MaterialTheme.typography.bodyLarge, color = fg.copy(alpha = 0.6f), maxLines = 1)
             }
             BasicTextField(
                 value = value,
                 onValueChange = onChange,
                 singleLine = true,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = c.textPrimary),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = fg, fontWeight = FontWeight.SemiBold),
                 cursorBrush = SolidColor(c.accent),
                 modifier = Modifier.fillMaxWidth().semantics { contentDescription = searchLabel },
             )
         }
         if (value.isNotEmpty()) {
-            IconBtn(SonivellTheme.icons.close, stringResource(R.string.cd_clear_search), { onChange("") }, tint = c.textSecondary, iconSize = 18.dp)
-        }
-    }
-}
-
-@Composable
-private fun AlbumGrid(albums: List<Album>, actions: LibraryActions, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        albums.forEach { album ->
-            Column(
-                Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(14.dp))
-                    .clickable { actions.onOpenAlbum(album.id) },
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                AlbumArt(album.tracks.firstOrNull(), Modifier.fillMaxWidth().aspectRatio(1f), corner = 14.dp)
-                Text(
-                    album.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = SonivellTheme.colors.textPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        repeat(3 - albums.size) { Spacer(Modifier.weight(1f)) }
-    }
-}
-
-/** "Anos 90" (ou "Anos 2000"). */
-@Composable
-private fun decadeLabel(start: Int): String =
-    stringResource(R.string.decade_label, if (start in 1900..1999) (start % 100).toString() else start.toString())
-
-/** Linha de playlist: capa (primeira faixa), nome e total. */
-@Composable
-private fun PlaylistRow(playlist: Playlist, trackById: Map<Long, Track>, actions: LibraryActions) {
-    val c = SonivellTheme.colors
-    val tracks = playlist.trackIds.mapNotNull(trackById::get)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { actions.onOpenPlaylist(playlist.id) }
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        AlbumArt(tracks.firstOrNull(), Modifier.size(52.dp), corner = 12.dp, detailed = true)
-        Column(Modifier.weight(1f)) {
-            Text(playlist.name, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                pluralStringResource(R.plurals.songs_count, tracks.size, tracks.size) + " · " + formatDuration(tracks.sumOf { it.durationMs }),
-                style = MaterialTheme.typography.bodyMedium,
-                color = c.textSecondary,
-            )
-        }
-    }
-}
-
-@Composable
-private fun GroupRow(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 60.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(
-            Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)).background(c.surface),
-            contentAlignment = Alignment.Center,
-        ) { Icon(icon, null, tint = c.textSecondary) }
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            IconBtn(SonivellTheme.icons.close, stringResource(R.string.cd_clear_search), { onChange("") }, tint = fg, iconSize = 18.dp)
         }
     }
 }

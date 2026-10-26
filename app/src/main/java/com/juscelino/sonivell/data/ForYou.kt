@@ -21,6 +21,8 @@ data class ForYouState(
     val thisHour: List<Track> = emptyList(),
     /** Sementes dos mixes pelo som (edição SMART): uma por artista que você ouve. */
     val mixSeeds: List<Track> = emptyList(),
+    /** Onde cada faixa de [unfinished] parou (ms), para o "Continuar ouvindo". */
+    val resumeAtMs: Map<Long, Long> = emptyMap(),
 ) {
     val isEmpty: Boolean
         get() = unfinished.isEmpty() && forgottenFavorites.isEmpty() && thisHour.isEmpty()
@@ -109,6 +111,7 @@ object ForYou {
             forgottenFavorites = forgotten,
             thisHour = thisHour,
             mixSeeds = mixSeeds,
+            resumeAtMs = unfinished.associate { t -> t.id to (latest[t.id]?.playedMs ?: 0L) },
         )
     }
 

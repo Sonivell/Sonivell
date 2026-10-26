@@ -341,6 +341,17 @@ private fun MainContent(vm: MainViewModel) {
         onOpenAuto = { nav.navigate(Routes.auto(it)) },
         onOpenSmartPlaylist = { nav.navigate(Routes.smartlist(it)) },
         onNewSmartPlaylist = { nav.navigate(Routes.smartEdit(0)) },
+        onResume = { t, pos ->
+            source = res.getString(R.string.nav_home)
+            vm.playFrom(listOf(t), 0, startPositionMs = pos)
+        },
+        onOpenSearch = {
+            nav.navigate(Routes.SEARCH) {
+                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        },
     )
 
     val chromeRoutes = remember { tabs.map { it.route }.toSet() + Routes.COLLECTIONS + setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS) }
@@ -360,6 +371,8 @@ private fun MainContent(vm: MainViewModel) {
                             progress = if (player.durationMs > 0) player.positionMs.toFloat() / player.durationMs else 0f,
                             onOpen = { nav.navigate(Routes.PLAYER) },
                             onTogglePlay = vm.player::togglePlay,
+                            liked = t.id in favorites,
+                            onLike = { vm.toggleFavorite(t.id) },
                         )
                     }
                     BottomNav(route) { r ->
@@ -623,6 +636,8 @@ private fun MainContent(vm: MainViewModel) {
                         isFavorite = t.id in favorites,
                         sourceLabel = source,
                         sleepTimer = sleepTimer,
+                        lyrics = lyricsState,
+                        lyricsOffsetMs = lyricsOffset,
                         actions = NowPlayingActions(
                             onClose = { nav.popBackStack() },
                             onMore = { playerMenu = true },
@@ -924,11 +939,12 @@ private fun displayName(context: Context, uri: Uri): String? = runCatching {
 private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp),
+        Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 8.dp),
     ) {
         tabs.forEach { tab ->
             val selected = tab.route == route
-            val color = if (selected) c.accent else c.textSecondary
+            // 2.0: aba ativa em branco com ícone preenchido; inativas em cinza.
+            val color = if (selected) c.textPrimary else c.textSecondary
             Column(
                 Modifier
                     .weight(1f)
@@ -939,7 +955,7 @@ private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
                 verticalArrangement = Arrangement.Center,
             ) {
                 val icons = SonivellTheme.icons
-                Icon(if (selected) tab.activeIcon(icons) else tab.icon(icons), null, Modifier.size(22.dp), tint = color)
+                Icon(if (selected) tab.activeIcon(icons) else tab.icon(icons), null, Modifier.size(24.dp), tint = color)
                 Text(
                     stringResource(tab.label),
                     style = MaterialTheme.typography.labelMedium,

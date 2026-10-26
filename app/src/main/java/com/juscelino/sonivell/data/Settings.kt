@@ -11,11 +11,11 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class AppSettings(
     val theme: ThemeMode = ThemeMode.AUTO,
-    val accent: AccentChoice = AccentChoice.Lima,
+    val accent: AccentChoice = AccentChoice.Verde,
     /** Traço fino (padrão, como o Lumivell) ou arredondado. */
     val iconStyle: IconStyle = IconStyle.FINO,
     /** Fundo usado no tema escuro. */
-    val darkBackground: DarkBackground = DarkBackground.Grafite,
+    val darkBackground: DarkBackground = DarkBackground.Preto,
     /** Pausar quando o fone é desconectado (Media3 "becoming noisy"). */
     val pauseOnUnplug: Boolean = true,
     /** Não registrar novas escutas (o SMART e o Para você param de aprender). */
@@ -51,9 +51,9 @@ class SettingsStore(private val prefs: SharedPreferences) {
 
     private fun read() = AppSettings(
         theme = ThemeMode.entries.getOrElse(prefs.getInt(KEY_THEME, 0)) { ThemeMode.AUTO },
-        accent = AccentChoice.entries.getOrElse(prefs.getInt(KEY_ACCENT, 0)) { AccentChoice.Lima },
+        accent = AccentChoice.entries.getOrElse(prefs.getInt(KEY_ACCENT, AccentChoice.Verde.ordinal)) { AccentChoice.Verde },
         iconStyle = IconStyle.entries.firstOrNull { it.name == prefs.getString(KEY_ICON_STYLE, null) } ?: IconStyle.FINO,
-        darkBackground = DarkBackground.entries.firstOrNull { it.name == prefs.getString(KEY_DARK_BACKGROUND, null) } ?: DarkBackground.Grafite,
+        darkBackground = DarkBackground.entries.firstOrNull { it.name == prefs.getString(KEY_DARK_BACKGROUND, null) } ?: DarkBackground.Preto,
         pauseOnUnplug = prefs.getBoolean(KEY_PAUSE_ON_UNPLUG, true),
         historyPaused = prefs.getBoolean(KEY_HISTORY_PAUSED, false),
         artistVariety = prefs.getInt(KEY_ARTIST_VARIETY, 2),

@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class LibraryTab(@StringRes val label: Int) {
+    Tudo(R.string.tab_all),
     Musicas(R.string.tab_songs),
     Playlists(R.string.tab_playlists),
     Albuns(R.string.tab_albums),
@@ -112,7 +113,7 @@ data class LibraryState(
     val genres: List<Genre> = emptyList(),
     val recentAlbums: List<Album> = emptyList(),
     val query: String = "",
-    val tab: LibraryTab = LibraryTab.Musicas,
+    val tab: LibraryTab = LibraryTab.Tudo,
     val sort: SortOrder = SortOrder.Titulo,
 )
 
@@ -160,7 +161,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val allTracks = MutableStateFlow<List<Track>?>(null)
     private val query = MutableStateFlow("")
-    private val tab = MutableStateFlow(LibraryTab.Musicas)
+    private val tab = MutableStateFlow(LibraryTab.Tudo)
     private val sort = MutableStateFlow(
         SortOrder.entries.getOrElse(prefs.getInt("sort", 0)) { SortOrder.Titulo }
     )
@@ -543,13 +544,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      * Toca [tracks] a partir de [index]. No modo SMART, só a faixa escolhida vem da lista:
      * o resto da fila é montado pelo motor, com músicas que soam parecidas.
      */
-    fun playFrom(tracks: List<Track>, index: Int) {
+    fun playFrom(tracks: List<Track>, index: Int, startPositionMs: Long = 0L) {
         if (!smartMode.value) {
-            player.play(tracks, index)
+            player.play(tracks, index, startPositionMs = startPositionMs)
             return
         }
         val seed = tracks.getOrNull(index) ?: return
-        player.play(listOf(seed), 0)
+        player.play(listOf(seed), 0, startPositionMs = startPositionMs)
         planningJob?.cancel()
         planningJob = viewModelScope.launch {
             val planned = planSmart(seed, excluding = setOf(seed.id))

@@ -84,10 +84,10 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
 
     // ---- Ações ----
 
-    fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean = false) {
+    fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean = false, startPositionMs: Long = 0L) {
         val c = controller ?: return
         c.shuffleModeEnabled = shuffle
-        c.setMediaItems(tracks.map { it.toMediaItem() }, startIndex.coerceAtLeast(0), 0L)
+        c.setMediaItems(tracks.map { it.toMediaItem() }, startIndex.coerceAtLeast(0), startPositionMs.coerceAtLeast(0L))
         c.prepare()
         c.play()
     }

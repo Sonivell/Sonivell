@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.theme.SonivellTheme
@@ -154,7 +155,10 @@ fun TrackRow(
     }
 }
 
-/** Mini player do mockup: capa, título, botão de play e a barrinha de progresso. */
+/**
+ * Mini player 2.0: capa, título, curtir e play, com uma linha de progresso fina na base
+ * do cartão. Fica acima da barra de navegação em todas as telas principais.
+ */
 @Composable
 fun MiniPlayer(
     track: Track,
@@ -163,49 +167,67 @@ fun MiniPlayer(
     onOpen: () -> Unit,
     onTogglePlay: () -> Unit,
     modifier: Modifier = Modifier,
+    liked: Boolean = false,
+    onLike: (() -> Unit)? = null,
 ) {
     val c = SonivellTheme.colors
+    val icons = SonivellTheme.icons
     val openPlayer = stringResource(R.string.cd_open_player)
-    Column(modifier.padding(horizontal = 12.dp)) {
+    Box(modifier.padding(horizontal = 8.dp).clip(RoundedCornerShape(12.dp)).background(c.miniPlayer)) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
-                .background(c.miniPlayer)
                 .clickable(onClickLabel = openPlayer, onClick = onOpen)
-                .padding(8.dp),
+                .padding(start = 8.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            AlbumArt(track, Modifier.size(44.dp))
+            AlbumArt(track, Modifier.size(40.dp), corner = 6.dp)
             Column(Modifier.weight(1f)) {
                 Text(track.title, style = MaterialTheme.typography.titleSmall, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(track.artist, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            if (onLike != null) {
+                IconBtn(
+                    icon = if (liked) icons.liked else icons.like,
+                    contentDescription = stringResource(if (liked) R.string.cd_unlike else R.string.cd_like),
+                    onClick = onLike,
+                    tint = if (liked) c.accent else c.textPrimary,
+                    iconSize = 22.dp,
+                )
+            }
             IconBtn(
-                icon = if (isPlaying) SonivellTheme.icons.pause else SonivellTheme.icons.play,
+                icon = if (isPlaying) icons.pause else icons.play,
                 contentDescription = stringResource(if (isPlaying) R.string.cd_pause else R.string.cd_play),
                 onClick = onTogglePlay,
-                background = c.accent,
-                tint = c.onAccent,
-                iconSize = 20.dp,
+                tint = c.textPrimary,
+                iconSize = 26.dp,
             )
         }
+        // Progresso: linha de 2 dp colada na base do cartão.
         Box(
             Modifier
-                .padding(horizontal = 16.dp)
+                .align(Alignment.BottomStart)
+                .padding(horizontal = 8.dp)
                 .fillMaxWidth()
-                .height(3.dp)
-                .padding(0.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(c.track)
+                .height(2.dp)
+                .background(c.textPrimary.copy(alpha = 0.18f))
         ) {
-            Box(
-                Modifier
-                    .fillMaxWidth(progress.coerceIn(0f, 1f))
-                    .height(3.dp)
-                    .background(c.accent)
-            )
+            Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(2.dp).background(c.textPrimary))
         }
+    }
+}
+
+/** Título de seção grande (Para você, Busca): mais legível que o rótulo em maiúsculas. */
+@Composable
+fun SectionTitle(text: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text,
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
+            color = SonivellTheme.colors.textPrimary,
+            modifier = Modifier.weight(1f),
+        )
+        trailing?.invoke()
     }
 }

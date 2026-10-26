@@ -352,4 +352,33 @@
     <string name="background_graphite">Graphite</string>
     <string name="background_black">Black</string>
     <string name="settings_dark_background_hint">Applies when the dark theme is in use.</string>
+    <!-- 2.0 -->
+    <string name="tab_all">All</string>
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="fy_continue">Continue listening</string>
+    <string name="fy_time_left">%1$s · %2$s left</string>
+    <string name="cd_continue">Continue %1$s</string>
+    <string name="cd_shuffle_all">Shuffle all songs</string>
+    <string name="cd_new_playlist">Create playlist</string>
+    <string name="cd_search_library">Search the library</string>
+    <string name="cd_view_grid">Show as grid</string>
+    <string name="cd_view_list">Show as list</string>
+    <string name="kind_playlist">Playlist · %1$s</string>
+    <string name="kind_smart">Smart · updates by itself</string>
+    <string name="kind_auto">Automatic</string>
+    <string name="kind_album">Album · %1$s</string>
+    <string name="kind_artist">Artist</string>
+    <string name="kind_genre">Genre · %1$s</string>
+    <string name="kind_folder">Folder · %1$s</string>
+    <string name="search_best">Top result</string>
+    <string name="search_period">Period: %1$d–%2$d</string>
+    <string name="search_genre">Genre: %1$s</string>
+    <string name="search_browse">Browse by genre</string>
+    <string name="search_show_all">Show all %1$d songs</string>
+    <string name="search_match_style">Match the style</string>
+    <string name="cd_play_item">Play %1$s</string>
+    <string name="lyrics_label">Lyrics</string>
+    <string name="cd_sleep_timer">Sleep timer</string>
 </resources>
