@@ -24,26 +24,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.Lyrics
-import androidx.compose.material.icons.rounded.MoreHoriz
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PhoneAndroid
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.RepeatOne
-import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material.icons.rounded.AutoAwesome
 import com.juscelino.sonivell.ShuffleMode
 import com.juscelino.sonivell.SleepTimer
 import android.media.AudioManager
-import androidx.compose.material.icons.automirrored.rounded.VolumeDown
-import androidx.compose.material.icons.automirrored.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.LaunchedEffect
@@ -52,8 +35,6 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -116,13 +97,13 @@ fun NowPlayingScreen(
     ) {
         // Topo
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconBtn(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.cd_close_player), actions.onClose, background = c.surface)
+            IconBtn(SonivellTheme.icons.collapse, stringResource(R.string.cd_close_player), actions.onClose, background = c.surface)
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(R.string.playing_from).uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp), color = c.textSecondary)
                 Text(sourceLabel, style = MaterialTheme.typography.titleSmall, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (sleepTimer.active) SleepChip(sleepTimer, actions.onSleepTimer)
             }
-            IconBtn(Icons.Rounded.MoreHoriz, stringResource(R.string.cd_more_options), actions.onMore, background = c.surface)
+            IconBtn(SonivellTheme.icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore, background = c.surface)
         }
 
         // Capa
@@ -148,7 +129,7 @@ fun NowPlayingScreen(
                 )
             }
             IconBtn(
-                if (isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                if (isFavorite) SonivellTheme.icons.liked else SonivellTheme.icons.like,
                 stringResource(if (isFavorite) R.string.cd_unlike else R.string.cd_like),
                 actions.onFavorite,
                 tint = if (isFavorite) c.accent else c.textSecondary,
@@ -189,9 +170,9 @@ fun NowPlayingScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ShuffleButton(shuffleMode, smartAvailable, actions.onShuffle)
-            IconBtn(Icons.Rounded.SkipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 56.dp, iconSize = 34.dp)
+            IconBtn(SonivellTheme.icons.skipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 56.dp, iconSize = 34.dp)
             IconBtn(
-                if (state.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                if (state.isPlaying) SonivellTheme.icons.pause else SonivellTheme.icons.play,
                 stringResource(if (state.isPlaying) R.string.cd_pause else R.string.cd_play),
                 actions.onTogglePlay,
                 size = 76.dp,
@@ -199,9 +180,9 @@ fun NowPlayingScreen(
                 background = c.accent,
                 tint = c.onAccent,
             )
-            IconBtn(Icons.Rounded.SkipNext, stringResource(R.string.cd_next), actions.onNext, size = 56.dp, iconSize = 34.dp)
+            IconBtn(SonivellTheme.icons.skipNext, stringResource(R.string.cd_next), actions.onNext, size = 56.dp, iconSize = 34.dp)
             IconBtn(
-                if (state.repeat == RepeatMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                if (state.repeat == RepeatMode.ONE) SonivellTheme.icons.repeatOne else SonivellTheme.icons.repeat,
                 stringResource(
                     when (state.repeat) {
                         RepeatMode.OFF -> R.string.cd_repeat_off
@@ -230,10 +211,10 @@ fun NowPlayingScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(Icons.Rounded.PhoneAndroid, null, Modifier.size(18.dp), tint = c.textTertiary)
+                Icon(SonivellTheme.icons.device, null, Modifier.size(18.dp), tint = c.textTertiary)
                 Text(stringResource(R.string.this_phone), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textTertiary)
             }
-            IconBtn(Icons.Rounded.Lyrics, stringResource(R.string.cd_lyrics), actions.onLyrics, tint = c.textTertiary, iconSize = 20.dp)
+            IconBtn(SonivellTheme.icons.lyrics, stringResource(R.string.cd_lyrics), actions.onLyrics, tint = c.textTertiary, iconSize = 20.dp)
             Spacer(Modifier.size(4.dp))
             val openQueue = stringResource(R.string.cd_open_queue)
             Box(
@@ -245,7 +226,7 @@ fun NowPlayingScreen(
                     .semantics { contentDescription = openQueue },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, Modifier.size(20.dp), tint = c.textPrimary)
+                Icon(SonivellTheme.icons.queue, null, Modifier.size(20.dp), tint = c.textPrimary)
             }
         }
     }
@@ -317,7 +298,7 @@ private fun ShuffleButton(mode: ShuffleMode, smartAvailable: Boolean, onClick: (
     )
     Box(contentAlignment = Alignment.Center) {
         IconBtn(
-            if (mode == ShuffleMode.SMART) Icons.Rounded.AutoAwesome else Icons.Rounded.Shuffle,
+            if (mode == ShuffleMode.SMART) SonivellTheme.icons.smart else SonivellTheme.icons.shuffle,
             label,
             onClick,
             tint = if (mode == ShuffleMode.OFF) c.textSecondary else c.accent,
@@ -364,7 +345,7 @@ private fun SleepChip(timer: SleepTimer, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Icon(Icons.Rounded.Bedtime, null, Modifier.size(12.dp), tint = c.accent)
+        Icon(SonivellTheme.icons.sleep, null, Modifier.size(12.dp), tint = c.accent)
         Text(label, style = MaterialTheme.typography.labelMedium, color = c.accent)
     }
 }
@@ -388,7 +369,7 @@ private fun VolumeRow() {
         }
     }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Icon(Icons.AutoMirrored.Rounded.VolumeDown, null, Modifier.size(20.dp), tint = c.textSecondary)
+        Icon(SonivellTheme.icons.volumeDown, null, Modifier.size(20.dp), tint = c.textSecondary)
         Slider(
             value = volume.toFloat(),
             onValueChange = {
@@ -403,6 +384,6 @@ private fun VolumeRow() {
                 inactiveTrackColor = c.track,
             ),
         )
-        Icon(Icons.AutoMirrored.Rounded.VolumeUp, null, Modifier.size(20.dp), tint = c.textSecondary)
+        Icon(SonivellTheme.icons.volumeUp, null, Modifier.size(20.dp), tint = c.textSecondary)
     }
 }

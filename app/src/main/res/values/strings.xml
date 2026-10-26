@@ -178,6 +178,9 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="settings_accent">Accent color</string>
+    <string name="settings_icon_style">Icon style</string>
+    <string name="icon_style_fine">Fine</string>
+    <string name="icon_style_rounded">Rounded</string>
     <string name="accent_lime">Lime</string>
     <string name="accent_blue">Blue</string>
     <string name="accent_orange">Orange</string>

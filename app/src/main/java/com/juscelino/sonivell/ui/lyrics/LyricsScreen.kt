@@ -16,11 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.FolderOpen
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -75,12 +70,12 @@ fun LyricsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconBtn(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.cd_close_lyrics), actions.onClose, background = c.surface)
+            IconBtn(SonivellTheme.icons.collapse, stringResource(R.string.cd_close_lyrics), actions.onClose, background = c.surface)
             Column(Modifier.weight(1f)) {
                 Text(track.title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(track.artist, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            IconBtn(Icons.Rounded.FolderOpen, stringResource(R.string.lyrics_pick_folder), actions.onPickFolder, background = c.surface, iconSize = 20.dp)
+            IconBtn(SonivellTheme.icons.folderOpen, stringResource(R.string.lyrics_pick_folder), actions.onPickFolder, background = c.surface, iconSize = 20.dp)
         }
 
         when (state) {
@@ -183,7 +178,7 @@ private fun OffsetBar(offsetMs: Long, onOffset: (Long) -> Unit) {
         Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(c.surface).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconBtn(Icons.Rounded.Remove, stringResource(R.string.lyrics_earlier), { onOffset(-500) }, tint = c.textPrimary)
+        IconBtn(SonivellTheme.icons.remove, stringResource(R.string.lyrics_earlier), { onOffset(-500) }, tint = c.textPrimary)
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(R.string.lyrics_sync), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
             val seconds = String.format(Locale.getDefault(), "%+.1f s", offsetMs / 1000f)
@@ -194,6 +189,6 @@ private fun OffsetBar(offsetMs: Long, onOffset: (Long) -> Unit) {
                 modifier = Modifier.clickable { if (offsetMs != 0L) onOffset(-offsetMs) },
             )
         }
-        IconBtn(Icons.Rounded.Add, stringResource(R.string.lyrics_later), { onOffset(500) }, tint = c.textPrimary)
+        IconBtn(SonivellTheme.icons.add, stringResource(R.string.lyrics_later), { onOffset(500) }, tint = c.textPrimary)
     }
 }

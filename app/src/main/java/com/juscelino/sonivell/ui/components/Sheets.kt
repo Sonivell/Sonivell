@@ -16,9 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -145,13 +142,13 @@ fun AddToPlaylistSheet(
             )
             LazyColumn(Modifier.heightIn(max = 420.dp)) {
                 item {
-                    SheetRow(Icons.Rounded.Add, stringResource(R.string.new_playlist), null) {
+                    SheetRow(SonivellTheme.icons.add, stringResource(R.string.new_playlist), null) {
                         onDismiss(); onNew()
                     }
                 }
                 items(playlists, key = { it.id }) { p ->
                     SheetRow(
-                        Icons.AutoMirrored.Rounded.PlaylistAdd,
+                        SonivellTheme.icons.addToPlaylist,
                         p.name,
                         pluralStringResource(R.plurals.songs_count, p.trackIds.size, p.trackIds.size),
                     ) { onDismiss(); onPick(p) }

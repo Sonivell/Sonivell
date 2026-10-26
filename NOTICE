@@ -10,3 +10,9 @@ ao alvo Android e sem os testes e o código iOS.
 
 Os modelos em app/src/smart/assets/ml/ vêm do mesmo projeto; as licenças e
 atribuições de cada arquivo estão em app/src/smart/assets/ml/LICENSE-MODEL.txt.
+
+O estilo de ícones "Fino" usa caminhos do Material Symbols Outlined (peso 300),
+Copyright Google LLC, licenciado sob a Apache License 2.0
+(https://github.com/google/material-design-icons). Os caminhos estão em
+app/src/main/java/com/juscelino/sonivell/ui/theme/FinoIconPaths.kt, gerado por
+tools/gen_fino_icons.py.

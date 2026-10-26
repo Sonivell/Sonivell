@@ -19,10 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -44,6 +40,8 @@ import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.theme.AccentChoice
+import com.juscelino.sonivell.ui.theme.IconStyle
+import com.juscelino.sonivell.ui.theme.icons
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.ThemeMode
 
@@ -82,7 +80,7 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconBtn(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.cd_back), actions.onBack, background = c.surface)
+            IconBtn(SonivellTheme.icons.back, stringResource(R.string.cd_back), actions.onBack, background = c.surface)
             Text(stringResource(R.string.settings), style = MaterialTheme.typography.displaySmall, color = c.textPrimary)
         }
 
@@ -115,8 +113,19 @@ fun SettingsScreen(
                             .semantics { contentDescription = label; this.selected = selected },
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (selected) Icon(Icons.Rounded.Check, null, Modifier.size(20.dp), tint = c.onAccent)
+                        if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.onAccent)
                     }
+                }
+            }
+            RowLabel(stringResource(R.string.settings_icon_style))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconStyle.entries.forEach { style ->
+                    IconStyleOption(
+                        style = style,
+                        label = stringResource(iconStyleNames[style.ordinal]),
+                        selected = settings.iconStyle == style,
+                        modifier = Modifier.weight(1f),
+                    ) { actions.onUpdate { it.copy(iconStyle = style) } }
                 }
             }
         }
@@ -174,6 +183,44 @@ fun SettingsScreen(
             }
             LinkRow(stringResource(R.string.settings_reset), null, actions.onReset)
         }
+    }
+}
+
+/** Nomes dos estilos de ícone, na ordem de [IconStyle]. */
+private val iconStyleNames = listOf(R.string.icon_style_fine, R.string.icon_style_rounded)
+
+/** Cartão com uma amostra dos ícones do estilo, para comparar antes de escolher. */
+@Composable
+private fun IconStyleOption(
+    style: IconStyle,
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val c = SonivellTheme.colors
+    val icons = style.icons()
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        modifier
+            .clip(shape)
+            .background(if (selected) c.surfaceHigh else c.surface)
+            .border(if (selected) 2.dp else 1.dp, if (selected) c.accent else c.outline, shape)
+            .clickable(role = Role.RadioButton, onClick = onClick)
+            .semantics { this.selected = selected }
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf(icons.play, icons.liked, icons.shuffle, icons.queue).forEach {
+                Icon(it, null, Modifier.size(22.dp), tint = if (selected) c.accent else c.textPrimary)
+            }
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.titleSmall,
+            color = c.textPrimary,
+            modifier = Modifier.padding(top = 10.dp),
+        )
     }
 }
 
@@ -250,6 +297,6 @@ private fun LinkRow(title: String, hint: String?, onClick: () -> Unit) {
             Text(title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary)
             if (hint != null) Text(hint, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
         }
-        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = c.textSecondary)
+        Icon(SonivellTheme.icons.chevron, null, tint = c.textSecondary)
     }
 }

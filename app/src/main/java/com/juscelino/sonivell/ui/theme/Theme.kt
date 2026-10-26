@@ -115,12 +115,16 @@ val LocalSonivellColors = staticCompositionLocalOf { SonivellColors() }
 object SonivellTheme {
     val colors: SonivellColors
         @Composable get() = LocalSonivellColors.current
+
+    val icons: SonivellIcons
+        @Composable get() = LocalSonivellIcons.current
 }
 
 @Composable
 fun SonivellTheme(
     accent: AccentChoice = AccentChoice.Lima,
     darkTheme: Boolean = true,
+    iconStyle: IconStyle = IconStyle.FINO,
     content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) SonivellColors(accent = accent.dark) else lightColors(accent.light)
@@ -135,7 +139,10 @@ fun SonivellTheme(
         onSurfaceVariant = colors.textSecondary,
         outline = colors.outline,
     )
-    androidx.compose.runtime.CompositionLocalProvider(LocalSonivellColors provides colors) {
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalSonivellColors provides colors,
+        LocalSonivellIcons provides iconStyle.icons(),
+    ) {
         MaterialTheme(colorScheme = scheme, typography = SonivellTypography, content = content)
     }
 }
