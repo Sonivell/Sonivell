@@ -9,6 +9,7 @@ export HOME="$DEMO_HOME"
 export XDG_CONFIG_HOME="$HOME/.config" XDG_DATA_HOME="$HOME/.local/share" XDG_CACHE_HOME="$HOME/.cache"
 mkdir -p "$HOME/Music" "$XDG_CONFIG_HOME/sonivell" "$HOME/covers"
 cat > "$XDG_CONFIG_HOME/sonivell/settings.properties" <<'PROPS'
+musicDirs=$HOME/Music
 theme=DARK
 accent=Lima
 darkBg=Grafite
@@ -43,13 +44,16 @@ make 11.mp3 "Janela Molhada" "Marina Ruído" "Vidro e Sal" Pop 2020 3 587 vidro 
 export LANG=pt_BR.UTF-8 JAVA_TOOL_OPTIONS="-Duser.language=pt -Duser.country=BR"
 APP=/opt/sonivell/bin/sonivell
 export DISPLAY=:99
-Xvfb :99 -screen 0 1360x860x24 &
+export SKIKO_RENDER_API=SOFTWARE_FAST
+Xvfb :99 -screen 0 1600x1000x24 &
 XVFB=$!
 sleep 2
 "$APP" > "$OUT/app.log" 2>&1 &
 APPPID=$!
 sleep 25
-shot() { import -window root "$OUT/$1.png"; }
+xdotool search --name Sonivell windowmove 0 0 || true
+sleep 2
+shot() { import -window root -crop 1360x860+0+0 +repage "$OUT/$1.png"; }
 shot 1-para-voce
 # Biblioteca
 xdotool mousemove 110 195 click 1; sleep 3; shot 2-biblioteca

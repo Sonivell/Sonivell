@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Textos exclusivos da versão para PC. Os demais vêm do strings.xml do app Android. -->
 <resources>
+    <string name="app_name">Sonivell</string>
     <string name="desktop_music_folders">Music folders</string>
     <string name="desktop_music_folders_hint">Sonivell reads the songs inside these folders, including subfolders.</string>
     <string name="desktop_add_folder">Add folder</string>

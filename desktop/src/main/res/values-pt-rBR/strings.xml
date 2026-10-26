@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Textos exclusivos da versão para PC. Os demais vêm do strings.xml do app Android. -->
 <resources>
+    <string name="app_name">Sonivell</string>
     <string name="desktop_music_folders">Pastas de música</string>
     <string name="desktop_music_folders_hint">O Sonivell lê as músicas dentro destas pastas, inclusive nas subpastas.</string>
     <string name="desktop_add_folder">Adicionar pasta</string>

@@ -84,7 +84,7 @@ tasks.test { useJUnitPlatform() }
 compose.desktop {
     application {
         mainClass = "com.juscelino.sonivell.desktop.MainKt"
-        jvmArgs += listOf("-Xmx768m", "-Dsun.java2d.opengl=true")
+        jvmArgs += listOf("-Xmx768m")
         nativeDistributions {
             targetFormats(TargetFormat.Deb)
             packageName = "sonivell"
