@@ -56,6 +56,9 @@ data class Artist(val name: String, val tracks: List<Track>) {
 }
 
 @Immutable
+data class Genre(val name: String, val tracks: List<Track>)
+
+@Immutable
 data class Folder(val path: String, val tracks: List<Track>) {
     val name: String get() = path.trimEnd('/').substringAfterLast('/').ifBlank { path }
 }

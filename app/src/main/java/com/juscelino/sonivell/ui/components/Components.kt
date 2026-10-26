@@ -5,6 +5,9 @@ import com.juscelino.sonivell.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -99,11 +102,14 @@ fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun TrackRow(
     track: Track,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     highlighted: Boolean = false,
+    /** Abre o menu da faixa (botão ⋮ e toque longo). */
+    onMore: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val c = SonivellTheme.colors
@@ -112,7 +118,7 @@ fun TrackRow(
             .fillMaxWidth()
             .heightIn(min = 60.dp)
             .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onMore)
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -139,6 +145,16 @@ fun TrackRow(
             style = MaterialTheme.typography.labelMedium,
             color = c.textSecondary,
         )
+        if (onMore != null) {
+            IconBtn(
+                Icons.Rounded.MoreVert,
+                stringResource(R.string.cd_track_options, track.title),
+                onMore,
+                tint = c.textSecondary,
+                iconSize = 20.dp,
+                size = 40.dp,
+            )
+        }
     }
 }
 

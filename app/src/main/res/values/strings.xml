@@ -116,4 +116,57 @@
     <string name="fy_mix_of">%1$s mix</string>
     <string name="fy_mix_from">From “%1$s”</string>
     <string name="fy_empty_hint">Listen for a while and this page fills up with your own music.</string>
+    <!-- Fase 1: playlists, menus, temporizador -->
+    <string name="tab_playlists">Playlists</string>
+    <string name="tab_genres">Genres</string>
+    <string name="sort_album">Album</string>
+    <string name="sort_duration">Duration</string>
+    <string name="sort_year">Year</string>
+    <string name="cd_track_options">Options for %1$s</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_volume">Volume</string>
+    <string name="add_to_playlist">Add to playlist</string>
+    <string name="new_playlist">New playlist</string>
+    <string name="import_playlist">Import M3U</string>
+    <string name="export_playlist">Export M3U</string>
+    <string name="rename">Rename</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="create">Create</string>
+    <string name="cancel">Cancel</string>
+    <string name="name">Name</string>
+    <string name="playlists_empty">No playlists yet. Create one, or save your queue as a playlist.</string>
+    <string name="playlist_empty">This playlist is empty. Add songs from their menu (⋮).</string>
+    <string name="genres_empty">Your files don\'t have genre tags.</string>
+    <string name="delete_playlist_title">Delete playlist?</string>
+    <string name="delete_playlist_message">“%1$s” will be deleted. Your songs stay on the phone.</string>
+    <string name="play_next">Play next</string>
+    <string name="add_to_queue">Add to queue</string>
+    <string name="go_to_album">Go to album</string>
+    <string name="go_to_artist">Go to artist</string>
+    <string name="share">Share</string>
+    <string name="share_chooser">Share song</string>
+    <string name="remove_from_queue">Remove from queue</string>
+    <string name="remove_from_playlist">Remove from this playlist</string>
+    <string name="added_next">Will play next</string>
+    <string name="added_to_queue">Added to queue</string>
+    <string name="added_to_playlist">Added to “%1$s”</string>
+    <string name="playlist_created">Playlist “%1$s” created</string>
+    <string name="exported">Playlist exported</string>
+    <string name="export_failed">Couldn\'t export the playlist</string>
+    <string name="import_failed">Couldn\'t open that file</string>
+    <string name="import_none">None of the songs in that file are on this phone</string>
+    <plurals name="imported_count">
+        <item quantity="one">%d song imported</item>
+        <item quantity="other">%d songs imported</item>
+    </plurals>
+    <string name="sleep_timer">Sleep timer</string>
+    <plurals name="timer_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="timer_end_of_track">At the end of this song</string>
+    <string name="timer_end_of_track_short">End of song</string>
+    <string name="timer_off">Turn off timer</string>
+    <string name="save_queue_title">Save queue as playlist</string>
 </resources>

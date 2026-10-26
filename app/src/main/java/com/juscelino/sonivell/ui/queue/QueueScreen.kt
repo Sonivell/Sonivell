@@ -6,6 +6,8 @@ import com.juscelino.sonivell.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,9 +66,12 @@ data class QueueActions(
     val onMove: (from: Int, to: Int) -> Unit,
     val onShuffle: () -> Unit,
     val onSavePlaylist: () -> Unit,
+    /** Menu de uma faixa da fila (remover, tocar a seguir…): índice real na fila. */
+    val onItemMenu: (track: Track, queueIndex: Int) -> Unit = { _, _ -> },
 )
 
 /** [upNext]: faixas seguintes com o índice real delas na fila. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun QueueScreen(
     current: Track?,
@@ -175,7 +180,10 @@ fun QueueScreen(
                             .height(rowHeight)
                             .clip(RoundedCornerShape(12.dp))
                             .background(if (isDragging) c.surface else c.background)
-                            .clickable { actions.onPlayAt(queueIndex) },
+                            .combinedClickable(
+                                onClick = { actions.onPlayAt(queueIndex) },
+                                onLongClick = { actions.onItemMenu(track, queueIndex) },
+                            ),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {

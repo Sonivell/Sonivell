@@ -109,4 +109,57 @@
     <string name="fy_mix_of">Mix de %1$s</string>
     <string name="fy_mix_from">A partir de “%1$s”</string>
     <string name="fy_empty_hint">Ouça um pouco e esta página se enche com as suas músicas.</string>
+    <!-- Fase 1: playlists, menus, temporizador -->
+    <string name="tab_playlists">Playlists</string>
+    <string name="tab_genres">Gêneros</string>
+    <string name="sort_album">Álbum</string>
+    <string name="sort_duration">Duração</string>
+    <string name="sort_year">Ano</string>
+    <string name="cd_track_options">Opções de %1$s</string>
+    <string name="cd_back">Voltar</string>
+    <string name="cd_volume">Volume</string>
+    <string name="add_to_playlist">Adicionar à playlist</string>
+    <string name="new_playlist">Nova playlist</string>
+    <string name="import_playlist">Importar M3U</string>
+    <string name="export_playlist">Exportar M3U</string>
+    <string name="rename">Renomear</string>
+    <string name="delete">Excluir</string>
+    <string name="save">Salvar</string>
+    <string name="create">Criar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="name">Nome</string>
+    <string name="playlists_empty">Nenhuma playlist ainda. Crie uma, ou salve a fila como playlist.</string>
+    <string name="playlist_empty">Esta playlist está vazia. Adicione músicas pelo menu (⋮) delas.</string>
+    <string name="genres_empty">Seus arquivos não têm a tag de gênero.</string>
+    <string name="delete_playlist_title">Excluir playlist?</string>
+    <string name="delete_playlist_message">“%1$s” será excluída. Suas músicas continuam no celular.</string>
+    <string name="play_next">Tocar a seguir</string>
+    <string name="add_to_queue">Adicionar à fila</string>
+    <string name="go_to_album">Ir para o álbum</string>
+    <string name="go_to_artist">Ir para o artista</string>
+    <string name="share">Compartilhar</string>
+    <string name="share_chooser">Compartilhar música</string>
+    <string name="remove_from_queue">Remover da fila</string>
+    <string name="remove_from_playlist">Remover desta playlist</string>
+    <string name="added_next">Vai tocar a seguir</string>
+    <string name="added_to_queue">Adicionada à fila</string>
+    <string name="added_to_playlist">Adicionada a “%1$s”</string>
+    <string name="playlist_created">Playlist “%1$s” criada</string>
+    <string name="exported">Playlist exportada</string>
+    <string name="export_failed">Não foi possível exportar a playlist</string>
+    <string name="import_failed">Não foi possível abrir esse arquivo</string>
+    <string name="import_none">Nenhuma música desse arquivo está no celular</string>
+    <plurals name="imported_count">
+        <item quantity="one">%d música importada</item>
+        <item quantity="other">%d músicas importadas</item>
+    </plurals>
+    <string name="sleep_timer">Temporizador</string>
+    <plurals name="timer_minutes">
+        <item quantity="one">%d minuto</item>
+        <item quantity="other">%d minutos</item>
+    </plurals>
+    <string name="timer_end_of_track">Ao fim desta música</string>
+    <string name="timer_end_of_track_short">Fim da música</string>
+    <string name="timer_off">Desligar temporizador</string>
+    <string name="save_queue_title">Salvar fila como playlist</string>
 </resources>

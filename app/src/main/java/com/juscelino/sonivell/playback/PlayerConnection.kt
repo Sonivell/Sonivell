@@ -48,6 +48,10 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
     val state: StateFlow<PlayerState> = _state.asStateFlow()
 
     private var controller: MediaController? = null
+
+    private val _connected = MutableStateFlow(false)
+    /** true quando a ligação com o serviço de reprodução está pronta. */
+    val connected: StateFlow<Boolean> = _connected.asStateFlow()
     private var progressJob: Job? = null
 
     private val listener = object : Player.Listener {
@@ -65,11 +69,13 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
             controller = c
             c.addListener(listener)
             publish(c)
+            _connected.value = true
             if (c.isPlaying) startProgress()
         }
     }
 
     fun release() {
+        _connected.value = false
         stopProgress()
         controller?.removeListener(listener)
         controller?.release()
@@ -139,6 +145,34 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
         if (from < c.mediaItemCount) c.removeMediaItems(from, c.mediaItemCount)
     }
 
+    /**
+     * Restaura a sessão salva sem começar a tocar (como os players do sistema fazem).
+     * Não faz nada se já houver algo na fila — por exemplo, o serviço ainda estava vivo.
+     */
+    fun restore(tracks: List<Track>, index: Int, positionMs: Long, shuffle: Boolean, repeatMode: Int) {
+        val c = controller ?: return
+        if (c.mediaItemCount > 0 || tracks.isEmpty()) return
+        c.setMediaItems(tracks.map { it.toMediaItem() }, index.coerceIn(0, tracks.lastIndex), positionMs.coerceAtLeast(0))
+        c.shuffleModeEnabled = shuffle
+        c.repeatMode = repeatMode
+        c.prepare()
+    }
+
+    /** Coloca as faixas logo depois da atual ("tocar a seguir"). */
+    fun playNext(tracks: List<Track>) {
+        val c = controller ?: return
+        if (tracks.isEmpty()) return
+        if (c.mediaItemCount == 0) return play(tracks, 0)
+        c.addMediaItems(c.currentMediaItemIndex + 1, tracks.map { it.toMediaItem() })
+    }
+
+    fun pause() {
+        controller?.pause()
+    }
+
+    /** Modo de repetição cru do Media3, para salvar a sessão. */
+    val rawRepeatMode: Int get() = controller?.repeatMode ?: Player.REPEAT_MODE_OFF
+
     fun setShuffle(enabled: Boolean) {
         controller?.shuffleModeEnabled = enabled
     }
@@ -146,7 +180,9 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
     /** Coloca [tracks] no fim da fila. */
     fun append(tracks: List<Track>) {
         val c = controller ?: return
-        if (tracks.isNotEmpty()) c.addMediaItems(tracks.map { it.toMediaItem() })
+        if (tracks.isEmpty()) return
+        if (c.mediaItemCount == 0) return play(tracks, 0)
+        c.addMediaItems(tracks.map { it.toMediaItem() })
     }
 
     /** Troca tudo que vem depois da faixa atual por [tracks]. */

@@ -8,6 +8,16 @@ import androidx.lifecycle.viewModelScope
 import com.juscelino.sonivell.data.Album
 import com.juscelino.sonivell.data.Artist
 import com.juscelino.sonivell.data.Folder
+import com.juscelino.sonivell.data.Genre
+import com.juscelino.sonivell.data.M3u
+import com.juscelino.sonivell.data.Playlist
+import com.juscelino.sonivell.data.PlaylistStore
+import com.juscelino.sonivell.data.SavedSession
+import com.juscelino.sonivell.data.SessionStore
+import android.net.Uri
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import com.juscelino.sonivell.data.ListenEvent
 import com.juscelino.sonivell.data.ListenSessionTracker
 import com.juscelino.sonivell.data.ListeningHistory
@@ -34,10 +44,25 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class LibraryTab(@StringRes val label: Int) {
-    Musicas(R.string.tab_songs), Albuns(R.string.tab_albums), Artistas(R.string.tab_artists), Pastas(R.string.tab_folders)
+    Musicas(R.string.tab_songs),
+    Playlists(R.string.tab_playlists),
+    Albuns(R.string.tab_albums),
+    Artistas(R.string.tab_artists),
+    Generos(R.string.tab_genres),
+    Pastas(R.string.tab_folders),
 }
 enum class SortOrder(@StringRes val label: Int) {
-    Titulo(R.string.sort_title), Artista(R.string.sort_artist), Recentes(R.string.sort_recent)
+    Titulo(R.string.sort_title),
+    Artista(R.string.sort_artist),
+    Album(R.string.sort_album),
+    Duracao(R.string.sort_duration),
+    Ano(R.string.sort_year),
+    Recentes(R.string.sort_recent),
+}
+
+/** Temporizador para parar a música: num horário ([endsAtMs]) ou ao fim da faixa atual. */
+data class SleepTimer(val endsAtMs: Long? = null, val endOfTrack: Boolean = false) {
+    val active: Boolean get() = endsAtMs != null || endOfTrack
 }
 
 /** Estado do botão de aleatório: desligado, aleatório comum ou SMART (só na edição smart). */
@@ -50,6 +75,7 @@ data class LibraryState(
     val albums: List<Album> = emptyList(),
     val artists: List<Artist> = emptyList(),
     val folders: List<Folder> = emptyList(),
+    val genres: List<Genre> = emptyList(),
     val recentAlbums: List<Album> = emptyList(),
     val query: String = "",
     val tab: LibraryTab = LibraryTab.Musicas,
@@ -76,6 +102,20 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val history = ListeningHistory(app)
     private val session = ListenSessionTracker()
 
+    /** Sessão salva: ao abrir o app, a fila e a posição voltam como estavam. */
+    private val sessionStore = SessionStore(prefs)
+    private var lastSessionSaveMs = 0L
+    private var lastSavedQueue: List<String> = emptyList()
+    private var lastSavedPlaying = false
+
+    val playlistStore = PlaylistStore(app)
+    val playlists: StateFlow<List<Playlist>> = playlistStore.playlists
+
+    private val _sleepTimer = MutableStateFlow(SleepTimer())
+    val sleepTimer: StateFlow<SleepTimer> = _sleepTimer.asStateFlow()
+    private var sleepJob: Job? = null
+    private var sleepTrackId: String? = null
+
     private val allTracks = MutableStateFlow<List<Track>?>(null)
     private val query = MutableStateFlow("")
     private val tab = MutableStateFlow(LibraryTab.Musicas)
@@ -91,11 +131,17 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val library: StateFlow<LibraryState> = combine(allTracks, query, tab, sort) { all, q, t, s ->
         if (all == null) return@combine LibraryState(loading = true, query = q, tab = t, sort = s)
         val filtered = if (q.isBlank()) all else all.filter {
-            it.title.contains(q, true) || it.artist.contains(q, true) || it.album.contains(q, true)
+            it.title.contains(q, true) || it.artist.contains(q, true) || it.album.contains(q, true) ||
+                it.genre?.contains(q, true) == true || it.fileName?.contains(q, true) == true
         }
         val sorted = when (s) {
             SortOrder.Titulo -> filtered.sortedBy { it.title.lowercase() }
             SortOrder.Artista -> filtered.sortedWith(compareBy({ it.artist.lowercase() }, { it.album.lowercase() }))
+            SortOrder.Album -> filtered.sortedWith(
+                compareBy({ it.album.lowercase() }, { it.discNumber ?: 0 }, { it.trackNumber ?: 0 }, { it.title.lowercase() })
+            )
+            SortOrder.Duracao -> filtered.sortedByDescending { it.durationMs }
+            SortOrder.Ano -> filtered.sortedWith(compareByDescending<Track> { it.year ?: 0 }.thenBy { it.album.lowercase() })
             SortOrder.Recentes -> filtered.sortedByDescending { it.dateAdded }
         }
         val albums = filtered.groupBy { it.albumId }.map { (id, ts) ->
@@ -108,6 +154,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             albums = albums,
             artists = filtered.groupBy { it.artist }.map { (n, ts) -> Artist(n, ts) }.sortedBy { it.name.lowercase() },
             folders = filtered.groupBy { it.folder }.map { (p, ts) -> Folder(p, ts) }.sortedBy { it.name.lowercase() },
+            // Uma faixa pode ter vários gêneros na mesma tag ("Rock; Indie").
+            genres = filtered
+                .flatMap { t -> t.genre.orEmpty().split(';', '/', ',').map { it.trim() }.filter { it.isNotEmpty() }.map { it to t } }
+                .groupBy({ it.first.lowercase() }, { it })
+                .map { (_, pairs) -> Genre(pairs.first().first, pairs.map { it.second }.distinctBy { it.id }) }
+                .sortedBy { it.name.lowercase() },
             recentAlbums = all.sortedByDescending { it.dateAdded }
                 .distinctBy { it.albumId }
                 .take(6)
@@ -141,6 +193,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }.stateIn(viewModelScope, SharingStarted.Eagerly, ShuffleMode.OFF)
 
     init {
+        viewModelScope.launch { playlistStore.load() }
+
+        // Restaura a sessão quando o player conectar e a biblioteca carregar (uma vez só).
+        viewModelScope.launch {
+            combine(player.connected, allTracks) { connected, all -> if (connected) all else null }
+                .first { it != null }
+                ?.let(::restoreSession)
+        }
+
         // Fila SMART "infinita": quando faltam poucas faixas, o motor planeja mais.
         viewModelScope.launch {
             playerState.collect { st ->
@@ -153,12 +214,150 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     nowMs = System.currentTimeMillis(),
                 )?.let { event -> onListenFinished(event, st) }
 
+                maybeSaveSession(st)
+                checkSleepAtEndOfTrack(st)
+
                 if (smartMode.value && st.hasMedia && st.upNext.size < SMART_TOP_UP_BELOW &&
                     planningJob?.isActive != true
                 ) {
                     topUpSmartQueue(st)
                 }
             }
+        }
+    }
+
+    // ---- Sessão ----
+
+    private fun restoreSession(all: List<Track>) {
+        val saved = sessionStore.load() ?: return
+        val byId = all.associateBy { it.id }
+        val tracks = saved.queueIds.mapNotNull(byId::get)
+        if (tracks.isEmpty()) return
+        // Se alguma faixa sumiu do aparelho, a atual pode ter mudado de posição.
+        val currentId = saved.queueIds.getOrNull(saved.index)
+        val index = tracks.indexOfFirst { it.id == currentId }.takeIf { it >= 0 } ?: 0
+        player.restore(tracks, index, if (index == saved.index) saved.positionMs else 0L, saved.shuffle, saved.repeatMode)
+    }
+
+    private fun maybeSaveSession(st: PlayerState) {
+        if (!st.hasMedia) return
+        val now = System.currentTimeMillis()
+        val ids = st.queue.map { it.mediaId }
+        val changed = ids != lastSavedQueue || st.isPlaying != lastSavedPlaying
+        if (!changed && now - lastSessionSaveMs < SESSION_SAVE_EVERY_MS) return
+        lastSessionSaveMs = now
+        lastSavedQueue = ids
+        lastSavedPlaying = st.isPlaying
+        sessionStore.save(
+            SavedSession(
+                queueIds = ids.mapNotNull { it.toLongOrNull() },
+                index = st.currentIndex,
+                positionMs = st.positionMs,
+                shuffle = st.shuffle,
+                repeatMode = player.rawRepeatMode,
+            )
+        )
+    }
+
+    // ---- Fila ----
+
+    /** Toca uma coleção (álbum, playlist…) em ordem aleatória. */
+    fun playShuffled(tracks: List<Track>) {
+        if (tracks.isEmpty()) return
+        if (smartMode.value) setSmartMode(false)
+        player.play(tracks, tracks.indices.random(), shuffle = true)
+    }
+
+    fun playNext(tracks: List<Track>) = player.playNext(tracks)
+    fun addToQueue(tracks: List<Track>) = player.append(tracks)
+    fun removeFromQueue(index: Int) = player.removeItem(index)
+
+    // ---- Playlists ----
+
+    fun tracksOf(playlist: Playlist): List<Track> {
+        val byId = allTracks.value.orEmpty().associateBy { it.id }
+        return playlist.trackIds.mapNotNull(byId::get)
+    }
+
+    fun createPlaylist(name: String, tracks: List<Track> = emptyList(), then: (Long) -> Unit = {}) {
+        viewModelScope.launch { then(playlistStore.create(name, tracks.map { it.id })) }
+    }
+
+    fun renamePlaylist(id: Long, name: String) { viewModelScope.launch { playlistStore.rename(id, name) } }
+    fun deletePlaylist(id: Long) { viewModelScope.launch { playlistStore.delete(id) } }
+    fun addToPlaylist(id: Long, tracks: List<Track>) {
+        viewModelScope.launch { playlistStore.addTracks(id, tracks.map { it.id }) }
+    }
+    fun removeFromPlaylist(id: Long, index: Int) { viewModelScope.launch { playlistStore.removeAt(id, index) } }
+    fun movePlaylistItem(id: Long, from: Int, to: Int) { viewModelScope.launch { playlistStore.move(id, from, to) } }
+
+    /** A fila atual (inclusive a faixa que está tocando) vira uma playlist. */
+    fun saveQueueAsPlaylist(name: String) {
+        val byId = allTracks.value.orEmpty().associateBy { it.id }
+        val tracks = playerState.value.queue.mapNotNull { it.mediaId.toLongOrNull()?.let(byId::get) }
+        createPlaylist(name, tracks)
+    }
+
+    /** Exporta como M3U para o arquivo escolhido pelo usuário. Devolve false se não deu. */
+    suspend fun exportPlaylist(id: Long, target: Uri): Boolean {
+        val playlist = playlists.value.firstOrNull { it.id == id } ?: return false
+        val text = M3u.export(tracksOf(playlist))
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                getApplication<Application>().contentResolver.openOutputStream(target, "wt")!!.use {
+                    it.write(text.toByteArray())
+                }
+            }.isSuccess
+        }
+    }
+
+    /** Importa um M3U; devolve quantas faixas foram encontradas no aparelho (-1 se o arquivo não abriu). */
+    suspend fun importPlaylist(source: Uri, name: String): Int {
+        val text = withContext(Dispatchers.IO) {
+            runCatching {
+                getApplication<Application>().contentResolver.openInputStream(source)!!.use { it.readBytes().decodeToString() }
+            }.getOrNull()
+        } ?: return -1
+        val ids = M3u.import(text, allTracks.value.orEmpty())
+        if (ids.isNotEmpty()) playlistStore.create(name, ids)
+        return ids.size
+    }
+
+    // ---- Temporizador ----
+
+    fun setSleepTimer(minutes: Int) {
+        sleepJob?.cancel()
+        sleepTrackId = null
+        val endsAt = System.currentTimeMillis() + minutes * 60_000L
+        _sleepTimer.value = SleepTimer(endsAtMs = endsAt)
+        sleepJob = viewModelScope.launch {
+            delay(minutes * 60_000L)
+            player.pause()
+            _sleepTimer.value = SleepTimer()
+        }
+    }
+
+    fun sleepAtEndOfTrack() {
+        sleepJob?.cancel()
+        sleepTrackId = playerState.value.current?.mediaId
+        _sleepTimer.value = SleepTimer(endOfTrack = true)
+    }
+
+    fun cancelSleepTimer() {
+        sleepJob?.cancel()
+        sleepTrackId = null
+        _sleepTimer.value = SleepTimer()
+    }
+
+    private fun checkSleepAtEndOfTrack(st: PlayerState) {
+        val armed = sleepTrackId ?: return
+        if (!_sleepTimer.value.endOfTrack) return
+        val currentId = st.current?.mediaId
+        // A faixa marcada acabou (passou para outra, ou a fila terminou): pausa no começo da próxima.
+        if (currentId != armed || (!st.isPlaying && st.durationMs > 0 && st.positionMs >= st.durationMs - 500)) {
+            player.pause()
+            if (currentId != armed) player.seekTo(0)
+            cancelSleepTimer()
         }
     }
 
@@ -312,6 +511,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         const val SMART_PLAN_LENGTH = 25
         const val SMART_TOP_UP_BELOW = 5
         const val SMART_HISTORY_LIMIT = 2_000
+        const val SESSION_SAVE_EVERY_MS = 5_000L
     }
 
     override fun onCleared() {

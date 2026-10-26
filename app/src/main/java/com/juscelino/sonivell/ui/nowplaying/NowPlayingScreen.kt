@@ -39,6 +39,19 @@ import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.AutoAwesome
 import com.juscelino.sonivell.ShuffleMode
+import com.juscelino.sonivell.SleepTimer
+import android.media.AudioManager
+import androidx.compose.material.icons.automirrored.rounded.VolumeDown
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
@@ -78,6 +91,7 @@ data class NowPlayingActions(
     val onFavorite: () -> Unit,
     val onLyrics: () -> Unit,
     val onQueue: () -> Unit,
+    val onSleepTimer: () -> Unit = {},
 )
 
 @Composable
@@ -89,6 +103,7 @@ fun NowPlayingScreen(
     isFavorite: Boolean,
     sourceLabel: String,
     actions: NowPlayingActions,
+    sleepTimer: SleepTimer = SleepTimer(),
 ) {
     val c = SonivellTheme.colors
     Column(
@@ -105,6 +120,7 @@ fun NowPlayingScreen(
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(R.string.playing_from).uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp), color = c.textSecondary)
                 Text(sourceLabel, style = MaterialTheme.typography.titleSmall, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (sleepTimer.active) SleepChip(sleepTimer, actions.onSleepTimer)
             }
             IconBtn(Icons.Rounded.MoreHoriz, stringResource(R.string.cd_more_options), actions.onMore, background = c.surface)
         }
@@ -197,6 +213,8 @@ fun NowPlayingScreen(
                 tint = if (state.repeat == RepeatMode.OFF) c.textSecondary else c.accent,
             )
         }
+
+        VolumeRow()
 
         // Barra inferior
         Row(
@@ -317,5 +335,74 @@ private fun ShuffleButton(mode: ShuffleMode, smartAvailable: Boolean, onClick: (
                     .padding(horizontal = 3.dp),
             )
         }
+    }
+}
+
+/** Contagem regressiva do temporizador (toque para mudar ou cancelar). */
+@Composable
+private fun SleepChip(timer: SleepTimer, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(timer) {
+        while (true) {
+            now = System.currentTimeMillis()
+            delay(1_000)
+        }
+    }
+    val label = when {
+        timer.endOfTrack -> stringResource(R.string.timer_end_of_track_short)
+        timer.endsAtMs != null -> formatDuration((timer.endsAtMs - now).coerceAtLeast(0))
+        else -> ""
+    }
+    Row(
+        Modifier
+            .padding(top = 4.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(c.surface)
+            .clickable(onClickLabel = stringResource(R.string.sleep_timer), onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(Icons.Rounded.Bedtime, null, Modifier.size(12.dp), tint = c.accent)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = c.accent)
+    }
+}
+
+/**
+ * Volume da música do aparelho (o mesmo dos botões físicos). Acompanha mudanças feitas
+ * pelos botões enquanto a tela está aberta.
+ */
+@Composable
+private fun VolumeRow() {
+    val c = SonivellTheme.colors
+    val context = LocalContext.current
+    val audio = remember { context.getSystemService(AudioManager::class.java) }
+    val volumeLabel = stringResource(R.string.cd_volume)
+    val max = remember { audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1) }
+    var volume by remember { mutableIntStateOf(audio.getStreamVolume(AudioManager.STREAM_MUSIC)) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            volume = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
+            delay(1_000)
+        }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Icon(Icons.AutoMirrored.Rounded.VolumeDown, null, Modifier.size(20.dp), tint = c.textSecondary)
+        Slider(
+            value = volume.toFloat(),
+            onValueChange = {
+                volume = it.roundToInt()
+                runCatching { audio.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0) }
+            },
+            valueRange = 0f..max.toFloat(),
+            modifier = Modifier.weight(1f).semantics { contentDescription = volumeLabel },
+            colors = SliderDefaults.colors(
+                thumbColor = c.textPrimary,
+                activeTrackColor = c.textPrimary,
+                inactiveTrackColor = c.track,
+            ),
+        )
+        Icon(Icons.AutoMirrored.Rounded.VolumeUp, null, Modifier.size(20.dp), tint = c.textSecondary)
     }
 }
