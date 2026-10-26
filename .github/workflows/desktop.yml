@@ -78,7 +78,7 @@ jobs:
           fail() { tail -n 25 "$log" | grep -v '^$' | while IFS= read -r line; do echo "::error::${1}: ${line}"; done; exit 1; }
           stage "apt update";  sudo apt-get update -qq > "$log" 2>&1 || fail "apt update"
           stage "apt ferramentas"; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq xvfb xdotool imagemagick ffmpeg x11-utils > "$log" 2>&1 || fail "apt ferramentas"
-          stage "instalar deb"; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ./dist/*.deb > "$log" 2>&1 || fail "instalar deb"
+          stage "instalar deb"; sudo dpkg -i dist/*.deb > "$log" 2>&1; echo "dpkg rc=$?" >> "$log"; sudo DEBIAN_FRONTEND=noninteractive apt-get install -f -y >> "$log" 2>&1; echo "apt -f rc=$?" >> "$log"; grep -E "rc=|rror|aviso|warning" "$log" | while IFS= read -r line; do echo "::notice::inst: ${line}"; done; [ -x /opt/sonivell/bin/sonivell ] || fail "instalar deb"
           ls -la /opt/sonivell/bin/ 2>&1 | while IFS= read -r line; do echo "::notice::${line}"; done
           stage "capturas"; bash tools/desktop-screenshot.sh "$GITHUB_WORKSPACE/screenshots" > "$log" 2>&1 || fail "capturas"
           tail -n 12 "$log" | grep -v '^$' | while IFS= read -r line; do echo "::notice::${line}"; done
