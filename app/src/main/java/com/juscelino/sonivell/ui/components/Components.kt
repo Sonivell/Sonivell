@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -147,7 +143,7 @@ fun TrackRow(
         )
         if (onMore != null) {
             IconBtn(
-                Icons.Rounded.MoreVert,
+                SonivellTheme.icons.more,
                 stringResource(R.string.cd_track_options, track.title),
                 onMore,
                 tint = c.textSecondary,
@@ -187,7 +183,7 @@ fun MiniPlayer(
                 Text(track.artist, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             IconBtn(
-                icon = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                icon = if (isPlaying) SonivellTheme.icons.pause else SonivellTheme.icons.play,
                 contentDescription = stringResource(if (isPlaying) R.string.cd_pause else R.string.cd_play),
                 onClick = onTogglePlay,
                 background = c.accent,

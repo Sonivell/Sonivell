@@ -18,12 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.DragHandle
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -110,10 +104,10 @@ fun CollectionScreen(
     ) {
         item(key = "top") {
             Row(Modifier.fillMaxWidth().padding(end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconBtn(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.cd_back), actions.onBack, background = c.surface)
+                IconBtn(SonivellTheme.icons.back, stringResource(R.string.cd_back), actions.onBack, background = c.surface)
                 Box(Modifier.weight(1f))
                 actions.onMore?.let {
-                    IconBtn(Icons.Rounded.MoreVert, stringResource(R.string.cd_more_options), it, background = c.surface)
+                    IconBtn(SonivellTheme.icons.more, stringResource(R.string.cd_more_options), it, background = c.surface)
                 }
             }
         }
@@ -140,10 +134,10 @@ fun CollectionScreen(
         }
         item(key = "buttons") {
             Row(Modifier.fillMaxWidth().padding(bottom = 16.dp, end = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PillButton(stringResource(R.string.cd_play), Icons.Rounded.PlayArrow, filled = true, enabled = tracks.isNotEmpty(), modifier = Modifier.weight(1f)) {
+                PillButton(stringResource(R.string.cd_play), SonivellTheme.icons.play, filled = true, enabled = tracks.isNotEmpty(), modifier = Modifier.weight(1f)) {
                     actions.onPlay(0)
                 }
-                PillButton(stringResource(R.string.shuffle), Icons.Rounded.Shuffle, filled = false, enabled = tracks.isNotEmpty(), modifier = Modifier.weight(1f), onClick = actions.onShuffle)
+                PillButton(stringResource(R.string.shuffle), SonivellTheme.icons.shuffle, filled = false, enabled = tracks.isNotEmpty(), modifier = Modifier.weight(1f), onClick = actions.onShuffle)
             }
         }
         if (tracks.isEmpty() && emptyText != null) {
@@ -194,7 +188,7 @@ fun CollectionScreen(
                                         )
                                     },
                                 contentAlignment = Alignment.Center,
-                            ) { Icon(Icons.Rounded.DragHandle, null, tint = c.textSecondary) }
+                            ) { Icon(SonivellTheme.icons.dragHandle, null, tint = c.textSecondary) }
                         }
                     },
                 )

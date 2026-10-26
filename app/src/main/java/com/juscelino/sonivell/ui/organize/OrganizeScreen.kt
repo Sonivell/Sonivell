@@ -73,7 +73,7 @@ fun OrganizeScreen(
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconBtn(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.cd_back), actions.onBack, background = c.surface)
+                IconBtn(SonivellTheme.icons.back, stringResource(R.string.cd_back), actions.onBack, background = c.surface)
                 Text(stringResource(R.string.organize), style = MaterialTheme.typography.displaySmall, color = c.textPrimary)
             }
         }

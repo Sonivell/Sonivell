@@ -123,14 +123,14 @@ fun SmartPlaylistEditor(initial: SmartPlaylist, contentPadding: PaddingValues, a
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconBtn(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.cd_back), actions.onBack, background = c.surface)
+            IconBtn(SonivellTheme.icons.back, stringResource(R.string.cd_back), actions.onBack, background = c.surface)
             Text(
                 stringResource(if (initial.id > 0) R.string.edit_smart_playlist else R.string.new_smart_playlist),
                 style = MaterialTheme.typography.titleLarge,
                 color = c.textPrimary,
                 modifier = Modifier.weight(1f),
             )
-            actions.onDelete?.let { IconBtn(Icons.Rounded.DeleteOutline, stringResource(R.string.delete), it, background = c.surface) }
+            actions.onDelete?.let { IconBtn(SonivellTheme.icons.delete, stringResource(R.string.delete), it, background = c.surface) }
         }
 
         OutlinedTextField(
@@ -213,7 +213,7 @@ private fun RuleEditor(rule: SmartRule, onChange: (SmartRule) -> Unit, onRemove:
                     }
                 }
             }
-            IconBtn(Icons.Rounded.Close, stringResource(R.string.remove_rule), onRemove, tint = c.textSecondary, iconSize = 18.dp)
+            IconBtn(SonivellTheme.icons.close, stringResource(R.string.remove_rule), onRemove, tint = c.textSecondary, iconSize = 18.dp)
         }
         val ops = when (rule.field.kind()) {
             Kind.Text -> listOf(RuleOp.Contem, RuleOp.NaoContem, RuleOp.Igual)

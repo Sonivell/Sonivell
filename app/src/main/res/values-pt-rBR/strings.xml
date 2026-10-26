@@ -171,6 +171,9 @@
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Escuro</string>
     <string name="settings_accent">Cor de destaque</string>
+    <string name="settings_icon_style">Estilo dos ícones</string>
+    <string name="icon_style_fine">Fino</string>
+    <string name="icon_style_rounded">Arredondado</string>
     <string name="accent_lime">Lima</string>
     <string name="accent_blue">Azul</string>
     <string name="accent_orange">Laranja</string>

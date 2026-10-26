@@ -25,28 +25,16 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import com.juscelino.sonivell.data.ForYouState
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Category
 import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.Search
 import com.juscelino.sonivell.data.SmartPlaylist
 import com.juscelino.sonivell.data.SmartPlaylists
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.smart.SmartProgress
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -156,7 +144,7 @@ fun LibraryScreen(
                     color = c.textPrimary,
                     modifier = Modifier.weight(1f),
                 )
-                IconBtn(Icons.Rounded.Settings, stringResource(R.string.cd_settings), actions.onOpenSettings, background = c.surface, iconSize = 20.dp)
+                IconBtn(SonivellTheme.icons.settings, stringResource(R.string.cd_settings), actions.onOpenSettings, background = c.surface, iconSize = 20.dp)
             }
         }
 
@@ -199,7 +187,7 @@ fun LibraryScreen(
                 if (artists.isNotEmpty()) {
                     item(key = "s-artists-label") { SectionLabel(stringResource(R.string.tab_artists), Modifier.padding(bottom = 4.dp)) }
                     items(artists, key = { "s-ar-" + it.name }) { a ->
-                        GroupRow(Icons.Rounded.Person, a.name, pluralStringResource(R.plurals.songs_count, a.tracks.size, a.tracks.size)) { actions.onOpenArtist(a.name) }
+                        GroupRow(SonivellTheme.icons.artist, a.name, pluralStringResource(R.plurals.songs_count, a.tracks.size, a.tracks.size)) { actions.onOpenArtist(a.name) }
                     }
                     item(key = "s-artists-gap") { Box(Modifier.height(12.dp)) }
                 }
@@ -226,7 +214,7 @@ fun LibraryScreen(
                 if (searching && extra.isNotEmpty()) {
                     item(key = "s-sem-label") {
                         Row(Modifier.padding(top = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(14.dp), tint = c.accent)
+                            Icon(SonivellTheme.icons.smart, null, Modifier.size(14.dp), tint = c.accent)
                             SectionLabel(stringResource(R.string.search_semantic))
                         }
                     }
@@ -256,7 +244,7 @@ fun LibraryScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 SectionLabel(stringResource(R.string.all_songs, state.tracks.size), Modifier.weight(1f))
                                 Text(stringResource(state.sort.label), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
-                                IconBtn(Icons.Rounded.SwapVert, stringResource(R.string.cd_sort_by, stringResource(state.sort.label)), actions.onSort, tint = c.textSecondary, iconSize = 18.dp)
+                                IconBtn(SonivellTheme.icons.sort, stringResource(R.string.cd_sort_by, stringResource(state.sort.label)), actions.onSort, tint = c.textSecondary, iconSize = 18.dp)
                             }
                         }
                         trackList(state.tracks, currentId, labels.library, false, actions)
@@ -297,7 +285,7 @@ fun LibraryScreen(
                             }
                         }
                         items(smartPlaylists, key = { "sp-" + it.id }) { sp ->
-                            GroupRow(Icons.Rounded.AutoAwesome, sp.name, pluralStringResource(R.plurals.rules_count, sp.rules.size, sp.rules.size)) {
+                            GroupRow(SonivellTheme.icons.smart, sp.name, pluralStringResource(R.plurals.rules_count, sp.rules.size, sp.rules.size)) {
                                 actions.onOpenSmartPlaylist(sp.id)
                             }
                         }
@@ -316,7 +304,7 @@ fun LibraryScreen(
                     }
                     LibraryTab.Artistas -> {
                         items(state.artists, key = { "ar-" + it.name }) { a ->
-                            GroupRow(Icons.Rounded.Person, a.name, pluralStringResource(R.plurals.albums_count, a.albumCount, a.albumCount) + " · " + pluralStringResource(R.plurals.songs_count, a.tracks.size, a.tracks.size)) {
+                            GroupRow(SonivellTheme.icons.artist, a.name, pluralStringResource(R.plurals.albums_count, a.albumCount, a.albumCount) + " · " + pluralStringResource(R.plurals.songs_count, a.tracks.size, a.tracks.size)) {
                                 actions.onOpenArtist(a.name)
                             }
                         }
@@ -328,14 +316,14 @@ fun LibraryScreen(
                             }
                         }
                         items(state.genres, key = { "g-" + it.name.lowercase() }) { g ->
-                            GroupRow(Icons.Rounded.Category, g.name, pluralStringResource(R.plurals.songs_count, g.tracks.size, g.tracks.size)) {
+                            GroupRow(SonivellTheme.icons.genre, g.name, pluralStringResource(R.plurals.songs_count, g.tracks.size, g.tracks.size)) {
                                 actions.onOpenGenre(g.name)
                             }
                         }
                     }
                     LibraryTab.Pastas -> {
                         items(state.folders, key = { "f-" + it.path }) { f ->
-                            GroupRow(Icons.Rounded.Folder, f.name, pluralStringResource(R.plurals.songs_count, f.tracks.size, f.tracks.size) + " · " + f.path) {
+                            GroupRow(SonivellTheme.icons.folder, f.name, pluralStringResource(R.plurals.songs_count, f.tracks.size, f.tracks.size) + " · " + f.path) {
                                 actions.onOpenFolder(f.path)
                             }
                         }
@@ -386,7 +374,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.homeContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Icon(Icons.Rounded.Shuffle, null, Modifier.size(28.dp), tint = c.onAccent)
+            Icon(SonivellTheme.icons.shuffle, null, Modifier.size(28.dp), tint = c.onAccent)
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.shuffle_all), style = MaterialTheme.typography.titleMedium, color = c.onAccent)
                 Text(pluralStringResource(R.plurals.songs_count, state.allTracks.size, state.allTracks.size), style = MaterialTheme.typography.bodyMedium, color = c.onAccent)
@@ -476,7 +464,7 @@ private fun MixRow(title: String, seeds: List<Track>, onPlayMix: (Track) -> Unit
     val c = SonivellTheme.colors
     Column(Modifier.padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(14.dp), tint = c.accent)
+            Icon(SonivellTheme.icons.smart, null, Modifier.size(14.dp), tint = c.accent)
             SectionLabel(title)
         }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -538,7 +526,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
                 color = c.accent,
             )
         }
-        IconBtn(Icons.Rounded.PlayArrow, stringResource(R.string.cd_play), onPlay, background = c.accent, tint = c.onAccent)
+        IconBtn(SonivellTheme.icons.play, stringResource(R.string.cd_play), onPlay, background = c.accent, tint = c.onAccent)
     }
 }
 
@@ -556,7 +544,7 @@ private fun SmartAnalysisCard(progress: SmartProgress) {
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Icon(Icons.Rounded.AutoAwesome, null, Modifier.size(18.dp), tint = c.accent)
+            Icon(SonivellTheme.icons.smart, null, Modifier.size(18.dp), tint = c.accent)
             Text(
                 stringResource(R.string.smart_analysing),
                 style = MaterialTheme.typography.titleSmall,
@@ -590,7 +578,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Mod
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Icon(Icons.Rounded.Search, null, Modifier.size(18.dp), tint = c.textSecondary)
+        Icon(SonivellTheme.icons.search, null, Modifier.size(18.dp), tint = c.textSecondary)
         Box(Modifier.weight(1f)) {
             if (value.isEmpty()) {
                 Text(stringResource(R.string.search_hint), style = MaterialTheme.typography.bodyLarge, color = c.textSecondary)
@@ -605,7 +593,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Mod
             )
         }
         if (value.isNotEmpty()) {
-            IconBtn(Icons.Rounded.Close, stringResource(R.string.cd_clear_search), { onChange("") }, tint = c.textSecondary, iconSize = 18.dp)
+            IconBtn(SonivellTheme.icons.close, stringResource(R.string.cd_clear_search), { onChange("") }, tint = c.textSecondary, iconSize = 18.dp)
         }
     }
 }

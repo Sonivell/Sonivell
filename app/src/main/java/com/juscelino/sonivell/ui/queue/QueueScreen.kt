@@ -23,12 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.DragHandle
-import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -95,7 +89,7 @@ fun QueueScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconBtn(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.cd_back_to_player), actions.onClose, background = c.surface)
+            IconBtn(SonivellTheme.icons.collapse, stringResource(R.string.cd_back_to_player), actions.onClose, background = c.surface)
             Text(stringResource(R.string.queue_title), style = MaterialTheme.typography.titleLarge, color = c.textPrimary, modifier = Modifier.weight(1f).padding(start = 12.dp))
             Box(
                 Modifier
@@ -126,7 +120,7 @@ fun QueueScreen(
                         Box(
                             Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)).background(c.background.copy(alpha = 0.55f)),
                             contentAlignment = Alignment.Center,
-                        ) { Icon(Icons.Rounded.GraphicEq, null, tint = c.accent) }
+                        ) { Icon(SonivellTheme.icons.nowPlaying, null, tint = c.accent) }
                     }
                     Column(Modifier.weight(1f)) {
                         Text(current.title, style = MaterialTheme.typography.titleMedium, color = c.accent, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -225,7 +219,7 @@ fun QueueScreen(
                                 },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Icon(Icons.Rounded.DragHandle, null, tint = c.textSecondary)
+                            Icon(SonivellTheme.icons.dragHandle, null, tint = c.textSecondary)
                         }
                     }
                 }
@@ -234,10 +228,10 @@ fun QueueScreen(
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             WideButton(
-                stringResource(R.string.shuffle), Icons.Rounded.Shuffle, actions.onShuffle, filled = false,
+                stringResource(R.string.shuffle), SonivellTheme.icons.shuffle, actions.onShuffle, filled = false,
                 active = shuffle, modifier = Modifier.weight(1f),
             )
-            WideButton(stringResource(R.string.save_playlist), Icons.Rounded.Add, actions.onSavePlaylist, filled = true, modifier = Modifier.weight(1f))
+            WideButton(stringResource(R.string.save_playlist), SonivellTheme.icons.add, actions.onSavePlaylist, filled = true, modifier = Modifier.weight(1f))
         }
     }
 }

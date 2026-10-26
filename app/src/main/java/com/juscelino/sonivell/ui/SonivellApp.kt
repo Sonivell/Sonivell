@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui
 
+import androidx.compose.material.icons.Icons
 import androidx.annotation.StringRes
 import androidx.compose.ui.res.stringResource
 import com.juscelino.sonivell.R
@@ -7,22 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
-import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.rounded.QueuePlayNext
-import androidx.compose.material.icons.rounded.Album
-import androidx.compose.material.icons.rounded.Bedtime
-import androidx.compose.material.icons.rounded.DeleteOutline
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.FileUpload
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.RemoveCircleOutline
-import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.Timer
-import androidx.compose.material.icons.rounded.TimerOff
 import androidx.compose.ui.res.pluralStringResource
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -85,10 +70,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -130,6 +111,7 @@ import com.juscelino.sonivell.ui.nowplaying.NowPlayingActions
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreen
 import com.juscelino.sonivell.ui.queue.QueueActions
 import com.juscelino.sonivell.ui.queue.QueueScreen
+import com.juscelino.sonivell.ui.theme.SonivellIcons
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlinx.coroutines.launch
 
@@ -165,12 +147,17 @@ private object Routes {
     fun playlist(id: Long) = "playlist/$id"
 }
 
-private data class Tab(val route: String, @StringRes val label: Int, val icon: ImageVector)
+private data class Tab(
+    val route: String,
+    @StringRes val label: Int,
+    val icon: (SonivellIcons) -> ImageVector,
+    val activeIcon: (SonivellIcons) -> ImageVector,
+)
 
 private val tabs = listOf(
-    Tab(Routes.HOME, R.string.nav_home, Icons.Rounded.Home),
-    Tab(Routes.SEARCH, R.string.nav_search, Icons.Rounded.Search),
-    Tab(Routes.LIBRARY, R.string.nav_library, Icons.Rounded.LibraryMusic),
+    Tab(Routes.HOME, R.string.nav_home, { it.home }, { it.homeActive }),
+    Tab(Routes.SEARCH, R.string.nav_search, { it.search }, { it.searchActive }),
+    Tab(Routes.LIBRARY, R.string.nav_library, { it.library }, { it.libraryActive }),
 )
 
 private fun audioPermission() =
@@ -711,30 +698,30 @@ private fun MainContent(vm: MainViewModel) {
     menuFor?.let { (track, ctx) ->
         val liked = track.id in favorites
         val options = buildList {
-            add(MenuOption(Icons.Rounded.QueuePlayNext, stringResource(R.string.play_next)) {
+            add(MenuOption(SonivellTheme.icons.playNext, stringResource(R.string.play_next)) {
                 vm.playNext(listOf(track)); toast(res.getString(R.string.added_next))
             })
-            add(MenuOption(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.add_to_queue)) {
+            add(MenuOption(SonivellTheme.icons.queue, stringResource(R.string.add_to_queue)) {
                 vm.addToQueue(listOf(track)); toast(res.getString(R.string.added_to_queue))
             })
-            add(MenuOption(Icons.AutoMirrored.Rounded.PlaylistAdd, stringResource(R.string.add_to_playlist)) {
+            add(MenuOption(SonivellTheme.icons.addToPlaylist, stringResource(R.string.add_to_playlist)) {
                 addToPlaylist = listOf(track)
             })
             when (ctx) {
-                is MenuContext.Queue -> add(MenuOption(Icons.Rounded.RemoveCircleOutline, stringResource(R.string.remove_from_queue)) {
+                is MenuContext.Queue -> add(MenuOption(SonivellTheme.icons.removeItem, stringResource(R.string.remove_from_queue)) {
                     vm.removeFromQueue(ctx.index)
                 })
-                is MenuContext.InPlaylist -> add(MenuOption(Icons.Rounded.RemoveCircleOutline, stringResource(R.string.remove_from_playlist)) {
+                is MenuContext.InPlaylist -> add(MenuOption(SonivellTheme.icons.removeItem, stringResource(R.string.remove_from_playlist)) {
                     vm.removeFromPlaylist(ctx.playlistId, ctx.storeIndex)
                 })
                 MenuContext.None -> Unit
             }
-            add(MenuOption(if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, stringResource(if (liked) R.string.cd_unlike else R.string.cd_like)) {
+            add(MenuOption(if (liked) SonivellTheme.icons.liked else SonivellTheme.icons.like, stringResource(if (liked) R.string.cd_unlike else R.string.cd_like)) {
                 vm.toggleFavorite(track.id)
             })
-            add(MenuOption(Icons.Rounded.Album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) })
-            add(MenuOption(Icons.Rounded.Person, stringResource(R.string.go_to_artist)) { openArtist(track.artist) })
-            add(MenuOption(Icons.Rounded.Share, stringResource(R.string.share)) { share(track) })
+            add(MenuOption(SonivellTheme.icons.album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) })
+            add(MenuOption(SonivellTheme.icons.artist, stringResource(R.string.go_to_artist)) { openArtist(track.artist) })
+            add(MenuOption(SonivellTheme.icons.share, stringResource(R.string.share)) { share(track) })
             val trackBlocked = track.id in blockedTracks
             add(MenuOption(Icons.Rounded.Block, stringResource(if (trackBlocked) R.string.recommend_again else R.string.dont_recommend)) {
                 vm.recommendations.blockTrack(track.id, !trackBlocked)
@@ -751,10 +738,10 @@ private fun MainContent(vm: MainViewModel) {
     collectionMenu?.let { data ->
         val playlist = data.playlist
         val options = buildList {
-            add(MenuOption(Icons.Rounded.QueuePlayNext, stringResource(R.string.play_next)) {
+            add(MenuOption(SonivellTheme.icons.playNext, stringResource(R.string.play_next)) {
                 vm.playNext(data.tracks); toast(res.getString(R.string.added_next))
             })
-            add(MenuOption(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.add_to_queue)) {
+            add(MenuOption(SonivellTheme.icons.queue, stringResource(R.string.add_to_queue)) {
                 vm.addToQueue(data.tracks); toast(res.getString(R.string.added_to_queue))
             })
             val smart = data.smart
@@ -765,19 +752,19 @@ private fun MainContent(vm: MainViewModel) {
                 add(MenuOption(Icons.Rounded.SaveAlt, stringResource(R.string.save_as_playlist)) { newPlaylistWith = data.tracks })
             }
             if (smart != null) {
-                add(MenuOption(Icons.Rounded.DeleteOutline, stringResource(R.string.delete)) { deletingSmart = smart })
+                add(MenuOption(SonivellTheme.icons.delete, stringResource(R.string.delete)) { deletingSmart = smart })
             }
             if (playlist == null) {
-                add(MenuOption(Icons.AutoMirrored.Rounded.PlaylistAdd, stringResource(R.string.add_to_playlist)) {
+                add(MenuOption(SonivellTheme.icons.addToPlaylist, stringResource(R.string.add_to_playlist)) {
                     addToPlaylist = data.tracks
                 })
             } else {
-                add(MenuOption(Icons.Rounded.Edit, stringResource(R.string.rename)) { renaming = playlist })
-                add(MenuOption(Icons.Rounded.FileUpload, stringResource(R.string.export_playlist)) {
+                add(MenuOption(SonivellTheme.icons.edit, stringResource(R.string.rename)) { renaming = playlist })
+                add(MenuOption(SonivellTheme.icons.export, stringResource(R.string.export_playlist)) {
                     exportId = playlist.id
                     exportLauncher.launch("${playlist.name}.m3u")
                 })
-                add(MenuOption(Icons.Rounded.DeleteOutline, stringResource(R.string.delete)) { deleting = playlist })
+                add(MenuOption(SonivellTheme.icons.delete, stringResource(R.string.delete)) { deleting = playlist })
             }
         }
         OptionsSheet(options, onDismiss = { collectionMenu = null })
@@ -788,11 +775,11 @@ private fun MainContent(vm: MainViewModel) {
         if (playing == null) LaunchedEffect(Unit) { playerMenu = false }
         playing?.let { track ->
             val options = listOf(
-                MenuOption(Icons.Rounded.Bedtime, stringResource(R.string.sleep_timer)) { timerSheet = true },
-                MenuOption(Icons.AutoMirrored.Rounded.PlaylistAdd, stringResource(R.string.add_to_playlist)) { addToPlaylist = listOf(track) },
-                MenuOption(Icons.Rounded.Album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) },
-                MenuOption(Icons.Rounded.Person, stringResource(R.string.go_to_artist)) { openArtist(track.artist) },
-                MenuOption(Icons.Rounded.Share, stringResource(R.string.share)) { share(track) },
+                MenuOption(SonivellTheme.icons.sleep, stringResource(R.string.sleep_timer)) { timerSheet = true },
+                MenuOption(SonivellTheme.icons.addToPlaylist, stringResource(R.string.add_to_playlist)) { addToPlaylist = listOf(track) },
+                MenuOption(SonivellTheme.icons.album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) },
+                MenuOption(SonivellTheme.icons.artist, stringResource(R.string.go_to_artist)) { openArtist(track.artist) },
+                MenuOption(SonivellTheme.icons.share, stringResource(R.string.share)) { share(track) },
             )
             OptionsSheet(options, onDismiss = { playerMenu = false }, header = { TrackHeader(track) })
         }
@@ -801,10 +788,10 @@ private fun MainContent(vm: MainViewModel) {
     if (timerSheet) {
         val options = buildList {
             listOf(5, 15, 30, 45, 60).forEach { m ->
-                add(MenuOption(Icons.Rounded.Timer, pluralStringResource(R.plurals.timer_minutes, m, m)) { vm.setSleepTimer(m) })
+                add(MenuOption(SonivellTheme.icons.timer, pluralStringResource(R.plurals.timer_minutes, m, m)) { vm.setSleepTimer(m) })
             }
-            add(MenuOption(Icons.Rounded.MusicNote, stringResource(R.string.timer_end_of_track)) { vm.sleepAtEndOfTrack() })
-            if (sleepTimer.active) add(MenuOption(Icons.Rounded.TimerOff, stringResource(R.string.timer_off)) { vm.cancelSleepTimer() })
+            add(MenuOption(SonivellTheme.icons.musicNote, stringResource(R.string.timer_end_of_track)) { vm.sleepAtEndOfTrack() })
+            if (sleepTimer.active) add(MenuOption(SonivellTheme.icons.timerOff, stringResource(R.string.timer_off)) { vm.cancelSleepTimer() })
         }
         OptionsSheet(options, onDismiss = { timerSheet = false }, header = {
             Text(stringResource(R.string.sleep_timer), style = MaterialTheme.typography.titleLarge, color = SonivellTheme.colors.textPrimary)
@@ -951,7 +938,8 @@ private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Icon(tab.icon, null, Modifier.size(22.dp), tint = color)
+                val icons = SonivellTheme.icons
+                Icon(if (selected) tab.activeIcon(icons) else tab.icon(icons), null, Modifier.size(22.dp), tint = color)
                 Text(
                     stringResource(tab.label),
                     style = MaterialTheme.typography.labelMedium,
