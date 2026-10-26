@@ -1,0 +1,90 @@
+# CI do Sonivell no GitLab. Para poupar os 400 min/mês do plano gratuito:
+#  - os jobs rodam só quando você clica em "Run" (manual) ou em tags v*;
+#  - o cache do Gradle é reaproveitado entre execuções.
+# Os artefatos (APKs, .deb e capturas de tela) ficam em Build > Jobs > Download artifacts.
+
+image: eclipse-temurin:21-jdk-jammy
+
+variables:
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle-home"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  ANDROID_HOME: "/opt/android-sdk"
+  DEBIAN_FRONTEND: noninteractive
+
+cache:
+  key: gradle-$CI_COMMIT_REF_SLUG
+  paths:
+    - .gradle-home/caches
+    - .gradle-home/wrapper
+
+.manual_or_tag:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+    - when: manual
+      allow_failure: true
+
+apk:
+  extends: .manual_or_tag
+  stage: build
+  timeout: 40m
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl unzip cmake ninja-build >/dev/null
+    - mkdir -p $ANDROID_HOME/cmdline-tools
+    - curl -sSL -o /tmp/cmdtools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+    - unzip -q /tmp/cmdtools.zip -d $ANDROID_HOME/cmdline-tools && mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+    - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
+    - $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358" >/dev/null
+    - echo "sdk.dir=$ANDROID_HOME" > local.properties
+  script:
+    - ./gradlew assembleLiteRelease assembleSmartRelease
+  artifacts:
+    name: sonivell-apks
+    paths:
+      - app/build/outputs/apk/lite/release/*.apk
+      - app/build/outputs/apk/smart/release/*.apk
+    expire_in: 30 days
+
+desktop-deb:
+  extends: .manual_or_tag
+  stage: build
+  timeout: 40m
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq fakeroot dpkg-dev binutils >/dev/null
+  script:
+    - ./gradlew -Psonivell.desktop=only :desktop:packageDeb
+    # inclui o ffmpeg como dependência do pacote
+    - deb=$(find desktop/build -name "*.deb" | head -n 1)
+    - work=$(mktemp -d)
+    - dpkg-deb -R "$deb" "$work/pkg"
+    - control="$work/pkg/DEBIAN/control"
+    - if grep -q '^Depends:' "$control"; then sed -i 's/^Depends:\(.*\)$/Depends:\1, ffmpeg/' "$control"; else echo 'Depends: ffmpeg' >> "$control"; fi
+    - chmod 0755 "$work/pkg/DEBIAN"
+    - fakeroot dpkg-deb --root-owner-group -b "$work/pkg" "$work/out.deb"
+    - mkdir -p dist && cp "$work/out.deb" "dist/$(basename "$deb")"
+    - dpkg-deb -I dist/*.deb
+    - ./gradlew -Psonivell.desktop=only :desktop:test
+  artifacts:
+    name: sonivell-desktop-deb
+    paths:
+      - dist/*.deb
+    expire_in: 30 days
+
+desktop-screenshots:
+  extends: .manual_or_tag
+  stage: test
+  needs: [desktop-deb]
+  timeout: 20m
+  allow_failure: true
+  script:
+    - apt-get update -qq
+    - apt-get install -y -qq xvfb xdotool imagemagick ffmpeg x11-utils fonts-dejavu-core libgl1 libxrender1 libxtst6 libxi6 libfreetype6 libasound2 >/dev/null
+    - mkdir -p /usr/share/applications /usr/share/desktop-directories /etc/xdg/menus/applications-merged /usr/share/mime/packages
+    - dpkg -i dist/*.deb || true
+    - apt-get install -f -y -qq >/dev/null
+    - bash tools/desktop-screenshot.sh "$CI_PROJECT_DIR/screenshots"
+  artifacts:
+    when: always
+    name: sonivell-desktop-screenshots
+    paths:
+      - screenshots/
+    expire_in: 30 days
