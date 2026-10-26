@@ -36,7 +36,7 @@ jobs:
         run: |
           set -o pipefail
           sudo apt-get update -qq && sudo apt-get install -y -qq fakeroot dpkg-dev
-          ./gradlew -Psonivell.desktop=true :desktop:packageDeb 2>&1 | tee build.log || {
+          ./gradlew -Psonivell.desktop=only :desktop:packageDeb 2>&1 | tee build.log || {
             grep -E "^e: |What went wrong|Execution failed|error:|Error:" -A3 build.log | head -n 60 | while IFS= read -r line; do
               echo "::error::${line}"
             done
@@ -104,7 +104,7 @@ jobs:
 
       - name: Testes do módulo desktop
         shell: bash
-        run: ./gradlew -Psonivell.desktop=true :desktop:test 2>&1 | tail -n 40
+        run: ./gradlew -Psonivell.desktop=only :desktop:test 2>&1 | tail -n 40
 
       - uses: actions/upload-artifact@v4
         with:

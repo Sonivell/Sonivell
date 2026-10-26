@@ -21,15 +21,21 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Sonivell"
-include(":app")
+// -Psonivell.desktop=only: só o módulo do PC (o CI do .deb não precisa do SDK/NDK do Android).
+val desktopMode = providers.gradleProperty("sonivell.desktop").orNull
+if (desktopMode != "only") {
+    include(":app")
+}
 
 // Motor SMART, trazido do LatentJam (Apache 2.0) — usado só pela versão "smart" do app.
-include(":core:smart")
-include(":core:ort-ops")
-include(":core:map-native")
+if (desktopMode != "only") {
+    include(":core:smart")
+    include(":core:ort-ops")
+    include(":core:map-native")
+}
 
 // Versão para PC (Linux): só entra no build quando pedida (-Psonivell.desktop=true),
 // para não interferir no build do app Android.
-if (providers.gradleProperty("sonivell.desktop").orNull == "true") {
+if (desktopMode == "true" || desktopMode == "only") {
     include(":desktop")
 }
