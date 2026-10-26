@@ -58,6 +58,14 @@ jobs:
           dpkg-deb -c "$deb" | head -n 30
           mkdir -p dist && cp "$deb" dist/
 
+      - name: Captura de tela (ambiente gráfico virtual)
+        continue-on-error: true
+        shell: bash
+        run: |
+          sudo apt-get install -y -qq xvfb xdotool imagemagick ffmpeg x11-utils
+          sudo apt-get install -y -qq ./dist/*.deb
+          tools/desktop-screenshot.sh "$GITHUB_WORKSPACE/screenshots"
+
       - name: Testes do módulo desktop
         shell: bash
         run: ./gradlew -Psonivell.desktop=true :desktop:test 2>&1 | tail -n 40
@@ -66,3 +74,10 @@ jobs:
         with:
           name: sonivell-desktop-deb
           path: dist/*.deb
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sonivell-desktop-screenshots
+          path: screenshots/
+          if-no-files-found: ignore
