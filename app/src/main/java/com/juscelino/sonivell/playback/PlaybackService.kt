@@ -6,6 +6,12 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.media.AudioManager
 import com.juscelino.sonivell.data.SettingsStore
+import com.juscelino.sonivell.data.TagReader
+import androidx.annotation.OptIn
+import androidx.media3.common.Player
+import androidx.media3.common.Tracks
+import androidx.media3.common.util.UnstableApi
+import kotlin.math.pow
 import android.provider.MediaStore
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -29,8 +35,10 @@ class PlaybackService : MediaSessionService() {
 
     /** "Pausar ao desconectar o fone" muda na hora, sem reiniciar o player. */
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
-        if (key == SettingsStore.KEY_PAUSE_ON_UNPLUG) {
-            (session?.player as? ExoPlayer)?.setHandleAudioBecomingNoisy(p.getBoolean(key, true))
+        val player = session?.player as? ExoPlayer ?: return@OnSharedPreferenceChangeListener
+        when (key) {
+            SettingsStore.KEY_PAUSE_ON_UNPLUG -> player.setHandleAudioBecomingNoisy(p.getBoolean(key, true))
+            SettingsStore.KEY_NORMALIZE -> applyNormalization(player)
         }
     }
 
@@ -55,6 +63,10 @@ class PlaybackService : MediaSessionService() {
         player.setAudioSessionId(audioSession)
         effects.attach(audioSession)
         prefs.registerOnSharedPreferenceChangeListener(settingsListener)
+        // A cada faixa nova, ajusta o volume pelo ReplayGain dela (se a opção estiver ligada).
+        player.addListener(object : Player.Listener {
+            override fun onTracksChanged(tracks: Tracks) = applyNormalization(player)
+        })
 
         val openApp = PendingIntent.getActivity(
             this,
@@ -93,6 +105,23 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
+    /**
+     * Normalização: volume = 10^(ganho/20), sem passar de 100%. Faixas sem ReplayGain tocam
+     * com −6 dB, perto do nível típico das que têm a tag, para não "saltarem" mais altas.
+     */
+    @OptIn(UnstableApi::class)
+    private fun applyNormalization(player: ExoPlayer) {
+        if (!prefs.getBoolean(SettingsStore.KEY_NORMALIZE, false)) {
+            player.volume = 1f
+            return
+        }
+        val metadata = player.currentTracks.groups
+            .filter { it.type == C.TRACK_TYPE_AUDIO }
+            .flatMap { g -> (0 until g.length).mapNotNull { g.getTrackFormat(it).metadata } }
+        val gainDb = TagReader.trackGainDb(metadata) ?: UNTAGGED_GAIN_DB
+        player.volume = 10f.pow(gainDb / 20f).coerceIn(0.05f, 1f)
+    }
+
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -111,5 +140,9 @@ class PlaybackService : MediaSessionService() {
         }
         session = null
         super.onDestroy()
+    }
+
+    private companion object {
+        const val UNTAGGED_GAIN_DB = -6f
     }
 }

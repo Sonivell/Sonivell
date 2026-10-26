@@ -29,6 +29,8 @@ import androidx.navigation.navArgument
 import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.collection.CollectionActions
+import com.juscelino.sonivell.ui.lyrics.LyricsActions
+import com.juscelino.sonivell.ui.lyrics.LyricsScreen
 import com.juscelino.sonivell.ui.settings.EqualizerActions
 import com.juscelino.sonivell.ui.settings.EqualizerScreen
 import com.juscelino.sonivell.ui.settings.SettingsActions
@@ -131,6 +133,7 @@ private object Routes {
     const val SETTINGS = "ajustes"
     const val EQUALIZER = "equalizador"
     const val STATS = "estatisticas"
+    const val LYRICS = "letra"
     /** Telas de coleção: mostram o mini player e a barra de navegação. */
     val COLLECTIONS = setOf(ALBUM, ARTIST, GENRE, FOLDER, PLAYLIST)
 
@@ -248,6 +251,11 @@ private fun MainContent(vm: MainViewModel) {
         if (uri != null) scope.launch {
             toast(res.getString(if (vm.exportHistory(uri)) R.string.history_exported else R.string.export_failed))
         }
+    }
+    val lyricsState by vm.lyrics.collectAsStateWithLifecycle()
+    val lyricsOffset by vm.lyricsOffset.collectAsStateWithLifecycle()
+    val lyricsFolderLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) vm.setLyricsFolder(uri)
     }
     val versionName = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()
@@ -460,6 +468,7 @@ private fun MainContent(vm: MainViewModel) {
                         onClearHistory = { confirmClearHistory = true },
                         onExportHistory = { historyExportLauncher.launch("sonivell-historico.csv") },
                         onReset = { confirmReset = true },
+                        onPickLyricsFolder = { lyricsFolderLauncher.launch(null) },
                     ),
                 )
             }
@@ -519,9 +528,34 @@ private fun MainContent(vm: MainViewModel) {
                             onShuffle = vm::cycleShuffle,
                             onRepeat = vm.player::cycleRepeat,
                             onFavorite = { vm.toggleFavorite(t.id) },
-                            onLyrics = soon,
+                            onLyrics = { nav.navigate(Routes.LYRICS) },
                             onQueue = { nav.navigate(Routes.QUEUE) },
                             onSleepTimer = { timerSheet = true },
+                        ),
+                    )
+                }
+            }
+
+            composable(
+                Routes.LYRICS,
+                enterTransition = { slideInVertically(tween(280)) { it } },
+                popExitTransition = { slideOutVertically(tween(250)) { it } },
+            ) {
+                val t = current
+                if (t == null) {
+                    LaunchedEffect(Unit) { nav.popBackStack() }
+                } else {
+                    LyricsScreen(
+                        track = t,
+                        state = lyricsState,
+                        positionMs = player.positionMs,
+                        offsetMs = lyricsOffset,
+                        hasFolder = vm.hasLyricsFolder,
+                        actions = LyricsActions(
+                            onClose = { nav.popBackStack() },
+                            onSeek = vm.player::seekTo,
+                            onOffset = vm::shiftLyrics,
+                            onPickFolder = { lyricsFolderLauncher.launch(null) },
                         ),
                     )
                 }

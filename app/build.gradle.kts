@@ -89,6 +89,7 @@ dependencies {
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media3.extractor)
     implementation(libs.kotlinx.coroutines.guava)
 
     implementation(libs.coil.compose)

@@ -56,6 +56,7 @@ data class SettingsActions(
     val onClearHistory: () -> Unit,
     val onExportHistory: () -> Unit,
     val onReset: () -> Unit,
+    val onPickLyricsFolder: () -> Unit = {},
 )
 
 @Composable
@@ -126,6 +127,11 @@ fun SettingsScreen(
                 stringResource(R.string.settings_pause_unplug_hint),
                 settings.pauseOnUnplug,
             ) { on -> actions.onUpdate { it.copy(pauseOnUnplug = on) } }
+            SwitchRow(
+                stringResource(R.string.settings_normalize),
+                stringResource(R.string.settings_normalize_hint),
+                settings.normalize,
+            ) { on -> actions.onUpdate { it.copy(normalize = on) } }
             LinkRow(stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), actions.onOpenEqualizer)
         }
 
@@ -157,6 +163,7 @@ fun SettingsScreen(
 
         Section(stringResource(R.string.nav_library)) {
             LinkRow(stringResource(R.string.cd_refresh), stringResource(R.string.settings_refresh_hint), actions.onRefreshLibrary)
+            LinkRow(stringResource(R.string.lyrics_pick_folder), stringResource(R.string.lyrics_folder_hint), actions.onPickLyricsFolder)
         }
 
         Section(stringResource(R.string.settings_about)) {

@@ -256,4 +256,18 @@
         <item quantity="one">%d min</item>
         <item quantity="other">%d min</item>
     </plurals>
+    <!-- Letras e normalização -->
+    <string name="cd_close_lyrics">Close lyrics</string>
+    <string name="lyrics_pick_folder">Lyrics folder (.lrc)</string>
+    <string name="lyrics_folder_hint">Choose the folder with your .lrc files, named like the songs</string>
+    <string name="lyrics_none">No lyrics for this song</string>
+    <string name="lyrics_none_hint">Sonivell reads lyrics saved inside the file. For .lrc files, choose their folder with the button above.</string>
+    <string name="lyrics_none_hint_folder">No lyrics inside the file, and no .lrc with the same name in your lyrics folder.</string>
+    <string name="lyrics_unsynced_note">These lyrics have no timing, so they don\'t follow the song.</string>
+    <string name="lyrics_sync">Sync</string>
+    <string name="lyrics_sync_none">In time</string>
+    <string name="lyrics_earlier">Show lyrics earlier</string>
+    <string name="lyrics_later">Show lyrics later</string>
+    <string name="settings_normalize">Normalize volume</string>
+    <string name="settings_normalize_hint">Uses the ReplayGain in your files so songs play at a similar volume</string>
 </resources>

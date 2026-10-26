@@ -41,6 +41,10 @@ import com.juscelino.sonivell.data.ForYou
 import com.juscelino.sonivell.data.ForYouState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.transformLatest
+import com.juscelino.sonivell.data.LyricsRepository
+import com.juscelino.sonivell.ui.lyrics.LyricsState
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -332,6 +336,43 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         e.apply()
         _eq.value = readEq()
+    }
+
+    // ---- Letras ----
+
+    val lyricsRepo = LyricsRepository(app, prefs)
+    private val lyricsVersion = MutableStateFlow(0)
+    private val offsetVersion = MutableStateFlow(0)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val lyrics: StateFlow<LyricsState> = combine(currentTrack, lyricsVersion) { t, _ -> t }
+        .transformLatest { t ->
+            if (t == null) { emit(LyricsState.None); return@transformLatest }
+            emit(LyricsState.Loading)
+            emit(lyricsRepo.load(t)?.let { LyricsState.Loaded(it) } ?: LyricsState.None)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LyricsState.None)
+
+    val lyricsOffset: StateFlow<Long> = combine(currentTrack, offsetVersion) { t, _ ->
+        t?.let { lyricsRepo.offsetFor(it.id) } ?: 0L
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0L)
+
+    val hasLyricsFolder: Boolean get() = lyricsRepo.lrcFolder != null
+
+    fun setLyricsFolder(uri: Uri) {
+        runCatching {
+            getApplication<Application>().contentResolver.takePersistableUriPermission(
+                uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
+            )
+        }
+        lyricsRepo.setLrcFolder(uri)
+        lyricsVersion.value++
+    }
+
+    fun shiftLyrics(deltaMs: Long) {
+        val id = currentTrack.value?.id ?: return
+        lyricsRepo.setOffset(id, lyricsRepo.offsetFor(id) + deltaMs)
+        offsetVersion.value++
     }
 
     // ---- Estatísticas ----

@@ -249,4 +249,18 @@
         <item quantity="one">%d min</item>
         <item quantity="other">%d min</item>
     </plurals>
+    <!-- Letras e normalização -->
+    <string name="cd_close_lyrics">Fechar letra</string>
+    <string name="lyrics_pick_folder">Pasta de letras (.lrc)</string>
+    <string name="lyrics_folder_hint">Escolha a pasta com seus arquivos .lrc, com o mesmo nome das músicas</string>
+    <string name="lyrics_none">Sem letra para esta música</string>
+    <string name="lyrics_none_hint">O Sonivell lê a letra salva dentro do arquivo. Para arquivos .lrc, escolha a pasta deles no botão acima.</string>
+    <string name="lyrics_none_hint_folder">Não há letra dentro do arquivo nem um .lrc com o mesmo nome na sua pasta de letras.</string>
+    <string name="lyrics_unsynced_note">Esta letra não tem marcação de tempo, então não acompanha a música.</string>
+    <string name="lyrics_sync">Sincronia</string>
+    <string name="lyrics_sync_none">No tempo</string>
+    <string name="lyrics_earlier">Mostrar a letra antes</string>
+    <string name="lyrics_later">Mostrar a letra depois</string>
+    <string name="settings_normalize">Normalizar volume</string>
+    <string name="settings_normalize_hint">Usa o ReplayGain dos arquivos para as músicas tocarem num volume parecido</string>
 </resources>

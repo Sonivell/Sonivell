@@ -35,10 +35,12 @@ As duas edições podem ficar instaladas ao mesmo tempo.
 - Temporizador, controle de volume, equalizador com predefinições e reforço de graves.
 - Tema claro, escuro ou automático e seis cores de destaque.
 - Estatísticas de audição por período, com exportação do histórico em CSV.
+- Letras: embutidas no arquivo ou em .lrc (pasta escolhida por você), sincronizadas, com toque para pular e ajuste de sincronia.
+- Normalização de volume pelo ReplayGain das tags.
 
 ## Ainda por vir
 
-Letras, normalização de volume, playlists inteligentes, busca aproximada, widgets e Android Auto.
+Playlists inteligentes, busca aproximada, widgets e Android Auto.
 
 ## Stack
 

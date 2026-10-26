@@ -16,6 +16,8 @@ data class AppSettings(
     val historyPaused: Boolean = false,
     /** Variedade de artistas no SMART: 0 a 4 (2 = padrão do LatentJam). */
     val artistVariety: Int = 2,
+    /** Normalizar o volume entre faixas pelo ReplayGain das tags. */
+    val normalize: Boolean = false,
 )
 
 /** Ajustes do app, nas preferências locais. O serviço de reprodução lê as mesmas chaves. */
@@ -33,6 +35,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putBoolean(KEY_PAUSE_ON_UNPLUG, next.pauseOnUnplug)
             .putBoolean(KEY_HISTORY_PAUSED, next.historyPaused)
             .putInt(KEY_ARTIST_VARIETY, next.artistVariety)
+            .putBoolean(KEY_NORMALIZE, next.normalize)
             .apply()
     }
 
@@ -44,6 +47,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         pauseOnUnplug = prefs.getBoolean(KEY_PAUSE_ON_UNPLUG, true),
         historyPaused = prefs.getBoolean(KEY_HISTORY_PAUSED, false),
         artistVariety = prefs.getInt(KEY_ARTIST_VARIETY, 2),
+        normalize = prefs.getBoolean(KEY_NORMALIZE, false),
     )
 
     companion object {
@@ -53,5 +57,6 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_PAUSE_ON_UNPLUG = "pause_on_unplug"
         const val KEY_HISTORY_PAUSED = "history_paused"
         const val KEY_ARTIST_VARIETY = "artist_variety"
+        const val KEY_NORMALIZE = "normalize"
     }
 }
