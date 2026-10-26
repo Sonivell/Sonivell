@@ -20,7 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /**
@@ -50,7 +49,7 @@ class SmartAnalysisService : Service() {
         }
         if (watchJob?.isActive != true) {
             watchJob = scope.launch {
-                engine.progress.distinctUntilChanged().collect { p ->
+                engine.progress.collect { p ->
                     if (!p.running) {
                         stopForegroundCompat()
                         stopSelf()
