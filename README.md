@@ -34,6 +34,8 @@ As duas edições podem ficar instaladas ao mesmo tempo.
 - Sessão salva: a fila e a posição voltam como estavam.
 - Temporizador, controle de volume, equalizador com predefinições e reforço de graves.
 - Tema claro, escuro ou automático; fundo escuro grafite ou preto (#121212); sete cores de destaque, incluindo verde #1DB954.
+- Três layouts: Ondas (padrão — progresso em onda, botões de modo com nome e "Por que tocou" do SMART), Contraste (player tingido pela capa) e Clássica (o visual da primeira versão).
+- Três estilos de ícone: Traço (padrão), Fino e Arredondado.
 - Estatísticas de audição por período, com exportação do histórico em CSV.
 - Letras: embutidas no arquivo ou em .lrc (pasta escolhida por você), sincronizadas, com toque para pular e ajuste de sincronia.
 - Normalização de volume pelo ReplayGain das tags.
