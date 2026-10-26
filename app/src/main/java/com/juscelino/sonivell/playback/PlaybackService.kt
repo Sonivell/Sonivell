@@ -3,6 +3,9 @@ package com.juscelino.sonivell.playback
 import android.app.PendingIntent
 import android.content.ContentUris
 import android.content.Intent
+import android.content.SharedPreferences
+import android.media.AudioManager
+import com.juscelino.sonivell.data.SettingsStore
 import android.provider.MediaStore
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -21,9 +24,20 @@ import com.juscelino.sonivell.MainActivity
 class PlaybackService : MediaSessionService() {
 
     private var session: MediaSession? = null
+    private lateinit var prefs: SharedPreferences
+    private lateinit var effects: AudioEffects
+
+    /** "Pausar ao desconectar o fone" muda na hora, sem reiniciar o player. */
+    private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
+        if (key == SettingsStore.KEY_PAUSE_ON_UNPLUG) {
+            (session?.player as? ExoPlayer)?.setHandleAudioBecomingNoisy(p.getBoolean(key, true))
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
+        prefs = getSharedPreferences(SettingsStore.PREFS, MODE_PRIVATE)
+        effects = AudioEffects(prefs)
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -32,9 +46,15 @@ class PlaybackService : MediaSessionService() {
                     .build(),
                 /* handleAudioFocus = */ true,
             )
-            .setHandleAudioBecomingNoisy(true) // pausa ao tirar o fone
+            .setHandleAudioBecomingNoisy(prefs.getBoolean(SettingsStore.KEY_PAUSE_ON_UNPLUG, true))
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
+
+        // Sessão de áudio fixa: o equalizador se prende a ela uma vez só.
+        val audioSession = getSystemService(AudioManager::class.java).generateAudioSessionId()
+        player.setAudioSessionId(audioSession)
+        effects.attach(audioSession)
+        prefs.registerOnSharedPreferenceChangeListener(settingsListener)
 
         val openApp = PendingIntent.getActivity(
             this,
@@ -83,6 +103,8 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        prefs.unregisterOnSharedPreferenceChangeListener(settingsListener)
+        effects.release()
         session?.run {
             player.release()
             release()

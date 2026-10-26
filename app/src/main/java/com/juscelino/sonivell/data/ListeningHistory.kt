@@ -93,6 +93,13 @@ class ListeningHistory(context: Context) {
         _revision.value++
     }
 
+    /** Apaga todo o histórico de escuta. */
+    suspend fun clear() = lock.withLock {
+        cache = mutableListOf()
+        withContext(Dispatchers.IO) { file.delete() }
+        _revision.value++
+    }
+
     /** As [limit] escutas mais recentes, da mais antiga para a mais nova. */
     suspend fun recent(limit: Int = MAX_EVENTS): List<ListenEvent> = lock.withLock {
         events().takeLast(limit).toList()

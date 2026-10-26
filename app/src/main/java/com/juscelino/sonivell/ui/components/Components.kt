@@ -175,7 +175,7 @@ fun MiniPlayer(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(18.dp))
-                .background(Color(0xFF1E2125))
+                .background(c.miniPlayer)
                 .clickable(onClickLabel = openPlayer, onClick = onOpen)
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,

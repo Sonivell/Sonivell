@@ -51,6 +51,9 @@ interface SmartEngine {
         preceding: List<Long>,
         history: List<ListenEvent>,
     ): List<Long>
+
+    /** Quanto o SMART evita várias músicas seguidas do mesmo artista: 0 (nada) a 4 (muito). */
+    fun setArtistVariety(level: Int) = Unit
 }
 
 object NoSmartEngine : SmartEngine {

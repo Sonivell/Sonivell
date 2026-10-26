@@ -29,6 +29,11 @@ import androidx.navigation.navArgument
 import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.collection.CollectionActions
+import com.juscelino.sonivell.ui.settings.EqualizerActions
+import com.juscelino.sonivell.ui.settings.EqualizerScreen
+import com.juscelino.sonivell.ui.settings.SettingsActions
+import com.juscelino.sonivell.ui.settings.SettingsScreen
+import com.juscelino.sonivell.ui.settings.StatsScreen
 import com.juscelino.sonivell.ui.collection.CollectionScreen
 import com.juscelino.sonivell.ui.components.AddToPlaylistSheet
 import com.juscelino.sonivell.ui.components.ConfirmDialog
@@ -123,6 +128,9 @@ private object Routes {
     const val GENRE = "genero/{name}"
     const val FOLDER = "pasta/{path}"
     const val PLAYLIST = "playlist/{id}"
+    const val SETTINGS = "ajustes"
+    const val EQUALIZER = "equalizador"
+    const val STATS = "estatisticas"
     /** Telas de coleção: mostram o mini player e a barra de navegação. */
     val COLLECTIONS = setOf(ALBUM, ARTIST, GENRE, FOLDER, PLAYLIST)
 
@@ -231,6 +239,19 @@ private fun MainContent(vm: MainViewModel) {
     var importUri by remember { mutableStateOf<Uri?>(null) }
     var importName by remember { mutableStateOf("") }
     var exportId by remember { mutableStateOf<Long?>(null) }
+    var confirmClearHistory by remember { mutableStateOf(false) }
+    var confirmReset by remember { mutableStateOf(false) }
+    val settings by vm.settings.collectAsStateWithLifecycle()
+    val equalizer by vm.equalizer.collectAsStateWithLifecycle()
+    val stats by vm.stats.collectAsStateWithLifecycle()
+    val historyExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        if (uri != null) scope.launch {
+            toast(res.getString(if (vm.exportHistory(uri)) R.string.history_exported else R.string.export_failed))
+        }
+    }
+    val versionName = remember {
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()
+    }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("audio/x-mpegurl")) { uri ->
         val id = exportId
@@ -282,9 +303,10 @@ private fun MainContent(vm: MainViewModel) {
         onOpenPlaylist = { nav.navigate(Routes.playlist(it)) },
         onNewPlaylist = { newPlaylistWith = emptyList() },
         onImportPlaylist = { importLauncher.launch(arrayOf("*/*")) },
+        onOpenSettings = { nav.navigate(Routes.SETTINGS) },
     )
 
-    val chromeRoutes = remember { tabs.map { it.route }.toSet() + Routes.COLLECTIONS }
+    val chromeRoutes = remember { tabs.map { it.route }.toSet() + Routes.COLLECTIONS + setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS) }
     val showChrome = route in chromeRoutes
 
     Scaffold(
@@ -421,6 +443,53 @@ private fun MainContent(vm: MainViewModel) {
                 // Enquanto as playlists carregam, não volta da tela.
                 if (data == null && playlists.isEmpty()) return@composable
                 Collection(data)
+            }
+
+            composable(Routes.SETTINGS) {
+                SettingsScreen(
+                    settings = settings,
+                    smartAvailable = vm.smart.isAvailable,
+                    versionName = versionName,
+                    contentPadding = listPadding,
+                    actions = SettingsActions(
+                        onBack = { nav.popBackStack() },
+                        onUpdate = vm::updateSettings,
+                        onOpenEqualizer = { nav.navigate(Routes.EQUALIZER) },
+                        onOpenStats = { nav.navigate(Routes.STATS) },
+                        onRefreshLibrary = vm::refresh,
+                        onClearHistory = { confirmClearHistory = true },
+                        onExportHistory = { historyExportLauncher.launch("sonivell-historico.csv") },
+                        onReset = { confirmReset = true },
+                    ),
+                )
+            }
+            composable(Routes.EQUALIZER) {
+                LaunchedEffect(Unit) { vm.refreshEqualizer() }
+                EqualizerScreen(
+                    state = equalizer,
+                    contentPadding = listPadding,
+                    actions = EqualizerActions(
+                        onBack = { nav.popBackStack() },
+                        onEnabled = { vm.setEqualizer(enabled = it) },
+                        onLevels = { levels, preset ->
+                            // Mexer numa banda liga o equalizador: o efeito aparece na hora.
+                            vm.setEqualizer(enabled = true, levels = levels, preset = preset, customLevels = preset == null)
+                        },
+                        onBass = { vm.setEqualizer(enabled = true, bass = it) },
+                    ),
+                )
+            }
+            composable(Routes.STATS) {
+                StatsScreen(
+                    stats = stats,
+                    contentPadding = listPadding,
+                    onBack = { nav.popBackStack() },
+                    onPeriod = vm::setStatsPeriod,
+                    onPlayTrack = { t ->
+                        source = res.getString(R.string.stats)
+                        vm.playFrom(listOf(t), 0)
+                    },
+                )
             }
 
             composable(
@@ -628,6 +697,26 @@ private fun MainContent(vm: MainViewModel) {
                 if (route == Routes.PLAYLIST) nav.popBackStack()
             },
             onDismiss = { deleting = null },
+        )
+    }
+
+    if (confirmClearHistory) {
+        ConfirmDialog(
+            title = stringResource(R.string.clear_history_title),
+            message = stringResource(R.string.clear_history_message),
+            confirmLabel = stringResource(R.string.clear),
+            onConfirm = { vm.clearHistory(); toast(res.getString(R.string.history_cleared)) },
+            onDismiss = { confirmClearHistory = false },
+        )
+    }
+
+    if (confirmReset) {
+        ConfirmDialog(
+            title = stringResource(R.string.reset_title),
+            message = stringResource(R.string.reset_message),
+            confirmLabel = stringResource(R.string.restore),
+            onConfirm = vm::resetSettings,
+            onDismiss = { confirmReset = false },
         )
     }
 

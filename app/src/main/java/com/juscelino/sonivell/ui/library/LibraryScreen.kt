@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import com.juscelino.sonivell.data.ForYouState
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Category
 import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.formatDuration
@@ -94,6 +95,7 @@ data class LibraryActions(
     val onOpenPlaylist: (Long) -> Unit = {},
     val onNewPlaylist: () -> Unit = {},
     val onImportPlaylist: () -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
 )
 
 @Composable
@@ -144,7 +146,7 @@ fun LibraryScreen(
                     color = c.textPrimary,
                     modifier = Modifier.weight(1f),
                 )
-                IconBtn(Icons.Rounded.Refresh, stringResource(R.string.cd_refresh), actions.onRefresh, background = c.surface, iconSize = 20.dp)
+                IconBtn(Icons.Rounded.Settings, stringResource(R.string.cd_settings), actions.onOpenSettings, background = c.surface, iconSize = 20.dp)
             }
         }
 

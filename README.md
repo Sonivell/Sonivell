@@ -28,9 +28,17 @@ O SMART também **aprende com a sessão**: pular uma música (ouvir menos de 30 
 
 As duas edições podem ficar instaladas ao mesmo tempo.
 
+## Também tem
+
+- Playlists (com importação e exportação M3U), menu de cada música, telas de álbum, artista, gênero e pasta.
+- Sessão salva: a fila e a posição voltam como estavam.
+- Temporizador, controle de volume, equalizador com predefinições e reforço de graves.
+- Tema claro, escuro ou automático e seis cores de destaque.
+- Estatísticas de audição por período, com exportação do histórico em CSV.
+
 ## Ainda por vir
 
-Letras, playlists salvas, menu "mais opções", equalizador e escolha de dispositivo de saída (os botões já estão na interface e avisam "em breve").
+Letras, normalização de volume, playlists inteligentes, busca aproximada, widgets e Android Auto.
 
 ## Stack
 

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Sonivell" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">@color/grafite</item>
+    <!-- Fundo da janela antes do Compose desenhar: segue o tema do sistema (claro aqui, escuro em values-night). -->
+    <style name="Theme.Sonivell" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/fundo</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
+    <color name="fundo">#FFF6F6F3</color>
     <color name="grafite">#FF0E0F11</color>
     <color name="lima">#FFC8F04A</color>
 </resources>

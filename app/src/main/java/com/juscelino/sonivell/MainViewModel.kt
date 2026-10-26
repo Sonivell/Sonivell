@@ -8,6 +8,14 @@ import androidx.lifecycle.viewModelScope
 import com.juscelino.sonivell.data.Album
 import com.juscelino.sonivell.data.Artist
 import com.juscelino.sonivell.data.Folder
+import com.juscelino.sonivell.data.AppSettings
+import com.juscelino.sonivell.data.SettingsStore
+import com.juscelino.sonivell.data.Stats
+import com.juscelino.sonivell.data.StatsPeriod
+import com.juscelino.sonivell.data.StatsState
+import com.juscelino.sonivell.data.historyCsv
+import com.juscelino.sonivell.playback.AudioEffects
+import com.juscelino.sonivell.playback.EqualizerInfo
 import com.juscelino.sonivell.data.Genre
 import com.juscelino.sonivell.data.M3u
 import com.juscelino.sonivell.data.Playlist
@@ -60,6 +68,15 @@ enum class SortOrder(@StringRes val label: Int) {
     Recentes(R.string.sort_recent),
 }
 
+/** O que a tela do equalizador mostra. Níveis em milibéis; [preset] null = ajuste próprio. */
+data class EqualizerState(
+    val info: EqualizerInfo? = null,
+    val enabled: Boolean = false,
+    val levels: List<Int> = emptyList(),
+    val bass: Int = 0,
+    val preset: String? = null,
+)
+
 /** Temporizador para parar a música: num horário ([endsAtMs]) ou ao fim da faixa atual. */
 data class SleepTimer(val endsAtMs: Long? = null, val endOfTrack: Boolean = false) {
     val active: Boolean get() = endsAtMs != null || endOfTrack
@@ -110,6 +127,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     val playlistStore = PlaylistStore(app)
     val playlists: StateFlow<List<Playlist>> = playlistStore.playlists
+
+    /** Ajustes do app (tema, cor, comportamento). */
+    private val settingsStore = SettingsStore(prefs)
+    val settings: StateFlow<AppSettings> = settingsStore.settings
 
     private val _sleepTimer = MutableStateFlow(SleepTimer())
     val sleepTimer: StateFlow<SleepTimer> = _sleepTimer.asStateFlow()
@@ -194,6 +215,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch { playlistStore.load() }
+        smart.setArtistVariety(settings.value.artistVariety)
 
         // Restaura a sessão quando o player conectar e a biblioteca carregar (uma vez só).
         viewModelScope.launch {
@@ -258,6 +280,69 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             )
         )
     }
+
+    // ---- Ajustes ----
+
+    fun updateSettings(change: (AppSettings) -> AppSettings) {
+        val before = settings.value.artistVariety
+        settingsStore.update(change)
+        if (settings.value.artistVariety != before) smart.setArtistVariety(settings.value.artistVariety)
+    }
+
+    fun resetSettings() {
+        settingsStore.reset()
+        smart.setArtistVariety(settings.value.artistVariety)
+    }
+
+    fun clearHistory() { viewModelScope.launch { history.clear() } }
+
+    /** Exporta o histórico de escuta como CSV. */
+    suspend fun exportHistory(target: Uri): Boolean {
+        val csv = historyCsv(history.recent(), allTracks.value.orEmpty())
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                getApplication<Application>().contentResolver.openOutputStream(target, "wt")!!.use { it.write(csv.toByteArray()) }
+            }.isSuccess
+        }
+    }
+
+    // ---- Equalizador (aplicado pelo serviço de reprodução) ----
+
+    private val _eq = MutableStateFlow(readEq())
+    val equalizer: StateFlow<EqualizerState> = _eq.asStateFlow()
+
+    private fun readEq() = EqualizerState(
+        info = AudioEffects.readInfo(prefs),
+        enabled = prefs.getBoolean(AudioEffects.KEY_ENABLED, false),
+        levels = AudioEffects.parseLevels(prefs.getString(AudioEffects.KEY_LEVELS, null)),
+        bass = prefs.getInt(AudioEffects.KEY_BASS, 0),
+        preset = prefs.getString(AudioEffects.KEY_PRESET, null),
+    )
+
+    fun refreshEqualizer() { _eq.value = readEq() }
+
+    fun setEqualizer(enabled: Boolean? = null, levels: List<Int>? = null, bass: Int? = null, preset: String? = null, customLevels: Boolean = false) {
+        val e = prefs.edit()
+        enabled?.let { e.putBoolean(AudioEffects.KEY_ENABLED, it) }
+        levels?.let { e.putString(AudioEffects.KEY_LEVELS, it.joinToString(",")) }
+        bass?.let { e.putInt(AudioEffects.KEY_BASS, it) }
+        when {
+            preset != null -> e.putString(AudioEffects.KEY_PRESET, preset)
+            customLevels -> e.remove(AudioEffects.KEY_PRESET)
+        }
+        e.apply()
+        _eq.value = readEq()
+    }
+
+    // ---- Estatísticas ----
+
+    private val statsPeriod = MutableStateFlow(StatsPeriod.Mes)
+    val stats: StateFlow<StatsState> = combine(allTracks, history.revision, statsPeriod) { all, _, period ->
+        Stats.compute(all.orEmpty(), history.recent(), period)
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StatsState())
+
+    fun setStatsPeriod(period: StatsPeriod) { statsPeriod.value = period }
 
     // ---- Fila ----
 
@@ -453,7 +538,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun onListenFinished(event: ListenEvent, st: PlayerState) {
-        viewModelScope.launch { history.record(event) }
+        if (!settings.value.historyPaused) viewModelScope.launch { history.record(event) }
         // Pulou no modo SMART: o motor refaz o "a seguir" levando o pulo em conta, como no
         // LatentJam. (Se uma fila nova já está sendo montada, ela ganha.)
         if (smartMode.value && event.skipped && planningJob?.isActive != true) replanAfterSkip(st)

@@ -143,6 +143,12 @@ internal class LatentJamSmartEngine private constructor(context: Context) : Smar
         }
     }
 
+    override fun setArtistVariety(level: Int) {
+        // Mesmos degraus do ajuste "Variedade de artistas" do LatentJam.
+        val penalties = listOf(0f, 0.25f, 0.5f, 1f, 2f)
+        engine.setArtistRunPenalty(penalties[level.coerceIn(0, penalties.lastIndex)])
+    }
+
     override suspend fun startQueue(
         seed: Track,
         library: List<Track>,

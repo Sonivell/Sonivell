@@ -7,21 +7,35 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.juscelino.sonivell.ui.SonivellApp
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.ThemeMode
 
 class MainActivity : ComponentActivity() {
 
     private val vm: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-        )
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            SonivellTheme {
+            val settings by vm.settings.collectAsStateWithLifecycle()
+            val dark = when (settings.theme) {
+                ThemeMode.AUTO -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            // Ícones da barra de status/navegação acompanham o tema escolhido.
+            LaunchedEffect(dark) {
+                val style = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)
+                else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+            }
+            SonivellTheme(accent = settings.accent, darkTheme = dark) {
                 SonivellApp(vm)
             }
         }
