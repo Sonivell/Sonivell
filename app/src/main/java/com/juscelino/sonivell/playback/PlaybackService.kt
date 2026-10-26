@@ -19,9 +19,11 @@ import androidx.media3.common.MediaItem
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.juscelino.sonivell.MainActivity
+import com.juscelino.sonivell.R
 
 /**
  * Serviço de reprodução: mantém o ExoPlayer vivo em segundo plano e publica a
@@ -42,6 +44,7 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
+    @OptIn(UnstableApi::class) // DefaultMediaNotificationProvider
     override fun onCreate() {
         super.onCreate()
         prefs = getSharedPreferences(SettingsStore.PREFS, MODE_PRIVATE)
@@ -79,6 +82,13 @@ class PlaybackService : MediaSessionService() {
             .setSessionActivity(openApp)
             .setCallback(SessionCallback())
             .build()
+
+        // Notificação do player com a silhueta das ondas do ícone.
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this).build().apply {
+                setSmallIcon(R.drawable.ic_notification)
+            }
+        )
     }
 
     /**
