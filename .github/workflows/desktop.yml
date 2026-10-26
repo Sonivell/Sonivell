@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'desktop/**'
+      - 'tools/desktop-screenshot.sh'
       - 'core/**'
       - 'settings.gradle.kts'
       - 'gradle/libs.versions.toml'
