@@ -9,7 +9,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.automirrored.rounded.QueuePlayNext
+import androidx.compose.material.icons.rounded.QueuePlayNext
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.DeleteOutline
@@ -490,7 +490,7 @@ private fun MainContent(vm: MainViewModel) {
     menuFor?.let { (track, ctx) ->
         val liked = track.id in favorites
         val options = buildList {
-            add(MenuOption(Icons.AutoMirrored.Rounded.QueuePlayNext, stringResource(R.string.play_next)) {
+            add(MenuOption(Icons.Rounded.QueuePlayNext, stringResource(R.string.play_next)) {
                 vm.playNext(listOf(track)); toast(res.getString(R.string.added_next))
             })
             add(MenuOption(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.add_to_queue)) {
@@ -521,7 +521,7 @@ private fun MainContent(vm: MainViewModel) {
     collectionMenu?.let { data ->
         val playlist = data.playlist
         val options = buildList {
-            add(MenuOption(Icons.AutoMirrored.Rounded.QueuePlayNext, stringResource(R.string.play_next)) {
+            add(MenuOption(Icons.Rounded.QueuePlayNext, stringResource(R.string.play_next)) {
                 vm.playNext(data.tracks); toast(res.getString(R.string.added_next))
             })
             add(MenuOption(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.add_to_queue)) {
