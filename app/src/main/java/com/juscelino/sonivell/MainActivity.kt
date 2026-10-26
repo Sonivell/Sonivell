@@ -35,7 +35,12 @@ class MainActivity : ComponentActivity() {
                 else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
             }
-            SonivellTheme(accent = settings.accent, darkTheme = dark, iconStyle = settings.iconStyle) {
+            SonivellTheme(
+                accent = settings.accent,
+                darkTheme = dark,
+                iconStyle = settings.iconStyle,
+                darkBackground = settings.darkBackground,
+            ) {
                 SonivellApp(vm)
             }
         }

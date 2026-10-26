@@ -33,7 +33,7 @@ As duas edições podem ficar instaladas ao mesmo tempo.
 - Playlists (com importação e exportação M3U), menu de cada música, telas de álbum, artista, gênero e pasta.
 - Sessão salva: a fila e a posição voltam como estavam.
 - Temporizador, controle de volume, equalizador com predefinições e reforço de graves.
-- Tema claro, escuro ou automático e seis cores de destaque.
+- Tema claro, escuro ou automático; fundo escuro grafite ou preto (#121212); sete cores de destaque, incluindo verde #1DB954.
 - Estatísticas de audição por período, com exportação do histórico em CSV.
 - Letras: embutidas no arquivo ou em .lrc (pasta escolhida por você), sincronizadas, com toque para pular e ajuste de sincronia.
 - Normalização de volume pelo ReplayGain das tags.

@@ -347,4 +347,9 @@
     <string name="missing_album">No album</string>
     <string name="missing_genre">No genre</string>
     <string name="missing_year">No year</string>
+    <string name="accent_green">Green</string>
+    <string name="settings_dark_background">Dark theme background</string>
+    <string name="background_graphite">Graphite</string>
+    <string name="background_black">Black</string>
+    <string name="settings_dark_background_hint">Applies when the dark theme is in use.</string>
 </resources>

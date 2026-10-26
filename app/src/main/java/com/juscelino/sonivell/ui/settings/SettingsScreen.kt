@@ -41,6 +41,7 @@ import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.theme.AccentChoice
+import com.juscelino.sonivell.ui.theme.DarkBackground
 import com.juscelino.sonivell.ui.theme.IconStyle
 import com.juscelino.sonivell.ui.theme.icons
 import com.juscelino.sonivell.ui.theme.SonivellTheme
@@ -103,8 +104,22 @@ fun SettingsScreen(
                     }
                 }
             }
+            RowLabel(stringResource(R.string.settings_dark_background))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    DarkBackground.Grafite to R.string.background_graphite,
+                    DarkBackground.Preto to R.string.background_black,
+                ).forEach { (bg, label) ->
+                    Chip(stringResource(label), selected = settings.darkBackground == bg) {
+                        actions.onUpdate { it.copy(darkBackground = bg) }
+                    }
+                }
+            }
+            if (!c.isDark) {
+                Text(stringResource(R.string.settings_dark_background_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+            }
             RowLabel(stringResource(R.string.settings_accent))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AccentChoice.entries.forEach { choice ->
                     val color = if (c.isDark) choice.dark else choice.light
                     val selected = settings.accent == choice
@@ -248,6 +263,7 @@ private fun IconStyleOption(
 private val accentNames = listOf(
     R.string.accent_lime, R.string.accent_blue, R.string.accent_orange,
     R.string.accent_lilac, R.string.accent_pink, R.string.accent_teal,
+    R.string.accent_green,
 )
 
 @Composable

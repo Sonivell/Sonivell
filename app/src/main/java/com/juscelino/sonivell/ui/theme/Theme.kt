@@ -66,7 +66,29 @@ enum class AccentChoice(val dark: Color, val light: Color) {
     Lilas(Color(0xFFE8A6FF), Color(0xFF8338A8)),
     Rosa(Color(0xFFFF8FB1), Color(0xFFB0305C)),
     Turquesa(Color(0xFF5FE3D0), Color(0xFF00756A)),
+    /** Verde #1DB954 (RGB 29, 185, 84); no tema claro, um tom mais escuro para o texto passar 4,5:1. */
+    Verde(Color(0xFF1DB954), Color(0xFF117A37)),
 }
+
+/** Fundo do tema escuro: grafite (padrão do Sonivell) ou preto. */
+enum class DarkBackground { Grafite, Preto }
+
+/** Paleta escura em preto: fundo #121212, superfícies a partir de #191414 e texto secundário #B3B3B3. */
+fun blackColors(accent: Color) = SonivellColors(
+    background = Color(0xFF121212),
+    surface = Color(0xFF1F1B1B),
+    surfaceLow = Color(0xFF191414),
+    surfaceHigh = Color(0xFF2A2626),
+    outline = Color(0xFF3A3535),
+    track = Color(0xFF3E3E3E),
+    textPrimary = Color(0xFFFFFFFF),
+    textSecondary = Color(0xFFB3B3B3),
+    textTertiary = Color(0xFFD9D9D9),
+    accent = accent,
+    onAccent = Color(0xFF121212),
+    miniPlayer = Color(0xFF282424),
+    isDark = true,
+)
 
 object Accents {
     val Lima = Color(0xFFC8F04A)
@@ -125,9 +147,14 @@ fun SonivellTheme(
     accent: AccentChoice = AccentChoice.Lima,
     darkTheme: Boolean = true,
     iconStyle: IconStyle = IconStyle.FINO,
+    darkBackground: DarkBackground = DarkBackground.Grafite,
     content: @Composable () -> Unit,
 ) {
-    val colors = if (darkTheme) SonivellColors(accent = accent.dark) else lightColors(accent.light)
+    val colors = when {
+        !darkTheme -> lightColors(accent.light)
+        darkBackground == DarkBackground.Preto -> blackColors(accent.dark)
+        else -> SonivellColors(accent = accent.dark)
+    }
     val scheme = (if (darkTheme) darkColorScheme() else lightColorScheme()).copy(
         primary = colors.accent,
         onPrimary = colors.onAccent,

@@ -340,4 +340,9 @@
     <string name="missing_album">Sem álbum</string>
     <string name="missing_genre">Sem gênero</string>
     <string name="missing_year">Sem ano</string>
+    <string name="accent_green">Verde</string>
+    <string name="settings_dark_background">Fundo do tema escuro</string>
+    <string name="background_graphite">Grafite</string>
+    <string name="background_black">Preto</string>
+    <string name="settings_dark_background_hint">Vale quando o tema escuro está em uso.</string>
 </resources>
