@@ -26,4 +26,6 @@
     <string name="desktop_col_number">#</string>
     <string name="desktop_playing_now">Tocando agora</string>
     <string name="desktop_sort_az">De A a Z</string>
+    <string name="desktop_smart_label">SMART</string>
+    <string name="desktop_smart_failed">O SMART não conseguiu analisar suas músicas neste computador.</string>
 </resources>

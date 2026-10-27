@@ -7,6 +7,8 @@ on:
       - 'desktop/**'
       - 'tools/desktop-screenshot.sh'
       - 'core/**'
+      - 'desktop-smart/**'
+      - 'app/src/smart/assets/**'
       - 'settings.gradle.kts'
       - 'gradle/libs.versions.toml'
       - 'app/src/main/res/values*/strings.xml'

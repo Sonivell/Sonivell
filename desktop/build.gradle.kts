@@ -12,6 +12,7 @@ plugins {
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
+    implementation(project(":desktop-smart"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.swing)
     testImplementation(kotlin("test"))

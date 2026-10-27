@@ -38,4 +38,5 @@ if (desktopMode != "only") {
 // para não interferir no build do app Android.
 if (desktopMode == "true" || desktopMode == "only") {
     include(":desktop")
+    include(":desktop-smart")
 }

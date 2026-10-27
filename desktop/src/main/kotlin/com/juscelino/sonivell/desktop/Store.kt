@@ -15,6 +15,8 @@ data class Settings(
     val volume: Float = 0.8f,
     val shuffle: Boolean = false,
     val repeat: Int = 0,
+    val smart: Boolean = false,
+    val artistVariety: Int = 2,
 )
 
 /** Ajustes do usuário, num arquivo .properties em ~/.config/sonivell. */
@@ -34,6 +36,8 @@ object SettingsStore {
             volume = p.getProperty("volume")?.toFloatOrNull()?.coerceIn(0f, 1f) ?: 0.8f,
             shuffle = p.getProperty("shuffle") == "true",
             repeat = p.getProperty("repeat")?.toIntOrNull()?.coerceIn(0, 2) ?: 0,
+            smart = p.getProperty("smart") == "true",
+            artistVariety = p.getProperty("artistVariety")?.toIntOrNull()?.coerceIn(0, 4) ?: 2,
         )
     }
 
@@ -46,6 +50,8 @@ object SettingsStore {
         p.setProperty("volume", s.volume.toString())
         p.setProperty("shuffle", s.shuffle.toString())
         p.setProperty("repeat", s.repeat.toString())
+        p.setProperty("smart", s.smart.toString())
+        p.setProperty("artistVariety", s.artistVariety.toString())
         runCatching { file.writer(Charsets.UTF_8).use { p.store(it, null) } }
     }
 }

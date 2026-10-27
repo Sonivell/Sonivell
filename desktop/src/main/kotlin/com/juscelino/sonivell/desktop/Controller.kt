@@ -2,6 +2,7 @@ package com.juscelino.sonivell.desktop
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ data class PlayerState(
     val volume: Float = 0.8f,
     val sourceLabel: String = "",
     val error: String? = null,
+    val smart: Boolean = false,
 ) {
     val current: Track? get() = queue.getOrNull(index)
     val upNext: List<Track> get() = if (index in queue.indices) queue.drop(index + 1) else emptyList()
@@ -37,6 +39,9 @@ data class LibraryState(
 )
 
 /** Une biblioteca, fila, reprodução, curtidas e histórico. Toda a interface lê daqui. */
+private const val SMART_BATCH = 30
+private const val SMART_REFILL_AT = 3
+
 class Controller {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val user = UserData()
@@ -47,7 +52,7 @@ class Controller {
     private val _library = MutableStateFlow(LibraryState())
     val library: StateFlow<LibraryState> = _library.asStateFlow()
 
-    private val _player = MutableStateFlow(PlayerState(shuffle = _settings.value.shuffle, repeat = Repeat.values()[_settings.value.repeat], volume = _settings.value.volume))
+    private val _player = MutableStateFlow(PlayerState(shuffle = _settings.value.shuffle, repeat = Repeat.values()[_settings.value.repeat], volume = _settings.value.volume, smart = _settings.value.smart))
     val player: StateFlow<PlayerState> = _player.asStateFlow()
 
     private val _favorites = MutableStateFlow(user.favorites)
@@ -67,8 +72,13 @@ class Controller {
 
     val audioAvailable: Boolean = AudioEngine.available()
 
+    /** Aleatório inteligente (motor do LatentJam): análise em segundo plano e filas pelo som. */
+    val smart = SmartBridge(scope)
+    private var smartJob: Job? = null
+
     init {
         engine.volume = _settings.value.volume
+        smart.setArtistVariety(_settings.value.artistVariety)
         scope.launch {
             while (true) {
                 delay(250)
@@ -103,6 +113,7 @@ class Controller {
             }
             val lib = Library(tracks)
             _library.update { LibraryState(lib, scanning = false, progress = null) }
+            smart.analyse(lib.tracks)
             if (_resume.value == null && _player.value.current == null) {
                 user.loadResume()?.let { (id, pos) -> lib.byId[id]?.let { _resume.value = it to pos } }
             }
@@ -112,6 +123,7 @@ class Controller {
     fun updateSettings(change: (Settings) -> Settings) {
         val next = change(_settings.value)
         val dirsChanged = next.musicDirs != _settings.value.musicDirs
+        if (next.artistVariety != _settings.value.artistVariety) smart.setArtistVariety(next.artistVariety)
         _settings.value = next
         SettingsStore.save(next)
         if (dirsChanged) refresh()
@@ -123,6 +135,12 @@ class Controller {
         if (tracks.isEmpty() || index !in tracks.indices) return
         recordCurrent(completed = false)
         baseOrder = tracks
+        if (_player.value.smart && smart.available) {
+            val seed = tracks[index]
+            startTrack(listOf(seed), 0, label.ifEmpty { "SMART" }, startMs)
+            smartFill(seed, replace = true)
+            return
+        }
         val shuffle = _player.value.shuffle
         val queue = if (shuffle) listOf(tracks[index]) + tracks.filterIndexed { i, _ -> i != index }.shuffled() else tracks
         val idx = if (shuffle) 0 else index
@@ -154,6 +172,7 @@ class Controller {
     private fun onTrackEnded() {
         recordCurrent(completed = true)
         val s = _player.value
+        smartTopUp()
         when {
             s.repeat == Repeat.One && s.current != null -> startTrack(s.queue, s.index, "")
             s.index + 1 < s.queue.size -> startTrack(s.queue, s.index + 1, "")
@@ -188,6 +207,7 @@ class Controller {
         val s = _player.value
         if (s.current == null) return
         recordCurrent(completed = false)
+        smartTopUp()
         if (s.index + 1 < s.queue.size) startTrack(s.queue, s.index + 1, "")
         else if (s.repeat == Repeat.All) startTrack(if (s.shuffle) baseOrder.shuffled() else baseOrder.ifEmpty { s.queue }, 0, "")
     }
@@ -213,6 +233,48 @@ class Controller {
         engine.volume = v
         _player.update { it.copy(volume = v.coerceIn(0f, 1f)) }
         persistModes()
+    }
+
+    fun toggleSmart() {
+        val on = !_player.value.smart
+        _player.update { it.copy(smart = on) }
+        updateSettings { it.copy(smart = on) }
+        if (on) _player.value.current?.let { smartFill(it, replace = true) }
+    }
+
+    /** Monta (replace) ou estende a fila a partir de [seed], escolhendo faixas que soam parecidas. */
+    private fun smartFill(seed: Track, replace: Boolean) {
+        if (!smart.available) return
+        smartJob?.cancel()
+        smartJob = scope.launch {
+            val lib = _library.value.library
+            val s0 = _player.value
+            val inQueue = s0.queue.map { it.id }.toSet()
+            val pool = lib.tracks.filter { it.id != seed.id && (replace || it.id !in inQueue) }
+            val history = user.history.takeLast(300)
+            val ids = if (replace) {
+                smart.startQueue(seed, pool, SMART_BATCH, history, lib.byId::get)
+            } else {
+                val preceding = s0.queue.dropLast(1).takeLast(40).map { it.id }
+                smart.continueQueue(seed, pool, SMART_BATCH, preceding, history, lib.byId::get)
+            }
+            val picked = ids.mapNotNull { lib.byId[it] }
+            if (picked.isEmpty()) return@launch
+            _player.update { st ->
+                if (replace) {
+                    if (st.current?.id != seed.id) st else st.copy(queue = st.queue.take(st.index + 1) + picked)
+                } else {
+                    if (st.queue.lastOrNull()?.id != seed.id) st else st.copy(queue = st.queue + picked)
+                }
+            }
+        }
+    }
+
+    /** Perto do fim da fila SMART, pede mais faixas a partir da última planejada. */
+    private fun smartTopUp() {
+        val s = _player.value
+        if (!s.smart || !smart.available || s.queue.isEmpty()) return
+        if (s.upNext.size <= SMART_REFILL_AT) smartFill(s.queue.last(), replace = false)
     }
 
     fun toggleShuffle() {

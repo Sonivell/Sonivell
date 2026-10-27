@@ -75,6 +75,7 @@ fun NowPlayingScreen(ctl: Controller, nav: Nav, actions: Actions) {
                 IconBtn(Traco.skipNext, str("cd_next"), { ctl.next() }, size = 52.dp, iconSize = 28.dp)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (ctl.smart.available) Pill(str("desktop_smart_label"), p.smart, { ctl.toggleSmart() }, Traco.shuffle)
                 Pill(str("mode_shuffle"), p.shuffle, { ctl.toggleShuffle() }, Traco.shuffle)
                 Pill(
                     str(if (p.repeat == Repeat.One) "mode_repeat_one" else "mode_repeat"), p.repeat != Repeat.Off, { ctl.cycleRepeat() },

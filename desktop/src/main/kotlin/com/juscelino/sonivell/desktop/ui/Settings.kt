@@ -93,6 +93,31 @@ fun SettingsScreen(ctl: Controller) {
             }
         }
 
+        if (ctl.smart.available) {
+            val progress by ctl.smart.progress.collectAsState()
+            Group(str("desktop_smart_label")) {
+                Txt(str("smart_on_hint"), 13, FontWeight.Medium, c.textSecondary, maxLines = 3)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Pill(str("desktop_smart_label"), settings.smart, { ctl.toggleSmart() }, Traco.shuffle)
+                }
+                if (progress.total > 0) {
+                    Label(str("smart_analysing"))
+                    Txt(
+                        if (progress.failed) str("desktop_smart_failed") else str("smart_progress", progress.analysed, progress.total),
+                        14, FontWeight.SemiBold, c.textSecondary,
+                    )
+                }
+                Label(str("settings_artist_variety"))
+                Txt(str("settings_artist_variety_hint"), 13, FontWeight.Medium, c.textSecondary, maxLines = 2)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    (0..4).forEach { level ->
+                        Pill(str("variety_$level"), settings.artistVariety == level, { ctl.updateSettings { it.copy(artistVariety = level) } })
+                    }
+                }
+                Txt(str("settings_credits_smart"), 12, FontWeight.Medium, c.textTertiary, maxLines = 2)
+            }
+        }
+
         Group(str("settings_about")) {
             Txt(str("settings_version", "0.1.0"), 14, FontWeight.SemiBold)
             Txt(str("desktop_shortcuts"), 13, FontWeight.Medium, c.textSecondary, maxLines = 3)
