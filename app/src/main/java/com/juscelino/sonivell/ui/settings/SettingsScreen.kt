@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -35,6 +38,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.AppSettings
 import com.juscelino.sonivell.data.CROSSFADE_STEPS
@@ -157,13 +163,13 @@ fun SettingsScreen(
                 }
             }
             RowLabel(stringResource(R.string.settings_icon_style))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconStyle.entries.forEach { style ->
                     IconStyleOption(
                         style = style,
                         label = stringResource(iconStyleNames[style.ordinal]),
                         selected = settings.iconStyle == style,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                     ) { actions.onUpdate { it.copy(iconStyle = style) } }
                 }
             }
@@ -341,10 +347,13 @@ private fun IconStyleOption(
                 Icon(it, null, Modifier.size(20.dp), tint = if (selected) c.accent else c.textPrimary)
             }
         }
-        Text(
+        // Uma linha só: em telas estreitas a fonte diminui em vez de quebrar a palavra.
+        val labelStyle = MaterialTheme.typography.titleSmall
+        BasicText(
             label,
-            style = MaterialTheme.typography.titleSmall,
-            color = c.textPrimary,
+            style = labelStyle.copy(color = c.textPrimary),
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = labelStyle.fontSize),
             modifier = Modifier.padding(top = 10.dp),
         )
     }
