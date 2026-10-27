@@ -85,7 +85,7 @@ object ArtCache {
     private val permits = Semaphore(3)
 
     suspend fun get(track: Track): ImageBitmap? {
-        val key = if (track.album.isBlank()) track.id.toString() else track.albumKey
+        val key = withContext(Dispatchers.IO) { ArtLoader.key(track) }
         synchronized(memory) { if (memory.containsKey(key)) return memory[key] }
         val bmp = permits.withPermit {
             withContext(Dispatchers.IO) {
@@ -106,7 +106,7 @@ private val artCores = listOf(Color(0xFFC8F04A), Color(0xFF7CC4FF), Color(0xFFFF
 /** Capa da faixa: arte embutida, imagem da pasta ou uma capa gerada (círculos) quando não há. */
 @Composable
 fun AlbumArt(track: Track?, size: Dp, corner: Dp = 14.dp, modifier: Modifier = Modifier) {
-    val bmp by produceState<ImageBitmap?>(null, track?.id, track?.albumKey) {
+    val bmp by produceState<ImageBitmap?>(null, track?.id) {
         value = if (track == null) null else ArtCache.get(track)
     }
     val seed = ((track?.albumKey?.hashCode() ?: 0) and 0x7fffffff) % 4

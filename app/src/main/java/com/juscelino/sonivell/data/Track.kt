@@ -29,8 +29,12 @@ data class Track(
     val sizeBytes: Long? = null,
     val dateModified: Long? = null,
 ) {
-    /** Arte do álbum guardada pelo MediaStore (pode não existir). */
-    val artUri: Uri get() = Uri.parse("content://media/external/audio/albumart/$albumId")
+    /**
+     * Capa DESTA faixa (embutida no arquivo ou a da pasta), servida pelo [ArtProvider].
+     * Não usar a "albumart/<albumId>" do MediaStore: ela é uma só por ALBUM_ID e repetia a
+     * capa errada em faixas sem relação.
+     */
+    val artUri: Uri get() = ArtProvider.uriFor(this)
 
     /** Rótulo curto do formato, ex.: "FLAC", "MP3". */
     val formatLabel: String?

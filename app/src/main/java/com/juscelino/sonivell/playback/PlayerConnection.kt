@@ -244,6 +244,8 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
 private const val EXTRA_ALBUM_ID = "albumId"
 private const val EXTRA_MIME = "mime"
 private const val EXTRA_DURATION = "duration"
+private const val EXTRA_MODIFIED = "modified"
+private const val EXTRA_SIZE = "size"
 
 fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
     .setMediaId(id.toString())
@@ -260,6 +262,9 @@ fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
                 putLong(EXTRA_ALBUM_ID, albumId)
                 putString(EXTRA_MIME, mimeType)
                 putLong(EXTRA_DURATION, durationMs)
+                // Fazem parte da URI da capa; guardados para a faixa reconstruída da fila apontar para a mesma.
+                dateModified?.let { putLong(EXTRA_MODIFIED, it) }
+                sizeBytes?.let { putLong(EXTRA_SIZE, it) }
             })
             .build()
     )
@@ -280,5 +285,7 @@ fun MediaItem.toTrack(context: Context): Track {
         mimeType = extras?.getString(EXTRA_MIME),
         folder = "",
         dateAdded = 0L,
+        dateModified = extras?.takeIf { it.containsKey(EXTRA_MODIFIED) }?.getLong(EXTRA_MODIFIED),
+        sizeBytes = extras?.takeIf { it.containsKey(EXTRA_SIZE) }?.getLong(EXTRA_SIZE),
     )
 }
