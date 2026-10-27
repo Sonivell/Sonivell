@@ -88,6 +88,17 @@ jobs:
           } > screenshots/ci.log 2>&1
           echo "rc=$?" >> screenshots/ci.log
 
+      - name: Testes do módulo desktop (inclui o SMART de ponta a ponta)
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p screenshots
+          set +e
+          ./gradlew -Psonivell.desktop=only :desktop:test -i > test-full.log 2>&1
+          rc=$?
+          { echo "rc=$rc"; grep -E "SMART|FAILED|PASSED|AssertionError|Exception|error:|e: " test-full.log | head -n 80; echo ----; tail -n 40 test-full.log; } > screenshots/test.log
+          exit $rc
+
       - name: Publicar as capturas na branch desktop-screenshots
         if: always()
         continue-on-error: true
@@ -106,10 +117,6 @@ jobs:
           git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" desktop-screenshots
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Testes do módulo desktop
-        shell: bash
-        run: ./gradlew -Psonivell.desktop=only :desktop:test 2>&1 | tail -n 40
 
       - uses: actions/upload-artifact@v4
         with:
