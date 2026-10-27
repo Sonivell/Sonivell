@@ -12,6 +12,7 @@ cat > "$XDG_CONFIG_HOME/sonivell/settings.properties" <<'PROPS'
 theme=DARK
 accent=Lima
 darkBg=Grafite
+smart=true
 PROPS
 echo "musicDirs=$HOME/Music" >> "$XDG_CONFIG_HOME/sonivell/settings.properties"
 
@@ -50,7 +51,7 @@ XVFB=$!
 sleep 2
 "$APP" > "$OUT/app.log" 2>&1 &
 APPPID=$!
-sleep 25
+sleep 45
 OX=48; OY=48
 shot() { import -window root -crop 1360x860+48+48 +repage "$OUT/$1.png"; }
 shot 1-para-voce
@@ -64,6 +65,7 @@ xdotool mousemove $((62+OX)) $((800+OY)) click 1; sleep 3; shot 4-player
 xdotool mousemove $((110+OX)) $((148+OY)) click 1; sleep 1; xdotool type "sal"; sleep 2; shot 5-busca
 # Ajustes
 xdotool mousemove $((110+OX)) $((820+OY)) click 1; sleep 2; shot 6-ajustes
+xdotool mousemove $((600+OX)) $((500+OY)); xdotool click --repeat 15 --delay 80 5; sleep 2; shot 7-ajustes-smart
 kill $APPPID || true
 kill $XVFB || true
 ls -la "$OUT"
