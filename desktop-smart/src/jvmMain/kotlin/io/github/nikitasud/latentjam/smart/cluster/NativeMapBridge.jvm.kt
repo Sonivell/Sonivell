@@ -5,4 +5,3 @@ internal actual fun nativeMapEmbed(
     rows: FloatArray, n: Int, dim: Int, initial: FloatArray?, output: FloatArray, cancellation: MapCancellation,
 ): Int = 3
 
-internal object MapBuildFlags { const val EXPERIMENTAL = false }
