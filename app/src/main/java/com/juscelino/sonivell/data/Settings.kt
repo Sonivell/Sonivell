@@ -39,7 +39,18 @@ data class AppSettings(
     val normalize: Boolean = false,
     /** O SMART aprende o seu gosto com o histórico (só na edição smart). */
     val learnTaste: Boolean = true,
+    /** Crossfade: o fim de uma faixa some enquanto a próxima entra, as duas sobrepostas. */
+    val crossfade: Boolean = false,
+    /** Duração do crossfade em segundos ([CROSSFADE_STEPS]). Com o SMART adaptando, é o "meio". */
+    val crossfadeSeconds: Int = 6,
+    /** O SMART alonga a transição entre faixas parecidas e encurta entre as bem diferentes. */
+    val crossfadeSmart: Boolean = true,
+    /** Não misturar faixas seguidas do mesmo álbum (álbuns ao vivo e sem pausa ficam inteiros). */
+    val crossfadeKeepAlbums: Boolean = true,
 )
+
+/** Durações oferecidas para o crossfade, em segundos. */
+val CROSSFADE_STEPS = listOf(2, 4, 6, 8, 10, 12)
 
 /** Ajustes do app, nas preferências locais. O serviço de reprodução lê as mesmas chaves. */
 class SettingsStore(private val prefs: SharedPreferences) {
@@ -61,6 +72,10 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putInt(KEY_ARTIST_VARIETY, next.artistVariety)
             .putBoolean(KEY_NORMALIZE, next.normalize)
             .putBoolean(KEY_LEARN_TASTE, next.learnTaste)
+            .putBoolean(KEY_CROSSFADE, next.crossfade)
+            .putInt(KEY_CROSSFADE_SECONDS, next.crossfadeSeconds)
+            .putBoolean(KEY_CROSSFADE_SMART, next.crossfadeSmart)
+            .putBoolean(KEY_CROSSFADE_KEEP_ALBUMS, next.crossfadeKeepAlbums)
             .apply()
     }
 
@@ -77,6 +92,10 @@ class SettingsStore(private val prefs: SharedPreferences) {
         artistVariety = prefs.getInt(KEY_ARTIST_VARIETY, 2),
         normalize = prefs.getBoolean(KEY_NORMALIZE, false),
         learnTaste = prefs.getBoolean(KEY_LEARN_TASTE, true),
+        crossfade = prefs.getBoolean(KEY_CROSSFADE, false),
+        crossfadeSeconds = prefs.getInt(KEY_CROSSFADE_SECONDS, 6),
+        crossfadeSmart = prefs.getBoolean(KEY_CROSSFADE_SMART, true),
+        crossfadeKeepAlbums = prefs.getBoolean(KEY_CROSSFADE_KEEP_ALBUMS, true),
     )
 
     companion object {
@@ -91,5 +110,11 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_ARTIST_VARIETY = "artist_variety"
         const val KEY_NORMALIZE = "normalize"
         const val KEY_LEARN_TASTE = "learn_taste"
+        const val KEY_CROSSFADE = "crossfade"
+        const val KEY_CROSSFADE_SECONDS = "crossfade_seconds"
+        const val KEY_CROSSFADE_SMART = "crossfade_smart"
+        const val KEY_CROSSFADE_KEEP_ALBUMS = "crossfade_keep_albums"
+        /** Escrita pelo MainViewModel: a fila atual é do SMART. */
+        const val KEY_SMART_MODE = "smart_mode"
     }
 }

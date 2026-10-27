@@ -86,6 +86,7 @@ internal class LatentJamSmartEngine private constructor(context: Context) : Smar
         val key = library.fold(library.size) { acc, t -> 31 * acc + (t.id.hashCode() xor (t.dateModified ?: 0).hashCode()) }
         if (key == analysedKey && (analysisJob?.isActive == true || _progress.value.analysed > 0)) return
         analysedKey = key
+        libraryIds = library.map { it.id }
         analysisJob?.cancel()
         analysisJob = scope.launch { runAnalysis(library.map { it.toDescriptor() }) }
     }
@@ -162,6 +163,59 @@ internal class LatentJamSmartEngine private constructor(context: Context) : Smar
             Log.w(TAG, "Vetores de som indisponíveis", failure)
             emptyMap()
         }
+    }
+
+    // ---- Semelhança entre duas faixas (crossfade adaptativo) ----
+
+    @Volatile private var libraryIds: List<Long> = emptyList()
+    private val meanLock = Mutex()
+    private var libraryMean: FloatArray? = null
+    private var meanBasis = 0
+
+    override suspend fun transitionSimilarity(fromId: Long, toId: Long): Float? = withContext(Dispatchers.Default) {
+        // Sem a biblioteca (o app ainda não abriu nesta execução) não há média: usa a duração fixa.
+        if (libraryIds.isEmpty()) return@withContext null
+        try {
+            val pair = embeddings(listOf(fromId, toId))
+            val a = pair[fromId] ?: return@withContext null
+            val b = pair[toId] ?: return@withContext null
+            val mean = libraryMean() ?: return@withContext null
+            centeredCosine(a, b, mean)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            Log.w(TAG, "Semelhança para o crossfade indisponível", failure)
+            null
+        }
+    }
+
+    /**
+     * Vetor médio da biblioteca. Sem subtraí-lo, tudo parece parecido com tudo (a mesma razão
+     * pela qual o SMART mede no espaço centrado). Recalculado quando a análise avança bastante.
+     */
+    private suspend fun libraryMean(): FloatArray? = meanLock.withLock {
+        val analysed = _progress.value.analysed
+        val cached = libraryMean
+        if (cached != null && analysed - meanBasis < MEAN_REFRESH_EVERY) return@withLock cached
+        val ids = libraryIds
+        if (ids.isEmpty()) return@withLock cached
+        val sample = if (ids.size <= MEAN_SAMPLE) ids else ids.shuffled().take(MEAN_SAMPLE)
+        val vectors = embeddings(sample).values
+        if (vectors.size < MEAN_MIN_TRACKS) return@withLock cached
+        val dim = vectors.first().size
+        val mean = FloatArray(dim)
+        var n = 0
+        for (v in vectors) {
+            if (v.size != dim) continue
+            val norm = norm(v).takeIf { it > 0f } ?: continue
+            for (d in 0 until dim) mean[d] += v[d] / norm
+            n++
+        }
+        if (n == 0) return@withLock cached
+        for (d in 0 until dim) mean[d] /= n
+        libraryMean = mean
+        meanBasis = analysed
+        mean
     }
 
     override fun setArtistVariety(level: Int) {
@@ -242,6 +296,9 @@ internal class LatentJamSmartEngine private constructor(context: Context) : Smar
         private const val AUDIO_CHUNK = 8
         private const val PERSIST_EVERY = 4
         private const val YIELD_MS = 75L
+        private const val MEAN_SAMPLE = 1500
+        private const val MEAN_MIN_TRACKS = 20
+        private const val MEAN_REFRESH_EVERY = 200
 
         @Volatile private var instance: LatentJamSmartEngine? = null
 
@@ -288,4 +345,29 @@ private fun analysisRank(id: TrackId): ULong {
     hash = (hash xor (hash shr 33)) * 0xFF51AFD7ED558CCDuL
     hash = (hash xor (hash shr 33)) * 0xC4CEB9FE1A85EC53uL
     return hash xor (hash shr 33)
+}
+
+private fun norm(v: FloatArray): Float {
+    var s = 0.0
+    for (x in v) s += x.toDouble() * x
+    return kotlin.math.sqrt(s).toFloat()
+}
+
+/** Cosseno entre [a] e [b] depois de normalizar cada um e subtrair [mean] (o espaço do SMART). */
+internal fun centeredCosine(a: FloatArray, b: FloatArray, mean: FloatArray): Float? {
+    if (a.size != b.size || a.size != mean.size) return null
+    val na = norm(a).takeIf { it > 0f } ?: return null
+    val nb = norm(b).takeIf { it > 0f } ?: return null
+    var dot = 0.0
+    var sa = 0.0
+    var sb = 0.0
+    for (d in a.indices) {
+        val x = a[d] / na - mean[d]
+        val y = b[d] / nb - mean[d]
+        dot += x.toDouble() * y
+        sa += x.toDouble() * x
+        sb += y.toDouble() * y
+    }
+    if (sa <= 0.0 || sb <= 0.0) return null
+    return (dot / kotlin.math.sqrt(sa * sb)).toFloat()
 }

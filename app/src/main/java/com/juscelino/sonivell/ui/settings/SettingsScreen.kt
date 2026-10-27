@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.AppSettings
+import com.juscelino.sonivell.data.CROSSFADE_STEPS
 import com.juscelino.sonivell.data.TasteModel
 import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.ui.components.Chip
@@ -179,6 +180,40 @@ fun SettingsScreen(
                 stringResource(R.string.settings_normalize_hint),
                 settings.normalize,
             ) { on -> actions.onUpdate { it.copy(normalize = on) } }
+            SwitchRow(
+                stringResource(R.string.settings_crossfade),
+                stringResource(R.string.settings_crossfade_hint),
+                settings.crossfade,
+            ) { on -> actions.onUpdate { it.copy(crossfade = on) } }
+            if (settings.crossfade) {
+                Text(
+                    stringResource(
+                        if (smartAvailable && settings.crossfadeSmart) R.string.settings_crossfade_length_smart
+                        else R.string.settings_crossfade_length,
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = c.textSecondary,
+                )
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CROSSFADE_STEPS.forEach { seconds ->
+                        Chip(stringResource(R.string.seconds_short, seconds), selected = settings.crossfadeSeconds == seconds) {
+                            actions.onUpdate { it.copy(crossfadeSeconds = seconds) }
+                        }
+                    }
+                }
+                if (smartAvailable) {
+                    SwitchRow(
+                        stringResource(R.string.settings_crossfade_smart),
+                        stringResource(R.string.settings_crossfade_smart_hint),
+                        settings.crossfadeSmart,
+                    ) { on -> actions.onUpdate { it.copy(crossfadeSmart = on) } }
+                }
+                SwitchRow(
+                    stringResource(R.string.settings_crossfade_albums),
+                    stringResource(R.string.settings_crossfade_albums_hint),
+                    settings.crossfadeKeepAlbums,
+                ) { on -> actions.onUpdate { it.copy(crossfadeKeepAlbums = on) } }
+            }
             LinkRow(stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), actions.onOpenEqualizer)
         }
 

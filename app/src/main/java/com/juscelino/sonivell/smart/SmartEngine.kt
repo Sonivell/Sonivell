@@ -66,6 +66,13 @@ interface SmartEngine {
      * Faixas ainda não analisadas ficam de fora. É a base do aprendizado do gosto.
      */
     suspend fun embeddings(ids: List<Long>): Map<Long, FloatArray> = emptyMap()
+
+    /**
+     * O quanto duas faixas soam parecidas, para o crossfade adaptativo: cosseno no espaço
+     * centrado do SMART (a média da biblioteca subtraída). Por volta de 0 é um par qualquer;
+     * de ~0,2 para cima, vizinhos bem próximos. Null se alguma das duas ainda não foi ouvida.
+     */
+    suspend fun transitionSimilarity(fromId: Long, toId: Long): Float? = null
 }
 
 object NoSmartEngine : SmartEngine {
