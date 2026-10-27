@@ -53,6 +53,13 @@ if(ANDROID)
 endif()
 target_include_directories(ljq4 PRIVATE vendor/onnxruntime ${KAI} ${PACK} ${BLOCKS} ${CHANNELS})
 target_compile_options(ljq4 PRIVATE -O3 -fvisibility=hidden $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions -fno-rtti>)
+# x86_64 (Sonivell desktop): fixed target, never the compiler's default. Some toolchains/CI images
+# default to x86-64-v3 (AVX2), and a library built there dies with SIGILL on older CPUs such as
+# Ivy Bridge (i5-3470), already in RegisterCustomOps. x86-64-v2 (SSE4.2, SSSE3, POPCNT) runs on
+# practically every 64-bit x86 PC since ~2009 and turns on the SSSE3 path of ljq4.cc.
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64" AND NOT APPLE AND NOT ANDROID)
+  target_compile_options(ljq4 PRIVATE -march=x86-64-v2 -mtune=generic)
+endif()
 if(ANDROID)
   # Keep the final ELF build ID independent of the clean checkout directory.
   target_compile_options(ljq4 PRIVATE

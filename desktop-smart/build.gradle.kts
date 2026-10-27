@@ -36,7 +36,11 @@ val buildLjq4 = tasks.register<Exec>("buildLjq4") {
     commandLine(
         "bash", "-c",
         "set -e; cmake -S '${src.absolutePath}' -B '${cmakeOut.absolutePath}' -DCMAKE_BUILD_TYPE=Release && " +
-            "cmake --build '${cmakeOut.absolutePath}' -j && mkdir -p '${dest.absolutePath}' && " +
+            "cmake --build '${cmakeOut.absolutePath}' -j && " +
+            // Trava: a lib precisa rodar em CPUs sem AVX (ex.: i5-3470). Registradores ymm/zmm = AVX/AVX-512.
+            "if command -v objdump >/dev/null && objdump -d '${cmakeOut.absolutePath}/libljq4.so' | grep -qE '%[yz]mm'; then " +
+            "echo 'libljq4.so contém instruções AVX/AVX-512; verifique as flags de compilação (-march)' >&2; exit 1; fi && " +
+            "mkdir -p '${dest.absolutePath}' && " +
             "cp '${cmakeOut.absolutePath}/libljq4.so' '${dest.absolutePath}/libljq4.so'",
     )
 }

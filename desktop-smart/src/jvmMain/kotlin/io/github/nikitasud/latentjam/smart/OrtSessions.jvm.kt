@@ -44,7 +44,24 @@ internal object OrtOperators {
      */
     private val pinned: Boolean by lazy { System.load(file.absolutePath); true }
 
+    /**
+     * A libljq4.so é compilada para x86-64-v2 (SSSE3, SSE4.1/4.2, POPCNT). Numa CPU sem isso a
+     * primeira instrução desconhecida vira SIGILL e derruba a JVM inteira, sem chance de catch;
+     * aqui a falha vira uma exceção comum, que o motor SMART relata sem fechar o app.
+     */
+    private val missingCpuFeatures: List<String> by lazy {
+        val flags = runCatching {
+            File("/proc/cpuinfo").useLines { lines ->
+                lines.firstOrNull { it.startsWith("flags") }?.substringAfter(':')?.trim()?.split(' ')?.toSet()
+            }
+        }.getOrNull() ?: return@lazy emptyList() // sem /proc/cpuinfo: não dá para saber, segue
+        listOf("ssse3", "sse4_1", "sse4_2", "popcnt").filterNot { it in flags }
+    }
+
     fun register(options: OrtSession.SessionOptions) {
+        check(missingCpuFeatures.isEmpty()) {
+            "processador sem ${missingCpuFeatures.joinToString()}; operadores SMART indisponíveis"
+        }
         check(pinned)
         options.registerCustomOpLibrary(file.absolutePath)
     }
