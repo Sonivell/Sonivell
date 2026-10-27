@@ -49,7 +49,7 @@ desktop-deb:
   stage: build
   timeout: 40m
   before_script:
-    - apt-get update -qq && apt-get install -y -qq fakeroot dpkg-dev binutils >/dev/null
+    - apt-get update -qq && apt-get install -y -qq fakeroot dpkg-dev binutils curl xz-utils file >/dev/null
   script:
     - ./gradlew -Psonivell.desktop=only :desktop:packageDeb
     # inclui o ffmpeg como dependência do pacote
@@ -62,11 +62,13 @@ desktop-deb:
     - fakeroot dpkg-deb --root-owner-group -b "$work/pkg" "$work/out.deb"
     - mkdir -p dist && cp "$work/out.deb" "dist/$(basename "$deb")"
     - dpkg-deb -I dist/*.deb
+    - SKIP_GRADLE=1 tools/desktop-appimage.sh && cp desktop/build/appimage/*.AppImage dist/
     - ./gradlew -Psonivell.desktop=only :desktop:test
   artifacts:
     name: sonivell-desktop-deb
     paths:
       - dist/*.deb
+      - dist/*.AppImage
     expire_in: 30 days
 
 desktop-screenshots:

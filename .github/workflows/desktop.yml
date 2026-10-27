@@ -6,6 +6,7 @@ on:
     paths:
       - 'desktop/**'
       - 'tools/desktop-screenshot.sh'
+      - 'tools/desktop-appimage.sh'
       - 'core/**'
       - 'desktop-smart/**'
       - 'app/src/smart/assets/**'
@@ -71,6 +72,17 @@ jobs:
           cat "$work/log.txt"
           grep '^NOTICE' "$work/log.txt" | while IFS= read -r line; do echo "::notice::${line}"; done
 
+      - name: Gerar o AppImage
+        shell: bash
+        run: |
+          set -o pipefail
+          SKIP_GRADLE=1 tools/desktop-appimage.sh 2>&1 | tee appimage.log || {
+            tail -n 30 appimage.log | while IFS= read -r line; do echo "::error::${line}"; done
+            exit 1
+          }
+          mkdir -p dist && cp desktop/build/appimage/*.AppImage dist/
+          echo "::notice::$(tail -n 1 appimage.log)"
+
       - name: Captura de tela (ambiente gráfico virtual)
         continue-on-error: true
         shell: bash
@@ -122,6 +134,11 @@ jobs:
         with:
           name: sonivell-desktop-deb
           path: dist/*.deb
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonivell-desktop-appimage
+          path: dist/*.AppImage
 
       - uses: actions/upload-artifact@v4
         if: always()
