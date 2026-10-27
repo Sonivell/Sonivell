@@ -37,7 +37,15 @@ internal object OrtOperators {
         out
     }
 
+    /**
+     * O ONNX Runtime faz dlopen da biblioteca e dlclose quando a SessionOptions é fechada. Sem esta
+     * carga pela JVM (o System.loadLibrary do Android faz o mesmo papel), o operador sumiria da memória
+     * e a primeira inferência leria memória já liberada.
+     */
+    private val pinned: Boolean by lazy { System.load(file.absolutePath); true }
+
     fun register(options: OrtSession.SessionOptions) {
+        check(pinned)
         options.registerCustomOpLibrary(file.absolutePath)
     }
 }
