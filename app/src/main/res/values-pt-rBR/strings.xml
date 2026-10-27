@@ -266,6 +266,15 @@
     <string name="lyrics_later">Mostrar a letra depois</string>
     <string name="settings_normalize">Normalizar volume</string>
     <string name="settings_normalize_hint">Usa o ReplayGain dos arquivos para as músicas tocarem num volume parecido</string>
+    <string name="settings_crossfade">Crossfade</string>
+    <string name="settings_crossfade_hint">O fim de uma música some enquanto a próxima entra, as duas juntas por um instante. Só quando a faixa acaba sozinha; pular corta na hora.</string>
+    <string name="settings_crossfade_length">Duração da transição</string>
+    <string name="settings_crossfade_length_smart">Duração da transição (nas filas SMART, o meio da faixa de ajuste)</string>
+    <string name="seconds_short">%d s</string>
+    <string name="settings_crossfade_smart">Deixar o SMART adaptar a duração</string>
+    <string name="settings_crossfade_smart_hint">Nas filas SMART, músicas que soam parecidas ganham uma mistura mais longa, e mudanças grandes, uma mais curta.</string>
+    <string name="settings_crossfade_albums">Manter álbuns inteiros</string>
+    <string name="settings_crossfade_albums_hint">Sem crossfade entre faixas do mesmo álbum, para discos ao vivo e sem pausa tocarem como foram gravados.</string>
     <!-- Fase 3: inteligência -->
     <string name="search_none">Nada encontrado. Tente menos palavras ou outra grafia.</string>
     <string name="search_semantic">Combinam com o estilo</string>

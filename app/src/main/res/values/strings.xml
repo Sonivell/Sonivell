@@ -273,6 +273,15 @@
     <string name="lyrics_later">Show lyrics later</string>
     <string name="settings_normalize">Normalize volume</string>
     <string name="settings_normalize_hint">Uses the ReplayGain in your files so songs play at a similar volume</string>
+    <string name="settings_crossfade">Crossfade</string>
+    <string name="settings_crossfade_hint">The end of a song fades out while the next one fades in, briefly overlapping. Only when a song ends on its own; skipping cuts right away.</string>
+    <string name="settings_crossfade_length">Transition length</string>
+    <string name="settings_crossfade_length_smart">Transition length (in SMART queues, the middle of the range)</string>
+    <string name="seconds_short">%d s</string>
+    <string name="settings_crossfade_smart">Let SMART adapt the length</string>
+    <string name="settings_crossfade_smart_hint">In SMART queues, songs that sound alike get a longer blend and big changes a shorter one.</string>
+    <string name="settings_crossfade_albums">Keep albums intact</string>
+    <string name="settings_crossfade_albums_hint">No crossfade between songs from the same album, so live and gapless albums play as recorded.</string>
     <!-- Fase 3: inteligência -->
     <string name="search_none">Nothing found. Try fewer words or another spelling.</string>
     <string name="search_semantic">Matching the style</string>
