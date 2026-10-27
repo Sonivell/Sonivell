@@ -16,7 +16,12 @@ internal fun createOrtSession(model: ByteArray, operators: Boolean = false): Ort
         options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL)
         options.setIntraOpNumThreads(1)
         options.setInterOpNumThreads(1)
-        options.setCPUArenaAllocator(false)
+        // Variantes só para diagnóstico (SONIVELL_ORT_VARIANT); o padrão é o mesmo do Android.
+        val variant = System.getenv("SONIVELL_ORT_VARIANT").orEmpty()
+        if (variant != "arena") options.setCPUArenaAllocator(false)
+        if (variant == "noopt") options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.NO_OPT)
+        if (variant == "nopattern") options.setMemoryPatternOptimization(false)
+        if (variant == "threads") { options.setIntraOpNumThreads(0); options.setInterOpNumThreads(0) }
         if (operators) OrtOperators.register(options)
         smartTrace("createSession...")
         offlineOrtEnvironment().createSession(model, options).also { smartTrace("createSession ok") }

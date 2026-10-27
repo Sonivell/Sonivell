@@ -23,20 +23,31 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Teste do SMART (ffmpeg + ONNX Runtime)
+      - name: Diagnóstico do SMART (ffmpeg + ONNX Runtime)
         continue-on-error: true
         shell: bash
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg cmake g++ >/dev/null
           mkdir -p out
-          export SONIVELL_SMART_TRACE="$PWD/out/trace.log"
+          { nproc; grep -m1 'model name' /proc/cpuinfo; grep -m1 flags /proc/cpuinfo | tr ' ' '\n' | grep -E '^(avx|avx2|avx512f|ssse3|sse4_1|fma|avx_vnni)$' | tr '\n' ' '; echo; } > out/cpu.log
+          # 1) Os testes do próprio operador (aritmética em todos os caminhos que a CPU tem)
+          cmake -S core/ort-ops/src/main/cpp -B /tmp/ljq4-host -DCMAKE_BUILD_TYPE=Release -DLJQ4_TESTS=ON > out/host-cmake.log 2>&1
+          cmake --build /tmp/ljq4-host -j >> out/host-cmake.log 2>&1
+          for t in ljq4_test ljdots_test; do echo "== $t"; /tmp/ljq4-host/$t 2>&1 | tail -n 15; echo "rc=$?"; done > out/host-tests.log 2>&1
+          # 2) O modelo uma vez, em variantes de sessão (cada uma num processo, pois o erro derruba a JVM)
           set +e
-          ./gradlew -Psonivell.desktop=only :desktop:test -i > out/test-full.log 2>&1
-          echo "rc=$?" > out/test.log
-          grep -E "SMART|FAILED|PASSED|SKIPPED|AssertionError|Exception|e: |SIGSEGV|Problematic" out/test-full.log | head -n 80 >> out/test.log
-          echo ---- >> out/test.log; tail -n 30 out/test-full.log >> out/test.log
-          for f in $(find . -name 'hs_err_pid*.log' | head -n 2); do { echo "== $f"; head -n 70 "$f"; grep -n "Native frames" -A25 "$f"; } > "out/hs_err_$(basename $f)"; done
-          nproc >> out/test.log; grep -m1 'model name' /proc/cpuinfo >> out/test.log; grep -m1 flags /proc/cpuinfo | tr ' ' '\n' | grep -E '^(avx|avx2|avx512f|ssse3|sse4_1|fma)$' | tr '\n' ' ' >> out/test.log
+          for v in default arena noopt nopattern threads; do
+            export SONIVELL_ORT_VARIANT=$v SONIVELL_SMART_TRACE="$PWD/out/trace-$v.log"
+            ./gradlew -Psonivell.desktop=only :desktop:cleanTest :desktop:test --tests '*OrtSmokeTest*' -i > out/smoke-$v-full.log 2>&1
+            echo "variant=$v rc=$?" >> out/smoke.log
+            grep -E "SMOKE|SIGSEGV|Problematic|C  \[" out/smoke-$v-full.log | head -n 6 >> out/smoke.log
+            rm -f out/smoke-$v-full.log; find . -name 'hs_err_pid*.log' -delete
+          done
+          # 3) O teste completo (decodifica, analisa, monta a fila), só com a variante padrão
+          unset SONIVELL_ORT_VARIANT; export SONIVELL_SMART_TRACE="$PWD/out/trace-full.log"
+          ./gradlew -Psonivell.desktop=only :desktop:cleanTest :desktop:test --tests '*SmartEngineTest*' -i > out/test-full.log 2>&1
+          echo "full rc=$?" > out/test.log
+          grep -E "SMART|FAILED|PASSED|SKIPPED|AssertionError|Exception|e: |SIGSEGV|Problematic" out/test-full.log | head -n 60 >> out/test.log
       - name: Publicar o log na branch smart-logs
         if: always()
         continue-on-error: true
