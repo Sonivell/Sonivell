@@ -64,7 +64,7 @@ xdotool mousemove $((62+OX)) $((800+OY)) click 1; sleep 3; shot 4-player
 # Busca
 xdotool mousemove $((110+OX)) $((148+OY)) click 1; sleep 1; xdotool type "sal"; sleep 2; shot 5-busca
 # Ajustes
-xdotool mousemove $((110+OX)) $((820+OY)) click 1; sleep 2; shot 6-ajustes
+xdotool mousemove $((90+OX)) $((712+OY)) click 1; sleep 2; shot 6-ajustes
 xdotool mousemove $((600+OX)) $((500+OY)); xdotool click --repeat 15 --delay 80 5; sleep 2; shot 7-ajustes-smart
 kill $APPPID || true
 kill $XVFB || true
