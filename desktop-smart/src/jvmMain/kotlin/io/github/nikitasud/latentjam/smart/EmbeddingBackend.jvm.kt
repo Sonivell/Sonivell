@@ -318,12 +318,15 @@ internal class OnnxEmbeddingBackend(
 
     private fun runWindow(session: OrtSession, waveform: FloatArray): FloatArray {
         val environment = offlineOrtEnvironment()
+        smartTrace("runWindow: tensor")
         OnnxTensor.createTensor(
             environment,
             FloatBuffer.wrap(waveform),
             longArrayOf(1, WINDOW_SAMPLES.toLong()),
         ).use { tensor ->
+            smartTrace("runWindow: run")
             session.run(mapOf(INPUT_NAME to tensor)).use { output ->
+                smartTrace("runWindow: run ok")
                 @Suppress("UNCHECKED_CAST")
                 val result = output[0].value as Array<FloatArray>
                 return result[0]

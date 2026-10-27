@@ -1,0 +1,51 @@
+name: SMART no PC (teste rápido)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'desktop-smart/**'
+      - 'desktop/src/main/kotlin/com/juscelino/sonivell/desktop/Smart.kt'
+      - 'desktop/src/test/**'
+      - '.github/workflows/smart-test.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  smart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Teste do SMART (ffmpeg + ONNX Runtime)
+        continue-on-error: true
+        shell: bash
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          mkdir -p out
+          export SONIVELL_SMART_TRACE="$PWD/out/trace.log"
+          set +e
+          ./gradlew -Psonivell.desktop=only :desktop:test -i > out/test-full.log 2>&1
+          echo "rc=$?" > out/test.log
+          grep -E "SMART|FAILED|PASSED|SKIPPED|AssertionError|Exception|e: |SIGSEGV|Problematic" out/test-full.log | head -n 80 >> out/test.log
+          echo ---- >> out/test.log; tail -n 30 out/test-full.log >> out/test.log
+          for f in $(find . -name 'hs_err_pid*.log' | head -n 2); do { echo "== $f"; head -n 70 "$f"; grep -n "Native frames" -A25 "$f"; } > "out/hs_err_$(basename $f)"; done
+          nproc >> out/test.log; grep -m1 'model name' /proc/cpuinfo >> out/test.log; grep -m1 flags /proc/cpuinfo | tr ' ' '\n' | grep -E '^(avx|avx2|avx512f|ssse3|sse4_1|fma)$' | tr '\n' ' ' >> out/test.log
+      - name: Publicar o log na branch smart-logs
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          [ -d out ] || exit 0
+          dir=$(mktemp -d); cp out/* "$dir"/ 2>/dev/null || true; cd "$dir"
+          git init -q -b smart-logs; git config user.name github-actions; git config user.email actions@users.noreply.github.com
+          git add -A; git commit -q -m "Logs do teste do SMART"
+          git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" smart-logs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

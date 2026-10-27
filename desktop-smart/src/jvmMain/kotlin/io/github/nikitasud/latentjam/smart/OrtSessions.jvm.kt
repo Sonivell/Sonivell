@@ -12,12 +12,14 @@ internal fun offlineOrtEnvironment(): OrtEnvironment = OrtEnvironment.getEnviron
 /** Uma thread só: o ONNX Runtime não deve ocupar vários núcleos e travar a interface durante a análise. */
 internal fun createOrtSession(model: ByteArray, operators: Boolean = false): OrtSession =
     OrtSession.SessionOptions().use { options ->
+        smartTrace("createOrtSession: ${model.size} bytes, operators=$operators")
         options.setExecutionMode(OrtSession.SessionOptions.ExecutionMode.SEQUENTIAL)
         options.setIntraOpNumThreads(1)
         options.setInterOpNumThreads(1)
         options.setCPUArenaAllocator(false)
         if (operators) OrtOperators.register(options)
-        offlineOrtEnvironment().createSession(model, options)
+        smartTrace("createSession...")
+        offlineOrtEnvironment().createSession(model, options).also { smartTrace("createSession ok") }
     }
 
 /** Os operadores de 4 bits do LatentJam (libljq4.so), extraídos do pacote para uma pasta temporária. */
@@ -47,4 +49,10 @@ public object JvmAssets {
 /** Onde o motor guarda os índices (por exemplo ~/.local/share/sonivell/smart). */
 public class JvmSmartPaths(public val directory: File) {
     init { directory.mkdirs() }
+}
+
+/** Diagnóstico: com SONIVELL_SMART_TRACE=arquivo, cada etapa nativa é anotada (e gravada) antes de rodar. */
+internal fun smartTrace(message: String) {
+    val path = System.getenv("SONIVELL_SMART_TRACE") ?: return
+    runCatching { java.io.FileOutputStream(path, true).use { it.write((message + "\n").toByteArray()); it.fd.sync() } }
 }
