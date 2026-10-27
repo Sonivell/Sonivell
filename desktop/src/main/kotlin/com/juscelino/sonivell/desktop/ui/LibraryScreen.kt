@@ -131,11 +131,11 @@ private fun TrackTable(tracks: List<Track>, ctl: Controller, actions: Actions) {
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().height(34.dp).padding(start = 14.dp, end = 20.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.width(44.dp)) { Txt(str("desktop_col_number"), 11, FontWeight.ExtraBold, c.textSecondary.copy(alpha = 0.8f), letterSpacing = 1f) }
-            Box(Modifier.weight(2.4f)) { Txt(str("sort_title").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
-            Box(Modifier.weight(1.5f)) { Txt(str("sort_artist").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
-            Box(Modifier.weight(1.5f)) { Txt(str("sort_album").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
-            Box(Modifier.weight(1f)) { Txt(str("rule_genre").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
-            Box(Modifier.width(70.dp)) { Txt(str("rule_format").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
+            Box(Modifier.weight(2.8f).padding(end = 12.dp)) { Txt(str("sort_title").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
+            Box(Modifier.weight(1.5f).padding(end = 12.dp)) { Txt(str("sort_artist").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
+            Box(Modifier.weight(1.5f).padding(end = 12.dp)) { Txt(str("sort_album").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
+            Box(Modifier.weight(1.1f).padding(end = 12.dp)) { Txt(str("rule_genre").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
+            Box(Modifier.width(76.dp)) { Txt(str("rule_format").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
             Box(Modifier.width(64.dp)) { Txt(str("sort_duration").uppercase(), 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 1f) }
             Box(Modifier.width(76.dp))
         }
@@ -163,14 +163,14 @@ private fun TableRow(index: Int, t: Track, all: List<Track>, ctl: Controller, ac
             if (current) Icon(Traco.nowPlaying, null, Modifier.size(16.dp), tint = c.accent)
             else Txt((index + 1).toString(), 13, FontWeight.Bold, c.textSecondary.copy(alpha = 0.8f))
         }
-        Row(Modifier.weight(2.4f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.weight(2.8f).padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             AlbumArt(t, 40.dp, 11.dp)
             Txt(t.title, 15, FontWeight.ExtraBold, if (current) c.accent else c.textPrimary)
         }
-        Box(Modifier.weight(1.5f)) { Txt(t.artist, 14, FontWeight.SemiBold, c.textTertiary) }
-        Box(Modifier.weight(1.5f)) { Txt(t.album, 14, FontWeight.SemiBold, c.textTertiary) }
-        Box(Modifier.weight(1f)) { Txt(t.genre, 14, FontWeight.Medium, c.textSecondary) }
-        Box(Modifier.width(70.dp)) { Txt(t.format, 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 0.8f) }
+        Box(Modifier.weight(1.5f).padding(end = 12.dp)) { Txt(t.artist, 14, FontWeight.SemiBold, c.textTertiary) }
+        Box(Modifier.weight(1.5f).padding(end = 12.dp)) { Txt(t.album, 14, FontWeight.SemiBold, c.textTertiary) }
+        Box(Modifier.weight(1.1f).padding(end = 12.dp)) { Txt(t.genre, 14, FontWeight.Medium, c.textSecondary) }
+        Box(Modifier.width(76.dp)) { Txt(t.format, 11, FontWeight.ExtraBold, c.textSecondary, letterSpacing = 0.8f) }
         Box(Modifier.width(64.dp)) { Txt(formatTime(t.durationMs), 14, FontWeight.Medium, c.textSecondary) }
         IconBtn(if (liked) Traco.liked else Traco.like, str(if (liked) "cd_unlike" else "cd_like"), { ctl.toggleFavorite(t) }, size = 36.dp, active = liked)
         Box {

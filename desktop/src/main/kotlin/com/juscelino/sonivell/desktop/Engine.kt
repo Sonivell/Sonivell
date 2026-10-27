@@ -48,6 +48,10 @@ class AudioEngine(
                 opened.open(format, 44100 * 4 / 2)
                 line = opened
                 opened
+            } catch (e: IllegalArgumentException) {
+                // sem placa de som / servidor de áudio (PulseAudio, PipeWire) acessível
+                onError("nenhuma saída de áudio encontrada. Verifique o som do sistema.")
+                null
             } catch (e: Exception) {
                 onError(e.message ?: e.javaClass.simpleName)
                 null

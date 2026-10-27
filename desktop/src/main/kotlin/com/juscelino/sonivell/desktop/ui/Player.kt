@@ -3,6 +3,7 @@ package com.juscelino.sonivell.desktop.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,9 +34,12 @@ fun NowPlayingScreen(ctl: Controller, nav: Nav, actions: Actions) {
     val favorites by ctl.favorites.collectAsState()
     val t = p.current
     Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(22.dp)).background(c.surfaceLow)) {
+        // a capa encolhe quando a janela é baixa, para os controles nunca ficarem cobertos
+        val artSize = (maxHeight - 470.dp).coerceIn(150.dp, 340.dp)
         Column(
-            Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(22.dp)).background(c.surfaceLow).padding(36.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterVertically),
+            Modifier.fillMaxSize().padding(horizontal = 36.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -46,7 +50,7 @@ fun NowPlayingScreen(ctl: Controller, nav: Nav, actions: Actions) {
                 }
                 Box(Modifier.size(44.dp))
             }
-            AlbumArt(t, 340.dp, 34.dp)
+            AlbumArt(t, artSize, 34.dp)
             Row(Modifier.width(420.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Txt(t?.title ?: "", 28, FontWeight.ExtraBold, letterSpacing = -0.8f)
@@ -77,6 +81,7 @@ fun NowPlayingScreen(ctl: Controller, nav: Nav, actions: Actions) {
                     if (p.repeat == Repeat.One) Traco.repeatOne else Traco.repeat,
                 )
             }
+        }
         }
         QueuePanel(ctl, Modifier.width(380.dp))
     }
