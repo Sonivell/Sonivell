@@ -62,7 +62,7 @@ desktop-deb:
     - fakeroot dpkg-deb --root-owner-group -b "$work/pkg" "$work/out.deb"
     - mkdir -p dist && cp "$work/out.deb" "dist/$(basename "$deb")"
     - dpkg-deb -I dist/*.deb
-    - SKIP_GRADLE=1 tools/desktop-appimage.sh && cp desktop/build/appimage/*.AppImage dist/
+    - tools/desktop-appimage.sh && cp desktop/build/appimage/*.AppImage dist/
     - ./gradlew -Psonivell.desktop=only :desktop:test
   artifacts:
     name: sonivell-desktop-deb

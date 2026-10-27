@@ -76,7 +76,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          SKIP_GRADLE=1 tools/desktop-appimage.sh 2>&1 | tee appimage.log || {
+          tools/desktop-appimage.sh 2>&1 | tee appimage.log || {
             tail -n 30 appimage.log | while IFS= read -r line; do echo "::error::${line}"; done
             exit 1
           }
