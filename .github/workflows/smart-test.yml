@@ -27,6 +27,7 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
+          set +e
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg cmake g++ >/dev/null
           mkdir -p out
           { nproc; grep -m1 'model name' /proc/cpuinfo; grep -m1 flags /proc/cpuinfo | tr ' ' '\n' | grep -E '^(avx|avx2|avx512f|ssse3|sse4_1|fma|avx_vnni)$' | tr '\n' ' '; echo; } > out/cpu.log
