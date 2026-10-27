@@ -37,5 +37,11 @@
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>
         </service>
+
+        <!-- Capas por faixa (lidas do próprio arquivo); só o app e o Media3 dele usam. -->
+        <provider
+            android:name=".data.ArtProvider"
+            android:authorities="${applicationId}.art"
+            android:exported="false" />
     </application>
 </manifest>

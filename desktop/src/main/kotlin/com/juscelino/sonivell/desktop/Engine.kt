@@ -160,29 +160,39 @@ class AudioEngine(
     }
 }
 
-/** Capas: tenta a arte embutida (via ffmpeg) ou uma imagem "cover/folder" na pasta; guarda em cache de disco. */
+/**
+ * Capas POR FAIXA: a arte embutida no arquivo (via ffmpeg) e, se não houver, uma imagem
+ * "cover/folder" na pasta. Cache de disco pela faixa (caminho + data de modificação + tamanho):
+ * antes a chave era o nome do álbum, e álbuns diferentes com o mesmo nome (ou faixas sem tag)
+ * dividiam a mesma capa — muitas vezes errada.
+ */
 object ArtLoader {
-    private val dir get() = File(Dirs.cache, "art").also { it.mkdirs() }
+    private val dir get() = File(Dirs.cache, "art-v2").also { it.mkdirs() }
+
+    fun key(track: Track): String {
+        val f = File(track.path)
+        return trackIdOf(track.path + "\u0001" + f.lastModified() + "\u0001" + f.length()).toULong().toString(16)
+    }
 
     fun bytesFor(track: Track): ByteArray? {
-        val key = fold(track.albumKey).hashCode().toString(16) + "-" + (if (track.album.isBlank()) track.id.toString(16) else "")
+        val key = key(track)
         val cached = File(dir, "$key.jpg")
         val none = File(dir, "$key.none")
         if (cached.exists()) return cached.readBytes()
         if (none.exists()) return null
-        val folderImage = File(track.folder).listFiles { f ->
-            f.isFile && f.nameWithoutExtension.lowercase() in setOf("cover", "folder", "front", "album", "artwork") &&
-                f.extension.lowercase() in setOf("jpg", "jpeg", "png")
-        }?.firstOrNull()
-        val bytes = folderImage?.readBytes() ?: runCatching {
+        val embedded = runCatching {
             val p = ProcessBuilder(
                 "ffmpeg", "-nostdin", "-loglevel", "error", "-i", track.path, "-an", "-map", "0:v:0", "-frames:v", "1",
-                "-vf", "scale=512:-2", "-f", "image2", "-c:v", "mjpeg", "-",
+                "-vf", "scale='min(1024,iw)':-2", "-f", "image2", "-c:v", "mjpeg", "-",
             ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
             val data = p.inputStream.readBytes()
             p.waitFor()
             data.takeIf { it.size > 100 }
         }.getOrNull()
+        val bytes = embedded ?: File(track.folder).listFiles { f ->
+            f.isFile && f.nameWithoutExtension.lowercase() in setOf("cover", "folder", "front", "album", "artwork") &&
+                f.extension.lowercase() in setOf("jpg", "jpeg", "png")
+        }?.minByOrNull { it.name.lowercase() }?.readBytes()
         if (bytes == null) runCatching { none.createNewFile() } else runCatching { cached.writeBytes(bytes) }
         return bytes
     }
