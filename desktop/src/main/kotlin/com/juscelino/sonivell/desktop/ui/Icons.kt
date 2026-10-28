@@ -122,6 +122,9 @@ object Traco {
     val nowPlaying: ImageVector by lazy { icon("nowPlaying", s("M4 10v4M8 6v12M12 9v6M16 4v16M20 10v4")) }
     val device: ImageVector by lazy { icon("device", s(rrect(6f, 2f, 12f, 20f, 2f)), s("M11 18h2")) }
     val volumeUp: ImageVector by lazy { icon("volumeUp", s(SPEAKER), s("M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"), autoMirror = true) }
+    val volumeOff: ImageVector by lazy { icon("volumeOff", s(SPEAKER), s("M16 9.5l5 5M21 9.5l-5 5"), autoMirror = true) }
+    val compact: ImageVector by lazy { icon("compact", s(rrect(3f, 4f, 18f, 16f, 3f)), f(rrect(11f, 11f, 7f, 6f, 1.5f))) }
+    val expand: ImageVector by lazy { icon("expand", s("M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7")) }
     val volumeDown: ImageVector by lazy { icon("volumeDown", s(SPEAKER), s("M16.5 8.5a5 5 0 0 1 0 7"), autoMirror = true) }
     val sort: ImageVector by lazy { icon("sort", s("M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4")) }
     val home: ImageVector by lazy { icon("home", s(HOUSE)) }

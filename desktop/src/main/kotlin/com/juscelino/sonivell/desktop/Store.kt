@@ -21,6 +21,10 @@ data class Settings(
     val repeat: Int = 0,
     val smart: Boolean = false,
     val artistVariety: Int = 2,
+    /** Modo compacto (janela pequena só com capa e controles) e onde a janela compacta ficou. */
+    val compact: Boolean = false,
+    val compactX: Int? = null,
+    val compactY: Int? = null,
 )
 
 /** Ajustes do usuário, num arquivo .properties em ~/.config/sonivell. */
@@ -43,6 +47,9 @@ object SettingsStore {
             repeat = p.getProperty("repeat")?.toIntOrNull()?.coerceIn(0, 2) ?: 0,
             smart = p.getProperty("smart") == "true",
             artistVariety = p.getProperty("artistVariety")?.toIntOrNull()?.coerceIn(0, 4) ?: 2,
+            compact = p.getProperty("compact") == "true",
+            compactX = p.getProperty("compactX")?.toIntOrNull(),
+            compactY = p.getProperty("compactY")?.toIntOrNull(),
         )
     }
 
@@ -58,6 +65,9 @@ object SettingsStore {
         p.setProperty("repeat", s.repeat.toString())
         p.setProperty("smart", s.smart.toString())
         p.setProperty("artistVariety", s.artistVariety.toString())
+        p.setProperty("compact", s.compact.toString())
+        s.compactX?.let { p.setProperty("compactX", it.toString()) }
+        s.compactY?.let { p.setProperty("compactY", it.toString()) }
         runCatching { file.writer(Charsets.UTF_8).use { p.store(it, null) } }
     }
 }

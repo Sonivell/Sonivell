@@ -161,6 +161,7 @@ fun PlayerBar(ctl: Controller, nav: Nav, modifier: Modifier = Modifier) {
             Icon(Traco.volumeUp, str("cd_volume"), Modifier.size(20.dp), tint = c.textTertiary)
             VolumeSlider(p.volume, { ctl.setVolume(it) }, Modifier.width(90.dp))
             IconBtn(Traco.queue, str("desktop_show_queue"), { nav.showQueue = !nav.showQueue }, active = nav.showQueue)
+            IconBtn(Traco.compact, str("desktop_compact_mode"), { ctl.setCompact(true) })
         }
     }
 }
