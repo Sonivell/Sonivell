@@ -76,6 +76,7 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Album
 import com.juscelino.sonivell.data.ForYouState
 import com.juscelino.sonivell.data.Playlist
+import com.juscelino.sonivell.data.Ranked
 import com.juscelino.sonivell.data.Search
 import com.juscelino.sonivell.data.SmartPlaylist
 import com.juscelino.sonivell.data.SmartPlaylists
@@ -129,6 +130,7 @@ fun LibraryScreenOndas(
     playlists: List<Playlist> = emptyList(),
     smartPlaylists: List<SmartPlaylist> = emptyList(),
     semanticResults: List<Track> = emptyList(),
+    genreOfMonth: Ranked<String>? = null,
 ) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -214,7 +216,7 @@ fun LibraryScreenOndas(
 
         when (mode) {
             LibraryMode.Inicio -> home(state, favorites, labels, actions, smartProgress, forYou, decades)
-            LibraryMode.Buscar -> search(state, currentId, labels, actions, playlists, semanticResults, decades, showAllSongs) { showAllSongs = true }
+            LibraryMode.Buscar -> search(state, currentId, labels, actions, playlists, semanticResults, decades, genreOfMonth, showAllSongs) { showAllSongs = true }
             LibraryMode.Biblioteca -> {
                 item(key = "segments") {
                     Segmented(
@@ -857,12 +859,13 @@ private fun LazyListScope.search(
     playlists: List<Playlist>,
     semanticResults: List<Track>,
     decades: List<Int>,
+    genreOfMonth: Ranked<String>?,
     showAllSongs: Boolean,
     onShowAll: () -> Unit,
 ) {
     val parsed = Search.parse(state.query)
     if (parsed.isEmpty) {
-        browse(state, decades, actions)
+        genreBrowse(state, decades, genreOfMonth, actions)
         return
     }
     val hasWords = parsed.words.isNotEmpty()
@@ -1002,42 +1005,6 @@ private fun LazyListScope.search(
                             Text(listOfNotNull(t.artist, t.year?.toString()).joinToString(" · "), style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-/** Busca vazia: blocos de gênero e de década, cada um com a sua onda. */
-private fun LazyListScope.browse(state: LibraryState, decades: List<Int>, actions: LibraryActions) {
-    item(key = "browse") {
-        val res = LocalContext.current.resources
-        val tiles = remember(state.genres, decades, res) {
-            state.genres.sortedByDescending { it.tracks.size }.take(12).map { g -> g.name to { actions.onOpenGenre(g.name) } } +
-                decades.map { d -> decadeName(res, d) to { actions.onOpenAuto("decada-$d") } }
-        }
-        if (tiles.isEmpty()) return@item
-        Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Title(stringResource(R.string.search_browse), Modifier.padding(bottom = 2.dp))
-            tiles.chunked(2).forEachIndexed { row, pair ->
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    pair.forEachIndexed { col, (label, onClick) ->
-                        Box(
-                            Modifier.weight(1f).height(96.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),
-                        ) {
-                            WaveTile(row * 2 + col, Modifier.matchParentSize())
-                            Text(
-                                label,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(14.dp),
-                            )
-                        }
-                    }
-                    if (pair.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
         }

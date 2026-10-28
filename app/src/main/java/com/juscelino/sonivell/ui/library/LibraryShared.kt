@@ -30,4 +30,6 @@ data class LibraryActions(
     /** "Continuar ouvindo": toca a faixa a partir de onde parou. */
     val onResume: (Track, Long) -> Unit = { _, _ -> },
     val onOpenSearch: () -> Unit = {},
+    /** Abre "Organizar biblioteca" (tags faltando ou genéricas). */
+    val onOpenOrganize: () -> Unit = {},
 )

@@ -241,6 +241,7 @@ private fun MainContent(vm: MainViewModel) {
     val shuffleMode by vm.shuffleMode.collectAsStateWithLifecycle()
     val smartProgress by vm.smartProgress.collectAsStateWithLifecycle()
     val forYou by vm.forYou.collectAsStateWithLifecycle()
+    val genreOfMonth by vm.genreOfMonth.collectAsStateWithLifecycle()
     val playlists by vm.playlists.collectAsStateWithLifecycle()
     val sleepTimer by vm.sleepTimer.collectAsStateWithLifecycle()
     val smartSource = stringResource(R.string.source_smart)
@@ -371,6 +372,7 @@ private fun MainContent(vm: MainViewModel) {
                 restoreState = true
             }
         },
+        onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
     )
 
     val chromeRoutes = remember { tabs.map { it.route }.toSet() + Routes.COLLECTIONS + setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS) }
@@ -486,6 +488,7 @@ private fun MainContent(vm: MainViewModel) {
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
                             contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                            genreOfMonth = genreOfMonth,
                         )
                         UiStyle.CONTRASTE -> LibraryScreenContraste(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
