@@ -115,6 +115,7 @@ import com.juscelino.sonivell.ui.library.LibraryActions
 import com.juscelino.sonivell.ui.library.LibraryMode
 import com.juscelino.sonivell.ui.library.LibraryScreenClassica
 import com.juscelino.sonivell.ui.library.LibraryScreenContraste
+import com.juscelino.sonivell.ui.library.LibraryScreenEssencial
 import com.juscelino.sonivell.ui.library.LibraryScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingActions
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenClassica
@@ -241,6 +242,7 @@ private fun MainContent(vm: MainViewModel) {
     val shuffleMode by vm.shuffleMode.collectAsStateWithLifecycle()
     val smartProgress by vm.smartProgress.collectAsStateWithLifecycle()
     val forYou by vm.forYou.collectAsStateWithLifecycle()
+    val genreOfMonth by vm.genreOfMonth.collectAsStateWithLifecycle()
     val playlists by vm.playlists.collectAsStateWithLifecycle()
     val sleepTimer by vm.sleepTimer.collectAsStateWithLifecycle()
     val smartSource = stringResource(R.string.source_smart)
@@ -371,6 +373,7 @@ private fun MainContent(vm: MainViewModel) {
                 restoreState = true
             }
         },
+        onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
     )
 
     val chromeRoutes = remember { tabs.map { it.route }.toSet() + Routes.COLLECTIONS + setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS) }
@@ -386,7 +389,7 @@ private fun MainContent(vm: MainViewModel) {
                     current?.let { t ->
                         val progress = if (player.durationMs > 0) player.positionMs.toFloat() / player.durationMs else 0f
                         when (uiStyle) {
-                            UiStyle.ONDAS -> MiniPlayerOndas(
+                            UiStyle.ONDAS, UiStyle.ESSENCIAL -> MiniPlayerOndas(
                                 track = t,
                                 isPlaying = player.isPlaying,
                                 progress = progress,
@@ -420,7 +423,7 @@ private fun MainContent(vm: MainViewModel) {
                         }
                     }
                     when (uiStyle) {
-                        UiStyle.ONDAS -> BottomNavOndas(route, onTab)
+                        UiStyle.ONDAS, UiStyle.ESSENCIAL -> BottomNavOndas(route, onTab)
                         UiStyle.CONTRASTE -> BottomNav(route, onTab)
                         UiStyle.CLASSICA -> BottomNavClassica(route, onTab)
                     }
@@ -486,10 +489,16 @@ private fun MainContent(vm: MainViewModel) {
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
                             contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                            genreOfMonth = genreOfMonth,
                         )
                         UiStyle.CONTRASTE -> LibraryScreenContraste(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
                             contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
+                            forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                        )
+                        UiStyle.ESSENCIAL -> LibraryScreenEssencial(
+                            mode = mode, state = library, favorites = favorites, currentId = current?.id,
+                            contentPadding = listPadding, actions = libraryActions,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
                         )
                         UiStyle.CLASSICA -> LibraryScreenClassica(
@@ -693,7 +702,7 @@ private fun MainContent(vm: MainViewModel) {
                         onSetShuffle = vm::setShuffleMode,
                     )
                     when (uiStyle) {
-                        UiStyle.ONDAS -> {
+                        UiStyle.ONDAS, UiStyle.ESSENCIAL -> {
                             val byId = remember(library.allTracks) { library.allTracks.associateBy { it.id } }
                             val upNext = player.upNext.take(3).mapNotNull { iv -> byId[iv.value.mediaId.toLongOrNull()] }
                             val seed = smartSeeds[t.id]?.let(byId::get)

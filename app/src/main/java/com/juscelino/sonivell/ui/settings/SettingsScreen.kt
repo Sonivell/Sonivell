@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -29,12 +32,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.AppSettings
 import com.juscelino.sonivell.data.CROSSFADE_STEPS
@@ -102,6 +109,7 @@ fun SettingsScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
                     Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
+                    Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
                     Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
                     Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
                 ).forEach { (style, name, hint) ->
@@ -157,13 +165,13 @@ fun SettingsScreen(
                 }
             }
             RowLabel(stringResource(R.string.settings_icon_style))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconStyle.entries.forEach { style ->
                     IconStyleOption(
                         style = style,
                         label = stringResource(iconStyleNames[style.ordinal]),
                         selected = settings.iconStyle == style,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                     ) { actions.onUpdate { it.copy(iconStyle = style) } }
                 }
             }
@@ -276,6 +284,13 @@ fun SettingsScreen(
             LinkRow(stringResource(R.string.organize), stringResource(R.string.organize_hint), actions.onOpenOrganize)
         }
 
+        Section(stringResource(R.string.thanks_title)) {
+            val uriHandler = LocalUriHandler.current
+            val url = stringResource(R.string.thanks_url)
+            Text(stringResource(R.string.thanks_message), style = MaterialTheme.typography.bodyLarge, color = c.textPrimary)
+            LinkRow(stringResource(R.string.thanks_link), url) { runCatching { uriHandler.openUri(url) } }
+        }
+
         Section(stringResource(R.string.settings_about)) {
             Text(stringResource(R.string.settings_version, versionName), style = MaterialTheme.typography.bodyLarge, color = c.textPrimary)
             Text(stringResource(R.string.settings_privacy), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
@@ -341,10 +356,13 @@ private fun IconStyleOption(
                 Icon(it, null, Modifier.size(20.dp), tint = if (selected) c.accent else c.textPrimary)
             }
         }
-        Text(
+        // Uma linha só: em telas estreitas a fonte diminui em vez de quebrar a palavra.
+        val labelStyle = MaterialTheme.typography.titleSmall
+        BasicText(
             label,
-            style = MaterialTheme.typography.titleSmall,
-            color = c.textPrimary,
+            style = labelStyle.copy(color = c.textPrimary),
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = labelStyle.fontSize),
             modifier = Modifier.padding(top = 10.dp),
         )
     }

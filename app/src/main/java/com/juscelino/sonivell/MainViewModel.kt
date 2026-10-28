@@ -10,6 +10,7 @@ import com.juscelino.sonivell.data.Artist
 import com.juscelino.sonivell.data.Folder
 import com.juscelino.sonivell.data.AppSettings
 import com.juscelino.sonivell.data.SettingsStore
+import com.juscelino.sonivell.data.Ranked
 import com.juscelino.sonivell.data.Stats
 import com.juscelino.sonivell.data.StatsPeriod
 import com.juscelino.sonivell.data.StatsState
@@ -474,6 +475,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StatsState())
 
     fun setStatsPeriod(period: StatsPeriod) { statsPeriod.value = period }
+
+    /** Gênero mais ouvido nos últimos 30 dias: o destaque da busca vazia. Null sem histórico. */
+    val genreOfMonth: StateFlow<Ranked<String>?> = combine(allTracks, history.revision) { all, _ ->
+        if (all.isNullOrEmpty()) null
+        else Stats.compute(all, history.recent(), StatsPeriod.Mes).topGenres.firstOrNull()
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     // ---- Fila ----
 

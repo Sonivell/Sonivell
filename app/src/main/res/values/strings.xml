@@ -436,4 +436,41 @@
     <string name="why_taste_2">And it moved up because it fits what you usually play in the afternoon.</string>
     <string name="why_taste_3">And it moved up because it fits what you usually play at night.</string>
     <string name="why_taste_any">And it moved up because it fits your taste.</string>
+    <string name="browse_genres">Genres</string>
+    <string name="browse_by_size">By number of songs</string>
+    <string name="browse_decades">By decade</string>
+    <string name="browse_month_genre">Your genre of the month</string>
+    <string name="browse_top_genre">Biggest in your library</string>
+    <string name="browse_listened">%1$s listened</string>
+    <string name="browse_hours">%1$d h</string>
+    <string name="browse_minutes">%1$d min</string>
+    <string name="browse_play_genre">Shuffle %1$s</string>
+    <string name="browse_show_all">See all genres (%1$d)</string>
+    <string name="browse_show_less">Show fewer</string>
+    <string name="browse_tags_title">Tags to tidy up</string>
+    <plurals name="browse_tags_sub">
+        <item quantity="one">%d song with a generic genre</item>
+        <item quantity="other">%d songs with a generic genre</item>
+    </plurals>
+    <string name="browse_review">Review</string>
+    <string name="browse_loading_title">Reading your music…</string>
+    <string name="browse_loading_sub">Genres and decades show up once the scan finishes.</string>
+    <string name="browse_no_genres">No genres found in your music\'s tags.</string>
+    <string name="layout_essencial">Essential</string>
+    <string name="layout_essencial_hint">Covers first, only the essentials on each screen</string>
+    <string name="ess_continue">Continue</string>
+    <string name="ess_remaining">%1$s left</string>
+    <string name="ess_mixes">Your mixes</string>
+    <string name="ess_mix_now">Mix for now</string>
+    <string name="ess_mix_now_sub">What you play at this hour</string>
+    <string name="ess_listen_again">Listen again</string>
+    <string name="ess_search_hint">What do you want to hear?</string>
+    <string name="ess_recent">Recent</string>
+    <string name="ess_recent_sub">Added</string>
+    <string name="ess_sort_az">A to Z</string>
+    <string name="ess_sort_added">Recently added</string>
+    <string name="thanks_title">Acknowledgements</string>
+    <string name="thanks_message">The SMART engine was only possible in this project thanks to the work of Nikita-sud and the LatentJam project.\nMy sincere thanks.</string>
+    <string name="thanks_link">See LatentJam on GitHub</string>
+    <string name="thanks_url" translatable="false">https://github.com/Nikita-sud/latentjam</string>
 </resources>

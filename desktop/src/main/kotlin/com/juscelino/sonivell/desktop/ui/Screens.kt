@@ -314,13 +314,12 @@ fun SearchScreen(ctl: Controller, nav: Nav, actions: Actions) {
         }
         SearchBox(q, { nav.query = it }, Modifier.widthIn(max = 640.dp).fillMaxWidth(), focus)
         if (q.isBlank()) {
-            if (lib.library.genres.isNotEmpty()) {
-                SectionTitle(str("search_browse"))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(lib.library.genres.take(20)) { (name, list) ->
-                        Pill(name + " · " + list.size, false, { nav.detail = Detail(name, str("desktop_tracks_count", list.size), list, list.first(), str("kind_genre", name)) })
-                    }
+            val browseState = rememberLazyListState()
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(state = browseState, modifier = Modifier.fillMaxSize().padding(end = 12.dp)) {
+                    item { GenreBrowse(ctl, lib.library, lib.scanning, player.index, nav) }
                 }
+                VerticalScrollbar(rememberScrollbarAdapter(browseState), Modifier.align(Alignment.CenterEnd).fillMaxHeight())
             }
         } else if (tracks.isEmpty() && albums.isEmpty() && artists.isEmpty()) {
             EmptyState(str("search_none"))

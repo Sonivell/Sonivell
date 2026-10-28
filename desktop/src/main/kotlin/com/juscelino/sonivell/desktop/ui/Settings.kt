@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.desktop.Accent
 import com.juscelino.sonivell.desktop.Controller
 import com.juscelino.sonivell.desktop.DarkBg
+import com.juscelino.sonivell.desktop.ScreenLayout
 import com.juscelino.sonivell.desktop.ThemeMode
 import com.juscelino.sonivell.desktop.str
 import java.io.File
@@ -41,6 +42,11 @@ fun SettingsScreen(ctl: Controller) {
         Txt(str("settings"), 36, FontWeight.ExtraBold, letterSpacing = -1f, modifier = Modifier.padding(top = 22.dp))
 
         Group(str("settings_appearance")) {
+            Label(str("settings_layout"))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Pill(str("layout_ondas"), settings.layout == ScreenLayout.ONDAS, { ctl.updateSettings { it.copy(layout = ScreenLayout.ONDAS) } })
+                Pill(str("layout_essencial"), settings.layout == ScreenLayout.ESSENCIAL, { ctl.updateSettings { it.copy(layout = ScreenLayout.ESSENCIAL) } })
+            }
             Label(str("settings_theme"))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Pill(str("theme_auto"), settings.theme == ThemeMode.AUTO, { ctl.updateSettings { it.copy(theme = ThemeMode.AUTO) } })
@@ -118,6 +124,14 @@ fun SettingsScreen(ctl: Controller) {
             }
         }
 
+        Group(str("thanks_title")) {
+            val url = "https://github.com/Nikita-sud/latentjam"
+            Txt(str("thanks_message"), 14, FontWeight.Medium, maxLines = 6, lineHeight = 21)
+            Box(Modifier.hoverClick(RoundedCornerShape(12.dp), hover = c.surface, label = str("thanks_link")) { openInBrowser(url) }.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                Txt(str("thanks_link"), 14, FontWeight.ExtraBold, c.accent)
+            }
+        }
+
         Group(str("settings_about")) {
             Txt(str("settings_version", "0.1.0"), 14, FontWeight.SemiBold)
             Txt(str("desktop_shortcuts"), 13, FontWeight.Medium, c.textSecondary, maxLines = 3)
@@ -141,4 +155,14 @@ private fun Group(title: String, content: @Composable () -> Unit) {
 @Composable
 private fun Label(text: String) {
     Txt(text, 13, FontWeight.Bold, SonivellTheme.colors.textSecondary)
+}
+
+/** Abre um endereço no navegador padrão; no Linux, cai para o xdg-open quando o AWT não consegue. */
+private fun openInBrowser(url: String) {
+    val viaAwt = runCatching {
+        val desktop = java.awt.Desktop.getDesktop()
+        if (!desktop.isSupported(java.awt.Desktop.Action.BROWSE)) error("sem suporte")
+        desktop.browse(java.net.URI(url))
+    }.isSuccess
+    if (!viaAwt) runCatching { ProcessBuilder("xdg-open", url).start() }
 }
