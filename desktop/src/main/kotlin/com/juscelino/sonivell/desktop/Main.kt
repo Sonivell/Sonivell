@@ -25,6 +25,8 @@ import androidx.compose.ui.window.rememberWindowState
 import com.juscelino.sonivell.desktop.ui.SonivellApp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import java.awt.Dimension
 
 /** Tamanho da janela no modo compacto (só capa e controles). */
@@ -44,13 +46,16 @@ fun main() = application {
     )
     // Tamanho do player completo antes de entrar no modo compacto, para voltar igual.
     var fullSize by remember { mutableStateOf(FULL_SIZE) }
+    // Só trava o tamanho depois que a janela já encolheu: travar antes congela as dicas de
+    // tamanho do sistema no tamanho atual (tela cheia) e o gerenciador de janelas não deixa encolher.
+    var sizeLocked by remember { mutableStateOf(false) }
     val icon = remember { runCatching { BitmapPainter(useResource("icon.png", ::loadImageBitmap)) }.getOrNull() }
     Window(
         onCloseRequest = { controller.shutdown(); exitApplication() },
         title = str("app_name"),
         state = state,
         icon = icon,
-        resizable = !compact,
+        resizable = !sizeLocked,
         onKeyEvent = { e ->
             if (e.type != KeyEventType.KeyDown) false
             else when {
@@ -64,12 +69,25 @@ fun main() = application {
     ) {
         LaunchedEffect(compact) {
             if (compact) {
-                // O modo compacto só existe com a janela solta (não maximizada).
-                if (state.placement != WindowPlacement.Floating) state.placement = WindowPlacement.Floating
+                sizeLocked = false
+                // O modo compacto só existe com a janela solta (não maximizada). O gerenciador de
+                // janelas (KWin, GNOME…) desmaximiza sem esperar e devolve o tamanho antigo logo
+                // depois: espera a janela soltar antes de encolher.
+                if (state.placement != WindowPlacement.Floating) {
+                    state.placement = WindowPlacement.Floating
+                    withTimeoutOrNull(1500) { snapshotFlow { state.placement }.first { it == WindowPlacement.Floating } }
+                    delay(300)
+                }
                 window.minimumSize = Dimension(360, 440)
                 state.size = COMPACT_SIZE
                 val s = controller.settings.value
                 if (s.compactX != null && s.compactY != null) state.position = WindowPosition(s.compactX.dp, s.compactY.dp)
+                // Se o sistema ainda devolveu outro tamanho, encolhe de novo antes de travar.
+                repeat(4) {
+                    delay(200)
+                    if (state.size.width > COMPACT_SIZE.width + 24.dp || state.size.height > COMPACT_SIZE.height + 24.dp) state.size = COMPACT_SIZE
+                }
+                sizeLocked = true
                 // Lembra onde a janela compacta ficou.
                 snapshotFlow { state.position }.collectLatest { pos ->
                     if (pos is WindowPosition.Absolute) {
@@ -78,6 +96,7 @@ fun main() = application {
                     }
                 }
             } else {
+                sizeLocked = false
                 if (state.size == COMPACT_SIZE) state.size = fullSize
                 window.minimumSize = Dimension(980, 640)
                 snapshotFlow { state.size to state.placement }.collectLatest { (size, placement) ->
