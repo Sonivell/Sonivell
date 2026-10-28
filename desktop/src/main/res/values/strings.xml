@@ -28,4 +28,7 @@
     <string name="desktop_sort_az">A to Z</string>
     <string name="desktop_smart_label">SMART</string>
     <string name="desktop_smart_failed">SMART could not analyze your music on this computer.</string>
+    <string name="desktop_audio_route_pipewire">Your sound server (PipeWire) is not receiving Sonivell\'s audio, so Bluetooth headphones and the volume panel won\'t get it. Fix: sudo apt install pipewire-alsa, then reopen the app.</string>
+    <string name="desktop_audio_route_pulse">Your sound server (PulseAudio) is not receiving Sonivell\'s audio, so Bluetooth headphones and the volume panel won\'t get it. Fix: sudo apt install libasound2-plugins, then reopen the app.</string>
+    <string name="desktop_dismiss">Dismiss</string>
 </resources>

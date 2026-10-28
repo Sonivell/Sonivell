@@ -47,7 +47,7 @@ jobs:
             exit 1
           }
 
-      - name: Incluir o ffmpeg como dependência do pacote
+      - name: Incluir o ffmpeg (e a ponte de som) como dependências do pacote
         shell: bash
         run: |
           set -uo pipefail
@@ -59,11 +59,12 @@ jobs:
             control="$work/pkg/DEBIAN/control" &&
             cat "$control" &&
             { if grep -q '^Depends:' "$control"; then sed -i 's/^Depends:\(.*\)$/Depends:\1, ffmpeg/' "$control"; else echo 'Depends: ffmpeg' >> "$control"; fi; } &&
+            { grep -q '^Recommends:' "$control" || echo 'Recommends: pipewire-alsa | libasound2-plugins' >> "$control"; } &&
             chmod 0755 "$work/pkg/DEBIAN" &&
             fakeroot dpkg-deb --root-owner-group -b "$work/pkg" "$work/out.deb" &&
             cp "$work/out.deb" "$deb" &&
             dpkg-deb -I "$deb" &&
-            echo "NOTICE $(dpkg-deb -f "$deb" Depends)" &&
+            echo "NOTICE Depends: $(dpkg-deb -f "$deb" Depends) | Recommends: $(dpkg-deb -f "$deb" Recommends)" &&
             mkdir -p dist && cp "$deb" dist/
           } > "$work/log.txt" 2>&1 || {
             tail -n 25 "$work/log.txt" | while IFS= read -r line; do echo "::error::${line}"; done
