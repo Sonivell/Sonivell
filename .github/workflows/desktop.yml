@@ -59,7 +59,7 @@ jobs:
             control="$work/pkg/DEBIAN/control" &&
             cat "$control" &&
             { if grep -q '^Depends:' "$control"; then sed -i 's/^Depends:\(.*\)$/Depends:\1, ffmpeg/' "$control"; else echo 'Depends: ffmpeg' >> "$control"; fi; } &&
-            { grep -q '^Recommends:' "$control" || echo 'Recommends: pipewire-alsa | libasound2-plugins' >> "$control"; } &&
+            { grep -q '^Recommends:' "$control" || sed -i '/^Depends:/a Recommends: pipewire-alsa | libasound2-plugins' "$control"; } &&
             chmod 0755 "$work/pkg/DEBIAN" &&
             fakeroot dpkg-deb --root-owner-group -b "$work/pkg" "$work/out.deb" &&
             cp "$work/out.deb" "$deb" &&
