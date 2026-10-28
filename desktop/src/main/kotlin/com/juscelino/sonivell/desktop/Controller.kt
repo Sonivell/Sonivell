@@ -72,6 +72,11 @@ class Controller {
 
     val audioAvailable: Boolean = AudioEngine.available()
 
+    /** Aviso quando o som não passa pelo servidor de som do sistema (ver [AudioRoute]). */
+    private val _audioRoute = MutableStateFlow(AudioRoute.missingBridge())
+    val audioRoute: StateFlow<AudioRoute.Server?> = _audioRoute.asStateFlow()
+    fun dismissAudioRoute() { _audioRoute.value = null }
+
     /** Aleatório inteligente (motor do LatentJam): análise em segundo plano e filas pelo som. */
     val smart = SmartBridge(scope)
     private var smartJob: Job? = null

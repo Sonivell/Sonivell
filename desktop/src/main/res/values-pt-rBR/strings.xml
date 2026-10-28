@@ -28,5 +28,8 @@
     <string name="desktop_sort_az">De A a Z</string>
     <string name="desktop_smart_label">SMART</string>
     <string name="desktop_smart_failed">O SMART não conseguiu analisar suas músicas neste computador.</string>
+    <string name="desktop_audio_route_pipewire">O som do Sonivell não está passando pelo PipeWire, então não chega ao fone Bluetooth nem ao painel de volume. Para corrigir: sudo apt install pipewire-alsa e reabra o app.</string>
+    <string name="desktop_audio_route_pulse">O som do Sonivell não está passando pelo PulseAudio, então não chega ao fone Bluetooth nem ao painel de volume. Para corrigir: sudo apt install libasound2-plugins e reabra o app.</string>
+    <string name="desktop_dismiss">Fechar</string>
     <string name="desktop_browse_tags_sub">%1$d músicas com gênero genérico</string>
 </resources>

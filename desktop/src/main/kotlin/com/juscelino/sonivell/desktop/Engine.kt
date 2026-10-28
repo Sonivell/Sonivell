@@ -161,6 +161,40 @@ class AudioEngine(
 }
 
 /**
+ * O Java Sound toca pela saída "default" do ALSA. Em sistemas com PipeWire ou PulseAudio, ela só
+ * chega ao servidor de som (e daí ao fone Bluetooth, à saída escolhida no painel de volume etc.)
+ * se a ponte ALSA estiver instalada: pipewire-alsa ou libasound2-plugins. Sem ela, o som vai
+ * direto para a placa (muitas vezes a HDMI) e o app "toca" em silêncio.
+ */
+object AudioRoute {
+    enum class Server { PipeWire, PulseAudio }
+
+    /** O servidor de som rodando sem a ponte ALSA, ou null se está tudo certo (ou não há servidor). */
+    fun missingBridge(): Server? = runCatching {
+        val runtime = System.getenv("XDG_RUNTIME_DIR")?.takeIf { it.isNotBlank() } ?: return null
+        val server = when {
+            File(runtime, "pipewire-0").exists() -> Server.PipeWire
+            File(runtime, "pulse/native").exists() -> Server.PulseAudio
+            else -> return null // ALSA puro: tocar direto na placa é o certo
+        }
+        if (bridged()) null else server
+    }.getOrNull()
+
+    private fun mentionsServer(text: String) = text.contains("pipewire", true) || text.contains("pulse", true)
+
+    private fun bridged(): Boolean {
+        val dirs = listOf("/usr/share/alsa/alsa.conf.d", "/etc/alsa/conf.d")
+        val confs = dirs.flatMap { File(it).listFiles()?.toList().orEmpty() }
+            .filter { it.name.endsWith(".conf") && mentionsServer(it.name) }
+        if (confs.isNotEmpty()) return true
+        val home = System.getProperty("user.home")
+        return listOf(File("/etc/asound.conf"), File(home, ".asoundrc")).any { f ->
+            f.isFile && runCatching { mentionsServer(f.readText()) }.getOrDefault(false)
+        }
+    }
+}
+
+/**
  * Capas POR FAIXA: a arte embutida no arquivo (via ffmpeg) e, se não houver, uma imagem
  * "cover/folder" na pasta. Cache de disco pela faixa (caminho + data de modificação + tamanho):
  * antes a chave era o nome do álbum, e álbuns diferentes com o mesmo nome (ou faixas sem tag)

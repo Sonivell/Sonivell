@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.juscelino.sonivell.desktop.AudioRoute
 import com.juscelino.sonivell.desktop.Controller
 import com.juscelino.sonivell.desktop.str
 
@@ -30,6 +31,7 @@ fun SonivellApp(ctl: Controller) {
         val nav = remember { Nav() }
         val actions = remember { Actions(ctl, nav) }
         val player by ctl.player.collectAsState()
+        val audioRoute by ctl.audioRoute.collectAsState()
         val essencial = settings.layout == com.juscelino.sonivell.desktop.ScreenLayout.ESSENCIAL
         BoxWithConstraints(Modifier.fillMaxSize().background(c.background)) {
             val wide = maxWidth >= 1180.dp
@@ -45,6 +47,19 @@ fun SonivellApp(ctl: Controller) {
                             Route.Library -> if (essencial) LibraryEssencial(ctl, nav, actions) else LibraryScreen(ctl, nav, actions)
                             Route.Settings -> SettingsScreen(ctl)
                             Route.NowPlaying -> NowPlayingScreen(ctl, nav, actions)
+                        }
+                        audioRoute?.let { server ->
+                            val hint = if (server == AudioRoute.Server.PipeWire) "desktop_audio_route_pipewire" else "desktop_audio_route_pulse"
+                            Row(
+                                Modifier.align(Alignment.TopCenter).padding(12.dp)
+                                    .background(c.surfaceHigh, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                                    .padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Txt(str(hint), 13, FontWeight.SemiBold, modifier = Modifier.weight(1f, fill = false), maxLines = 3)
+                                IconBtn(Traco.close, str("desktop_dismiss"), { ctl.dismissAudioRoute() }, size = 34.dp, iconSize = 16.dp, tint = c.textSecondary)
+                            }
                         }
                         player.error?.let { msg ->
                             Box(Modifier.align(Alignment.BottomCenter).padding(12.dp).background(c.surfaceHigh, androidx.compose.foundation.shape.RoundedCornerShape(12.dp)).padding(horizontal = 16.dp, vertical = 10.dp)) {
