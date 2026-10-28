@@ -463,4 +463,7 @@
     <string name="ess_recent_sub">Adicionadas</string>
     <string name="ess_sort_az">De A a Z</string>
     <string name="ess_sort_added">Adicionados recentemente</string>
+    <string name="thanks_title">Agradecimentos</string>
+    <string name="thanks_message">O motor SMART só foi possível neste projeto graças ao esforço de Nikita-sud e do seu projeto LatentJam.\nMeus sinceros agradecimentos.</string>
+    <string name="thanks_link">Ver o LatentJam no GitHub</string>
 </resources>

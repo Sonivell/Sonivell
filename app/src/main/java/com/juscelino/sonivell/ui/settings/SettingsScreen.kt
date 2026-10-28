@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -275,6 +276,13 @@ fun SettingsScreen(
             LinkRow(stringResource(R.string.cd_refresh), stringResource(R.string.settings_refresh_hint), actions.onRefreshLibrary)
             LinkRow(stringResource(R.string.lyrics_pick_folder), stringResource(R.string.lyrics_folder_hint), actions.onPickLyricsFolder)
             LinkRow(stringResource(R.string.organize), stringResource(R.string.organize_hint), actions.onOpenOrganize)
+        }
+
+        Section(stringResource(R.string.thanks_title)) {
+            val uriHandler = LocalUriHandler.current
+            val url = stringResource(R.string.thanks_url)
+            Text(stringResource(R.string.thanks_message), style = MaterialTheme.typography.bodyLarge, color = c.textPrimary)
+            LinkRow(stringResource(R.string.thanks_link), url) { runCatching { uriHandler.openUri(url) } }
         }
 
         Section(stringResource(R.string.settings_about)) {

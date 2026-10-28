@@ -124,6 +124,14 @@ fun SettingsScreen(ctl: Controller) {
             }
         }
 
+        Group(str("thanks_title")) {
+            val url = "https://github.com/Nikita-sud/latentjam"
+            Txt(str("thanks_message"), 14, FontWeight.Medium, maxLines = 6, lineHeight = 21)
+            Box(Modifier.hoverClick(RoundedCornerShape(12.dp), hover = c.surface, label = str("thanks_link")) { openInBrowser(url) }.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                Txt(str("thanks_link"), 14, FontWeight.ExtraBold, c.accent)
+            }
+        }
+
         Group(str("settings_about")) {
             Txt(str("settings_version", "0.1.0"), 14, FontWeight.SemiBold)
             Txt(str("desktop_shortcuts"), 13, FontWeight.Medium, c.textSecondary, maxLines = 3)
@@ -147,4 +155,14 @@ private fun Group(title: String, content: @Composable () -> Unit) {
 @Composable
 private fun Label(text: String) {
     Txt(text, 13, FontWeight.Bold, SonivellTheme.colors.textSecondary)
+}
+
+/** Abre um endereço no navegador padrão; no Linux, cai para o xdg-open quando o AWT não consegue. */
+private fun openInBrowser(url: String) {
+    val viaAwt = runCatching {
+        val desktop = java.awt.Desktop.getDesktop()
+        if (!desktop.isSupported(java.awt.Desktop.Action.BROWSE)) error("sem suporte")
+        desktop.browse(java.net.URI(url))
+    }.isSuccess
+    if (!viaAwt) runCatching { ProcessBuilder("xdg-open", url).start() }
 }

@@ -469,4 +469,8 @@
     <string name="ess_recent_sub">Added</string>
     <string name="ess_sort_az">A to Z</string>
     <string name="ess_sort_added">Recently added</string>
+    <string name="thanks_title">Acknowledgements</string>
+    <string name="thanks_message">The SMART engine was only possible in this project thanks to the work of Nikita-sud and the LatentJam project.\nMy sincere thanks.</string>
+    <string name="thanks_link">See LatentJam on GitHub</string>
+    <string name="thanks_url" translatable="false">https://github.com/Nikita-sud/latentjam</string>
 </resources>
