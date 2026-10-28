@@ -1,0 +1,7 @@
+<!-- Ícone Ondas (variante Lima) para o desktop: mesmos traços do ic_launcher_foreground.xml do Android. Fonte dos PNGs em desktop/packaging/sonivell.png e desktop/src/main/resources/icon.png. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="14 14 80 80">
+  <rect x="16" y="16" width="76" height="76" rx="17" fill="#C8F04A"/>
+  <path fill="#0E0F11" d="M25,54a13,13 0 1,0 26,0a13,13 0 1,0 -26,0z"/>
+  <path fill="none" stroke="#0E0F11" stroke-width="8" stroke-linecap="round" d="M54.1,37.1A22,22 0 0,1 54.1,70.9"/>
+  <path fill="none" stroke="#0E0F11" stroke-opacity="0.4" stroke-width="8" stroke-linecap="round" d="M61.9,28A34,34 0 0,1 61.9,80"/>
+</svg>
