@@ -28,4 +28,5 @@
     <string name="desktop_sort_az">A to Z</string>
     <string name="desktop_smart_label">SMART</string>
     <string name="desktop_smart_failed">SMART could not analyze your music on this computer.</string>
+    <string name="desktop_browse_tags_sub">%1$d songs with a generic genre</string>
 </resources>
