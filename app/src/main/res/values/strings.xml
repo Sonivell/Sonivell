@@ -456,4 +456,17 @@
     <string name="browse_loading_title">Reading your music…</string>
     <string name="browse_loading_sub">Genres and decades show up once the scan finishes.</string>
     <string name="browse_no_genres">No genres found in your music\'s tags.</string>
+    <string name="layout_essencial">Essential</string>
+    <string name="layout_essencial_hint">Covers first, only the essentials on each screen</string>
+    <string name="ess_continue">Continue</string>
+    <string name="ess_remaining">%1$s left</string>
+    <string name="ess_mixes">Your mixes</string>
+    <string name="ess_mix_now">Mix for now</string>
+    <string name="ess_mix_now_sub">What you play at this hour</string>
+    <string name="ess_listen_again">Listen again</string>
+    <string name="ess_search_hint">What do you want to hear?</string>
+    <string name="ess_recent">Recent</string>
+    <string name="ess_recent_sub">Added</string>
+    <string name="ess_sort_az">A to Z</string>
+    <string name="ess_sort_added">Recently added</string>
 </resources>

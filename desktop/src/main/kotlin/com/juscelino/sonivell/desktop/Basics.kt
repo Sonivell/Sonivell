@@ -101,3 +101,43 @@ fun waveShape(seed: Long, bars: Int): FloatArray {
         kotlin.math.abs(kotlin.math.sin(i * 1.7f + a) * kotlin.math.cos(i * 0.31f + b)) * 0.85f + 0.15f
     }
 }
+
+// ---- Tags com a codificação errada ----
+
+private val mojibakeMarker = Regex(
+    "[ÂÃâ][\u0080-\u00BF\u0152\u0153\u0160\u0161\u0178\u017D\u017E\u0192\u02C6\u02DC" +
+        "\u2013\u2014\u2018-\u201E\u2020-\u2022\u2026\u2030\u2039\u203A\u20AC\u2122]"
+)
+
+/** Caractere → byte do Windows-1252; os 5 bytes sem caractere voltam como eles mesmos. */
+private val cp1252Bytes: Map<Char, Byte> by lazy {
+    val cp1252 = java.nio.charset.Charset.forName("windows-1252")
+    (0..255).associate { b ->
+        val ch = String(byteArrayOf(b.toByte()), cp1252).single()
+        (if (ch == '\uFFFD') b.toChar() else ch) to b.toByte()
+    }
+}
+
+/**
+ * Conserta tags gravadas com a codificação errada ("Whatâ€™s" → "What’s", "SÃ£o" → "São"):
+ * texto UTF-8 que algum programa leu como Windows-1252. Só mexe quando há a marca típica do
+ * erro e a volta para UTF-8 é válida. (Mesma lógica do TextFix do Android.)
+ */
+fun repairEncoding(text: String): String {
+    var current = text
+    repeat(2) {
+        if (!mojibakeMarker.containsMatchIn(current)) return current
+        val bytes = ByteArray(current.length)
+        for (i in current.indices) bytes[i] = cp1252Bytes[current[i]] ?: return current
+        current = try {
+            Charsets.UTF_8.newDecoder()
+                .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+                .decode(java.nio.ByteBuffer.wrap(bytes))
+                .toString()
+        } catch (_: java.nio.charset.CharacterCodingException) {
+            return current
+        }
+    }
+    return current
+}

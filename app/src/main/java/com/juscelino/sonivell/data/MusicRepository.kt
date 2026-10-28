@@ -83,19 +83,19 @@ class MusicRepository(private val context: Context) {
                 } else {
                     rawFolder.substringBeforeLast('/', rawFolder)
                 }
-                val rawTitle = text(titleCol)
-                val rawArtist = text(artistCol)
-                val rawAlbum = text(albumCol)
+                val rawTitle = TextFix.repair(text(titleCol))
+                val rawArtist = TextFix.repair(text(artistCol))
+                val rawAlbum = TextFix.repair(text(albumCol))
                 // MediaStore guarda disco e faixa juntos: 1003 = disco 1, faixa 3.
                 val trackField = int(trackCol)
                 tracks += Track(
                     id = id,
                     uri = ContentUris.withAppendedId(collection, id),
-                    title = c.getString(titleCol)?.takeIf { it.isNotBlank() } ?: context.getString(R.string.unknown_title),
-                    artist = c.getString(artistCol)
+                    title = TextFix.repair(c.getString(titleCol))?.takeIf { it.isNotBlank() } ?: context.getString(R.string.unknown_title),
+                    artist = TextFix.repair(c.getString(artistCol))
                         ?.takeIf { it.isNotBlank() && it != MediaStore.UNKNOWN_STRING }
                         ?: context.getString(R.string.unknown_artist),
-                    album = c.getString(albumCol)?.takeIf { it.isNotBlank() } ?: context.getString(R.string.unknown_album),
+                    album = TextFix.repair(c.getString(albumCol))?.takeIf { it.isNotBlank() } ?: context.getString(R.string.unknown_album),
                     albumId = c.getLong(albumIdCol),
                     durationMs = c.getLong(durCol),
                     mimeType = c.getString(mimeCol),
@@ -104,8 +104,8 @@ class MusicRepository(private val context: Context) {
                     rawTitle = rawTitle,
                     rawArtist = rawArtist,
                     rawAlbum = rawAlbum,
-                    albumArtist = text(albumArtistCol),
-                    genre = text(genreCol),
+                    albumArtist = TextFix.repair(text(albumArtistCol)),
+                    genre = TextFix.repair(text(genreCol)),
                     year = int(yearCol)?.takeIf { it > 0 },
                     trackNumber = trackField?.rem(1000)?.takeIf { it > 0 },
                     discNumber = trackField?.div(1000)?.takeIf { it > 0 },

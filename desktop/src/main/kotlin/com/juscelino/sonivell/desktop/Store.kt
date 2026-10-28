@@ -7,11 +7,15 @@ enum class ThemeMode { AUTO, LIGHT, DARK }
 enum class Accent { Lima, Azul, Laranja, Lilas, Rosa, Turquesa, Verde }
 enum class DarkBg { Grafite, Preto }
 
+/** Layout das telas: Ondas (padrão) ou Essencial (enxuto, capas em destaque). */
+enum class ScreenLayout { ONDAS, ESSENCIAL }
+
 data class Settings(
     val musicDirs: List<String> = emptyList(),
     val theme: ThemeMode = ThemeMode.AUTO,
     val accent: Accent = Accent.Lima,
     val darkBg: DarkBg = DarkBg.Grafite,
+    val layout: ScreenLayout = ScreenLayout.ONDAS,
     val volume: Float = 0.8f,
     val shuffle: Boolean = false,
     val repeat: Int = 0,
@@ -33,6 +37,7 @@ object SettingsStore {
             theme = enumOf("theme", ThemeMode.values(), ThemeMode.AUTO),
             accent = enumOf("accent", Accent.values(), Accent.Lima),
             darkBg = enumOf("darkBg", DarkBg.values(), DarkBg.Grafite),
+            layout = enumOf("layout", ScreenLayout.values(), ScreenLayout.ONDAS),
             volume = p.getProperty("volume")?.toFloatOrNull()?.coerceIn(0f, 1f) ?: 0.8f,
             shuffle = p.getProperty("shuffle") == "true",
             repeat = p.getProperty("repeat")?.toIntOrNull()?.coerceIn(0, 2) ?: 0,
@@ -47,6 +52,7 @@ object SettingsStore {
         p.setProperty("theme", s.theme.name)
         p.setProperty("accent", s.accent.name)
         p.setProperty("darkBg", s.darkBg.name)
+        p.setProperty("layout", s.layout.name)
         p.setProperty("volume", s.volume.toString())
         p.setProperty("shuffle", s.shuffle.toString())
         p.setProperty("repeat", s.repeat.toString())

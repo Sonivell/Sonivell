@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.desktop.Accent
 import com.juscelino.sonivell.desktop.Controller
 import com.juscelino.sonivell.desktop.DarkBg
+import com.juscelino.sonivell.desktop.ScreenLayout
 import com.juscelino.sonivell.desktop.ThemeMode
 import com.juscelino.sonivell.desktop.str
 import java.io.File
@@ -41,6 +42,11 @@ fun SettingsScreen(ctl: Controller) {
         Txt(str("settings"), 36, FontWeight.ExtraBold, letterSpacing = -1f, modifier = Modifier.padding(top = 22.dp))
 
         Group(str("settings_appearance")) {
+            Label(str("settings_layout"))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Pill(str("layout_ondas"), settings.layout == ScreenLayout.ONDAS, { ctl.updateSettings { it.copy(layout = ScreenLayout.ONDAS) } })
+                Pill(str("layout_essencial"), settings.layout == ScreenLayout.ESSENCIAL, { ctl.updateSettings { it.copy(layout = ScreenLayout.ESSENCIAL) } })
+            }
             Label(str("settings_theme"))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Pill(str("theme_auto"), settings.theme == ThemeMode.AUTO, { ctl.updateSettings { it.copy(theme = ThemeMode.AUTO) } })

@@ -450,4 +450,17 @@
     <string name="browse_loading_title">Lendo suas músicas…</string>
     <string name="browse_loading_sub">Os gêneros e as décadas aparecem quando a leitura terminar.</string>
     <string name="browse_no_genres">Nenhum gênero encontrado nas tags das suas músicas.</string>
+    <string name="layout_essencial">Essencial</string>
+    <string name="layout_essencial_hint">Capas em destaque e só o essencial em cada tela</string>
+    <string name="ess_continue">Continuar</string>
+    <string name="ess_remaining">faltam %1$s</string>
+    <string name="ess_mixes">Seus mixes</string>
+    <string name="ess_mix_now">Mix de agora</string>
+    <string name="ess_mix_now_sub">O que você ouve neste horário</string>
+    <string name="ess_listen_again">Ouça de novo</string>
+    <string name="ess_search_hint">O que você quer ouvir?</string>
+    <string name="ess_recent">Recentes</string>
+    <string name="ess_recent_sub">Adicionadas</string>
+    <string name="ess_sort_az">De A a Z</string>
+    <string name="ess_sort_added">Adicionados recentemente</string>
 </resources>

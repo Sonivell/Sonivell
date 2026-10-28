@@ -102,6 +102,7 @@ fun SettingsScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
                     Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
+                    Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
                     Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
                     Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
                 ).forEach { (style, name, hint) ->

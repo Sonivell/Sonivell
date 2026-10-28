@@ -56,7 +56,7 @@ private val genericGenres = setOf(
     "unknown", "desconhecido", "misc", "miscellaneous", "various", "none", "n/a", "default",
 )
 
-private fun isGenericGenre(name: String): Boolean {
+internal fun isGenericGenreName(name: String): Boolean {
     val n = name.trim().trimEnd(':', '.', ' ').lowercase()
     return n.isEmpty() || n in genericGenres
 }
@@ -76,7 +76,7 @@ private fun genreOfMonth(ctl: Controller, library: Library): MonthGenre? {
     val time = HashMap<String, Long>()
     ctl.user.history.toList().forEach { l ->
         if (l.atMs < from) return@forEach
-        val g = library.byId[l.trackId]?.genre?.takeIf { it.isNotBlank() && !isGenericGenre(it) } ?: return@forEach
+        val g = library.byId[l.trackId]?.genre?.takeIf { it.isNotBlank() && !isGenericGenreName(it) } ?: return@forEach
         time[g] = (time[g] ?: 0L) + l.listenedMs
         if (l.completed || l.listenedMs >= 30_000) count[g] = (count[g] ?: 0) + 1
     }
@@ -94,8 +94,8 @@ fun GenreBrowse(ctl: Controller, library: Library, scanning: Boolean, playIndex:
         ScanningCard()
         return
     }
-    val good = remember(library) { library.genres.filterNot { isGenericGenre(it.first) }.sortedByDescending { it.second.size } }
-    val generic = remember(library) { library.genres.filter { isGenericGenre(it.first) } }
+    val good = remember(library) { library.genres.filterNot { isGenericGenreName(it.first) }.sortedByDescending { it.second.size } }
+    val generic = remember(library) { library.genres.filter { isGenericGenreName(it.first) } }
     val month = remember(library, playIndex) { genreOfMonth(ctl, library) }
     val monthGenre = month?.let { m -> good.firstOrNull { it.first == m.name } }
     val hero = monthGenre ?: good.firstOrNull()

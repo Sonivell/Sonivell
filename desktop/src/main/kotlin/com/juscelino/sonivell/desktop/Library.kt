@@ -28,8 +28,8 @@ object Scanner {
                 if (f.size < 14) return@forEachLine
                 val path = f[0]
                 out[path] = f[1].toLong() to Track(
-                    id = trackIdOf(path), path = path, title = f[3], artist = f[4], albumArtist = f[5], album = f[6],
-                    genre = f[7], year = f[8].toInt(), trackNo = f[9].toInt(), durationMs = f[10].toLong(),
+                    id = trackIdOf(path), path = path, title = repairEncoding(f[3]), artist = repairEncoding(f[4]), albumArtist = repairEncoding(f[5]), album = repairEncoding(f[6]),
+                    genre = repairEncoding(f[7]), year = f[8].toInt(), trackNo = f[9].toInt(), durationMs = f[10].toLong(),
                     format = f[11], bitrateKbps = f[12].toInt(), addedMs = f[13].toLong(),
                 )
             }
@@ -120,7 +120,7 @@ object Scanner {
             when {
                 key == "format.duration" -> duration = value.toDoubleOrNull() ?: 0.0
                 key == "format.bit_rate" -> bitrate = ((value.toLongOrNull() ?: 0L) / 1000).toInt()
-                key.startsWith("format.tags.") -> tags[key.removePrefix("format.tags.").lowercase()] = value.trim()
+                key.startsWith("format.tags.") -> tags[key.removePrefix("format.tags.").lowercase()] = repairEncoding(value.trim())
                 key.endsWith(".codec_name") -> codecs[key.removeSuffix(".codec_name")] = value
                 key.endsWith(".codec_type") -> types[key.removeSuffix(".codec_type")] = value
             }

@@ -19,6 +19,9 @@ enum class UiStyle {
 
     /** 1.0: o visual da primeira versão. */
     CLASSICA,
+
+    /** Enxuto: capas em destaque e só o essencial em cada tela (usa o player do Ondas). */
+    ESSENCIAL,
 }
 
 data class AppSettings(
