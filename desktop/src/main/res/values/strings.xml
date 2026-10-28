@@ -32,4 +32,8 @@
     <string name="desktop_audio_route_pulse">Your sound server (PulseAudio) is not receiving Sonivell\'s audio, so Bluetooth headphones and the volume panel won\'t get it. Fix: sudo apt install libasound2-plugins, then reopen the app.</string>
     <string name="desktop_dismiss">Dismiss</string>
     <string name="desktop_browse_tags_sub">%1$d songs with a generic genre</string>
+    <string name="desktop_compact_mode">Compact mode (Ctrl+M)</string>
+    <string name="desktop_exit_compact">Back to the full player</string>
+    <string name="desktop_mute">Mute</string>
+    <string name="desktop_unmute">Unmute</string>
 </resources>

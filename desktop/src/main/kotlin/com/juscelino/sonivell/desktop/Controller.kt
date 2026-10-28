@@ -134,6 +134,17 @@ class Controller {
         if (dirsChanged) refresh()
     }
 
+    fun setCompact(on: Boolean) {
+        if (_settings.value.compact != on) updateSettings { it.copy(compact = on) }
+    }
+
+    fun toggleCompact() = setCompact(!_settings.value.compact)
+
+    fun saveCompactPosition(x: Int, y: Int) {
+        val s = _settings.value
+        if (s.compactX != x || s.compactY != y) updateSettings { it.copy(compactX = x, compactY = y) }
+    }
+
     // ---- reprodução -----------------------------------------------------------------------------
 
     fun playFrom(tracks: List<Track>, index: Int, label: String = "", startMs: Long = 0L) {

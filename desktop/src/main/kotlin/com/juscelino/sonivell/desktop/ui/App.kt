@@ -33,7 +33,8 @@ fun SonivellApp(ctl: Controller) {
         val player by ctl.player.collectAsState()
         val audioRoute by ctl.audioRoute.collectAsState()
         val essencial = settings.layout == com.juscelino.sonivell.desktop.ScreenLayout.ESSENCIAL
-        BoxWithConstraints(Modifier.fillMaxSize().background(c.background)) {
+        if (settings.compact) CompactPlayer(ctl)
+        else BoxWithConstraints(Modifier.fillMaxSize().background(c.background)) {
             val wide = maxWidth >= 1180.dp
             Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
