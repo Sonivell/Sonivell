@@ -46,6 +46,14 @@ data class AlarmConfig(
 object MusicAlarm {
     private const val PREFS = "sonivell_alarm"
     private const val ACTION_FIRE = "com.juscelino.sonivell.alarm.FIRE"
+    private const val EXTRA_TEST = "test"
+
+    /** Toca agora do mesmo jeito que na hora marcada (botão "Testar"), sem mexer no agendamento. */
+    fun testNow(context: Context) {
+        context.sendBroadcast(
+            Intent(context, AlarmReceiver::class.java).setAction(ACTION_FIRE).putExtra(EXTRA_TEST, true),
+        )
+    }
 
     fun load(context: Context): AlarmConfig {
         val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -135,7 +143,11 @@ object MusicAlarm {
         override fun onReceive(context: Context, intent: Intent) {
             val app = context.applicationContext
             when (intent.action) {
-                Intent.ACTION_BOOT_COMPLETED, AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> {
+                Intent.ACTION_BOOT_COMPLETED,
+                Intent.ACTION_MY_PACKAGE_REPLACED,
+                Intent.ACTION_TIME_CHANGED,
+                Intent.ACTION_TIMEZONE_CHANGED,
+                AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> {
                     schedule(app)
                     return
                 }
@@ -146,14 +158,19 @@ object MusicAlarm {
             CoroutineScope(SupervisorJob() + Dispatchers.Main).launch {
                 try {
                     val config = load(app)
-                    // Só uma vez: desliga depois de tocar.
-                    if (config.days.isEmpty()) save(app, config.copy(enabled = false)) else schedule(app, config)
-                    val ids = trackIds(app, config)
-                    withTimeoutOrNull(8_000) {
+                    if (!intent.getBooleanExtra(EXTRA_TEST, false)) {
+                        // Só uma vez: desliga depois de tocar.
+                        if (config.days.isEmpty()) save(app, config.copy(enabled = false)) else schedule(app, config)
+                    }
+                    // Liga no player logo de cara (o Android só deixa o serviço de música começar
+                    // em segundo plano nos primeiros segundos após o alarme). A fila é montada
+                    // pelo próprio serviço.
+                    withTimeoutOrNull(9_000) {
                         val token = SessionToken(app, ComponentName(app, PlaybackService::class.java))
                         val controller = MediaController.Builder(app, token).buildAsync().await()
                         val args = Bundle().apply {
-                            putLongArray(PlaybackService.EXTRA_IDS, ids.toLongArray())
+                            putString(PlaybackService.EXTRA_SOURCE, config.source.name)
+                            putLong(PlaybackService.EXTRA_PLAYLIST, config.playlistId)
                             putInt(PlaybackService.EXTRA_RAMP_SEC, config.rampSec)
                             putInt(PlaybackService.EXTRA_STOP_MIN, config.stopMin)
                         }

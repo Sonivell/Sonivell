@@ -559,6 +559,8 @@
     <string name="alarm_minutes">%1$d min</string>
     <string name="alarm_stop">Stop by itself after</string>
     <string name="alarm_stop_never">Never</string>
+    <string name="alarm_test">Test now</string>
+    <string name="alarm_test_hint">Plays right away exactly as it will at the set time (volume rising, alarm sound). Pause to stop.</string>
     <string name="car_mode">Car mode</string>
     <string name="car_mode_hint">Big buttons and the cover, to use at a glance (car, gym)</string>
     <string name="car_mode_exit">Exit</string>

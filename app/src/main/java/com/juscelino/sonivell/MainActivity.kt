@@ -25,6 +25,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         AppShortcuts.publish(this)
+        // Reagenda o despertador (o Android apaga alarmes agendados em algumas atualizações).
+        com.juscelino.sonivell.system.MusicAlarm.schedule(this)
         if (savedInstanceState == null) handleShortcut(intent)
         setContent {
             val settings by vm.settings.collectAsStateWithLifecycle()

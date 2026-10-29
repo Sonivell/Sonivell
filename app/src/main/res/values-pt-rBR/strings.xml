@@ -556,6 +556,8 @@
     <string name="alarm_minutes">%1$d min</string>
     <string name="alarm_stop">Parar sozinho depois de</string>
     <string name="alarm_stop_never">Nunca</string>
+    <string name="alarm_test">Testar agora</string>
+    <string name="alarm_test_hint">Toca na hora, do mesmo jeito que vai tocar no horário marcado (volume subindo, som de alarme). Pause para parar.</string>
     <string name="car_mode">Modo carro</string>
     <string name="car_mode_hint">Botões grandes e a capa, para usar de relance (carro, academia)</string>
     <string name="car_mode_exit">Sair</string>

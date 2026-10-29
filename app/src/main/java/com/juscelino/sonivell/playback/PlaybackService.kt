@@ -107,6 +107,12 @@ class PlaybackService : MediaLibraryService() {
             override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) = publishWidget(player)
             override fun onIsPlayingChanged(isPlaying: Boolean) = publishWidget(player)
         })
+        // Pausou o despertador: o som volta a ser de música.
+        player.addListener(object : Player.Listener {
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                if (!playWhenReady && alarmAudio) useAlarmAudio(player, false)
+            }
+        })
 
         val openApp = PendingIntent.getActivity(
             this,
@@ -152,14 +158,21 @@ class PlaybackService : MediaLibraryService() {
             if (customCommand.customAction != ALARM_COMMAND) {
                 return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
             }
-            val ids = args.getLongArray(EXTRA_IDS)?.toList().orEmpty()
             val rampSec = args.getInt(EXTRA_RAMP_SEC, 0)
             val stopMin = args.getInt(EXTRA_STOP_MIN, 0)
+            val config = com.juscelino.sonivell.system.AlarmConfig(
+                source = com.juscelino.sonivell.system.AlarmSource.entries.firstOrNull { it.name == args.getString(EXTRA_SOURCE) }
+                    ?: com.juscelino.sonivell.system.AlarmSource.Curtidas,
+                playlistId = args.getLong(EXTRA_PLAYLIST, 0L),
+            )
             return scope.future {
+                val ids = args.getLongArray(EXTRA_IDS)?.toList()
+                    ?: com.juscelino.sonivell.system.MusicAlarm.trackIds(this@PlaybackService, config)
                 val items = browser.queueItems(ids)
                 val player = session.player
                 if (items.isEmpty() && player.mediaItemCount == 0) return@future SessionResult(SessionError.ERROR_BAD_VALUE)
                 if (items.isNotEmpty()) player.setMediaItems(items, 0, 0L)
+                (player as? ExoPlayer)?.let { useAlarmAudio(it, true) }
                 player.prepare()
                 startAlarmRamp(rampSec)
                 player.play()
@@ -238,6 +251,24 @@ class PlaybackService : MediaLibraryService() {
     // ---- Despertador: o volume sobe aos poucos e a música para sozinha depois de um tempo ----
 
     private val alarmStop = Runnable { session?.player?.pause() }
+
+    /**
+     * Enquanto o despertador toca, o som sai como alarme: toca mesmo com o "Não perturbe"
+     * ligado e usa o volume de alarme. Ao pausar, volta a ser música normal.
+     */
+    private var alarmAudio = false
+
+    private fun useAlarmAudio(player: ExoPlayer, on: Boolean) {
+        if (alarmAudio == on) return
+        alarmAudio = on
+        player.setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(if (on) C.USAGE_ALARM else C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                .build(),
+            /* handleAudioFocus = */ true,
+        )
+    }
     private var rampStep: Runnable? = null
 
     private fun startAlarmRamp(seconds: Int) {
@@ -341,6 +372,8 @@ class PlaybackService : MediaLibraryService() {
         const val EXTRA_IDS = "ids"
         const val EXTRA_RAMP_SEC = "ramp_sec"
         const val EXTRA_STOP_MIN = "stop_min"
+        const val EXTRA_SOURCE = "source"
+        const val EXTRA_PLAYLIST = "playlist"
 
         /** Sessão de áudio do player (o visualizador do app se liga nela). 0 = serviço parado. */
         @Volatile

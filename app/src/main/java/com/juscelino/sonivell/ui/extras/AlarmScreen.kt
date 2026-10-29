@@ -164,6 +164,18 @@ fun AlarmScreen(playlists: List<Playlist>, contentPadding: PaddingValues, onBack
         Chips(listOf(0, 15, 30, 60), config.stopMin, { if (it == 0) stringResource(R.string.alarm_stop_never) else stringResource(R.string.alarm_minutes, it) }) {
             update(config.copy(stopMin = it))
         }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .border(1.dp, c.outline, RoundedCornerShape(999.dp))
+                .clickable(role = Role.Button) { MusicAlarm.testNow(context) },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(stringResource(R.string.alarm_test), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
+        }
+        Text(stringResource(R.string.alarm_test_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
     }
 }
 
