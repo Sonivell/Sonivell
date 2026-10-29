@@ -562,4 +562,51 @@
     <string name="car_mode">Car mode</string>
     <string name="car_mode_hint">Big buttons and the cover, to use at a glance (car, gym)</string>
     <string name="car_mode_exit">Exit</string>
+
+    <!-- Editor de tags -->
+    <string name="tags_edit">Edit tags</string>
+    <string name="tags_title">Edit tags</string>
+    <string name="tags_save">Save</string>
+    <string name="tags_field_title">Title</string>
+    <string name="tags_field_artist">Artist</string>
+    <string name="tags_field_album">Album</string>
+    <string name="tags_field_genre">Genre</string>
+    <string name="tags_field_year">Year</string>
+    <string name="tags_missing">missing</string>
+    <string name="tags_generic">too generic</string>
+    <string name="tags_note">Corrections are saved in Sonivell and apply across the whole app and to SMART. Your music file is not changed.</string>
+    <string name="tags_restore">Restore original tags</string>
+    <string name="tags_saved">Tags saved</string>
+    <string name="tags_restored">Original tags restored</string>
+    <!-- Notas -->
+    <plurals name="rating_stars">
+        <item quantity="one">%d star</item>
+        <item quantity="other">%d stars</item>
+    </plurals>
+    <string name="auto_top_rated">Top rated</string>
+    <!-- Capa personalizada -->
+    <string name="cover_change">Change album cover</string>
+    <string name="cover_remove">Remove custom cover</string>
+    <string name="cover_changed">Cover changed</string>
+    <string name="cover_failed">Couldn\'t use this image</string>
+    <!-- Retrospectiva -->
+    <string name="retro_title">Your month in music</string>
+    <string name="retro_hint">The last 30 days: hours, top song, artist and genre</string>
+    <string name="retro_hours">%1$s hours</string>
+    <string name="retro_tracks">%1$d different songs · %2$d heard for the first time</string>
+    <string name="retro_top_track">Song of the month</string>
+    <string name="retro_top_artist">Artist of the month</string>
+    <string name="retro_top_genre">Genre of the month</string>
+    <string name="retro_plays">%1$d plays</string>
+    <string name="retro_share">Share as image</string>
+    <!-- Backup -->
+    <string name="backup_section">Your data</string>
+    <string name="backup_hint">Playlists, likes, history, ratings, tag corrections, custom covers and settings in a single file. Your music is not included.</string>
+    <string name="backup_export">Create backup</string>
+    <string name="backup_restore">Restore backup</string>
+    <string name="backup_restore_hint">Replaces the current data and restarts the app</string>
+    <string name="backup_restore_confirm">Your current playlists, history and settings will be replaced by the backup. The app will restart.</string>
+    <string name="backup_done">Backup saved</string>
+    <string name="backup_failed">Couldn\'t create the backup</string>
+    <string name="backup_invalid">This file isn\'t a Sonivell backup</string>
 </resources>

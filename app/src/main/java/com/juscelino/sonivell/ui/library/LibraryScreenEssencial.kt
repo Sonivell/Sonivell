@@ -904,6 +904,7 @@ private fun LazyListScope.essPlaylistRows(state: LibraryState, playlists: List<P
         "mais-ouvidas" to R.string.auto_most,
         "nunca-tocadas" to R.string.auto_never,
         "ouvidas-recentemente" to R.string.auto_recent_played,
+        "bem-avaliadas" to R.string.auto_top_rated,
         "menos-ouvidas" to R.string.auto_least,
     )
     items(autos, key = { "auto-${it.first}" }) { (key, label) ->

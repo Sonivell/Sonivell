@@ -49,6 +49,7 @@ fun StatsScreen(
     onBack: () -> Unit,
     onPeriod: (StatsPeriod) -> Unit,
     onPlayTrack: (Track) -> Unit,
+    onRetro: (() -> Unit)? = null,
 ) {
     val c = SonivellTheme.colors
     Column(
@@ -70,6 +71,16 @@ fun StatsScreen(
                 StatsPeriod.Ano to R.string.period_year,
                 StatsPeriod.Tudo to R.string.period_all,
             ).forEach { (p, label) -> Chip(stringResource(label), selected = stats.period == p) { onPeriod(p) } }
+        }
+
+        if (onRetro != null && !stats.isEmpty) {
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(c.accent).clickable(onClick = onRetro).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(stringResource(R.string.retro_title), style = MaterialTheme.typography.titleMedium, color = c.onAccent)
+                Text(stringResource(R.string.retro_hint), style = MaterialTheme.typography.bodyMedium, color = c.onAccent)
+            }
         }
 
         if (stats.isEmpty) {

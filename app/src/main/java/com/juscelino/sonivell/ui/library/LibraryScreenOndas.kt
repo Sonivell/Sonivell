@@ -376,6 +376,7 @@ private fun buildItems(
                 "nunca-tocadas" to R.string.auto_never,
                 "recentes" to R.string.auto_recent_added,
                 "ouvidas-recentemente" to R.string.auto_recent_played,
+                "bem-avaliadas" to R.string.auto_top_rated,
             ).map { (key, label) ->
                 OndasItem("auto-$key", res.getString(label), res.getString(R.string.kind_auto), OndasArt.Symbol(OndasSymbol.Auto), onClick = { actions.onOpenAuto(key) })
             } + decades.map { d ->

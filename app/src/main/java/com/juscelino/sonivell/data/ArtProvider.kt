@@ -39,7 +39,10 @@ import java.util.concurrent.ConcurrentHashMap
 class ArtProvider : ContentProvider() {
 
     override fun onCreate(): Boolean {
-        context?.let { authority = it.packageName + ".art" }
+        context?.let {
+            authority = it.packageName + ".art"
+            CustomCovers.init(it)
+        }
         return true
     }
 
@@ -51,6 +54,8 @@ class ArtProvider : ContentProvider() {
         val id = segments[1].toLongOrNull() ?: throw FileNotFoundException(uri.toString())
         val version = segments[2].filter { it.isLetterOrDigit() || it == '-' }.take(40)
         val albumId = uri.getQueryParameter("album")?.toLongOrNull() ?: 0L
+        // Capa escolhida pela pessoa para o álbum vem antes da do arquivo.
+        CustomCovers.file(albumId)?.let { return ParcelFileDescriptor.open(it, ParcelFileDescriptor.MODE_READ_ONLY) }
         val file = ArtCache.file(ctx, id, version, albumId) ?: throw FileNotFoundException("Sem capa: $uri")
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
     }
@@ -70,7 +75,7 @@ class ArtProvider : ContentProvider() {
             .authority(authority)
             .appendPath("track")
             .appendPath(track.id.toString())
-            .appendPath(ArtCache.version(track.dateModified, track.sizeBytes))
+            .appendPath(CustomCovers.version(track.albumId) ?: ArtCache.version(track.dateModified, track.sizeBytes))
             .appendQueryParameter("album", track.albumId.toString())
             .build()
     }
@@ -154,5 +159,47 @@ internal object ArtCache {
         val scale = MAX_SIDE.toFloat() / side
         return Bitmap.createScaledBitmap(decoded, (decoded.width * scale).toInt(), (decoded.height * scale).toInt(), true)
             .also { if (it !== decoded) decoded.recycle() }
+    }
+}
+
+/**
+ * Capas escolhidas pela pessoa para um álbum (galeria), em `filesDir/covers/<albumId>.jpg`.
+ * As versões ficam num mapa observável: trocar a capa redesenha na hora as telas que a mostram.
+ */
+object CustomCovers {
+    private var dir: File? = null
+    private val versions = androidx.compose.runtime.mutableStateMapOf<Long, Long>()
+
+    fun init(context: Context) {
+        val d = File(context.filesDir, "covers").apply { mkdirs() }
+        dir = d
+        d.listFiles()?.forEach { f -> f.nameWithoutExtension.toLongOrNull()?.let { versions[it] = f.lastModified() } }
+    }
+
+    fun has(albumId: Long): Boolean = albumId in versions
+
+    fun version(albumId: Long): String? = versions[albumId]?.let { "c$it" }
+
+    fun file(albumId: Long): File? = if (albumId in versions) dir?.let { File(it, "$albumId.jpg").takeIf(File::exists) } else null
+
+    /** Copia a imagem escolhida, reduzida a no máximo 1024 px, como capa do álbum. */
+    fun set(context: Context, albumId: Long, image: Uri): Boolean = runCatching {
+        val d = dir ?: File(context.filesDir, "covers").apply { mkdirs() }
+        val bytes = context.contentResolver.openInputStream(image)?.use { it.readBytes() } ?: return false
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        var sample = 1
+        while (bounds.outWidth / (sample * 2) >= 1024 && bounds.outHeight / (sample * 2) >= 1024) sample *= 2
+        val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return false
+        val out = File(d, "$albumId.jpg")
+        out.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+        bmp.recycle()
+        versions[albumId] = out.lastModified()
+        true
+    }.getOrDefault(false)
+
+    fun clear(albumId: Long) {
+        dir?.let { File(it, "$albumId.jpg").delete() }
+        versions.remove(albumId)
     }
 }

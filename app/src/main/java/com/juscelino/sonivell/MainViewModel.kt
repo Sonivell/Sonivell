@@ -12,6 +12,8 @@ import com.juscelino.sonivell.data.AppSettings
 import com.juscelino.sonivell.data.SettingsStore
 import com.juscelino.sonivell.data.Ranked
 import com.juscelino.sonivell.data.Stats
+import com.juscelino.sonivell.data.TagEdit
+import com.juscelino.sonivell.data.TagOverrides
 import com.juscelino.sonivell.data.sortKey
 import com.juscelino.sonivell.data.StatsPeriod
 import com.juscelino.sonivell.data.StatsState
@@ -491,6 +493,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    /** Retrospectiva: sempre os últimos 30 dias, independente do período escolhido nas estatísticas. */
+    val monthStats: StateFlow<StatsState> = combine(allTracks, history.revision) { all, _ ->
+        Stats.compute(all.orEmpty(), history.recent(), StatsPeriod.Mes)
+    }.flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StatsState())
+
+    // ---- Backup ----
+
+    suspend fun exportBackup(uri: android.net.Uri): Boolean = withContext(Dispatchers.IO) {
+        prefs.edit().commit()
+        com.juscelino.sonivell.system.Backup.export(getApplication<Application>(), uri)
+    }
+
+    suspend fun restoreBackup(uri: android.net.Uri): Boolean = withContext(Dispatchers.IO) {
+        com.juscelino.sonivell.system.Backup.restore(getApplication<Application>(), uri)
+    }
+
     // ---- Fila ----
 
     /** Toca uma coleção (álbum, playlist…) em ordem aleatória. */
@@ -620,6 +639,36 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     // ---- Filtro da biblioteca: áudios curtos e pastas ignoradas ----
 
     private var scanned: List<Track> = emptyList()
+    private val tagOverrides = TagOverrides(app)
+
+    /** Tags como vieram do arquivo (para o editor mostrar e restaurar). */
+    fun originalTrack(id: Long): Track? = scanned.firstOrNull { it.id == id }
+
+    fun tagEditOf(id: Long): TagEdit? = tagOverrides.get(id)
+
+    /** Salva a correção de tags (vazia = volta ao original) e atualiza a biblioteca na hora. */
+    fun saveTags(id: Long, edit: TagEdit) {
+        tagOverrides.put(id, edit)
+        applyLibraryFilter()
+    }
+
+    // ---- Notas (estrelas) ----
+
+    private val _ratings = MutableStateFlow(
+        prefs.getString(KEY_RATINGS, null).orEmpty().split(',').mapNotNull { p ->
+            val (id, stars) = p.split(':').takeIf { it.size == 2 } ?: return@mapNotNull null
+            (id.toLongOrNull() ?: return@mapNotNull null) to (stars.toIntOrNull()?.coerceIn(1, 5) ?: return@mapNotNull null)
+        }.toMap()
+    )
+    val ratings: StateFlow<Map<Long, Int>> = _ratings
+
+    /** 0 apaga a nota. Tocar na mesma estrela de novo também apaga. */
+    fun rate(id: Long, stars: Int) {
+        val current = _ratings.value[id]
+        val next = if (stars <= 0 || stars == current) _ratings.value - id else _ratings.value + (id to stars.coerceIn(1, 5))
+        _ratings.value = next
+        prefs.edit().putString(KEY_RATINGS, next.entries.joinToString(",") { "${it.key}:${it.value}" }).apply()
+    }
     private val _scannedFolders = MutableStateFlow<List<String>>(emptyList())
 
     /** Todas as pastas com áudio, inclusive as ignoradas (para a lista dos ajustes). */
@@ -628,7 +677,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private fun applyLibraryFilter(): List<Track> {
         val s = settings.value
         val minMs = s.minDurationSec * 1000L
-        val tracks = scanned.filter { t -> (minMs == 0L || t.durationMs >= minMs) && t.folder !in s.ignoredFolders }
+        val tracks = tagOverrides.apply(scanned).filter { t -> (minMs == 0L || t.durationMs >= minMs) && t.folder !in s.ignoredFolders }
         allTracks.value = tracks
         return tracks
     }
@@ -983,6 +1032,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         const val KEY_WELCOME_SEEN = "welcome_seen"
         const val AUTO_REFRESH_DEBOUNCE_MS = 3_000L
         const val PUBLISH_DEBOUNCE_MS = 2_000L
+        const val KEY_RATINGS = "ratings"
     }
 
     override fun onCleared() {

@@ -119,6 +119,18 @@ import com.juscelino.sonivell.system.AppShortcuts
 import androidx.compose.material.icons.rounded.NotificationsActive
 import com.juscelino.sonivell.ui.extras.CarModeScreen
 import com.juscelino.sonivell.ui.extras.AlarmScreen
+import com.juscelino.sonivell.ui.extras.RetroScreen
+import com.juscelino.sonivell.ui.extras.TagEditorScreen
+import com.juscelino.sonivell.system.Backup
+import com.juscelino.sonivell.data.CustomCovers
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.HideImage
+import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.juscelino.sonivell.system.Ringtones
 import com.juscelino.sonivell.ui.components.miniPlayerGestures
 import com.juscelino.sonivell.ui.library.LibraryScreenEssencial
@@ -155,6 +167,9 @@ private object Routes {
     const val ORGANIZE = "organizar"
     const val CAR = "carro"
     const val ALARM = "despertador"
+    const val TAGS = "tags/{id}"
+    const val RETRO = "retrospectiva"
+    fun tags(id: Long) = "tags/$id"
     fun auto(key: String) = "auto/$key"
     fun smartlist(id: Long) = "inteligente/$id"
     fun smartEdit(id: Long) = "inteligente-editar/$id"
@@ -305,6 +320,26 @@ private fun MainContent(vm: MainViewModel) {
     val uiStyle = settings.uiStyle
     val equalizer by vm.equalizer.collectAsStateWithLifecycle()
     val stats by vm.stats.collectAsStateWithLifecycle()
+    val monthStats by vm.monthStats.collectAsStateWithLifecycle()
+    val ratings by vm.ratings.collectAsStateWithLifecycle()
+    var confirmRestore by remember { mutableStateOf<Uri?>(null) }
+    val backupLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri != null) scope.launch {
+            toast(res.getString(if (vm.exportBackup(uri)) R.string.backup_done else R.string.backup_failed))
+        }
+    }
+    val restoreLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) confirmRestore = uri
+    }
+    var coverFor by remember { mutableStateOf<Long?>(null) }
+    val coverLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        val albumId = coverFor
+        if (uri != null && albumId != null) scope.launch {
+            val ok = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { CustomCovers.set(context, albumId, uri) }
+            toast(res.getString(if (ok) R.string.cover_changed else R.string.cover_failed))
+        }
+        coverFor = null
+    }
     val historyExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         if (uri != null) scope.launch {
             toast(res.getString(if (vm.exportHistory(uri)) R.string.history_exported else R.string.export_failed))
@@ -615,6 +650,9 @@ private fun MainContent(vm: MainViewModel) {
                         val label = if (start in 1900..1999) (start % 100).toString() else start.toString()
                         stringResource(R.string.decade_label, label) to SmartPlaylists.decade(all, start)
                     }
+                    key == "bem-avaliadas" -> stringResource(R.string.auto_top_rated) to all
+                        .filter { (ratings[it.id] ?: 0) >= 4 }
+                        .sortedByDescending { ratings[it.id] ?: 0 }
                     else -> {
                         val kind = when (key) {
                             "mais-ouvidas" -> SmartPlaylists.Builtin.MaisOuvidas to R.string.auto_most
@@ -671,6 +709,38 @@ private fun MainContent(vm: MainViewModel) {
                     onExit = { nav.popBackStack() },
                 )
             }
+            composable(Routes.TAGS, arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->
+                val id = entry.arguments?.getLong("id") ?: 0L
+                val original = remember(id) { vm.originalTrack(id) }
+                if (original == null) {
+                    LaunchedEffect(Unit) { nav.popBackStack() }
+                } else {
+                    TagEditorScreen(
+                        original = original,
+                        current = remember(id) { vm.tagEditOf(id) },
+                        contentPadding = listPadding,
+                        onSave = { edit ->
+                            vm.saveTags(id, edit)
+                            toast(res.getString(if (edit.isEmpty) R.string.tags_restored else R.string.tags_saved))
+                        },
+                        onBack = { nav.popBackStack() },
+                    )
+                }
+            }
+            composable(Routes.RETRO) {
+                RetroScreen(
+                    stats = monthStats,
+                    contentPadding = listPadding,
+                    onBack = { nav.popBackStack() },
+                    onPlayTop = {
+                        val top = monthStats.topTracks.map { it.item }
+                        if (top.isNotEmpty()) {
+                            source = res.getString(R.string.retro_title)
+                            vm.playFrom(top, 0)
+                        }
+                    },
+                )
+            }
             composable(Routes.ALARM) {
                 AlarmScreen(playlists = playlists, contentPadding = listPadding, onBack = { nav.popBackStack() })
             }
@@ -711,6 +781,9 @@ private fun MainContent(vm: MainViewModel) {
                         onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
                         onOpenAlarm = { nav.navigate(Routes.ALARM) },
                         onOpenCarMode = { nav.navigate(Routes.CAR) },
+                        onOpenRetro = { nav.navigate(Routes.RETRO) },
+                        onBackup = { backupLauncher.launch("sonivell-backup.zip") },
+                        onRestore = { restoreLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
                         onUnblockTrack = { vm.recommendations.blockTrack(it, false) },
                         onUnblockArtist = { vm.recommendations.blockArtist(it, false) },
                         onRetrainTaste = { vm.maybeTrainTaste(force = true) },
@@ -744,6 +817,7 @@ private fun MainContent(vm: MainViewModel) {
                     contentPadding = listPadding,
                     onBack = { nav.popBackStack() },
                     onPeriod = vm::setStatsPeriod,
+                    onRetro = { nav.navigate(Routes.RETRO) },
                     onPlayTrack = { t ->
                         source = res.getString(R.string.stats)
                         vm.playFrom(listOf(t), 0)
@@ -886,6 +960,14 @@ private fun MainContent(vm: MainViewModel) {
             add(MenuOption(SonivellTheme.icons.album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) })
             add(MenuOption(SonivellTheme.icons.artist, stringResource(R.string.go_to_artist)) { openArtist(track.artist) })
             add(MenuOption(SonivellTheme.icons.share, stringResource(R.string.share)) { share(track) })
+            add(MenuOption(Icons.Rounded.Edit, stringResource(R.string.tags_edit)) { nav.navigate(Routes.tags(track.id)) })
+            add(MenuOption(Icons.Rounded.Image, stringResource(R.string.cover_change)) {
+                coverFor = track.albumId
+                coverLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            })
+            if (CustomCovers.has(track.albumId)) {
+                add(MenuOption(Icons.Rounded.HideImage, stringResource(R.string.cover_remove)) { CustomCovers.clear(track.albumId) })
+            }
             add(MenuOption(Icons.Rounded.NotificationsActive, stringResource(R.string.set_ringtone)) {
                 if (Ringtones.canWrite(context)) {
                     toast(res.getString(if (Ringtones.setAsRingtone(context, track)) R.string.ringtone_set else R.string.ringtone_failed))
@@ -904,7 +986,12 @@ private fun MainContent(vm: MainViewModel) {
                 })
             }
         }
-        OptionsSheet(options, onDismiss = { menuFor = null }, header = { TrackHeader(track) })
+        OptionsSheet(options, onDismiss = { menuFor = null }, header = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                TrackHeader(track)
+                StarRow(ratings[track.id] ?: 0) { vm.rate(track.id, it) }
+            }
+        })
     }
 
     collectionMenu?.let { data ->
@@ -1050,6 +1137,21 @@ private fun MainContent(vm: MainViewModel) {
             confirmLabel = stringResource(R.string.clear),
             onConfirm = { vm.clearHistory(); toast(res.getString(R.string.history_cleared)) },
             onDismiss = { confirmClearHistory = false },
+        )
+    }
+
+    confirmRestore?.let { uri ->
+        ConfirmDialog(
+            title = stringResource(R.string.backup_restore),
+            message = stringResource(R.string.backup_restore_confirm),
+            confirmLabel = stringResource(R.string.restore),
+            onConfirm = {
+                scope.launch {
+                    if (vm.restoreBackup(uri)) Backup.restart(context)
+                    else toast(res.getString(R.string.backup_invalid))
+                }
+            },
+            onDismiss = { confirmRestore = null },
         )
     }
 
@@ -1227,6 +1329,28 @@ private fun PermissionScreen(onRequest: () -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(stringResource(R.string.permission_allow), style = MaterialTheme.typography.labelLarge, color = c.onAccent)
+            }
+        }
+    }
+}
+
+/** Nota de 1 a 5 estrelas; tocar na estrela marcada apaga a nota. */
+@Composable
+private fun StarRow(stars: Int, onRate: (Int) -> Unit) {
+    val c = SonivellTheme.colors
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        (1..5).forEach { n ->
+            val on = n <= stars
+            val label = pluralStringResource(R.plurals.rating_stars, n, n)
+            Box(
+                Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(role = Role.Button, onClickLabel = label) { onRate(n) }
+                    .semantics { contentDescription = label },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(if (on) Icons.Rounded.Star else Icons.Rounded.StarBorder, null, Modifier.size(26.dp), tint = if (on) c.accent else c.textSecondary)
             }
         }
     }

@@ -252,6 +252,7 @@ fun LibraryScreenClassica(
                                 "nunca-tocadas" to R.string.auto_never,
                                 "recentes" to R.string.auto_recent_added,
                                 "ouvidas-recentemente" to R.string.auto_recent_played,
+                                "bem-avaliadas" to R.string.auto_top_rated,
                                 "curtidas" to R.string.source_liked,
                             )
                             Row(Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -86,6 +86,9 @@ data class SettingsActions(
     val onForgetTaste: () -> Unit = {},
     val onOpenAlarm: () -> Unit = {},
     val onOpenCarMode: () -> Unit = {},
+    val onOpenRetro: () -> Unit = {},
+    val onBackup: () -> Unit = {},
+    val onRestore: () -> Unit = {},
 )
 
 @Composable
@@ -350,6 +353,7 @@ fun SettingsScreen(
 
         Section(stringResource(R.string.settings_history)) {
             LinkRow(stringResource(R.string.stats), stringResource(R.string.stats_hint), actions.onOpenStats)
+            LinkRow(stringResource(R.string.retro_title), stringResource(R.string.retro_hint), actions.onOpenRetro)
             SwitchRow(
                 stringResource(R.string.settings_history_pause),
                 stringResource(R.string.settings_history_pause_hint),
@@ -388,6 +392,12 @@ fun SettingsScreen(
             LinkRow(stringResource(R.string.cd_refresh), stringResource(R.string.settings_refresh_hint), actions.onRefreshLibrary)
             LinkRow(stringResource(R.string.lyrics_pick_folder), stringResource(R.string.lyrics_folder_hint), actions.onPickLyricsFolder)
             LinkRow(stringResource(R.string.organize), stringResource(R.string.organize_hint), actions.onOpenOrganize)
+        }
+
+        Section(stringResource(R.string.backup_section)) {
+            Text(stringResource(R.string.backup_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+            LinkRow(stringResource(R.string.backup_export), null, actions.onBackup)
+            LinkRow(stringResource(R.string.backup_restore), stringResource(R.string.backup_restore_hint), actions.onRestore)
         }
 
         Section(stringResource(R.string.thanks_title)) {
