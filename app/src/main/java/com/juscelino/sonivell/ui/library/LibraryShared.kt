@@ -14,6 +14,10 @@ data class LibraryActions(
     val onPlay: (tracks: List<Track>, index: Int, source: String) -> Unit,
     val onShuffleAll: () -> Unit,
     val onPlayMix: (Track) -> Unit = {},
+    /** Mixes por clima; null quando o SMART não está disponível (a seção some). */
+    val onPlayMood: ((com.juscelino.sonivell.data.Mood) -> Unit)? = null,
+    /** Toca a faixa a partir do trecho da letra encontrado. */
+    val onPlayLyric: (com.juscelino.sonivell.data.LyricHit) -> Unit = {},
     val onTrackMenu: (Track) -> Unit = {},
     val onOpenAlbum: (Long) -> Unit = {},
     val onOpenArtist: (String) -> Unit = {},

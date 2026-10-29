@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -97,6 +98,7 @@ fun NowPlayingScreenOndas(
     lyricsOffsetMs: Long = 0L,
     upNext: List<Track> = emptyList(),
     reason: PlayReason = PlayReason.Chosen,
+    visualizer: Boolean = false,
 ) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -122,7 +124,16 @@ fun NowPlayingScreenOndas(
 
             // Capa
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                AlbumArt(track, Modifier.widthIn(max = 420.dp).fillMaxWidth().aspectRatio(1f), corner = 28.dp, detailed = true)
+                Box(Modifier.widthIn(max = 420.dp).fillMaxWidth().aspectRatio(1f)) {
+                    AlbumArt(track, Modifier.fillMaxSize(), corner = 28.dp, detailed = true)
+                    if (visualizer) {
+                        AudioBars(
+                            playing = state.isPlaying,
+                            color = c.accent,
+                            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.32f).padding(horizontal = 16.dp, vertical = 14.dp),
+                        )
+                    }
+                }
             }
 
             // Título + curtir

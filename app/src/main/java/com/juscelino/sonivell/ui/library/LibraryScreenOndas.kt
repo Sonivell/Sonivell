@@ -134,6 +134,7 @@ fun LibraryScreenOndas(
     playlists: List<Playlist> = emptyList(),
     smartPlaylists: List<SmartPlaylist> = emptyList(),
     semanticResults: List<Track> = emptyList(),
+    lyricHits: List<com.juscelino.sonivell.data.LyricHit> = emptyList(),
     genreOfMonth: Ranked<String>? = null,
     recentSearches: List<String> = emptyList(),
     tagBannerCount: Int = 0,
@@ -244,7 +245,7 @@ fun LibraryScreenOndas(
 
         when (mode) {
             LibraryMode.Inicio -> home(state, favorites, labels, actions, smartProgress, forYou, decades)
-            LibraryMode.Buscar -> search(state, currentId, labels, actions, playlists, semanticResults, decades, genreOfMonth, recentSearches, showAllSongs) { showAllSongs = true }
+            LibraryMode.Buscar -> search(state, currentId, labels, actions, playlists, semanticResults, decades, genreOfMonth, recentSearches, showAllSongs, lyricHits) { showAllSongs = true }
             LibraryMode.Biblioteca -> {
                 if (tagBannerCount > 0) {
                     item(key = "tags-banner") {
@@ -688,6 +689,14 @@ private fun LazyListScope.home(
             }
         }
     }
+    actions.onPlayMood?.let { onMood ->
+        item(key = "fy-moods") {
+            Column(Modifier.padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Title(stringResource(R.string.mood_title)) { SmartTag() }
+                MoodRow(onMood)
+            }
+        }
+    }
     forYou.pick?.let { pick ->
         item(key = "fy-pick") {
             Column(Modifier.padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -904,6 +913,7 @@ private fun LazyListScope.search(
     genreOfMonth: Ranked<String>?,
     recentSearches: List<String>,
     showAllSongs: Boolean,
+    lyricHits: List<com.juscelino.sonivell.data.LyricHit>,
     onShowAll: () -> Unit,
 ) {
     val parsed = Search.parse(state.query)
@@ -1023,7 +1033,15 @@ private fun LazyListScope.search(
             })
         }
     }
-    if (tracks.isEmpty() && artists.isEmpty() && albums.isEmpty() && semanticResults.isEmpty()) {
+    if (lyricHits.isNotEmpty()) {
+        item(key = "s-lyrics") {
+            Column(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Title(stringResource(R.string.search_in_lyrics))
+                lyricHits.take(6).forEach { hit -> LyricHitCard(hit, state.query, onPlay = { actions.onPlayLyric(hit) }) }
+            }
+        }
+    }
+    if (tracks.isEmpty() && artists.isEmpty() && albums.isEmpty() && semanticResults.isEmpty() && lyricHits.isEmpty()) {
         item(key = "s-none") { Hint(stringResource(R.string.search_none)) }
     }
     // Busca pelo sentido (edição SMART): o que soa parecido com a descrição.

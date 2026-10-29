@@ -93,7 +93,7 @@ private const val SIDE = 20
 /** Chave de ordenação que ignora símbolos no começo ("!Tchau radar!", "#…", "(…"). */
 private enum class EssAlbumMode { AZ, Added }
 
-private enum class EssResultFilter { All, Songs, Albums, Artists }
+private enum class EssResultFilter { All, Songs, Albums, Artists, Lyrics }
 
 @Composable
 fun LibraryScreenEssencial(
@@ -107,6 +107,7 @@ fun LibraryScreenEssencial(
     playlists: List<Playlist> = emptyList(),
     smartPlaylists: List<SmartPlaylist> = emptyList(),
     semanticResults: List<Track> = emptyList(),
+    lyricHits: List<com.juscelino.sonivell.data.LyricHit> = emptyList(),
     recentSearches: List<String> = emptyList(),
     tagBannerCount: Int = 0,
 ) {
@@ -188,7 +189,7 @@ fun LibraryScreenEssencial(
                     }
                     essBrowse(state, actions)
                 }
-                else essResults(state, currentId, labels, actions, playlists, semanticResults)
+                else essResults(state, currentId, labels, actions, playlists, semanticResults, lyricHits)
             }
             LibraryMode.Biblioteca -> {
                 if (tagBannerCount > 0) {
@@ -400,6 +401,15 @@ private fun LazyListScope.essHome(state: LibraryState, favorites: Set<Long>, for
         }
     }
 
+    actions.onPlayMood?.let { onMood ->
+        item(key = "moods") {
+            Column(Modifier.padding(top = 30.dp)) {
+                EssSectionTitle(stringResource(R.string.mood_title))
+                MoodRow(onMood, contentPadding = PaddingValues(horizontal = SIDE.dp))
+            }
+        }
+    }
+
     if (forYou.forgottenFavorites.isNotEmpty()) {
         item(key = "again") {
             Column(Modifier.padding(top = 30.dp)) {
@@ -579,6 +589,7 @@ private fun LazyListScope.essResults(
     actions: LibraryActions,
     playlists: List<Playlist>,
     semanticResults: List<Track>,
+    lyricHits: List<com.juscelino.sonivell.data.LyricHit>,
 ) {
     val parsed = Search.parse(state.query)
     val hasWords = parsed.words.isNotEmpty()
@@ -596,6 +607,7 @@ private fun LazyListScope.essResults(
                         EssResultFilter.Songs -> R.string.tab_songs
                         EssResultFilter.Albums -> R.string.tab_albums
                         EssResultFilter.Artists -> R.string.tab_artists
+                        EssResultFilter.Lyrics -> R.string.search_in_lyrics
                     }
                 )
                 EssChip(label, selected = EssSearchFilter.value == f) { EssSearchFilter.value = f }
@@ -663,7 +675,18 @@ private fun LazyListScope.essResults(
                     }
                 }
             }
-            if (tracks.isEmpty() && artists.isEmpty() && albums.isEmpty() && semanticResults.isEmpty()) {
+            if ((filter == EssResultFilter.All || filter == EssResultFilter.Lyrics) && lyricHits.isNotEmpty()) {
+                Column {
+                    EssSectionTitle(stringResource(R.string.search_in_lyrics))
+                    Column(Modifier.padding(horizontal = SIDE.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        val shown = if (filter == EssResultFilter.Lyrics) lyricHits else lyricHits.take(3)
+                        shown.forEach { hit -> LyricHitCard(hit, state.query, onPlay = { actions.onPlayLyric(hit) }) }
+                    }
+                }
+            }
+            if (filter == EssResultFilter.Lyrics && lyricHits.isEmpty()) {
+                EssMuted(stringResource(R.string.search_lyrics_hint), Modifier.padding(horizontal = SIDE.dp))
+            } else if (tracks.isEmpty() && artists.isEmpty() && albums.isEmpty() && semanticResults.isEmpty() && lyricHits.isEmpty()) {
                 EssMuted(stringResource(R.string.search_none), Modifier.padding(horizontal = SIDE.dp))
             }
         }

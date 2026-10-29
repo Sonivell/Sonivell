@@ -609,4 +609,21 @@
     <string name="backup_done">Backup saved</string>
     <string name="backup_failed">Couldn\'t create the backup</string>
     <string name="backup_invalid">This file isn\'t a Sonivell backup</string>
+
+    <!-- Visualizador -->
+    <string name="settings_visualizer">Visualizer</string>
+    <string name="settings_visualizer_hint">Animated bars over the cover in the player. Android asks for microphone access to read the sound; Sonivell only reads what it is playing and records nothing.</string>
+    <!-- Para o momento -->
+    <string name="mood_title">For the moment</string>
+    <string name="mood_calm">Calm</string>
+    <string name="mood_upbeat">Upbeat</string>
+    <string name="mood_focus">Focus</string>
+    <string name="mood_workout">Workout</string>
+    <string name="mood_night">Night</string>
+    <string name="mood_nostalgia">Nostalgia</string>
+    <string name="mood_empty">SMART found nothing for this mood yet</string>
+    <!-- Busca na letra -->
+    <string name="search_in_lyrics">In lyrics</string>
+    <string name="search_lyrics_hint">Searches the lyrics saved on your device (lyrics folder and embedded lyrics you have opened).</string>
+    <string name="lyrics_play_from_here">Play from this line</string>
 </resources>

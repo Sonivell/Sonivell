@@ -35,6 +35,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
+import com.juscelino.sonivell.data.Mood
+import com.juscelino.sonivell.data.LyricHit
+import com.juscelino.sonivell.ui.components.AlbumArt
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.graphics.Color
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 
 /** Cartão da Biblioteca: "N músicas com tags para arrumar", leva ao Organizar. */
@@ -118,4 +128,86 @@ internal fun RecentSearches(items: List<String>, onPick: (String) -> Unit, onRem
             }
         }
     }
+}
+
+/** "Para o momento": mixes por clima, montados pelo SMART a partir de uma descrição. */
+@Composable
+internal fun MoodRow(onPick: (Mood) -> Unit, modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues(0.dp)) {
+    Row(
+        modifier.horizontalScroll(rememberScrollState()).padding(contentPadding),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Mood.entries.forEach { mood ->
+            val label = stringResource(mood.label)
+            Box(
+                Modifier
+                    .heightIn(min = 56.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Color(mood.color))
+                    .clickable(role = Role.Button, onClickLabel = label) { onPick(mood) }
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = Color(0xFFF2F2EE))
+            }
+        }
+    }
+}
+
+/** Resultado da busca na letra: a faixa e a linha, com o trecho buscado destacado. */
+@Composable
+internal fun LyricHitCard(hit: LyricHit, query: String, onPlay: () -> Unit, modifier: Modifier = Modifier) {
+    val c = SonivellTheme.colors
+    val range = highlightRange(hit.line, query)
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(c.surface)
+            .clickable(role = Role.Button, onClick = onPlay)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            AlbumArt(hit.track, Modifier.size(44.dp), corner = 12.dp)
+            Column(Modifier.weight(1f)) {
+                Text(hit.track.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(hit.track.artist, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            hit.timeMs?.let { ms ->
+                Text("%d:%02d".format(ms / 60_000, (ms / 1000) % 60), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = c.accent)
+            }
+        }
+        Text(
+            buildAnnotatedString {
+                if (range == null) append(hit.line)
+                else {
+                    append(hit.line.substring(0, range.first))
+                    withStyle(SpanStyle(color = c.onAccent, background = c.accent, fontWeight = FontWeight.ExtraBold)) {
+                        append(hit.line.substring(range.first, range.last + 1))
+                    }
+                    append(hit.line.substring(range.last + 1))
+                }
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = c.textTertiary,
+        )
+        if (hit.timeMs != null) {
+            Text(stringResource(R.string.lyrics_play_from_here), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textSecondary)
+        }
+    }
+}
+
+/** Onde [query] aparece em [line], ignorando maiúsculas e acentos (índices da linha original). */
+private fun highlightRange(line: String, query: String): IntRange? {
+    fun fold(ch: Char): String =
+        java.text.Normalizer.normalize(ch.lowercase(), java.text.Normalizer.Form.NFD).filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
+    val q = query.trim().map(::fold).joinToString("")
+    if (q.isEmpty()) return null
+    val folded = StringBuilder()
+    val origin = ArrayList<Int>()
+    line.forEachIndexed { i, ch -> fold(ch).forEach { f -> folded.append(f); origin += i } }
+    val at = folded.indexOf(q)
+    if (at < 0) return null
+    return origin[at]..origin[at + q.length - 1]
 }

@@ -92,6 +92,7 @@ class PlaybackService : MediaLibraryService() {
         // Sessão de áudio fixa: o equalizador se prende a ela uma vez só.
         val audioSession = getSystemService(AudioManager::class.java).generateAudioSessionId()
         player.setAudioSessionId(audioSession)
+        currentAudioSession = audioSession
         effects.attach(audioSession)
         crossfader = Crossfader(this, player, audioSession, prefs, createSmartEngine(this)).also { it.start() }
         prefs.registerOnSharedPreferenceChangeListener(settingsListener)
@@ -313,6 +314,7 @@ class PlaybackService : MediaLibraryService() {
             val md = p.mediaMetadata
             SonivellWidgets.publish(this, md.title?.toString(), md.artist?.toString(), md.artworkUri, playing = false)
         }
+        currentAudioSession = 0
         prefs.unregisterOnSharedPreferenceChangeListener(settingsListener)
         outputs?.release()
         outputs = null
@@ -339,5 +341,10 @@ class PlaybackService : MediaLibraryService() {
         const val EXTRA_IDS = "ids"
         const val EXTRA_RAMP_SEC = "ramp_sec"
         const val EXTRA_STOP_MIN = "stop_min"
+
+        /** Sessão de áudio do player (o visualizador do app se liga nela). 0 = serviço parado. */
+        @Volatile
+        var currentAudioSession: Int = 0
+            private set
     }
 }

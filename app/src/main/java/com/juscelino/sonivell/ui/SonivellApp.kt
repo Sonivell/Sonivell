@@ -347,6 +347,7 @@ private fun MainContent(vm: MainViewModel) {
     }
     val smartPlaylists by vm.smartPlaylists.collectAsStateWithLifecycle()
     val semanticResults by vm.semanticResults.collectAsStateWithLifecycle()
+    val lyricHits by vm.lyricHits.collectAsStateWithLifecycle()
     val duplicates by vm.duplicates.collectAsStateWithLifecycle()
     val metadataIssues by vm.metadataIssues.collectAsStateWithLifecycle()
     val playStats by vm.playStats.collectAsStateWithLifecycle()
@@ -409,6 +410,16 @@ private fun MainContent(vm: MainViewModel) {
             source = smartSource
             vm.playMix(seed)
         },
+        onPlayMood = if (!vm.smart.isAvailable) null else { mood ->
+            scope.launch {
+                val tracks = vm.moodTracks(mood)
+                if (tracks.isEmpty()) toast(res.getString(R.string.mood_empty))
+                else {
+                    source = res.getString(mood.label)
+                    vm.playShuffled(tracks)
+                }
+            }
+        },
         onShuffleAll = {
             source = if (shuffleMode == ShuffleMode.SMART) smartSource else shuffleSource
             vm.playAllShuffled()
@@ -438,6 +449,11 @@ private fun MainContent(vm: MainViewModel) {
         },
         onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
         onRemoveRecentSearch = vm::removeRecentSearch,
+        onPlayLyric = { hit ->
+            commitSearch()
+            source = res.getString(R.string.search_in_lyrics)
+            vm.playFrom(listOf(hit.track), 0, startPositionMs = ((hit.timeMs ?: 0L) - 1_500L).coerceAtLeast(0L))
+        },
         onDismissTagBanner = vm::dismissTagBanner,
     )
 
@@ -578,6 +594,7 @@ private fun MainContent(vm: MainViewModel) {
                             contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
                             genreOfMonth = genreOfMonth, recentSearches = recentSearches, tagBannerCount = tagBannerCount,
+                            lyricHits = lyricHits,
                         )
                         UiStyle.CONTRASTE -> LibraryScreenContraste(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
@@ -589,6 +606,7 @@ private fun MainContent(vm: MainViewModel) {
                             contentPadding = listPadding, actions = libraryActions,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
                             recentSearches = recentSearches, tagBannerCount = tagBannerCount,
+                            lyricHits = lyricHits,
                         )
                         UiStyle.CLASSICA -> LibraryScreenClassica(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
@@ -864,6 +882,7 @@ private fun MainContent(vm: MainViewModel) {
                                 track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
                                 isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, sleepTimer = sleepTimer,
                                 lyrics = lyricsState, lyricsOffsetMs = lyricsOffset, upNext = upNext, reason = reason,
+                                visualizer = settings.visualizer,
                             )
                         }
                         UiStyle.CONTRASTE -> NowPlayingScreenContraste(

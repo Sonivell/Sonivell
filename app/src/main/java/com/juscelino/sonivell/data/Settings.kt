@@ -70,6 +70,8 @@ data class AppSettings(
     val ignoredFolders: Set<String> = emptySet(),
     /** Publicar as playlists como .m3u para o Android e outros apps (Android 10+). */
     val publishPlaylists: Boolean = false,
+    /** Barras animadas sobre a capa no player (pede a permissão de microfone do Android). */
+    val visualizer: Boolean = false,
 )
 
 /** Velocidades oferecidas. */
@@ -115,6 +117,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putInt(KEY_MIN_DURATION, next.minDurationSec)
             .putStringSet(KEY_IGNORED_FOLDERS, next.ignoredFolders)
             .putBoolean(KEY_PUBLISH_PLAYLISTS, next.publishPlaylists)
+            .putBoolean(KEY_VISUALIZER, next.visualizer)
             .apply()
     }
 
@@ -145,6 +148,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         minDurationSec = prefs.getInt(KEY_MIN_DURATION, 0),
         ignoredFolders = prefs.getStringSet(KEY_IGNORED_FOLDERS, null)?.toSet().orEmpty(),
         publishPlaylists = prefs.getBoolean(KEY_PUBLISH_PLAYLISTS, false),
+        visualizer = prefs.getBoolean(KEY_VISUALIZER, false),
     )
 
     companion object {
@@ -173,6 +177,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_MIN_DURATION = "min_duration"
         const val KEY_IGNORED_FOLDERS = "ignored_folders"
         const val KEY_PUBLISH_PLAYLISTS = "publish_playlists"
+        const val KEY_VISUALIZER = "visualizer"
         /** Escrita pelo MainViewModel: a fila atual é do SMART. */
         const val KEY_SMART_MODE = "smart_mode"
     }

@@ -17,6 +17,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+/** Trecho de letra encontrado na busca; [timeMs] só existe em letra sincronizada. */
+@Immutable
+data class LyricHit(val track: Track, val line: String, val timeMs: Long?)
+
 @Immutable
 data class LyricLine(val timeMs: Long, val text: String)
 
@@ -51,12 +55,15 @@ class LyricsRepository(private val context: Context, private val prefs: SharedPr
     private val cache = HashMap<Long, Lyrics?>()
     private val lock = Mutex()
     private var lrcIndex: Map<String, Uri>? = null
+    /** Texto das letras da pasta, lido uma vez para a busca: nome do arquivo → letra. */
+    private var textIndex: Map<String, Lyrics>? = null
 
     val lrcFolder: Uri? get() = prefs.getString(KEY_FOLDER, null)?.let(Uri::parse)
 
     fun setLrcFolder(uri: Uri?) {
         prefs.edit().apply { if (uri == null) remove(KEY_FOLDER) else putString(KEY_FOLDER, uri.toString()) }.apply()
         lrcIndex = null
+        textIndex = null
         cache.clear()
     }
 
@@ -104,6 +111,42 @@ class LyricsRepository(private val context: Context, private val prefs: SharedPr
         return parse(text, fromFile = true)
     }
 
+    /**
+     * Busca um trecho nas letras: as da pasta escolhida e as embutidas que já foram abertas.
+     * Ignora maiúsculas e acentos. Cada faixa aparece uma vez, com a primeira linha que bate.
+     */
+    suspend fun search(query: String, tracks: List<Track>, limit: Int = 30): List<LyricHit> = withContext(Dispatchers.IO) {
+        val q = fold(query.trim())
+        if (q.length < 3) return@withContext emptyList()
+        val texts = lock.withLock {
+            textIndex ?: run {
+                val index = lrcIndex ?: buildIndex().also { lrcIndex = it }
+                index.mapNotNull { (stem, uri) ->
+                    runCatching {
+                        context.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() }
+                            ?.let { parse(it, fromFile = true) }?.let { stem to it }
+                    }.getOrNull()
+                }.toMap().also { textIndex = it }
+            }
+        }
+        val embedded = lock.withLock { cache.filterValues { it != null && !it.fromFile }.mapValues { it.value!! } }
+        val out = ArrayList<LyricHit>()
+        for (t in tracks) {
+            val lyrics = embedded[t.id]
+                ?: t.fileName?.substringBeforeLast('.')?.lowercase()?.let(texts::get)
+                ?: texts["${t.artist} - ${t.title}".lowercase()]
+                ?: texts[t.title.lowercase()]
+                ?: continue
+            val line = lyrics.lines.firstOrNull { fold(it.text).contains(q) } ?: continue
+            out += LyricHit(t, line.text, if (lyrics.synced) line.timeMs else null)
+            if (out.size >= limit) break
+        }
+        out
+    }
+
+    private fun fold(s: String): String =
+        java.text.Normalizer.normalize(s.lowercase(), java.text.Normalizer.Form.NFD).replace(DIACRITICS, "")
+
     /** Lista os .lrc da pasta (e subpastas, até 4 níveis): nome sem extensão → arquivo. */
     private fun buildIndex(): Map<String, Uri> {
         val tree = lrcFolder ?: return emptyMap()
@@ -127,7 +170,7 @@ class LyricsRepository(private val context: Context, private val prefs: SharedPr
                         val name = c.getString(1).orEmpty()
                         val mime = c.getString(2)
                         if (mime == DocumentsContract.Document.MIME_TYPE_DIR) walk(id, depth + 1)
-                        else if (name.endsWith(".lrc", ignoreCase = true)) {
+                        else if (name.endsWith(".lrc", ignoreCase = true) || name.endsWith(".txt", ignoreCase = true)) {
                             out[name.substringBeforeLast('.').lowercase()] =
                                 DocumentsContract.buildDocumentUriUsingTree(tree, id)
                         }
@@ -141,6 +184,7 @@ class LyricsRepository(private val context: Context, private val prefs: SharedPr
 
     companion object {
         private const val TAG = "SonivellLyrics"
+        private val DIACRITICS = Regex("\\p{Mn}+")
         private const val KEY_FOLDER = "lyrics_folder"
         private const val KEY_OFFSET = "lyrics_offset_"
 

@@ -299,6 +299,7 @@ fun SettingsScreen(
                 stringResource(R.string.settings_skip_silence_hint),
                 settings.skipSilence,
             ) { on -> actions.onUpdate { it.copy(skipSilence = on) } }
+            VisualizerSwitch(settings.visualizer) { on -> actions.onUpdate { it.copy(visualizer = on) } }
             LinkRow(stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), actions.onOpenEqualizer)
             LinkRow(stringResource(R.string.alarm_title), stringResource(R.string.alarm_hint), actions.onOpenAlarm)
             LinkRow(stringResource(R.string.car_mode), stringResource(R.string.car_mode_hint), actions.onOpenCarMode)
@@ -646,5 +647,25 @@ private fun LinkRow(title: String, hint: String?, onClick: () -> Unit) {
             if (hint != null) Text(hint, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
         }
         Icon(SonivellTheme.icons.chevron, null, tint = c.textSecondary)
+    }
+}
+
+/** Liga o visualizador; antes pede a permissão de microfone, que o Android exige para ler o som. */
+@Composable
+private fun VisualizerSwitch(on: Boolean, onChange: (Boolean) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) onChange(true) }
+    SwitchRow(
+        stringResource(R.string.settings_visualizer),
+        stringResource(R.string.settings_visualizer_hint),
+        on,
+    ) { enable ->
+        if (!enable) onChange(false)
+        else if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) onChange(true)
+        else launcher.launch(android.Manifest.permission.RECORD_AUDIO)
     }
 }

@@ -606,4 +606,21 @@
     <string name="backup_done">Backup salvo</string>
     <string name="backup_failed">Não deu para fazer o backup</string>
     <string name="backup_invalid">Esse arquivo não é um backup do Sonivell</string>
+
+    <!-- Visualizador -->
+    <string name="settings_visualizer">Visualizador</string>
+    <string name="settings_visualizer_hint">Barras animadas sobre a capa no player. O Android pede acesso ao microfone para ler o som; o Sonivell só lê o que ele mesmo toca e não grava nada.</string>
+    <!-- Para o momento -->
+    <string name="mood_title">Para o momento</string>
+    <string name="mood_calm">Calmo</string>
+    <string name="mood_upbeat">Animado</string>
+    <string name="mood_focus">Para focar</string>
+    <string name="mood_workout">Treino</string>
+    <string name="mood_night">Noite</string>
+    <string name="mood_nostalgia">Nostalgia</string>
+    <string name="mood_empty">O SMART ainda não achou nada para esse clima</string>
+    <!-- Busca na letra -->
+    <string name="search_in_lyrics">Na letra</string>
+    <string name="search_lyrics_hint">Procura nas letras salvas no aparelho (pasta de letras e letras embutidas que você já abriu).</string>
+    <string name="lyrics_play_from_here">Tocar a partir deste trecho</string>
 </resources>

@@ -879,6 +879,24 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** Faixas de um mix por clima (busca por descrição no SMART), já sem as bloqueadas. */
+    suspend fun moodTracks(mood: com.juscelino.sonivell.data.Mood): List<Track> {
+        if (!smart.isAvailable) return emptyList()
+        val byId = allTracks.value.orEmpty().associateBy { it.id }
+        val blocked = recommendations.blockedTracks.value
+        return smart.semanticSearch(mood.query, 60).filter { it !in blocked }.mapNotNull(byId::get).take(40)
+    }
+
+    /** Busca nas letras (pasta de letras e letras embutidas já abertas). */
+    @OptIn(kotlinx.coroutines.FlowPreview::class, ExperimentalCoroutinesApi::class)
+    val lyricHits: StateFlow<List<com.juscelino.sonivell.data.LyricHit>> = query
+        .debounce(400)
+        .mapLatest { q ->
+            if (q.trim().length < 3) emptyList()
+            else lyricsRepo.search(q, allTracks.value.orEmpty())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     // ---- Organizar: duplicatas e metadados ----
 
     val duplicates: StateFlow<List<DuplicateGroup>> = combine(allTracks, recommendations.notDuplicates) { all, ignored ->
