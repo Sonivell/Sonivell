@@ -628,4 +628,30 @@
     <string name="search_in_lyrics">In lyrics</string>
     <string name="search_lyrics_hint">Searches the lyrics saved on your device (lyrics folder and embedded lyrics you have opened).</string>
     <string name="lyrics_play_from_here">Play from this line</string>
+
+    <!-- Ajustes em páginas -->
+    <string name="settings_transitions">Transitions</string>
+    <string name="settings_smart_page">SMART and recommendations</string>
+    <string name="settings_history_page">History and stats</string>
+    <string name="settings_search">Search settings</string>
+    <string name="settings_search_none">No setting with that name</string>
+    <string name="sum_playback">Speed %1$s · headphones and Bluetooth</string>
+    <string name="sum_crossfade_off">Crossfade off</string>
+    <string name="sum_crossfade">Crossfade %1$d s</string>
+    <string name="sum_crossfade_smart">Crossfade %1$d s · adapted by SMART</string>
+    <string name="sum_smart">Variety %1$s · %2$s</string>
+    <string name="sum_taste_on">learning your taste</string>
+    <string name="sum_taste_off">not learning your taste</string>
+    <string name="sum_library_auto">Updates by itself · folders · lyrics</string>
+    <string name="sum_library">Folders · lyrics · organize</string>
+    <string name="sum_history">Stats · your month in music · export</string>
+    <string name="sum_off">Off</string>
+    <string name="sum_car">Big buttons, to use at a glance</string>
+    <string name="sum_data">Backup and restore</string>
+    <string name="sum_about">Version %1$s · acknowledgements</string>
+    <string name="group_headset">Headphones and Bluetooth</string>
+    <string name="group_sound">Sound</string>
+    <string name="group_screen">On screen</string>
+    <string name="settings_speed_hint">Playback pace; the pitch stays the same</string>
+    <string name="settings_crossfade_duration">Transition length</string>
 </resources>

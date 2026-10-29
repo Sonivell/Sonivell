@@ -1,6 +1,29 @@
 package com.juscelino.sonivell.ui.settings
 
 import android.os.Build
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Alarm
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Insights
+import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import com.juscelino.sonivell.system.PlaylistPublisher
 import androidx.compose.ui.res.pluralStringResource
 import com.juscelino.sonivell.data.MIN_DURATION_STEPS
@@ -91,6 +114,14 @@ data class SettingsActions(
     val onRestore: () -> Unit = {},
 )
 
+/** Páginas dos ajustes: o índice e uma página por assunto. */
+private enum class SettingsPage { Index, Aparencia, Reproducao, Transicoes, Smart, Biblioteca, Historico, Dados, Sobre }
+
+/**
+ * Ajustes em páginas, como nos ajustes do Android: o índice mostra cada assunto com o valor
+ * atual em uma linha, e cada página tem só as opções daquele assunto. O cabeçalho fica fixo
+ * (o conteúdo rola por baixo dele, nunca por baixo da barra de status).
+ */
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
@@ -105,319 +136,553 @@ fun SettingsScreen(
     folders: List<String> = emptyList(),
 ) {
     val c = SonivellTheme.colors
+    var pageName by rememberSaveable { mutableStateOf(SettingsPage.Index.name) }
+    val page = SettingsPage.valueOf(pageName)
+    fun open(p: SettingsPage) { pageName = p.name }
+    BackHandler(enabled = page != SettingsPage.Index) { open(SettingsPage.Index) }
+
     Column(
         Modifier
             .fillMaxSize()
             .background(c.background)
-            .verticalScroll(rememberScrollState())
-            .padding(
-                start = 24.dp,
-                end = 24.dp,
-                top = contentPadding.calculateTopPadding() + 8.dp,
-                bottom = contentPadding.calculateBottomPadding() + 24.dp,
-            ),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+            .padding(top = contentPadding.calculateTopPadding()),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconBtn(SonivellTheme.icons.back, stringResource(R.string.cd_back), actions.onBack, background = c.surface)
-            Text(stringResource(R.string.settings), style = MaterialTheme.typography.displaySmall, color = c.textPrimary)
+        Row(
+            Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            IconBtn(
+                SonivellTheme.icons.back,
+                stringResource(R.string.cd_back),
+                { if (page == SettingsPage.Index) actions.onBack() else open(SettingsPage.Index) },
+                background = c.surface,
+            )
+            Text(
+                stringResource(pageTitle(page)),
+                style = if (page == SettingsPage.Index) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = c.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
+        key(page) {
+            Column(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                when (page) {
+                    SettingsPage.Index -> IndexPage(settings, smartAvailable, versionName, actions, ::open)
+                    SettingsPage.Aparencia -> AppearancePage(settings, actions)
+                    SettingsPage.Reproducao -> PlaybackPage(settings, actions)
+                    SettingsPage.Transicoes -> TransitionsPage(settings, smartAvailable, actions)
+                    SettingsPage.Smart -> SmartPage(settings, smartAvailable, tasteStatus, blockedTracks, blockedArtists, actions)
+                    SettingsPage.Biblioteca -> LibraryPage(settings, folders, actions)
+                    SettingsPage.Historico -> HistoryPage(settings, actions)
+                    SettingsPage.Dados -> DataPage(actions)
+                    SettingsPage.Sobre -> AboutPage(versionName, smartAvailable, actions)
+                }
+            }
+        }
+    }
+}
 
-        Section(stringResource(R.string.settings_appearance)) {
-            // Prévia ao vivo: já usa o tema aplicado, então mostra o resultado de cada escolha.
-            AppearancePreview()
-            RowLabel(stringResource(R.string.settings_layout))
-            val legacy = settings.uiStyle == UiStyle.CONTRASTE || settings.uiStyle == UiStyle.CLASSICA
-            var showLegacy by rememberSaveable { mutableStateOf(legacy) }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+private fun pageTitle(p: SettingsPage): Int = when (p) {
+    SettingsPage.Index -> R.string.settings
+    SettingsPage.Aparencia -> R.string.settings_appearance
+    SettingsPage.Reproducao -> R.string.settings_playback
+    SettingsPage.Transicoes -> R.string.settings_transitions
+    SettingsPage.Smart -> R.string.settings_smart_page
+    SettingsPage.Biblioteca -> R.string.nav_library
+    SettingsPage.Historico -> R.string.settings_history_page
+    SettingsPage.Dados -> R.string.backup_section
+    SettingsPage.Sobre -> R.string.settings_about
+}
+
+// ---------------------------------------------------------------- Índice
+
+@Composable
+private fun IndexPage(
+    settings: AppSettings,
+    smartAvailable: Boolean,
+    versionName: String,
+    actions: SettingsActions,
+    open: (SettingsPage) -> Unit,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var query by rememberSaveable { mutableStateOf("") }
+    SearchField(query) { query = it }
+
+    if (query.isNotBlank()) {
+        val entries = searchEntries(smartAvailable)
+        val q = fold(query)
+        val hits = entries.filter { fold(it.title).contains(q) || fold(it.hint).contains(q) }
+        if (hits.isEmpty()) {
+            Text(stringResource(R.string.settings_search_none), style = MaterialTheme.typography.bodyLarge, color = SonivellTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 8.dp))
+        } else {
+            Card {
+                hits.forEach { e ->
+                    NavRow(null, e.title, if (e.page == SettingsPage.Index) e.hint else stringResource(pageTitle(e.page))) {
+                        when (e.page) {
+                            SettingsPage.Index -> e.direct?.invoke(actions)
+                            else -> open(e.page)
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    val layout = stringResource(
+        when (settings.uiStyle) {
+            UiStyle.ONDAS -> R.string.layout_ondas
+            UiStyle.ESSENCIAL -> R.string.layout_essencial
+            UiStyle.CONTRASTE -> R.string.layout_contrast
+            UiStyle.CLASSICA -> R.string.layout_classic
+        }
+    )
+    val theme = stringResource(
+        when (settings.theme) {
+            ThemeMode.AUTO -> R.string.theme_auto
+            ThemeMode.LIGHT -> R.string.theme_light
+            ThemeMode.DARK -> R.string.theme_dark
+        }
+    )
+    val color = if (settings.systemColors && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) stringResource(R.string.settings_system_colors)
+    else stringResource(accentNames[settings.accent.ordinal])
+
+    Card {
+        NavRow(Icons.Rounded.Palette, stringResource(R.string.settings_appearance), "$layout · $theme · $color", accent = true) { open(SettingsPage.Aparencia) }
+        NavRow(Icons.Rounded.PlayCircle, stringResource(R.string.settings_playback), stringResource(R.string.sum_playback, speedLabel(settings.playbackSpeed))) { open(SettingsPage.Reproducao) }
+        NavRow(
+            Icons.Rounded.SwapHoriz,
+            stringResource(R.string.settings_transitions),
+            when {
+                !settings.crossfade -> stringResource(R.string.sum_crossfade_off)
+                smartAvailable && settings.crossfadeSmart -> stringResource(R.string.sum_crossfade_smart, settings.crossfadeSeconds)
+                else -> stringResource(R.string.sum_crossfade, settings.crossfadeSeconds)
+            },
+        ) { open(SettingsPage.Transicoes) }
+        NavRow(Icons.Rounded.GraphicEq, stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), onClick = actions.onOpenEqualizer)
+    }
+    Card {
+        NavRow(
+            Icons.Rounded.AutoAwesome,
+            stringResource(R.string.settings_smart_page),
+            if (smartAvailable) stringResource(
+                R.string.sum_smart,
+                stringResource(varietyNames[settings.artistVariety.coerceIn(0, varietyNames.lastIndex)]),
+                stringResource(if (settings.learnTaste) R.string.sum_taste_on else R.string.sum_taste_off),
+            ) else stringResource(R.string.not_recommended),
+            accent = true,
+        ) { open(SettingsPage.Smart) }
+        NavRow(
+            Icons.Rounded.LibraryMusic,
+            stringResource(R.string.nav_library),
+            stringResource(if (settings.autoRefresh) R.string.sum_library_auto else R.string.sum_library),
+        ) { open(SettingsPage.Biblioteca) }
+        NavRow(Icons.Rounded.Insights, stringResource(R.string.settings_history_page), stringResource(R.string.sum_history)) { open(SettingsPage.Historico) }
+    }
+    Card {
+        val alarm = remember { com.juscelino.sonivell.system.MusicAlarm.load(context) }
+        val next = com.juscelino.sonivell.system.MusicAlarm.nextTrigger(alarm)
+        NavRow(
+            Icons.Rounded.Alarm,
+            stringResource(R.string.alarm_title),
+            if (next == null) stringResource(R.string.sum_off)
+            else java.text.SimpleDateFormat("EEE HH:mm", java.util.Locale.getDefault()).format(java.util.Date(next)),
+            onClick = actions.onOpenAlarm,
+        )
+        NavRow(Icons.Rounded.DirectionsCar, stringResource(R.string.car_mode), stringResource(R.string.sum_car), onClick = actions.onOpenCarMode)
+        NavRow(Icons.Rounded.Backup, stringResource(R.string.backup_section), stringResource(R.string.sum_data)) { open(SettingsPage.Dados) }
+        NavRow(Icons.Rounded.Info, stringResource(R.string.settings_about), stringResource(R.string.sum_about, versionName)) { open(SettingsPage.Sobre) }
+    }
+}
+
+/** Um ajuste que a busca encontra: abre a página dele (ou a tela, quando é um atalho). */
+private class SearchEntry(val title: String, val hint: String, val page: SettingsPage, val direct: ((SettingsActions) -> Unit)? = null)
+
+@Composable
+private fun searchEntries(smartAvailable: Boolean): List<SearchEntry> {
+    @Composable fun e(title: Int, hint: Int?, page: SettingsPage) = SearchEntry(stringResource(title), hint?.let { stringResource(it) }.orEmpty(), page)
+    return buildList {
+        add(e(R.string.settings_layout, null, SettingsPage.Aparencia))
+        add(e(R.string.settings_theme, null, SettingsPage.Aparencia))
+        add(e(R.string.settings_accent, null, SettingsPage.Aparencia))
+        add(e(R.string.settings_tinted_background, R.string.settings_tinted_background_hint, SettingsPage.Aparencia))
+        add(e(R.string.settings_black_background, null, SettingsPage.Aparencia))
+        add(e(R.string.settings_icon_style, null, SettingsPage.Aparencia))
+        add(e(R.string.settings_pause_unplug, R.string.settings_pause_unplug_hint, SettingsPage.Reproducao))
+        add(e(R.string.settings_resume_connect, R.string.settings_resume_connect_hint, SettingsPage.Reproducao))
+        add(e(R.string.settings_eq_per_output, R.string.settings_eq_per_output_hint, SettingsPage.Reproducao))
+        add(e(R.string.settings_normalize, R.string.settings_normalize_hint, SettingsPage.Reproducao))
+        add(e(R.string.settings_speed, null, SettingsPage.Reproducao))
+        add(e(R.string.settings_skip_silence, R.string.settings_skip_silence_hint, SettingsPage.Reproducao))
+        add(e(R.string.settings_visualizer, R.string.settings_visualizer_hint, SettingsPage.Reproducao))
+        add(e(R.string.settings_crossfade, R.string.settings_crossfade_hint, SettingsPage.Transicoes))
+        add(e(R.string.settings_crossfade_albums, R.string.settings_crossfade_albums_hint, SettingsPage.Transicoes))
+        if (smartAvailable) {
+            add(e(R.string.settings_crossfade_smart, R.string.settings_crossfade_smart_hint, SettingsPage.Transicoes))
+            add(e(R.string.settings_artist_variety, R.string.settings_artist_variety_hint, SettingsPage.Smart))
+            add(e(R.string.taste_learn, R.string.taste_learn_hint, SettingsPage.Smart))
+        }
+        add(e(R.string.not_recommended, R.string.not_recommended_hint, SettingsPage.Smart))
+        add(e(R.string.settings_auto_refresh, R.string.settings_auto_refresh_hint, SettingsPage.Biblioteca))
+        add(e(R.string.settings_min_duration, R.string.settings_min_duration_hint, SettingsPage.Biblioteca))
+        add(e(R.string.settings_ignored_folders, null, SettingsPage.Biblioteca))
+        add(e(R.string.settings_publish_playlists, R.string.settings_publish_playlists_hint, SettingsPage.Biblioteca))
+        add(e(R.string.lyrics_pick_folder, R.string.lyrics_folder_hint, SettingsPage.Biblioteca))
+        add(e(R.string.organize, R.string.organize_hint, SettingsPage.Biblioteca))
+        add(e(R.string.stats, R.string.stats_hint, SettingsPage.Historico))
+        add(e(R.string.retro_title, R.string.retro_hint, SettingsPage.Historico))
+        add(e(R.string.settings_history_pause, R.string.settings_history_pause_hint, SettingsPage.Historico))
+        add(e(R.string.settings_history_export, null, SettingsPage.Historico))
+        add(e(R.string.settings_history_clear, null, SettingsPage.Historico))
+        add(e(R.string.backup_export, R.string.backup_hint, SettingsPage.Dados))
+        add(e(R.string.backup_restore, R.string.backup_restore_hint, SettingsPage.Dados))
+        add(e(R.string.thanks_title, null, SettingsPage.Sobre))
+        add(e(R.string.settings_reset, null, SettingsPage.Sobre))
+        add(SearchEntry(stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), SettingsPage.Index) { it.onOpenEqualizer() })
+        add(SearchEntry(stringResource(R.string.alarm_title), stringResource(R.string.alarm_hint), SettingsPage.Index) { it.onOpenAlarm() })
+        add(SearchEntry(stringResource(R.string.car_mode), stringResource(R.string.car_mode_hint), SettingsPage.Index) { it.onOpenCarMode() })
+    }
+}
+
+private val DIACRITICS = Regex("\\p{Mn}+")
+private fun fold(s: String) = java.text.Normalizer.normalize(s.trim().lowercase(), java.text.Normalizer.Form.NFD).replace(DIACRITICS, "")
+
+@Composable
+private fun SearchField(value: String, onChange: (String) -> Unit) {
+    val c = SonivellTheme.colors
+    val label = stringResource(R.string.settings_search)
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(999.dp)).background(c.surface).padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Icon(SonivellTheme.icons.search, null, Modifier.size(18.dp), tint = c.textSecondary)
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (value.isEmpty()) Text(label, style = MaterialTheme.typography.bodyLarge, color = c.textSecondary)
+            BasicTextField(
+                value = value,
+                onValueChange = onChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge.merge(TextStyle(color = c.textPrimary, fontWeight = FontWeight.SemiBold)),
+                cursorBrush = SolidColor(c.accent),
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = label },
+            )
+        }
+        if (value.isNotEmpty()) IconBtn(SonivellTheme.icons.close, stringResource(R.string.cd_clear_search), { onChange("") }, size = 36.dp, iconSize = 16.dp, tint = c.textSecondary)
+    }
+}
+
+// ---------------------------------------------------------------- Páginas
+
+@Composable
+private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
+    val c = SonivellTheme.colors
+    // Prévia ao vivo: já usa o tema aplicado, então mostra o resultado de cada escolha.
+    AppearancePreview()
+    Group(stringResource(R.string.settings_layout)) {
+        val legacy = settings.uiStyle == UiStyle.CONTRASTE || settings.uiStyle == UiStyle.CLASSICA
+        var showLegacy by rememberSaveable { mutableStateOf(legacy) }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(
+                Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
+                Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
+            ).forEach { (style, name, hint) ->
+                LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
+                    actions.onUpdate { it.copy(uiStyle = style) }
+                }
+            }
+            Text(
+                stringResource(if (showLegacy) R.string.settings_legacy_hide else R.string.settings_legacy_show),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = c.textSecondary,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(role = Role.Button) { showLegacy = !showLegacy }
+                    .heightIn(min = 44.dp)
+                    .padding(vertical = 12.dp, horizontal = 8.dp),
+            )
+            if (showLegacy) {
                 listOf(
-                    Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
-                    Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
+                    Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
+                    Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
                 ).forEach { (style, name, hint) ->
                     LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
                         actions.onUpdate { it.copy(uiStyle = style) }
                     }
                 }
-                Text(
-                    stringResource(if (showLegacy) R.string.settings_legacy_hide else R.string.settings_legacy_show),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = c.textSecondary,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable(role = Role.Button) { showLegacy = !showLegacy }
-                        .heightIn(min = 44.dp)
-                        .padding(vertical = 12.dp, horizontal = 2.dp),
-                )
-                if (showLegacy) {
-                    listOf(
-                        Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
-                        Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
-                    ).forEach { (style, name, hint) ->
-                        LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
-                            actions.onUpdate { it.copy(uiStyle = style) }
-                        }
-                    }
+            }
+        }
+    }
+    Group(stringResource(R.string.settings_accent)) {
+        val dynamicAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val usingSystem = dynamicAvailable && settings.systemColors
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (dynamicAvailable) {
+                val label = stringResource(R.string.settings_system_colors)
+                Box(
+                    Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Brush.sweepGradient(listOf(AccentChoice.Lima.dark, AccentChoice.Azul.dark, AccentChoice.Lilas.dark, AccentChoice.Laranja.dark, AccentChoice.Lima.dark)))
+                        .then(if (usingSystem) Modifier.border(3.dp, c.textPrimary, CircleShape) else Modifier)
+                        .clickable(role = Role.RadioButton) { actions.onUpdate { it.copy(systemColors = true) } }
+                        .semantics { contentDescription = label; this.selected = usingSystem },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (usingSystem) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = Color(0xFF121314))
+                    else Text("A", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = Color(0xFF121314))
                 }
             }
-            RowLabel(stringResource(R.string.settings_theme))
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(
-                    ThemeMode.AUTO to R.string.theme_auto,
-                    ThemeMode.LIGHT to R.string.theme_light,
-                    ThemeMode.DARK to R.string.theme_dark,
-                ).forEach { (mode, label) ->
-                    Chip(stringResource(label), selected = settings.theme == mode) {
-                        actions.onUpdate { it.copy(theme = mode) }
-                    }
-                }
-            }
-            RowLabel(stringResource(R.string.settings_accent))
-            val dynamicAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-            val usingSystem = dynamicAvailable && settings.systemColors
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (dynamicAvailable) {
-                    val label = stringResource(R.string.settings_system_colors)
-                    Box(
-                        Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(Brush.sweepGradient(listOf(AccentChoice.Lima.dark, AccentChoice.Azul.dark, AccentChoice.Lilas.dark, AccentChoice.Laranja.dark, AccentChoice.Lima.dark)))
-                            .then(if (usingSystem) Modifier.border(3.dp, c.textPrimary, CircleShape) else Modifier)
-                            .clickable(role = Role.RadioButton) { actions.onUpdate { it.copy(systemColors = true) } }
-                            .semantics { contentDescription = label; this.selected = usingSystem },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (usingSystem) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = Color(0xFF121314))
-                        else Text("A", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = Color(0xFF121314))
-                    }
-                }
-                AccentChoice.entries.forEach { choice ->
-                    val color = if (c.isDark) choice.dark else choice.light
-                    val selected = !usingSystem && settings.accent == choice
-                    val label = stringResource(accentNames[choice.ordinal])
-                    Box(
-                        Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(color)
-                            .then(if (selected) Modifier.border(3.dp, c.textPrimary, CircleShape) else Modifier)
-                            .clickable(role = Role.RadioButton) { actions.onUpdate { it.copy(accent = choice, systemColors = false) } }
-                            .semantics { contentDescription = label; this.selected = selected },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.onAccent)
-                    }
-                }
-            }
-            if (usingSystem) {
-                Text(stringResource(R.string.settings_system_colors_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-            }
-            SwitchRow(stringResource(R.string.settings_tinted_background), stringResource(R.string.settings_tinted_background_hint), settings.tintedBackground) { on ->
-                actions.onUpdate { it.copy(tintedBackground = on) }
-            }
-            if (!settings.tintedBackground) {
-                SwitchRow(
-                    stringResource(R.string.settings_black_background),
-                    stringResource(if (c.isDark) R.string.settings_black_background_hint else R.string.settings_dark_background_hint),
-                    settings.darkBackground == DarkBackground.Preto,
-                ) { on -> actions.onUpdate { it.copy(darkBackground = if (on) DarkBackground.Preto else DarkBackground.Grafite) } }
-            }
-            RowLabel(stringResource(R.string.settings_icon_style))
-            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconStyle.entries.forEach { style ->
-                    IconStyleOption(
-                        style = style,
-                        label = stringResource(iconStyleNames[style.ordinal]),
-                        selected = settings.iconStyle == style,
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                    ) { actions.onUpdate { it.copy(iconStyle = style) } }
+            AccentChoice.entries.forEach { choice ->
+                val color = if (c.isDark) choice.dark else choice.light
+                val selected = !usingSystem && settings.accent == choice
+                val label = stringResource(accentNames[choice.ordinal])
+                Box(
+                    Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .then(if (selected) Modifier.border(3.dp, c.textPrimary, CircleShape) else Modifier)
+                        .clickable(role = Role.RadioButton) { actions.onUpdate { it.copy(accent = choice, systemColors = false) } }
+                        .semantics { contentDescription = label; this.selected = selected },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.onAccent)
                 }
             }
         }
-
-        Section(stringResource(R.string.settings_playback)) {
-            SwitchRow(
-                stringResource(R.string.settings_pause_unplug),
-                stringResource(R.string.settings_pause_unplug_hint),
-                settings.pauseOnUnplug,
-            ) { on -> actions.onUpdate { it.copy(pauseOnUnplug = on) } }
-            SwitchRow(
-                stringResource(R.string.settings_normalize),
-                stringResource(R.string.settings_normalize_hint),
-                settings.normalize,
-            ) { on -> actions.onUpdate { it.copy(normalize = on) } }
-            SwitchRow(
-                stringResource(R.string.settings_crossfade),
-                stringResource(R.string.settings_crossfade_hint),
-                settings.crossfade,
-            ) { on -> actions.onUpdate { it.copy(crossfade = on) } }
-            if (settings.crossfade) {
-                Text(
-                    stringResource(
-                        if (smartAvailable && settings.crossfadeSmart) R.string.settings_crossfade_length_smart
-                        else R.string.settings_crossfade_length,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = c.textSecondary,
-                )
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CROSSFADE_STEPS.forEach { seconds ->
-                        Chip(stringResource(R.string.seconds_short, seconds), selected = settings.crossfadeSeconds == seconds) {
-                            actions.onUpdate { it.copy(crossfadeSeconds = seconds) }
-                        }
-                    }
-                }
-                if (smartAvailable) {
-                    SwitchRow(
-                        stringResource(R.string.settings_crossfade_smart),
-                        stringResource(R.string.settings_crossfade_smart_hint),
-                        settings.crossfadeSmart,
-                    ) { on -> actions.onUpdate { it.copy(crossfadeSmart = on) } }
-                }
-                SwitchRow(
-                    stringResource(R.string.settings_crossfade_albums),
-                    stringResource(R.string.settings_crossfade_albums_hint),
-                    settings.crossfadeKeepAlbums,
-                ) { on -> actions.onUpdate { it.copy(crossfadeKeepAlbums = on) } }
-            }
-            SwitchRow(
-                stringResource(R.string.settings_resume_connect),
-                stringResource(R.string.settings_resume_connect_hint),
-                settings.resumeOnConnect,
-            ) { on -> actions.onUpdate { it.copy(resumeOnConnect = on) } }
-            RowLabel(stringResource(R.string.settings_speed))
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SPEED_STEPS.forEach { speed ->
-                    Chip(speedLabel(speed), selected = kotlin.math.abs(settings.playbackSpeed - speed) < 0.01f) {
-                        actions.onUpdate { it.copy(playbackSpeed = speed) }
-                    }
-                }
-            }
-            SwitchRow(
-                stringResource(R.string.settings_skip_silence),
-                stringResource(R.string.settings_skip_silence_hint),
-                settings.skipSilence,
-            ) { on -> actions.onUpdate { it.copy(skipSilence = on) } }
-            VisualizerSwitch(settings.visualizer) { on -> actions.onUpdate { it.copy(visualizer = on) } }
-            LinkRow(stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), actions.onOpenEqualizer)
-            LinkRow(stringResource(R.string.alarm_title), stringResource(R.string.alarm_hint), actions.onOpenAlarm)
-            LinkRow(stringResource(R.string.car_mode), stringResource(R.string.car_mode_hint), actions.onOpenCarMode)
-            SwitchRow(
-                stringResource(R.string.settings_eq_per_output),
-                stringResource(R.string.settings_eq_per_output_hint),
-                settings.eqPerOutput,
-            ) { on -> actions.onUpdate { it.copy(eqPerOutput = on) } }
+        if (usingSystem) {
+            Text(stringResource(R.string.settings_system_colors_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
         }
-
-        if (smartAvailable) {
-            Section(stringResource(R.string.source_smart)) {
-                RowLabel(stringResource(R.string.settings_artist_variety))
-                Text(stringResource(R.string.settings_artist_variety_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(R.string.variety_0, R.string.variety_1, R.string.variety_2, R.string.variety_3, R.string.variety_4)
-                        .forEachIndexed { level, label ->
-                            Chip(stringResource(label), selected = settings.artistVariety == level) {
-                                actions.onUpdate { it.copy(artistVariety = level) }
-                            }
-                        }
-                }
-            }
-            Section(stringResource(R.string.taste_section)) {
-                SwitchRow(
-                    stringResource(R.string.taste_learn),
-                    stringResource(R.string.taste_learn_hint),
-                    settings.learnTaste,
-                ) { on -> actions.onUpdate { it.copy(learnTaste = on) } }
-                if (settings.learnTaste) {
-                    Text(tasteStatusText(tasteStatus), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-                    LinkRow(stringResource(R.string.taste_train_now), stringResource(R.string.taste_train_now_hint), actions.onRetrainTaste)
-                }
-                if (tasteStatus.trained) {
-                    LinkRow(stringResource(R.string.taste_forget), stringResource(R.string.taste_forget_hint), actions.onForgetTaste)
-                }
-            }
+    }
+    Card {
+        val themes = listOf(ThemeMode.AUTO to R.string.theme_auto, ThemeMode.LIGHT to R.string.theme_light, ThemeMode.DARK to R.string.theme_dark)
+        ChoiceRow(
+            stringResource(R.string.settings_theme),
+            null,
+            themes.map { stringResource(it.second) },
+            themes.indexOfFirst { it.first == settings.theme },
+        ) { i -> actions.onUpdate { it.copy(theme = themes[i].first) } }
+        SwitchRow(stringResource(R.string.settings_tinted_background), stringResource(R.string.settings_tinted_background_hint), settings.tintedBackground) { on ->
+            actions.onUpdate { it.copy(tintedBackground = on) }
         }
-
-        Section(stringResource(R.string.not_recommended)) {
-            Text(stringResource(R.string.not_recommended_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-            if (blockedTracks.isEmpty() && blockedArtists.isEmpty()) {
-                Text(stringResource(R.string.not_recommended_none), style = MaterialTheme.typography.bodyLarge, color = c.textPrimary)
-            }
-            blockedArtists.forEach { name ->
-                RemovableRow(name, stringResource(R.string.tab_artists)) { actions.onUnblockArtist(name) }
-            }
-            blockedTracks.forEach { t ->
-                RemovableRow(t.title, t.artist) { actions.onUnblockTrack(t.id) }
-            }
-        }
-
-        Section(stringResource(R.string.settings_history)) {
-            LinkRow(stringResource(R.string.stats), stringResource(R.string.stats_hint), actions.onOpenStats)
-            LinkRow(stringResource(R.string.retro_title), stringResource(R.string.retro_hint), actions.onOpenRetro)
+        if (!settings.tintedBackground) {
             SwitchRow(
-                stringResource(R.string.settings_history_pause),
-                stringResource(R.string.settings_history_pause_hint),
-                settings.historyPaused,
-            ) { on -> actions.onUpdate { it.copy(historyPaused = on) } }
-            LinkRow(stringResource(R.string.settings_history_export), null, actions.onExportHistory)
-            LinkRow(stringResource(R.string.settings_history_clear), null, actions.onClearHistory)
+                stringResource(R.string.settings_black_background),
+                stringResource(if (c.isDark) R.string.settings_black_background_hint else R.string.settings_dark_background_hint),
+                settings.darkBackground == DarkBackground.Preto,
+            ) { on -> actions.onUpdate { it.copy(darkBackground = if (on) DarkBackground.Preto else DarkBackground.Grafite) } }
         }
-
-        Section(stringResource(R.string.nav_library)) {
-            SwitchRow(
-                stringResource(R.string.settings_auto_refresh),
-                stringResource(R.string.settings_auto_refresh_hint),
-                settings.autoRefresh,
-            ) { on -> actions.onUpdate { it.copy(autoRefresh = on) } }
-            RowLabel(stringResource(R.string.settings_min_duration))
-            Text(stringResource(R.string.settings_min_duration_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MIN_DURATION_STEPS.forEach { sec ->
-                    Chip(
-                        if (sec == 0) stringResource(R.string.settings_min_duration_off) else stringResource(R.string.seconds_short, sec),
-                        selected = settings.minDurationSec == sec,
-                    ) { actions.onUpdate { it.copy(minDurationSec = sec) } }
-                }
+    }
+    Group(stringResource(R.string.settings_icon_style)) {
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            IconStyle.entries.forEach { style ->
+                IconStyleOption(
+                    style = style,
+                    label = stringResource(iconStyleNames[style.ordinal]),
+                    selected = settings.iconStyle == style,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                ) { actions.onUpdate { it.copy(iconStyle = style) } }
             }
-            IgnoredFolders(folders, settings.ignoredFolders) { folder, ignore ->
-                actions.onUpdate { s -> s.copy(ignoredFolders = if (ignore) s.ignoredFolders + folder else s.ignoredFolders - folder) }
-            }
-            if (PlaylistPublisher.supported) {
-                SwitchRow(
-                    stringResource(R.string.settings_publish_playlists),
-                    stringResource(R.string.settings_publish_playlists_hint),
-                    settings.publishPlaylists,
-                ) { on -> actions.onUpdate { it.copy(publishPlaylists = on) } }
-            }
-            LinkRow(stringResource(R.string.cd_refresh), stringResource(R.string.settings_refresh_hint), actions.onRefreshLibrary)
-            LinkRow(stringResource(R.string.lyrics_pick_folder), stringResource(R.string.lyrics_folder_hint), actions.onPickLyricsFolder)
-            LinkRow(stringResource(R.string.organize), stringResource(R.string.organize_hint), actions.onOpenOrganize)
-        }
-
-        Section(stringResource(R.string.backup_section)) {
-            Text(stringResource(R.string.backup_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-            LinkRow(stringResource(R.string.backup_export), null, actions.onBackup)
-            LinkRow(stringResource(R.string.backup_restore), stringResource(R.string.backup_restore_hint), actions.onRestore)
-        }
-
-        Section(stringResource(R.string.thanks_title)) {
-            val uriHandler = LocalUriHandler.current
-            val url = stringResource(R.string.thanks_url)
-            Text(stringResource(R.string.thanks_message), style = MaterialTheme.typography.bodyLarge, color = c.textPrimary)
-            LinkRow(stringResource(R.string.thanks_link), url) { runCatching { uriHandler.openUri(url) } }
-        }
-
-        Section(stringResource(R.string.settings_about)) {
-            Text(stringResource(R.string.settings_version, versionName), style = MaterialTheme.typography.bodyLarge, color = c.textPrimary)
-            Text(stringResource(R.string.settings_privacy), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-            if (smartAvailable) {
-                Text(stringResource(R.string.settings_credits_smart), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-            }
-            LinkRow(stringResource(R.string.settings_reset), null, actions.onReset)
         }
     }
 }
+
+@Composable
+private fun PlaybackPage(settings: AppSettings, actions: SettingsActions) {
+    Group(stringResource(R.string.group_headset)) {
+        Card {
+            SwitchRow(stringResource(R.string.settings_pause_unplug), stringResource(R.string.settings_pause_unplug_hint), settings.pauseOnUnplug) { on ->
+                actions.onUpdate { it.copy(pauseOnUnplug = on) }
+            }
+            SwitchRow(stringResource(R.string.settings_resume_connect), stringResource(R.string.settings_resume_connect_hint), settings.resumeOnConnect) { on ->
+                actions.onUpdate { it.copy(resumeOnConnect = on) }
+            }
+            SwitchRow(stringResource(R.string.settings_eq_per_output), stringResource(R.string.settings_eq_per_output_hint), settings.eqPerOutput) { on ->
+                actions.onUpdate { it.copy(eqPerOutput = on) }
+            }
+        }
+    }
+    Group(stringResource(R.string.group_sound)) {
+        Card {
+            SwitchRow(stringResource(R.string.settings_normalize), stringResource(R.string.settings_normalize_hint), settings.normalize) { on ->
+                actions.onUpdate { it.copy(normalize = on) }
+            }
+            ChoiceRow(
+                stringResource(R.string.settings_speed),
+                stringResource(R.string.settings_speed_hint),
+                SPEED_STEPS.map(::speedLabel),
+                SPEED_STEPS.indexOfFirst { kotlin.math.abs(settings.playbackSpeed - it) < 0.01f },
+            ) { i -> actions.onUpdate { it.copy(playbackSpeed = SPEED_STEPS[i]) } }
+            SwitchRow(stringResource(R.string.settings_skip_silence), stringResource(R.string.settings_skip_silence_hint), settings.skipSilence) { on ->
+                actions.onUpdate { it.copy(skipSilence = on) }
+            }
+        }
+    }
+    Group(stringResource(R.string.group_screen)) {
+        Card { VisualizerSwitch(settings.visualizer) { on -> actions.onUpdate { it.copy(visualizer = on) } } }
+    }
+}
+
+@Composable
+private fun TransitionsPage(settings: AppSettings, smartAvailable: Boolean, actions: SettingsActions) {
+    Card {
+        SwitchRow(stringResource(R.string.settings_crossfade), stringResource(R.string.settings_crossfade_hint), settings.crossfade) { on ->
+            actions.onUpdate { it.copy(crossfade = on) }
+        }
+        if (settings.crossfade) {
+            ChoiceRow(
+                stringResource(R.string.settings_crossfade_duration),
+                stringResource(
+                    if (smartAvailable && settings.crossfadeSmart) R.string.settings_crossfade_length_smart else R.string.settings_crossfade_length,
+                ),
+                CROSSFADE_STEPS.map { stringResource(R.string.seconds_short, it) },
+                CROSSFADE_STEPS.indexOf(settings.crossfadeSeconds),
+            ) { i -> actions.onUpdate { it.copy(crossfadeSeconds = CROSSFADE_STEPS[i]) } }
+            if (smartAvailable) {
+                SwitchRow(stringResource(R.string.settings_crossfade_smart), stringResource(R.string.settings_crossfade_smart_hint), settings.crossfadeSmart) { on ->
+                    actions.onUpdate { it.copy(crossfadeSmart = on) }
+                }
+            }
+            SwitchRow(stringResource(R.string.settings_crossfade_albums), stringResource(R.string.settings_crossfade_albums_hint), settings.crossfadeKeepAlbums) { on ->
+                actions.onUpdate { it.copy(crossfadeKeepAlbums = on) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SmartPage(
+    settings: AppSettings,
+    smartAvailable: Boolean,
+    tasteStatus: TasteModel.Status,
+    blockedTracks: List<Track>,
+    blockedArtists: List<String>,
+    actions: SettingsActions,
+) {
+    val c = SonivellTheme.colors
+    if (smartAvailable) {
+        Card {
+            ChoiceRow(
+                stringResource(R.string.settings_artist_variety),
+                stringResource(R.string.settings_artist_variety_hint),
+                varietyNames.map { stringResource(it) },
+                settings.artistVariety.coerceIn(0, varietyNames.lastIndex),
+            ) { i -> actions.onUpdate { it.copy(artistVariety = i) } }
+        }
+        Group(stringResource(R.string.taste_section)) {
+            Card {
+                SwitchRow(stringResource(R.string.taste_learn), stringResource(R.string.taste_learn_hint), settings.learnTaste) { on ->
+                    actions.onUpdate { it.copy(learnTaste = on) }
+                }
+                if (settings.learnTaste) {
+                    InfoRow(tasteStatusText(tasteStatus))
+                    NavRow(null, stringResource(R.string.taste_train_now), stringResource(R.string.taste_train_now_hint), onClick = actions.onRetrainTaste)
+                }
+                if (tasteStatus.trained) {
+                    DangerRow(stringResource(R.string.taste_forget), stringResource(R.string.taste_forget_hint), actions.onForgetTaste)
+                }
+            }
+        }
+    }
+    Group(stringResource(R.string.not_recommended)) {
+        Card {
+            InfoRow(stringResource(R.string.not_recommended_hint))
+            if (blockedTracks.isEmpty() && blockedArtists.isEmpty()) {
+                InfoRow(stringResource(R.string.not_recommended_none), primary = true)
+            }
+            blockedArtists.forEach { name ->
+                Box(Modifier.padding(horizontal = 16.dp)) { RemovableRow(name, stringResource(R.string.tab_artists)) { actions.onUnblockArtist(name) } }
+            }
+            blockedTracks.forEach { t ->
+                Box(Modifier.padding(horizontal = 16.dp)) { RemovableRow(t.title, t.artist) { actions.onUnblockTrack(t.id) } }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryPage(settings: AppSettings, folders: List<String>, actions: SettingsActions) {
+    Card {
+        SwitchRow(stringResource(R.string.settings_auto_refresh), stringResource(R.string.settings_auto_refresh_hint), settings.autoRefresh) { on ->
+            actions.onUpdate { it.copy(autoRefresh = on) }
+        }
+        ChoiceRow(
+            stringResource(R.string.settings_min_duration),
+            stringResource(R.string.settings_min_duration_hint),
+            MIN_DURATION_STEPS.map { if (it == 0) stringResource(R.string.settings_min_duration_off) else stringResource(R.string.seconds_short, it) },
+            MIN_DURATION_STEPS.indexOf(settings.minDurationSec),
+        ) { i -> actions.onUpdate { it.copy(minDurationSec = MIN_DURATION_STEPS[i]) } }
+        IgnoredFolders(folders, settings.ignoredFolders) { folder, ignore ->
+            actions.onUpdate { s -> s.copy(ignoredFolders = if (ignore) s.ignoredFolders + folder else s.ignoredFolders - folder) }
+        }
+        if (PlaylistPublisher.supported) {
+            SwitchRow(stringResource(R.string.settings_publish_playlists), stringResource(R.string.settings_publish_playlists_hint), settings.publishPlaylists) { on ->
+                actions.onUpdate { it.copy(publishPlaylists = on) }
+            }
+        }
+    }
+    Card {
+        NavRow(null, stringResource(R.string.lyrics_pick_folder), stringResource(R.string.lyrics_folder_hint), onClick = actions.onPickLyricsFolder)
+        NavRow(null, stringResource(R.string.organize), stringResource(R.string.organize_hint), onClick = actions.onOpenOrganize)
+        NavRow(null, stringResource(R.string.cd_refresh), stringResource(R.string.settings_refresh_hint), onClick = actions.onRefreshLibrary)
+    }
+}
+
+@Composable
+private fun HistoryPage(settings: AppSettings, actions: SettingsActions) {
+    Card {
+        NavRow(null, stringResource(R.string.stats), stringResource(R.string.stats_hint), onClick = actions.onOpenStats)
+        NavRow(null, stringResource(R.string.retro_title), stringResource(R.string.retro_hint), onClick = actions.onOpenRetro)
+    }
+    Card {
+        SwitchRow(stringResource(R.string.settings_history_pause), stringResource(R.string.settings_history_pause_hint), settings.historyPaused) { on ->
+            actions.onUpdate { it.copy(historyPaused = on) }
+        }
+        NavRow(null, stringResource(R.string.settings_history_export), null, onClick = actions.onExportHistory)
+        DangerRow(stringResource(R.string.settings_history_clear), null, actions.onClearHistory)
+    }
+}
+
+@Composable
+private fun DataPage(actions: SettingsActions) {
+    Card {
+        InfoRow(stringResource(R.string.backup_hint))
+        NavRow(null, stringResource(R.string.backup_export), null, onClick = actions.onBackup)
+        DangerRow(stringResource(R.string.backup_restore), stringResource(R.string.backup_restore_hint), actions.onRestore)
+    }
+}
+
+@Composable
+private fun AboutPage(versionName: String, smartAvailable: Boolean, actions: SettingsActions) {
+    Card {
+        InfoRow(stringResource(R.string.settings_version, versionName), primary = true)
+        InfoRow(stringResource(R.string.settings_privacy))
+        if (smartAvailable) InfoRow(stringResource(R.string.settings_credits_smart))
+    }
+    Group(stringResource(R.string.thanks_title)) {
+        Card {
+            val uriHandler = LocalUriHandler.current
+            val url = stringResource(R.string.thanks_url)
+            InfoRow(stringResource(R.string.thanks_message), primary = true)
+            NavRow(null, stringResource(R.string.thanks_link), url) { runCatching { uriHandler.openUri(url) } }
+        }
+    }
+    Card { DangerRow(stringResource(R.string.settings_reset), null, actions.onReset) }
+}
+
+private val varietyNames = listOf(R.string.variety_0, R.string.variety_1, R.string.variety_2, R.string.variety_3, R.string.variety_4)
 
 private fun speedLabel(speed: Float): String =
     (if (speed % 1f == 0f) speed.toInt().toString() else "%.2f".format(speed).trimEnd('0').replace('.', ',')) + "×"
@@ -427,14 +692,15 @@ private fun speedLabel(speed: Float): String =
 private fun IgnoredFolders(folders: List<String>, ignored: Set<String>, onToggle: (String, Boolean) -> Unit) {
     val c = SonivellTheme.colors
     var open by rememberSaveable { mutableStateOf(false) }
-    LinkRow(
+    NavRow(
+        null,
         stringResource(R.string.settings_ignored_folders),
         if (ignored.isEmpty()) stringResource(R.string.settings_ignored_folders_none)
         else pluralStringResource(R.plurals.settings_ignored_folders_count, ignored.size, ignored.size),
     ) { open = !open }
     if (open) {
         if (folders.isEmpty()) {
-            Text(stringResource(R.string.settings_ignored_folders_empty), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+            Text(stringResource(R.string.settings_ignored_folders_empty), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, modifier = Modifier.padding(horizontal = 16.dp))
         }
         folders.forEach { folder ->
             val name = folder.trimEnd('/').substringAfterLast('/').ifBlank { folder }
@@ -552,26 +818,75 @@ private val accentNames = listOf(
     R.string.accent_green,
 )
 
+/** Rótulo pequeno acima de um bloco (FONE E BLUETOOTH, SOM…). */
 @Composable
-private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
-    val c = SonivellTheme.colors
+private fun Group(label: String, content: @Composable ColumnScope.() -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(title)
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
-                .background(c.surface)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            content = content,
-        )
+        SectionLabel(label, Modifier.padding(horizontal = 8.dp))
+        content()
     }
 }
 
+/** Cartão com linhas de ajuste encostadas umas nas outras. */
 @Composable
-private fun RowLabel(text: String) {
-    Text(text, style = MaterialTheme.typography.titleMedium, color = SonivellTheme.colors.textPrimary)
+private fun Card(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .background(SonivellTheme.colors.surface)
+            .padding(vertical = 4.dp),
+        content = content,
+    )
+}
+
+/**
+ * Descrição de uma linha; quando não cabe, tocar nela mostra o texto inteiro.
+ * Assim a tela fica limpa sem esconder a explicação.
+ */
+@Composable
+private fun Hint(text: String) {
+    val c = SonivellTheme.colors
+    var expanded by rememberSaveable(text) { mutableStateOf(false) }
+    var overflows by remember(text) { mutableStateOf(false) }
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = c.textSecondary,
+        maxLines = if (expanded) Int.MAX_VALUE else 1,
+        overflow = TextOverflow.Ellipsis,
+        onTextLayout = { if (!expanded) overflows = it.hasVisualOverflow },
+        modifier = if (overflows || expanded) Modifier.clickable(onClickLabel = text) { expanded = !expanded } else Modifier,
+    )
+}
+
+/** Linha que abre uma página ou tela: ícone opcional, nome, resumo do valor atual e seta. */
+@Composable
+private fun NavRow(icon: ImageVector?, title: String, summary: String?, accent: Boolean = false, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        if (icon != null) {
+            Box(
+                Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(if (accent) c.accent.copy(alpha = 0.18f) else c.surfaceHigh),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, null, Modifier.size(20.dp), tint = if (accent) c.accent else c.textTertiary)
+            }
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
+            if (summary != null) Text(summary, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Icon(SonivellTheme.icons.chevron, null, Modifier.size(20.dp), tint = c.textSecondary)
+    }
 }
 
 @Composable
@@ -580,18 +895,25 @@ private fun SwitchRow(title: String, hint: String?, checked: Boolean, onChange: 
     Row(
         Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clickable(role = Role.Switch) { onChange(!checked) },
+            .heightIn(min = 60.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary)
-            if (hint != null) Text(hint, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = c.textPrimary,
+                modifier = Modifier.clickable(role = Role.Switch) { onChange(!checked) },
+            )
+            if (hint != null) Hint(hint)
         }
         Switch(
             checked = checked,
-            onCheckedChange = null,
+            onCheckedChange = onChange,
+            modifier = Modifier.semantics { contentDescription = title },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = c.onAccent,
                 checkedTrackColor = c.accent,
@@ -600,6 +922,89 @@ private fun SwitchRow(title: String, hint: String?, checked: Boolean, onChange: 
                 uncheckedBorderColor = c.outline,
             ),
         )
+    }
+}
+
+/** Escolha entre poucas opções: a linha mostra o valor; tocar abre uma folha com a lista. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChoiceRow(title: String, hint: String?, options: List<String>, selected: Int, onPick: (Int) -> Unit) {
+    val c = SonivellTheme.colors
+    var open by rememberSaveable { mutableStateOf(false) }
+    val value = options.getOrNull(selected).orEmpty()
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .clickable(role = Role.Button, onClickLabel = title) { open = true }
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
+            if (hint != null) Text(hint, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = c.accent)
+        Icon(SonivellTheme.icons.chevron, null, Modifier.size(20.dp), tint = c.textSecondary)
+    }
+    if (open) {
+        val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(onDismissRequest = { open = false }, sheetState = state, containerColor = c.surface) {
+            Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, modifier = Modifier.padding(horizontal = 8.dp))
+                if (hint != null) {
+                    Text(hint, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp))
+                }
+                options.forEachIndexed { i, label ->
+                    val on = i == selected
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (on) c.accent.copy(alpha = 0.16f) else Color.Transparent)
+                            .clickable(role = Role.RadioButton) { onPick(i); open = false }
+                            .semantics { this.selected = on }
+                            .padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold, color = c.textPrimary, modifier = Modifier.weight(1f))
+                        if (on) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.accent)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Texto informativo dentro de um cartão. */
+@Composable
+private fun InfoRow(text: String, primary: Boolean = false) {
+    val c = SonivellTheme.colors
+    Text(
+        text,
+        style = if (primary) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium,
+        color = if (primary) c.textPrimary else c.textSecondary,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+    )
+}
+
+/** Ação que apaga ou troca dados: fica por último e em vermelho. */
+@Composable
+private fun DangerRow(title: String, hint: String?, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    val danger = if (c.isDark) Color(0xFFFF8A80) else Color(0xFFB3261E)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+    ) {
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = danger)
+        if (hint != null) Text(hint, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -627,26 +1032,6 @@ private fun tasteStatusText(st: TasteModel.Status): String {
         st.profileOnly -> base + " · " + stringResource(R.string.taste_profile_only)
         st.accuracy != null -> base + " · " + stringResource(R.string.taste_accuracy, (st.accuracy * 100).toInt())
         else -> base
-    }
-}
-
-@Composable
-private fun LinkRow(title: String, hint: String?, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .clickable(role = Role.Button, onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary)
-            if (hint != null) Text(hint, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-        }
-        Icon(SonivellTheme.icons.chevron, null, tint = c.textSecondary)
     }
 }
 

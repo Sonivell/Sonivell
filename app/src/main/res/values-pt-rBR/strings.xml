@@ -625,4 +625,30 @@
     <string name="search_in_lyrics">Na letra</string>
     <string name="search_lyrics_hint">Procura nas letras salvas no aparelho (pasta de letras e letras embutidas que você já abriu).</string>
     <string name="lyrics_play_from_here">Tocar a partir deste trecho</string>
+
+    <!-- Ajustes em páginas -->
+    <string name="settings_transitions">Transições</string>
+    <string name="settings_smart_page">SMART e recomendações</string>
+    <string name="settings_history_page">Histórico e estatísticas</string>
+    <string name="settings_search">Buscar ajuste</string>
+    <string name="settings_search_none">Nenhum ajuste com esse nome</string>
+    <string name="sum_playback">Velocidade %1$s · fone e Bluetooth</string>
+    <string name="sum_crossfade_off">Crossfade desligado</string>
+    <string name="sum_crossfade">Crossfade %1$d s</string>
+    <string name="sum_crossfade_smart">Crossfade %1$d s · adaptado pelo SMART</string>
+    <string name="sum_smart">Variedade %1$s · %2$s</string>
+    <string name="sum_taste_on">aprendendo seu gosto</string>
+    <string name="sum_taste_off">sem aprender seu gosto</string>
+    <string name="sum_library_auto">Atualiza sozinha · pastas · letras</string>
+    <string name="sum_library">Pastas · letras · organizar</string>
+    <string name="sum_history">Estatísticas · seu mês em música · exportar</string>
+    <string name="sum_off">Desligado</string>
+    <string name="sum_car">Botões grandes, para usar de relance</string>
+    <string name="sum_data">Backup e restauração</string>
+    <string name="sum_about">Versão %1$s · agradecimentos</string>
+    <string name="group_headset">Fone e Bluetooth</string>
+    <string name="group_sound">Som</string>
+    <string name="group_screen">Na tela</string>
+    <string name="settings_speed_hint">Ritmo da reprodução; o tom da voz se mantém</string>
+    <string name="settings_crossfade_duration">Duração da transição</string>
 </resources>
