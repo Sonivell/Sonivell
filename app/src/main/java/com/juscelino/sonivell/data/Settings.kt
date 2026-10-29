@@ -54,7 +54,27 @@ data class AppSettings(
     val crossfadeSmart: Boolean = true,
     /** Não misturar faixas seguidas do mesmo álbum (álbuns ao vivo e sem pausa ficam inteiros). */
     val crossfadeKeepAlbums: Boolean = true,
+    /** Voltar a tocar ao conectar fone com fio ou Bluetooth (com o player aberto em segundo plano). */
+    val resumeOnConnect: Boolean = false,
+    /** Um ajuste de equalizador para cada saída (fone, Bluetooth, alto-falante), trocado sozinho. */
+    val eqPerOutput: Boolean = false,
+    /** Velocidade de reprodução ([SPEED_STEPS]). */
+    val playbackSpeed: Float = 1f,
+    /** Cortar trechos de silêncio (podcasts, aulas). */
+    val skipSilence: Boolean = false,
+    /** Atualizar a biblioteca sozinha quando músicas chegam ou saem do aparelho. */
+    val autoRefresh: Boolean = true,
+    /** Ignorar áudios mais curtos que isso, em segundos (0 = não ignora). */
+    val minDurationSec: Int = 0,
+    /** Pastas cujas músicas ficam fora da biblioteca. */
+    val ignoredFolders: Set<String> = emptySet(),
 )
+
+/** Velocidades oferecidas. */
+val SPEED_STEPS = listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
+
+/** Durações mínimas oferecidas para ignorar áudios curtos, em segundos. */
+val MIN_DURATION_STEPS = listOf(0, 15, 30, 60)
 
 /** Durações oferecidas para o crossfade, em segundos. */
 val CROSSFADE_STEPS = listOf(2, 4, 6, 8, 10, 12)
@@ -85,6 +105,13 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putInt(KEY_CROSSFADE_SECONDS, next.crossfadeSeconds)
             .putBoolean(KEY_CROSSFADE_SMART, next.crossfadeSmart)
             .putBoolean(KEY_CROSSFADE_KEEP_ALBUMS, next.crossfadeKeepAlbums)
+            .putBoolean(KEY_RESUME_ON_CONNECT, next.resumeOnConnect)
+            .putBoolean(KEY_EQ_PER_OUTPUT, next.eqPerOutput)
+            .putFloat(KEY_PLAYBACK_SPEED, next.playbackSpeed)
+            .putBoolean(KEY_SKIP_SILENCE, next.skipSilence)
+            .putBoolean(KEY_AUTO_REFRESH, next.autoRefresh)
+            .putInt(KEY_MIN_DURATION, next.minDurationSec)
+            .putStringSet(KEY_IGNORED_FOLDERS, next.ignoredFolders)
             .apply()
     }
 
@@ -107,6 +134,13 @@ class SettingsStore(private val prefs: SharedPreferences) {
         crossfadeSeconds = prefs.getInt(KEY_CROSSFADE_SECONDS, 6),
         crossfadeSmart = prefs.getBoolean(KEY_CROSSFADE_SMART, true),
         crossfadeKeepAlbums = prefs.getBoolean(KEY_CROSSFADE_KEEP_ALBUMS, true),
+        resumeOnConnect = prefs.getBoolean(KEY_RESUME_ON_CONNECT, false),
+        eqPerOutput = prefs.getBoolean(KEY_EQ_PER_OUTPUT, false),
+        playbackSpeed = prefs.getFloat(KEY_PLAYBACK_SPEED, 1f),
+        skipSilence = prefs.getBoolean(KEY_SKIP_SILENCE, false),
+        autoRefresh = prefs.getBoolean(KEY_AUTO_REFRESH, true),
+        minDurationSec = prefs.getInt(KEY_MIN_DURATION, 0),
+        ignoredFolders = prefs.getStringSet(KEY_IGNORED_FOLDERS, null)?.toSet().orEmpty(),
     )
 
     companion object {
@@ -127,6 +161,13 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_CROSSFADE_SECONDS = "crossfade_seconds"
         const val KEY_CROSSFADE_SMART = "crossfade_smart"
         const val KEY_CROSSFADE_KEEP_ALBUMS = "crossfade_keep_albums"
+        const val KEY_RESUME_ON_CONNECT = "resume_on_connect"
+        const val KEY_EQ_PER_OUTPUT = "per_output_eq"
+        const val KEY_PLAYBACK_SPEED = "playback_speed"
+        const val KEY_SKIP_SILENCE = "skip_silence"
+        const val KEY_AUTO_REFRESH = "auto_refresh"
+        const val KEY_MIN_DURATION = "min_duration"
+        const val KEY_IGNORED_FOLDERS = "ignored_folders"
         /** Escrita pelo MainViewModel: a fila atual é do SMART. */
         const val KEY_SMART_MODE = "smart_mode"
     }

@@ -519,4 +519,23 @@
     <string name="widget_small_desc">Cover and play/pause</string>
     <string name="widget_idle_title">Sonivell</string>
     <string name="widget_idle_sub">Tap to open</string>
+    <string name="settings_resume_connect">Resume when connecting</string>
+    <string name="settings_resume_connect_hint">Plays again when headphones or Bluetooth connect, if Sonivell was playing recently</string>
+    <string name="settings_speed">Speed</string>
+    <string name="settings_skip_silence">Skip silence</string>
+    <string name="settings_skip_silence_hint">Cuts pauses in podcasts, lectures and audiobooks</string>
+    <string name="settings_eq_per_output">Equalizer per output</string>
+    <string name="settings_eq_per_output_hint">Remembers one setting for headphones, Bluetooth and speaker, and switches by itself</string>
+    <string name="settings_auto_refresh">Update by itself</string>
+    <string name="settings_auto_refresh_hint">New songs show up as soon as they arrive on the device</string>
+    <string name="settings_min_duration">Ignore short audio</string>
+    <string name="settings_min_duration_hint">Keeps voice messages, recordings and notification sounds out of the library</string>
+    <string name="settings_min_duration_off">Off</string>
+    <string name="settings_ignored_folders">Folders in the library</string>
+    <string name="settings_ignored_folders_none">All folders are included</string>
+    <plurals name="settings_ignored_folders_count">
+        <item quantity="one">%d folder ignored</item>
+        <item quantity="other">%d folders ignored</item>
+    </plurals>
+    <string name="settings_ignored_folders_empty">No folders found yet.</string>
 </resources>

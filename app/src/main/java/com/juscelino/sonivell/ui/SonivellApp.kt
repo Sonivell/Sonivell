@@ -259,6 +259,7 @@ private fun MainContent(vm: MainViewModel) {
     val forYou by vm.forYou.collectAsStateWithLifecycle()
     val genreOfMonth by vm.genreOfMonth.collectAsStateWithLifecycle()
     val recentSearches by vm.recentSearches.collectAsStateWithLifecycle()
+    val scannedFolders by vm.scannedFolders.collectAsStateWithLifecycle()
     val tagBannerCount by vm.tagBannerCount.collectAsStateWithLifecycle()
     val playlists by vm.playlists.collectAsStateWithLifecycle()
     val sleepTimer by vm.sleepTimer.collectAsStateWithLifecycle()
@@ -671,6 +672,7 @@ private fun MainContent(vm: MainViewModel) {
                     tasteStatus = tasteStatus,
                     blockedTracks = library.allTracks.filter { it.id in blockedTracks },
                     blockedArtists = blockedArtists.sorted(),
+                    folders = scannedFolders,
                 )
             }
             composable(Routes.EQUALIZER) {

@@ -1,6 +1,9 @@
 package com.juscelino.sonivell.ui.settings
 
 import android.os.Build
+import androidx.compose.ui.res.pluralStringResource
+import com.juscelino.sonivell.data.MIN_DURATION_STEPS
+import com.juscelino.sonivell.data.SPEED_STEPS
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
@@ -92,6 +95,8 @@ fun SettingsScreen(
     blockedTracks: List<Track> = emptyList(),
     blockedArtists: List<String> = emptyList(),
     tasteStatus: TasteModel.Status = TasteModel.Status(),
+    /** Todas as pastas com áudio (inclusive as ignoradas). */
+    folders: List<String> = emptyList(),
 ) {
     val c = SonivellTheme.colors
     Column(
@@ -270,7 +275,30 @@ fun SettingsScreen(
                     settings.crossfadeKeepAlbums,
                 ) { on -> actions.onUpdate { it.copy(crossfadeKeepAlbums = on) } }
             }
+            SwitchRow(
+                stringResource(R.string.settings_resume_connect),
+                stringResource(R.string.settings_resume_connect_hint),
+                settings.resumeOnConnect,
+            ) { on -> actions.onUpdate { it.copy(resumeOnConnect = on) } }
+            RowLabel(stringResource(R.string.settings_speed))
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SPEED_STEPS.forEach { speed ->
+                    Chip(speedLabel(speed), selected = kotlin.math.abs(settings.playbackSpeed - speed) < 0.01f) {
+                        actions.onUpdate { it.copy(playbackSpeed = speed) }
+                    }
+                }
+            }
+            SwitchRow(
+                stringResource(R.string.settings_skip_silence),
+                stringResource(R.string.settings_skip_silence_hint),
+                settings.skipSilence,
+            ) { on -> actions.onUpdate { it.copy(skipSilence = on) } }
             LinkRow(stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), actions.onOpenEqualizer)
+            SwitchRow(
+                stringResource(R.string.settings_eq_per_output),
+                stringResource(R.string.settings_eq_per_output_hint),
+                settings.eqPerOutput,
+            ) { on -> actions.onUpdate { it.copy(eqPerOutput = on) } }
         }
 
         if (smartAvailable) {
@@ -327,6 +355,24 @@ fun SettingsScreen(
         }
 
         Section(stringResource(R.string.nav_library)) {
+            SwitchRow(
+                stringResource(R.string.settings_auto_refresh),
+                stringResource(R.string.settings_auto_refresh_hint),
+                settings.autoRefresh,
+            ) { on -> actions.onUpdate { it.copy(autoRefresh = on) } }
+            RowLabel(stringResource(R.string.settings_min_duration))
+            Text(stringResource(R.string.settings_min_duration_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MIN_DURATION_STEPS.forEach { sec ->
+                    Chip(
+                        if (sec == 0) stringResource(R.string.settings_min_duration_off) else stringResource(R.string.seconds_short, sec),
+                        selected = settings.minDurationSec == sec,
+                    ) { actions.onUpdate { it.copy(minDurationSec = sec) } }
+                }
+            }
+            IgnoredFolders(folders, settings.ignoredFolders) { folder, ignore ->
+                actions.onUpdate { s -> s.copy(ignoredFolders = if (ignore) s.ignoredFolders + folder else s.ignoredFolders - folder) }
+            }
             LinkRow(stringResource(R.string.cd_refresh), stringResource(R.string.settings_refresh_hint), actions.onRefreshLibrary)
             LinkRow(stringResource(R.string.lyrics_pick_folder), stringResource(R.string.lyrics_folder_hint), actions.onPickLyricsFolder)
             LinkRow(stringResource(R.string.organize), stringResource(R.string.organize_hint), actions.onOpenOrganize)
@@ -346,6 +392,31 @@ fun SettingsScreen(
                 Text(stringResource(R.string.settings_credits_smart), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
             }
             LinkRow(stringResource(R.string.settings_reset), null, actions.onReset)
+        }
+    }
+}
+
+private fun speedLabel(speed: Float): String =
+    (if (speed % 1f == 0f) speed.toInt().toString() else "%.2f".format(speed).trimEnd('0').replace('.', ',')) + "×"
+
+/** Pastas ignoradas: recolhida mostra quantas; aberta lista todas com um interruptor cada. */
+@Composable
+private fun IgnoredFolders(folders: List<String>, ignored: Set<String>, onToggle: (String, Boolean) -> Unit) {
+    val c = SonivellTheme.colors
+    var open by rememberSaveable { mutableStateOf(false) }
+    LinkRow(
+        stringResource(R.string.settings_ignored_folders),
+        if (ignored.isEmpty()) stringResource(R.string.settings_ignored_folders_none)
+        else pluralStringResource(R.plurals.settings_ignored_folders_count, ignored.size, ignored.size),
+    ) { open = !open }
+    if (open) {
+        if (folders.isEmpty()) {
+            Text(stringResource(R.string.settings_ignored_folders_empty), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+        }
+        folders.forEach { folder ->
+            val name = folder.trimEnd('/').substringAfterLast('/').ifBlank { folder }
+            // O interruptor diz "incluir": ligado = a pasta entra na biblioteca.
+            SwitchRow(name, folder, checked = folder !in ignored) { include -> onToggle(folder, !include) }
         }
     }
 }

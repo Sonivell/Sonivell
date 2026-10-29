@@ -43,6 +43,11 @@ import com.juscelino.sonivell.smart.createSmartEngine
 import com.juscelino.sonivell.data.ForYou
 import com.juscelino.sonivell.data.ForYouState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.distinctUntilChanged
+import android.os.Looper
+import android.os.Handler
+import android.database.ContentObserver
 import kotlinx.coroutines.Job
 import android.os.Build
 import android.provider.MediaStore
@@ -591,15 +596,52 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         refresh()
     }
 
-    fun refresh() {
+    fun refresh() = reload(train = true)
+
+    /** Relê o MediaStore; [train] = treinar o gosto depois (não a cada atualização automática). */
+    private fun reload(train: Boolean) {
         viewModelScope.launch {
-            val tracks = repository.loadTracks()
-            allTracks.value = tracks
+            scanned = repository.loadTracks()
+            _scannedFolders.value = scanned.map { it.folder }.distinct().sortedBy { sortKey(it.substringAfterLast('/')) }
+            val tracks = applyLibraryFilter()
             if (smart.isAvailable) {
                 smart.analyse(tracks)
-                // Dá tempo de o motor carregar os vetores já salvos antes de treinar.
-                delay(8_000)
-                maybeTrainTaste()
+                if (train) {
+                    // Dá tempo de o motor carregar os vetores já salvos antes de treinar.
+                    delay(8_000)
+                    maybeTrainTaste()
+                }
+            }
+        }
+    }
+
+    // ---- Filtro da biblioteca: áudios curtos e pastas ignoradas ----
+
+    private var scanned: List<Track> = emptyList()
+    private val _scannedFolders = MutableStateFlow<List<String>>(emptyList())
+
+    /** Todas as pastas com áudio, inclusive as ignoradas (para a lista dos ajustes). */
+    val scannedFolders: StateFlow<List<String>> = _scannedFolders
+
+    private fun applyLibraryFilter(): List<Track> {
+        val s = settings.value
+        val minMs = s.minDurationSec * 1000L
+        val tracks = scanned.filter { t -> (minMs == 0L || t.durationMs >= minMs) && t.folder !in s.ignoredFolders }
+        allTracks.value = tracks
+        return tracks
+    }
+
+    // ---- Atualização automática: o MediaStore avisa quando algo muda ----
+
+    private var refreshJob: Job? = null
+    private val mediaObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) {
+            if (!settings.value.autoRefresh || allTracks.value == null) return
+            refreshJob?.cancel()
+            // Um download ou cópia gera vários avisos seguidos: espera acalmar.
+            refreshJob = viewModelScope.launch {
+                delay(AUTO_REFRESH_DEBOUNCE_MS)
+                reload(train = false)
             }
         }
     }
@@ -828,6 +870,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    init {
+        runCatching {
+            getApplication<Application>().contentResolver.registerContentObserver(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver,
+            )
+        }
+        // Mudou o mínimo de duração ou as pastas ignoradas: refaz o filtro sem reler o aparelho.
+        viewModelScope.launch {
+            settings.map { it.minDurationSec to it.ignoredFolders }.distinctUntilChanged().drop(1).collect {
+                if (allTracks.value != null) {
+                    val tracks = applyLibraryFilter()
+                    if (smart.isAvailable) smart.analyse(tracks)
+                }
+            }
+        }
+    }
+
     fun dismissWelcome() {
         _showWelcome.value = false
         prefs.edit().putBoolean(KEY_WELCOME_SEEN, true).apply()
@@ -896,9 +955,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         const val KEY_TAG_BANNER_DISMISSED = "tag_banner_dismissed"
         const val MAX_RECENT_SEARCHES = 8
         const val KEY_WELCOME_SEEN = "welcome_seen"
+        const val AUTO_REFRESH_DEBOUNCE_MS = 3_000L
     }
 
     override fun onCleared() {
+        runCatching { getApplication<Application>().contentResolver.unregisterContentObserver(mediaObserver) }
         player.release()
         super.onCleared()
     }

@@ -515,4 +515,24 @@
     <string name="widget_small_desc">Capa e tocar/pausar</string>
     <string name="widget_idle_title">Sonivell</string>
     <string name="widget_idle_sub">Toque para abrir</string>
+    <string name="settings_resume_connect">Retomar ao conectar</string>
+    <string name="settings_resume_connect_hint">Volta a tocar quando um fone ou Bluetooth conecta, se o Sonivell estava tocando há pouco</string>
+    <string name="settings_speed">Velocidade</string>
+    <string name="settings_skip_silence">Pular silêncio</string>
+    <string name="settings_skip_silence_hint">Corta pausas em podcasts, aulas e audiolivros</string>
+    <string name="settings_eq_per_output">Equalizador por saída</string>
+    <string name="settings_eq_per_output_hint">Guarda um ajuste para fone, Bluetooth e alto-falante, e troca sozinho</string>
+    <string name="settings_auto_refresh">Atualizar sozinha</string>
+    <string name="settings_auto_refresh_hint">Músicas novas aparecem assim que chegam ao aparelho</string>
+    <string name="settings_min_duration">Ignorar áudios curtos</string>
+    <string name="settings_min_duration_hint">Deixa áudios de mensagem, gravações e sons de notificação fora da biblioteca</string>
+    <string name="settings_min_duration_off">Não</string>
+    <string name="settings_ignored_folders">Pastas na biblioteca</string>
+    <string name="settings_ignored_folders_none">Todas as pastas entram</string>
+    <plurals name="settings_ignored_folders_count">
+        <item quantity="one">%d pasta ignorada</item>
+        <item quantity="many">%d pastas ignoradas</item>
+        <item quantity="other">%d pastas ignoradas</item>
+    </plurals>
+    <string name="settings_ignored_folders_empty">Nenhuma pasta encontrada ainda.</string>
 </resources>

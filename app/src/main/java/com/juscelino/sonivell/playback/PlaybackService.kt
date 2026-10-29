@@ -38,6 +38,7 @@ class PlaybackService : MediaSessionService() {
     private lateinit var prefs: SharedPreferences
     private lateinit var effects: AudioEffects
     private var crossfader: Crossfader? = null
+    private var outputs: OutputWatcher? = null
 
     /** "Pausar ao desconectar o fone" muda na hora, sem reiniciar o player. */
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
@@ -45,6 +46,7 @@ class PlaybackService : MediaSessionService() {
         when (key) {
             SettingsStore.KEY_PAUSE_ON_UNPLUG -> player.setHandleAudioBecomingNoisy(p.getBoolean(key, true))
             SettingsStore.KEY_NORMALIZE -> applyNormalization(player)
+            SettingsStore.KEY_PLAYBACK_SPEED, SettingsStore.KEY_SKIP_SILENCE -> applySpeed(player)
         }
     }
 
@@ -71,6 +73,8 @@ class PlaybackService : MediaSessionService() {
         effects.attach(audioSession)
         crossfader = Crossfader(this, player, audioSession, prefs, createSmartEngine(this)).also { it.start() }
         prefs.registerOnSharedPreferenceChangeListener(settingsListener)
+        applySpeed(player)
+        outputs = OutputWatcher(getSystemService(AudioManager::class.java), prefs, player).also { it.start() }
         // A cada faixa nova, ajusta o volume pelo ReplayGain dela (se a opção estiver ligada).
         player.addListener(object : Player.Listener {
             override fun onTracksChanged(tracks: Tracks) = applyNormalization(player)
@@ -142,6 +146,13 @@ class PlaybackService : MediaSessionService() {
         setGain(player, 10f.pow(gainDb / 20f).coerceIn(0.05f, 1f))
     }
 
+    /** Velocidade e "pular silêncio" (ajustes de reprodução). */
+    @OptIn(UnstableApi::class)
+    private fun applySpeed(player: ExoPlayer) {
+        player.setPlaybackSpeed(prefs.getFloat(SettingsStore.KEY_PLAYBACK_SPEED, 1f).coerceIn(0.5f, 2f))
+        player.skipSilenceEnabled = prefs.getBoolean(SettingsStore.KEY_SKIP_SILENCE, false)
+    }
+
     /** O crossfade multiplica o volume dele por cima do da normalização. */
     private fun setGain(player: ExoPlayer, gain: Float) {
         crossfader?.setMainGain(gain) ?: run { player.volume = gain }
@@ -167,6 +178,8 @@ class PlaybackService : MediaSessionService() {
             SonivellWidgets.publish(this, md.title?.toString(), md.artist?.toString(), md.artworkUri, playing = false)
         }
         prefs.unregisterOnSharedPreferenceChangeListener(settingsListener)
+        outputs?.release()
+        outputs = null
         effects.release()
         crossfader?.release()
         crossfader = null
