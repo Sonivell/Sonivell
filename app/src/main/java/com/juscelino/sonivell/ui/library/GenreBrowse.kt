@@ -59,6 +59,7 @@ import com.juscelino.sonivell.LibraryState
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Genre
 import com.juscelino.sonivell.data.Ranked
+import com.juscelino.sonivell.data.isGenericGenre
 import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
@@ -70,15 +71,7 @@ import kotlin.math.sin
 
 /** Gêneros que não dizem nada ("Genre:", "Music", "Other"…): vão para "Tags para arrumar", não para a grade. */
 internal object GenreTags {
-    private val generic = setOf(
-        "genre", "genres", "music", "musica", "música", "other", "others", "outro", "outros",
-        "unknown", "desconhecido", "misc", "miscellaneous", "various", "none", "n/a", "default",
-    )
-
-    fun isGeneric(name: String): Boolean {
-        val n = name.trim().trimEnd(':', '.', ' ').lowercase()
-        return n.isEmpty() || n in generic
-    }
+    fun isGeneric(name: String): Boolean = isGenericGenre(name)
 }
 
 /** Quantos blocos de gênero aparecem antes do "Ver todos". */

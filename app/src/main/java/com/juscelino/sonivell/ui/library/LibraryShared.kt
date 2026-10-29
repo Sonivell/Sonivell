@@ -32,4 +32,6 @@ data class LibraryActions(
     val onOpenSearch: () -> Unit = {},
     /** Abre "Organizar biblioteca" (tags faltando ou genéricas). */
     val onOpenOrganize: () -> Unit = {},
+    val onRemoveRecentSearch: (String) -> Unit = {},
+    val onDismissTagBanner: () -> Unit = {},
 )

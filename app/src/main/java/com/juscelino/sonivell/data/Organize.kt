@@ -68,7 +68,8 @@ object Organize {
     fun issues(library: List<Track>) = MetadataIssues(
         noArtist = library.filter { it.rawArtist == null },
         noAlbum = library.filter { it.rawAlbum == null },
-        noGenre = library.filter { it.genre == null },
+        // Sem gênero ou com um gênero que não diz nada ("Genre:", "Music", "Other"…).
+        noGenre = library.filter { it.genre == null || isGenericGenre(it.genre) },
         noYear = library.filter { it.year == null },
         noTitle = library.filter { it.rawTitle == null },
     )
@@ -116,4 +117,15 @@ class RecommendationPrefs(private val prefs: SharedPreferences) {
         const val KEY_ARTISTS = "blocked_artists"
         const val KEY_NOT_DUP = "not_duplicates"
     }
+}
+
+private val GENERIC_GENRES = setOf(
+    "genre", "genres", "music", "musica", "música", "other", "others", "outro", "outros",
+    "unknown", "desconhecido", "misc", "miscellaneous", "various", "none", "n/a", "default",
+)
+
+/** Gênero que não diz nada ("Genre:", "Music", "Other"…): conta como gênero para arrumar. */
+fun isGenericGenre(name: String): Boolean {
+    val n = name.trim().trimEnd(':', '.', ' ').lowercase()
+    return n.isEmpty() || n in GENERIC_GENRES
 }

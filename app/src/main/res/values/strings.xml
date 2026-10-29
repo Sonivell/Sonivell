@@ -354,7 +354,7 @@
     <string name="missing_title">No title</string>
     <string name="missing_artist">No artist</string>
     <string name="missing_album">No album</string>
-    <string name="missing_genre">No genre</string>
+    <string name="missing_genre">No or generic genre</string>
     <string name="missing_year">No year</string>
     <string name="accent_green">Green</string>
     <string name="settings_dark_background">Dark theme background</string>
@@ -477,4 +477,46 @@
     <string name="settings_tinted_background_hint">Background and cards take the tone of the accent color, in every layout</string>
     <string name="settings_system_colors">Android colors</string>
     <string name="settings_system_colors_hint">Use the color from your wallpaper (Material You) instead of the accent color</string>
+    <plurals name="lib_tags_banner">
+        <item quantity="one">%d song with tags to tidy up</item>
+        <item quantity="other">%d songs with tags to tidy up</item>
+    </plurals>
+    <string name="lib_tags_banner_sub">Missing or generic genre, artist, album or year</string>
+    <string name="lib_tags_banner_hide">Hide notice</string>
+    <string name="search_recent">Recent searches</string>
+    <string name="cd_remove_recent">Remove %1$s from recent searches</string>
+    <string name="welcome_title">Your music is ready</string>
+    <string name="welcome_title_loading">Reading your music…</string>
+    <string name="welcome_sub_loading">This only takes a moment the first time.</string>
+    <plurals name="welcome_sub">
+        <item quantity="one">We found %d song. You can start listening now.</item>
+        <item quantity="other">We found %d songs. You can start listening now.</item>
+    </plurals>
+    <plurals name="welcome_sub_smart">
+        <item quantity="one">We found %d song. You can listen now while SMART learns how it sounds.</item>
+        <item quantity="other">We found %d songs. You can listen now while SMART learns how each one sounds.</item>
+    </plurals>
+    <string name="welcome_smart_listening">SMART is listening to your library</string>
+    <string name="welcome_smart_count">%1$d of %2$d · keeps going in the background, faster while charging</string>
+    <string name="welcome_point_now">Works right away</string>
+    <string name="welcome_point_now_text">Play, search, playlists and the For you screen, from now on.</string>
+    <string name="welcome_point_now_text_smart">Play, search and mixes by artist and genre, from now on.</string>
+    <string name="welcome_point_better">Gets better over time</string>
+    <string name="welcome_point_better_text">Queues by sound and \"Sounds alike\" get sharper with every song analysed.</string>
+    <string name="welcome_point_private">Everything stays on your device</string>
+    <string name="welcome_point_private_text">Nothing is sent to the internet.</string>
+    <string name="welcome_start">Start listening</string>
+    <string name="settings_preview">Preview</string>
+    <string name="settings_preview_title">What\'s a Woman</string>
+    <string name="settings_preview_artist">Vaya Con Dios</string>
+    <string name="settings_legacy_show">Older styles (Contrast, Classic) ▸</string>
+    <string name="settings_legacy_hide">Hide older styles ▾</string>
+    <string name="settings_black_background">Black background</string>
+    <string name="settings_black_background_hint">Pure black instead of graphite in the dark theme</string>
+    <string name="widget_large_name">Sonivell · player</string>
+    <string name="widget_small_name">Sonivell · compacto</string>
+    <string name="widget_large_desc">Cover, song and controls</string>
+    <string name="widget_small_desc">Cover and play/pause</string>
+    <string name="widget_idle_title">Sonivell</string>
+    <string name="widget_idle_sub">Tap to open</string>
 </resources>

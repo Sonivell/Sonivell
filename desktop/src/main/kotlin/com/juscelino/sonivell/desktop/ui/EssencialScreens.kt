@@ -50,6 +50,7 @@ import com.juscelino.sonivell.desktop.Album
 import com.juscelino.sonivell.desktop.Controller
 import com.juscelino.sonivell.desktop.Track
 import com.juscelino.sonivell.desktop.formatTime
+import com.juscelino.sonivell.desktop.sortKey
 import com.juscelino.sonivell.desktop.str
 import java.util.Calendar
 
@@ -61,8 +62,6 @@ import java.util.Calendar
 private const val MAX_W = 1180
 private val CELL = 176.dp
 private val GAP = 16.dp
-
-private fun sortKey(s: String): String = s.trimStart { !it.isLetterOrDigit() }.lowercase()
 
 private fun greeting(): String = str(
     when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {

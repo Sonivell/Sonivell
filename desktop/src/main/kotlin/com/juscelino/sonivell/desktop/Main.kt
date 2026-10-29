@@ -35,6 +35,8 @@ private val FULL_SIZE = DpSize(1360.dp, 860.dp)
 
 fun main() = application {
     val controller = remember { Controller() }
+    // Teclas de mídia e controle de música do sistema (MPRIS); sem D-Bus, não faz nada.
+    val mpris = remember { Mpris(controller).also { m -> Thread({ m.start() }, "mpris").apply { isDaemon = true }.start() } }
     val settings by controller.settings.collectAsState()
     val compact = settings.compact
     val state = rememberWindowState(
@@ -51,7 +53,7 @@ fun main() = application {
     var sizeLocked by remember { mutableStateOf(false) }
     val icon = remember { runCatching { BitmapPainter(useResource("icon.png", ::loadImageBitmap)) }.getOrNull() }
     Window(
-        onCloseRequest = { controller.shutdown(); exitApplication() },
+        onCloseRequest = { mpris.stop(); controller.shutdown(); exitApplication() },
         title = str("app_name"),
         state = state,
         icon = icon,
@@ -67,6 +69,13 @@ fun main() = application {
             }
         },
     ) {
+        LaunchedEffect(Unit) {
+            mpris.onRaise = {
+                state.isMinimized = false
+                window.toFront()
+                window.requestFocus()
+            }
+        }
         LaunchedEffect(compact) {
             if (compact) {
                 sizeLocked = false

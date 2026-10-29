@@ -1,6 +1,13 @@
 package com.juscelino.sonivell.ui.settings
 
 import android.os.Build
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -106,16 +113,39 @@ fun SettingsScreen(
         }
 
         Section(stringResource(R.string.settings_appearance)) {
+            // Prévia ao vivo: já usa o tema aplicado, então mostra o resultado de cada escolha.
+            AppearancePreview()
             RowLabel(stringResource(R.string.settings_layout))
+            val legacy = settings.uiStyle == UiStyle.CONTRASTE || settings.uiStyle == UiStyle.CLASSICA
+            var showLegacy by rememberSaveable { mutableStateOf(legacy) }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
                     Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
                     Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
-                    Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
-                    Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
                 ).forEach { (style, name, hint) ->
                     LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
                         actions.onUpdate { it.copy(uiStyle = style) }
+                    }
+                }
+                Text(
+                    stringResource(if (showLegacy) R.string.settings_legacy_hide else R.string.settings_legacy_show),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = c.textSecondary,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(role = Role.Button) { showLegacy = !showLegacy }
+                        .heightIn(min = 44.dp)
+                        .padding(vertical = 12.dp, horizontal = 2.dp),
+                )
+                if (showLegacy) {
+                    listOf(
+                        Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
+                        Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
+                    ).forEach { (style, name, hint) ->
+                        LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
+                            actions.onUpdate { it.copy(uiStyle = style) }
+                        }
                     }
                 }
             }
@@ -131,51 +161,56 @@ fun SettingsScreen(
                     }
                 }
             }
+            RowLabel(stringResource(R.string.settings_accent))
+            val dynamicAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            val usingSystem = dynamicAvailable && settings.systemColors
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (dynamicAvailable) {
+                    val label = stringResource(R.string.settings_system_colors)
+                    Box(
+                        Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Brush.sweepGradient(listOf(AccentChoice.Lima.dark, AccentChoice.Azul.dark, AccentChoice.Lilas.dark, AccentChoice.Laranja.dark, AccentChoice.Lima.dark)))
+                            .then(if (usingSystem) Modifier.border(3.dp, c.textPrimary, CircleShape) else Modifier)
+                            .clickable(role = Role.RadioButton) { actions.onUpdate { it.copy(systemColors = true) } }
+                            .semantics { contentDescription = label; this.selected = usingSystem },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (usingSystem) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = Color(0xFF121314))
+                        else Text("A", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = Color(0xFF121314))
+                    }
+                }
+                AccentChoice.entries.forEach { choice ->
+                    val color = if (c.isDark) choice.dark else choice.light
+                    val selected = !usingSystem && settings.accent == choice
+                    val label = stringResource(accentNames[choice.ordinal])
+                    Box(
+                        Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(color)
+                            .then(if (selected) Modifier.border(3.dp, c.textPrimary, CircleShape) else Modifier)
+                            .clickable(role = Role.RadioButton) { actions.onUpdate { it.copy(accent = choice, systemColors = false) } }
+                            .semantics { contentDescription = label; this.selected = selected },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.onAccent)
+                    }
+                }
+            }
+            if (usingSystem) {
+                Text(stringResource(R.string.settings_system_colors_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+            }
             SwitchRow(stringResource(R.string.settings_tinted_background), stringResource(R.string.settings_tinted_background_hint), settings.tintedBackground) { on ->
                 actions.onUpdate { it.copy(tintedBackground = on) }
             }
             if (!settings.tintedBackground) {
-                RowLabel(stringResource(R.string.settings_dark_background))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(
-                        DarkBackground.Grafite to R.string.background_graphite,
-                        DarkBackground.Preto to R.string.background_black,
-                    ).forEach { (bg, label) ->
-                        Chip(stringResource(label), selected = settings.darkBackground == bg) {
-                            actions.onUpdate { it.copy(darkBackground = bg) }
-                        }
-                    }
-                }
-                if (!c.isDark) {
-                    Text(stringResource(R.string.settings_dark_background_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-                }
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                SwitchRow(stringResource(R.string.settings_system_colors), stringResource(R.string.settings_system_colors_hint), settings.systemColors) { on ->
-                    actions.onUpdate { it.copy(systemColors = on) }
-                }
-            }
-            if (!settings.systemColors || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                RowLabel(stringResource(R.string.settings_accent))
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    AccentChoice.entries.forEach { choice ->
-                        val color = if (c.isDark) choice.dark else choice.light
-                        val selected = settings.accent == choice
-                        val label = stringResource(accentNames[choice.ordinal])
-                        Box(
-                            Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .then(if (selected) Modifier.border(3.dp, c.textPrimary, CircleShape) else Modifier)
-                                .clickable(role = Role.RadioButton) { actions.onUpdate { it.copy(accent = choice) } }
-                                .semantics { contentDescription = label; this.selected = selected },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.onAccent)
-                        }
-                    }
-                }
+                SwitchRow(
+                    stringResource(R.string.settings_black_background),
+                    stringResource(if (c.isDark) R.string.settings_black_background_hint else R.string.settings_dark_background_hint),
+                    settings.darkBackground == DarkBackground.Preto,
+                ) { on -> actions.onUpdate { it.copy(darkBackground = if (on) DarkBackground.Preto else DarkBackground.Grafite) } }
             }
             RowLabel(stringResource(R.string.settings_icon_style))
             Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -311,6 +346,41 @@ fun SettingsScreen(
                 Text(stringResource(R.string.settings_credits_smart), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
             }
             LinkRow(stringResource(R.string.settings_reset), null, actions.onReset)
+        }
+    }
+}
+
+/** Prévia da aparência: uma faixa tocando, com capa, progresso, botão e abas no tema atual. */
+@Composable
+private fun AppearancePreview() {
+    val c = SonivellTheme.colors
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(c.background).border(1.dp, c.outline, RoundedCornerShape(24.dp)).padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(stringResource(R.string.settings_preview).uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.7.sp), color = c.textSecondary)
+        Row(Modifier.clip(RoundedCornerShape(18.dp)).background(c.surface).padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
+                Icon(SonivellTheme.icons.musicNote, null, Modifier.size(22.dp), tint = c.textSecondary)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(R.string.settings_preview_title), style = MaterialTheme.typography.titleSmall, color = c.textPrimary, maxLines = 1)
+                Text(stringResource(R.string.settings_preview_artist), style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1)
+                Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+                    Box(Modifier.fillMaxWidth(0.4f).height(4.dp).background(c.accent))
+                }
+            }
+            Box(Modifier.size(44.dp).clip(CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
+                Icon(SonivellTheme.icons.play, null, Modifier.size(18.dp), tint = c.onAccent)
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Box(Modifier.height(30.dp).clip(RoundedCornerShape(999.dp)).background(c.accent).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.nav_home), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = c.onAccent)
+            }
+            Box(Modifier.height(30.dp).clip(RoundedCornerShape(999.dp)).background(c.surface).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.nav_search), style = MaterialTheme.typography.labelMedium, color = c.textTertiary)
+            }
         }
     }
 }

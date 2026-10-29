@@ -12,6 +12,7 @@ import com.juscelino.sonivell.data.AppSettings
 import com.juscelino.sonivell.data.SettingsStore
 import com.juscelino.sonivell.data.Ranked
 import com.juscelino.sonivell.data.Stats
+import com.juscelino.sonivell.data.sortKey
 import com.juscelino.sonivell.data.StatsPeriod
 import com.juscelino.sonivell.data.StatsState
 import com.juscelino.sonivell.data.historyCsv
@@ -248,10 +249,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val scored = if (parsed.isEmpty) null else all.mapNotNull { t -> Search.score(parsed, t).takeIf { it > 0 }?.let { t to it } }
         val filtered = scored?.map { it.first } ?: all
         val sorted = if (scored != null) scored.sortedByDescending { it.second }.map { it.first } else when (s) {
-            SortOrder.Titulo -> filtered.sortedBy { it.title.lowercase() }
-            SortOrder.Artista -> filtered.sortedWith(compareBy({ it.artist.lowercase() }, { it.album.lowercase() }))
+            SortOrder.Titulo -> filtered.sortedBy { sortKey(it.title) }
+            SortOrder.Artista -> filtered.sortedWith(compareBy({ sortKey(it.artist) }, { sortKey(it.album) }))
             SortOrder.Album -> filtered.sortedWith(
-                compareBy({ it.album.lowercase() }, { it.discNumber ?: 0 }, { it.trackNumber ?: 0 }, { it.title.lowercase() })
+                compareBy({ sortKey(it.album) }, { it.discNumber ?: 0 }, { it.trackNumber ?: 0 }, { sortKey(it.title) })
             )
             SortOrder.Duracao -> filtered.sortedByDescending { it.durationMs }
             SortOrder.Ano -> filtered.sortedWith(compareByDescending<Track> { it.year ?: 0 }.thenBy { it.album.lowercase() })
@@ -259,20 +260,20 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         val albums = filtered.groupBy { it.albumId }.map { (id, ts) ->
             Album(id, ts.first().album, ts.first().artist, ts)
-        }.sortedBy { it.title.lowercase() }
+        }.sortedBy { sortKey(it.title) }
         LibraryState(
             loading = false,
             allTracks = all,
             tracks = sorted,
             albums = albums,
-            artists = filtered.groupBy { it.artist }.map { (n, ts) -> Artist(n, ts) }.sortedBy { it.name.lowercase() },
-            folders = filtered.groupBy { it.folder }.map { (p, ts) -> Folder(p, ts) }.sortedBy { it.name.lowercase() },
+            artists = filtered.groupBy { it.artist }.map { (n, ts) -> Artist(n, ts) }.sortedBy { sortKey(it.name) },
+            folders = filtered.groupBy { it.folder }.map { (p, ts) -> Folder(p, ts) }.sortedBy { sortKey(it.name) },
             // Uma faixa pode ter vários gêneros na mesma tag ("Rock; Indie").
             genres = filtered
                 .flatMap { t -> t.genre.orEmpty().split(';', '/', ',').map { it.trim() }.filter { it.isNotEmpty() }.map { it to t } }
                 .groupBy({ it.first.lowercase() }, { it })
                 .map { (_, pairs) -> Genre(pairs.first().first, pairs.map { it.second }.distinctBy { it.id }) }
-                .sortedBy { it.name.lowercase() },
+                .sortedBy { sortKey(it.name) },
             recentAlbums = all.sortedByDescending { it.dateAdded }
                 .distinctBy { it.albumId }
                 .take(6)
@@ -796,6 +797,64 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MetadataIssues())
 
+    // ---- Aviso "tags para arrumar" na Biblioteca ----
+
+    /** Quantas faixas tinham problema quando o aviso foi dispensado; ele volta se aumentar. */
+    private val tagBannerDismissedAt = MutableStateFlow(prefs.getInt(KEY_TAG_BANNER_DISMISSED, 0))
+
+    /** Faixas com tags para arrumar, ou 0 quando o aviso não deve aparecer. */
+    val tagBannerCount: StateFlow<Int> = combine(metadataIssues, tagBannerDismissedAt) { issues, dismissed ->
+        issues.total.takeIf { it > dismissed } ?: 0
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    fun dismissTagBanner() {
+        val total = metadataIssues.value.total
+        tagBannerDismissedAt.value = total
+        prefs.edit().putInt(KEY_TAG_BANNER_DISMISSED, total).apply()
+    }
+
+    // ---- Boas-vindas (primeiro uso) ----
+
+    private val _showWelcome = MutableStateFlow(false)
+
+    /** Mostra a tela de boas-vindas uma vez, na primeira abertura (quem já ouviu algo não vê). */
+    val showWelcome: StateFlow<Boolean> = _showWelcome
+
+    init {
+        if (!prefs.getBoolean(KEY_WELCOME_SEEN, false)) {
+            viewModelScope.launch(Dispatchers.IO) {
+                if (history.recent(1).isNotEmpty()) dismissWelcome() else _showWelcome.value = true
+            }
+        }
+    }
+
+    fun dismissWelcome() {
+        _showWelcome.value = false
+        prefs.edit().putBoolean(KEY_WELCOME_SEEN, true).apply()
+    }
+
+    // ---- Buscas recentes ----
+
+    private val _recentSearches = MutableStateFlow(
+        prefs.getString(KEY_RECENT_SEARCHES, null)?.split('\n')?.filter { it.isNotBlank() }.orEmpty()
+    )
+    val recentSearches: StateFlow<List<String>> = _recentSearches
+
+    /** Guarda a busca quando ela levou a algo (tocar, abrir um álbum, um artista…). */
+    fun addRecentSearch(query: String) {
+        val q = query.trim().replace(Regex("\\s+"), " ")
+        if (q.length < 2) return
+        val next = (listOf(q) + _recentSearches.value.filterNot { it.equals(q, ignoreCase = true) }).take(MAX_RECENT_SEARCHES)
+        _recentSearches.value = next
+        prefs.edit().putString(KEY_RECENT_SEARCHES, next.joinToString("\n")).apply()
+    }
+
+    fun removeRecentSearch(query: String) {
+        val next = _recentSearches.value.filterNot { it == query }
+        _recentSearches.value = next
+        prefs.edit().putString(KEY_RECENT_SEARCHES, next.joinToString("\n")).apply()
+    }
+
     /**
      * Pede ao Android para apagar os arquivos (o sistema mostra a confirmação).
      * Devolve null quando o aparelho (Android 10 ou anterior) não oferece esse pedido.
@@ -833,6 +892,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         const val SMART_TOP_UP_BELOW = 5
         const val SMART_HISTORY_LIMIT = 2_000
         const val SESSION_SAVE_EVERY_MS = 5_000L
+        const val KEY_RECENT_SEARCHES = "recent_searches"
+        const val KEY_TAG_BANNER_DISMISSED = "tag_banner_dismissed"
+        const val MAX_RECENT_SEARCHES = 8
+        const val KEY_WELCOME_SEEN = "welcome_seen"
     }
 
     override fun onCleared() {

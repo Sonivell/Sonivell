@@ -141,3 +141,13 @@ fun repairEncoding(text: String): String {
     }
     return current
 }
+
+// ---- Ordem alfabética ----
+
+private val diacritics = Regex("\\p{Mn}+")
+
+/** Chave de ordem: ignora símbolos no começo e acentos (mesma regra do Android, sortKey). */
+fun sortKey(text: String): String {
+    val trimmed = text.trimStart { !it.isLetterOrDigit() }.ifEmpty { text }
+    return java.text.Normalizer.normalize(trimmed, java.text.Normalizer.Form.NFD).replace(diacritics, "").lowercase()
+}

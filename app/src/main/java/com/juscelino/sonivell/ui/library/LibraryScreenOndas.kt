@@ -28,6 +28,10 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import com.juscelino.sonivell.ui.components.FastScroller
+import com.juscelino.sonivell.data.indexLetter
+import com.juscelino.sonivell.SortOrder
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -131,6 +135,8 @@ fun LibraryScreenOndas(
     smartPlaylists: List<SmartPlaylist> = emptyList(),
     semanticResults: List<Track> = emptyList(),
     genreOfMonth: Ranked<String>? = null,
+    recentSearches: List<String> = emptyList(),
+    tagBannerCount: Int = 0,
 ) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -153,11 +159,33 @@ fun LibraryScreenOndas(
     }
     val favs = remember(state.allTracks, favorites) { state.allTracks.filter { it.id in favorites } }
 
+    val listState = rememberLazyListState()
+    // Letras do índice A–Z: uma por linha do fim da lista, só nas listas em ordem alfabética.
+    val scrollLetters = remember(mode, state.tab, state.tracks, state.sort, libItems, grid) {
+        if (mode != LibraryMode.Biblioteca) emptyList()
+        else when (state.tab) {
+            LibraryTab.Musicas -> when (state.sort) {
+                SortOrder.Titulo -> state.tracks.map { indexLetter(it.title) }
+                SortOrder.Artista -> state.tracks.map { indexLetter(it.artist) }
+                SortOrder.Album -> state.tracks.map { indexLetter(it.album) }
+                else -> emptyList()
+            }
+            LibraryTab.Albuns, LibraryTab.Artistas, LibraryTab.Generos, LibraryTab.Pastas -> {
+                val letters = libItems.map { indexLetter(it.title) }
+                if (grid) letters.chunked(3).map { it.first() } else letters
+            }
+            else -> emptyList()
+        }
+    }
+    val withIndex = scrollLetters.size >= 40
+
+    Box(Modifier.fillMaxSize()) {
     LazyColumn(
         Modifier.fillMaxSize().background(c.background),
+        state = listState,
         contentPadding = PaddingValues(
             start = 20.dp,
-            end = 20.dp,
+            end = if (withIndex) 30.dp else 20.dp,
             top = contentPadding.calculateTopPadding() + 16.dp,
             bottom = contentPadding.calculateBottomPadding() + 16.dp,
         ),
@@ -216,8 +244,13 @@ fun LibraryScreenOndas(
 
         when (mode) {
             LibraryMode.Inicio -> home(state, favorites, labels, actions, smartProgress, forYou, decades)
-            LibraryMode.Buscar -> search(state, currentId, labels, actions, playlists, semanticResults, decades, genreOfMonth, showAllSongs) { showAllSongs = true }
+            LibraryMode.Buscar -> search(state, currentId, labels, actions, playlists, semanticResults, decades, genreOfMonth, recentSearches, showAllSongs) { showAllSongs = true }
             LibraryMode.Biblioteca -> {
+                if (tagBannerCount > 0) {
+                    item(key = "tags-banner") {
+                        TagsBanner(tagBannerCount, actions.onOpenOrganize, actions.onDismissTagBanner, Modifier.padding(bottom = 12.dp))
+                    }
+                }
                 item(key = "segments") {
                     Segmented(
                         listOf(LibraryTab.Tudo, LibraryTab.Playlists, LibraryTab.Albuns, LibraryTab.Artistas, LibraryTab.Musicas, LibraryTab.Generos, LibraryTab.Pastas),
@@ -287,6 +320,14 @@ fun LibraryScreenOndas(
                 }
             }
         }
+    }
+    FastScroller(
+        listState,
+        scrollLetters,
+        Modifier
+            .align(Alignment.CenterEnd)
+            .padding(top = contentPadding.calculateTopPadding() + 140.dp, bottom = contentPadding.calculateBottomPadding() + 16.dp, end = 4.dp),
+    )
     }
 }
 
@@ -860,11 +901,17 @@ private fun LazyListScope.search(
     semanticResults: List<Track>,
     decades: List<Int>,
     genreOfMonth: Ranked<String>?,
+    recentSearches: List<String>,
     showAllSongs: Boolean,
     onShowAll: () -> Unit,
 ) {
     val parsed = Search.parse(state.query)
     if (parsed.isEmpty) {
+        if (recentSearches.isNotEmpty() && state.allTracks.isNotEmpty()) {
+            item(key = "recent") {
+                RecentSearches(recentSearches, actions.onQuery, actions.onRemoveRecentSearch, Modifier.padding(top = 4.dp, bottom = 18.dp))
+            }
+        }
         genreBrowse(state, decades, genreOfMonth, actions)
         return
     }

@@ -16,6 +16,8 @@ import android.provider.MediaStore
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import com.juscelino.sonivell.widget.SonivellWidgets
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import androidx.media3.exoplayer.ExoPlayer
@@ -72,6 +74,11 @@ class PlaybackService : MediaSessionService() {
         // A cada faixa nova, ajusta o volume pelo ReplayGain dela (se a opção estiver ligada).
         player.addListener(object : Player.Listener {
             override fun onTracksChanged(tracks: Tracks) = applyNormalization(player)
+        })
+        // Widgets da tela inicial acompanham a faixa e o tocar/pausar.
+        player.addListener(object : Player.Listener {
+            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) = publishWidget(player)
+            override fun onIsPlayingChanged(isPlaying: Boolean) = publishWidget(player)
         })
 
         val openApp = PendingIntent.getActivity(
@@ -140,6 +147,11 @@ class PlaybackService : MediaSessionService() {
         crossfader?.setMainGain(gain) ?: run { player.volume = gain }
     }
 
+    private fun publishWidget(player: Player) {
+        val md = player.mediaMetadata
+        SonivellWidgets.publish(this, md.title?.toString(), md.artist?.toString(), md.artworkUri, player.isPlaying)
+    }
+
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -150,6 +162,10 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        session?.player?.let { p ->
+            val md = p.mediaMetadata
+            SonivellWidgets.publish(this, md.title?.toString(), md.artist?.toString(), md.artworkUri, playing = false)
+        }
         prefs.unregisterOnSharedPreferenceChangeListener(settingsListener)
         effects.release()
         crossfader?.release()

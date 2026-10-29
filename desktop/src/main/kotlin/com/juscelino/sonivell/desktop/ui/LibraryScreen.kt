@@ -40,14 +40,15 @@ import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.desktop.Controller
 import com.juscelino.sonivell.desktop.Track
 import com.juscelino.sonivell.desktop.formatTime
+import com.juscelino.sonivell.desktop.sortKey
 import com.juscelino.sonivell.desktop.str
 
 private enum class SortBy { Title, Artist, Album, Duration, Recent, Year }
 
 private fun sorted(tracks: List<Track>, by: SortBy): List<Track> = when (by) {
-    SortBy.Title -> tracks.sortedBy { it.title.lowercase() }
-    SortBy.Artist -> tracks.sortedWith(compareBy({ it.artist.lowercase() }, { it.album.lowercase() }, { it.trackNo }))
-    SortBy.Album -> tracks.sortedWith(compareBy({ it.album.lowercase() }, { it.trackNo }))
+    SortBy.Title -> tracks.sortedBy { sortKey(it.title) }
+    SortBy.Artist -> tracks.sortedWith(compareBy({ sortKey(it.artist) }, { sortKey(it.album) }, { it.trackNo }))
+    SortBy.Album -> tracks.sortedWith(compareBy({ sortKey(it.album) }, { it.trackNo }))
     SortBy.Duration -> tracks.sortedByDescending { it.durationMs }
     SortBy.Recent -> tracks.sortedByDescending { it.addedMs }
     SortBy.Year -> tracks.sortedByDescending { it.year }

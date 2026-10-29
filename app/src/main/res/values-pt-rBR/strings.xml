@@ -347,7 +347,7 @@
     <string name="missing_title">Sem título</string>
     <string name="missing_artist">Sem artista</string>
     <string name="missing_album">Sem álbum</string>
-    <string name="missing_genre">Sem gênero</string>
+    <string name="missing_genre">Sem gênero ou genérico</string>
     <string name="missing_year">Sem ano</string>
     <string name="accent_green">Verde</string>
     <string name="settings_dark_background">Fundo do tema escuro</string>
@@ -470,4 +470,49 @@
     <string name="settings_tinted_background_hint">Fundo e cartões no tom da cor de destaque, em todos os layouts</string>
     <string name="settings_system_colors">Cores do Android</string>
     <string name="settings_system_colors_hint">Usa a cor do papel de parede (Material You) no lugar da cor de destaque</string>
+    <plurals name="lib_tags_banner">
+        <item quantity="one">%d música com tags para arrumar</item>
+        <item quantity="many">%d músicas com tags para arrumar</item>
+        <item quantity="other">%d músicas com tags para arrumar</item>
+    </plurals>
+    <string name="lib_tags_banner_sub">Gênero genérico ou faltando artista, álbum ou ano</string>
+    <string name="lib_tags_banner_hide">Ocultar aviso</string>
+    <string name="search_recent">Buscas recentes</string>
+    <string name="cd_remove_recent">Remover %1$s das buscas recentes</string>
+    <string name="welcome_title">Suas músicas já estão prontas</string>
+    <string name="welcome_title_loading">Lendo suas músicas…</string>
+    <string name="welcome_sub_loading">Na primeira vez leva só um instante.</string>
+    <plurals name="welcome_sub">
+        <item quantity="one">Encontramos %d música. Você já pode começar a ouvir.</item>
+        <item quantity="many">Encontramos %d músicas. Você já pode começar a ouvir.</item>
+        <item quantity="other">Encontramos %d músicas. Você já pode começar a ouvir.</item>
+    </plurals>
+    <plurals name="welcome_sub_smart">
+        <item quantity="one">Encontramos %d música. Você já pode ouvir enquanto o SMART conhece o som dela.</item>
+        <item quantity="many">Encontramos %d músicas. Você já pode ouvir enquanto o SMART conhece o som de cada uma.</item>
+        <item quantity="other">Encontramos %d músicas. Você já pode ouvir enquanto o SMART conhece o som de cada uma.</item>
+    </plurals>
+    <string name="welcome_smart_listening">SMART ouvindo sua biblioteca</string>
+    <string name="welcome_smart_count">%1$d de %2$d · continua em segundo plano, mais rápido com o celular carregando</string>
+    <string name="welcome_point_now">Já funciona</string>
+    <string name="welcome_point_now_text">Tocar, buscar, playlists e a tela Para você, desde agora.</string>
+    <string name="welcome_point_now_text_smart">Tocar, buscar e mixes por artista e gênero, desde agora.</string>
+    <string name="welcome_point_better">Melhora com o tempo</string>
+    <string name="welcome_point_better_text">Filas pelo som e \"Soa parecido\" ficam mais certeiros a cada música analisada.</string>
+    <string name="welcome_point_private">Tudo fica no seu aparelho</string>
+    <string name="welcome_point_private_text">Nada é enviado para a internet.</string>
+    <string name="welcome_start">Começar a ouvir</string>
+    <string name="settings_preview">Prévia</string>
+    <string name="settings_preview_title">What\'s a Woman</string>
+    <string name="settings_preview_artist">Vaya Con Dios</string>
+    <string name="settings_legacy_show">Estilos antigos (Contraste, Clássica) ▸</string>
+    <string name="settings_legacy_hide">Ocultar estilos antigos ▾</string>
+    <string name="settings_black_background">Fundo preto</string>
+    <string name="settings_black_background_hint">Preto puro no lugar do grafite, no tema escuro</string>
+    <string name="widget_large_name">Sonivell · player</string>
+    <string name="widget_small_name">Sonivell · compacto</string>
+    <string name="widget_large_desc">Capa, música e controles</string>
+    <string name="widget_small_desc">Capa e tocar/pausar</string>
+    <string name="widget_idle_title">Sonivell</string>
+    <string name="widget_idle_sub">Toque para abrir</string>
 </resources>

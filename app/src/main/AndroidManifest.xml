@@ -38,6 +38,33 @@
             </intent-filter>
         </service>
 
+        <!-- Widgets da tela inicial (grande e pequeno) e os botões deles. -->
+        <receiver
+            android:name=".widget.SonivellWidgetLarge"
+            android:exported="false"
+            android:label="@string/widget_large_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_large_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.SonivellWidgetSmall"
+            android:exported="false"
+            android:label="@string/widget_small_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_small_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.WidgetActionReceiver"
+            android:exported="false" />
+
         <!-- Capas por faixa (lidas do próprio arquivo); só o app e o Media3 dele usam. -->
         <provider
             android:name=".data.ArtProvider"

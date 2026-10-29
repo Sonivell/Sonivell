@@ -115,6 +115,7 @@ import com.juscelino.sonivell.ui.library.LibraryActions
 import com.juscelino.sonivell.ui.library.LibraryMode
 import com.juscelino.sonivell.ui.library.LibraryScreenClassica
 import com.juscelino.sonivell.ui.library.LibraryScreenContraste
+import com.juscelino.sonivell.ui.components.miniPlayerGestures
 import com.juscelino.sonivell.ui.library.LibraryScreenEssencial
 import com.juscelino.sonivell.ui.library.LibraryScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingActions
@@ -204,7 +205,21 @@ fun SonivellApp(vm: MainViewModel) {
     if (!granted) {
         PermissionScreen(onRequest = requestPermissions)
     } else {
-        MainContent(vm)
+        val showWelcome by vm.showWelcome.collectAsStateWithLifecycle()
+        Box(Modifier.fillMaxSize()) {
+            MainContent(vm)
+            if (showWelcome) {
+                val library by vm.library.collectAsStateWithLifecycle()
+                val smartProgress by vm.smartProgress.collectAsStateWithLifecycle()
+                WelcomeScreen(
+                    trackCount = library.allTracks.size,
+                    loading = library.loading,
+                    smartAvailable = vm.smart.isAvailable,
+                    progress = smartProgress,
+                    onDone = vm::dismissWelcome,
+                )
+            }
+        }
     }
 }
 
@@ -243,6 +258,8 @@ private fun MainContent(vm: MainViewModel) {
     val smartProgress by vm.smartProgress.collectAsStateWithLifecycle()
     val forYou by vm.forYou.collectAsStateWithLifecycle()
     val genreOfMonth by vm.genreOfMonth.collectAsStateWithLifecycle()
+    val recentSearches by vm.recentSearches.collectAsStateWithLifecycle()
+    val tagBannerCount by vm.tagBannerCount.collectAsStateWithLifecycle()
     val playlists by vm.playlists.collectAsStateWithLifecycle()
     val sleepTimer by vm.sleepTimer.collectAsStateWithLifecycle()
     val smartSource = stringResource(R.string.source_smart)
@@ -333,12 +350,15 @@ private fun MainContent(vm: MainViewModel) {
         runCatching { context.startActivity(Intent.createChooser(send, res.getString(R.string.share_chooser))) }
     }
 
+    // Uma busca que levou a algo (tocar, abrir) vira "busca recente".
+    val commitSearch: () -> Unit = { if (route == Routes.SEARCH && library.query.isNotBlank()) vm.addRecentSearch(library.query) }
     val libraryActions = LibraryActions(
         onQuery = vm::setQuery,
         onTab = vm::setTab,
         onSort = vm::cycleSort,
         onRefresh = vm::refresh,
         onPlay = { tracks, index, src ->
+            commitSearch()
             source = if (shuffleMode == ShuffleMode.SMART) smartSource else src
             vm.playFrom(tracks, index)
         },
@@ -351,11 +371,11 @@ private fun MainContent(vm: MainViewModel) {
             vm.playAllShuffled()
         },
         onTrackMenu = { menuFor = it to MenuContext.None },
-        onOpenAlbum = ::openAlbum,
-        onOpenArtist = ::openArtist,
-        onOpenGenre = { nav.navigate(Routes.genre(it)) },
+        onOpenAlbum = { commitSearch(); openAlbum(it) },
+        onOpenArtist = { commitSearch(); openArtist(it) },
+        onOpenGenre = { commitSearch(); nav.navigate(Routes.genre(it)) },
         onOpenFolder = { nav.navigate(Routes.folder(it)) },
-        onOpenPlaylist = { nav.navigate(Routes.playlist(it)) },
+        onOpenPlaylist = { commitSearch(); nav.navigate(Routes.playlist(it)) },
         onNewPlaylist = { newPlaylistWith = emptyList() },
         onImportPlaylist = { importLauncher.launch(arrayOf("*/*")) },
         onOpenSettings = { nav.navigate(Routes.SETTINGS) },
@@ -374,6 +394,8 @@ private fun MainContent(vm: MainViewModel) {
             }
         },
         onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
+        onRemoveRecentSearch = vm::removeRecentSearch,
+        onDismissTagBanner = vm::dismissTagBanner,
     )
 
     val chromeRoutes = remember { tabs.map { it.route }.toSet() + Routes.COLLECTIONS + setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS) }
@@ -388,6 +410,7 @@ private fun MainContent(vm: MainViewModel) {
                 Column(Modifier.background(SonivellTheme.colors.background).windowInsetsPadding(WindowInsets.navigationBars)) {
                     current?.let { t ->
                         val progress = if (player.durationMs > 0) player.positionMs.toFloat() / player.durationMs else 0f
+                        Box(Modifier.miniPlayerGestures(onNext = { vm.player.next() }, onPrevious = { vm.player.previous() }, onOpen = { nav.navigate(Routes.PLAYER) })) {
                         when (uiStyle) {
                             UiStyle.ONDAS, UiStyle.ESSENCIAL -> MiniPlayerOndas(
                                 track = t,
@@ -413,6 +436,7 @@ private fun MainContent(vm: MainViewModel) {
                                 onOpen = { nav.navigate(Routes.PLAYER) },
                                 onTogglePlay = vm.player::togglePlay,
                             )
+                        }
                         }
                     }
                     val onTab: (String) -> Unit = { r ->
@@ -489,7 +513,7 @@ private fun MainContent(vm: MainViewModel) {
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
                             contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
-                            genreOfMonth = genreOfMonth,
+                            genreOfMonth = genreOfMonth, recentSearches = recentSearches, tagBannerCount = tagBannerCount,
                         )
                         UiStyle.CONTRASTE -> LibraryScreenContraste(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
@@ -500,6 +524,7 @@ private fun MainContent(vm: MainViewModel) {
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
                             contentPadding = listPadding, actions = libraryActions,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                            recentSearches = recentSearches, tagBannerCount = tagBannerCount,
                         )
                         UiStyle.CLASSICA -> LibraryScreenClassica(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,

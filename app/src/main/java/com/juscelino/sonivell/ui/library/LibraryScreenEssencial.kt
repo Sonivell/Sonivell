@@ -25,6 +25,11 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import com.juscelino.sonivell.ui.components.FastScroller
+import com.juscelino.sonivell.data.sortKey
+import com.juscelino.sonivell.data.indexLetter
+import com.juscelino.sonivell.SortOrder
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -86,8 +91,6 @@ import java.util.Calendar
 private const val SIDE = 20
 
 /** Chave de ordenação que ignora símbolos no começo ("!Tchau radar!", "#…", "(…"). */
-private fun essSortKey(s: String): String = s.trimStart { !it.isLetterOrDigit() }.lowercase()
-
 private enum class EssAlbumMode { AZ, Added }
 
 private enum class EssResultFilter { All, Songs, Albums, Artists }
@@ -104,6 +107,8 @@ fun LibraryScreenEssencial(
     playlists: List<Playlist> = emptyList(),
     smartPlaylists: List<SmartPlaylist> = emptyList(),
     semanticResults: List<Track> = emptyList(),
+    recentSearches: List<String> = emptyList(),
+    tagBannerCount: Int = 0,
 ) {
     val c = SonivellTheme.colors
     val labels = EssLabels(
@@ -119,11 +124,36 @@ fun LibraryScreenEssencial(
     // A Biblioteca Essencial não tem "Tudo": abre direto nos álbuns.
     LaunchedEffect(mode, state.tab) { if (mode == LibraryMode.Biblioteca && state.tab == LibraryTab.Tudo) actions.onTab(LibraryTab.Albuns) }
 
+    val listState = rememberLazyListState()
+    // Letras do índice A–Z: uma por linha do fim da lista (as grades contam uma por fileira de 3).
+    val albumMode = EssAlbumSort.value
+    val scrollLetters = remember(mode, state.tab, state.tracks, state.sort, state.albums, state.artists, state.folders, albumMode) {
+        if (mode != LibraryMode.Biblioteca) emptyList()
+        else when (state.tab) {
+            LibraryTab.Albuns, LibraryTab.Tudo ->
+                if (albumMode == EssAlbumMode.AZ) essSortAlbums(state.albums, albumMode).chunked(3).map { indexLetter(it.first().title) } else emptyList()
+            LibraryTab.Artistas -> state.artists.sortedBy { sortKey(it.name) }.chunked(3).map { indexLetter(it.first().name) }
+            LibraryTab.Pastas -> state.folders.map { indexLetter(it.name) }
+            LibraryTab.Musicas -> when (state.sort) {
+                SortOrder.Titulo -> state.tracks.map { indexLetter(it.title) }
+                SortOrder.Artista -> state.tracks.map { indexLetter(it.artist) }
+                SortOrder.Album -> state.tracks.map { indexLetter(it.album) }
+                else -> emptyList()
+            }
+            else -> emptyList()
+        }
+    }
+    // Na grade, 40 fileiras já são 120 capas.
+    val withIndex = scrollLetters.size >= 40
+
+    Box(Modifier.fillMaxSize()) {
     LazyColumn(
         Modifier.fillMaxSize().background(c.background),
+        state = listState,
         contentPadding = PaddingValues(
             top = contentPadding.calculateTopPadding() + 16.dp,
             bottom = contentPadding.calculateBottomPadding() + 24.dp,
+            end = if (withIndex) 14.dp else 0.dp,
         ),
     ) {
         item(key = "header") { EssHeader(mode, actions) }
@@ -150,11 +180,33 @@ fun LibraryScreenEssencial(
         when (mode) {
             LibraryMode.Inicio -> essHome(state, favorites, forYou, labels, actions)
             LibraryMode.Buscar -> {
-                if (Search.parse(state.query).isEmpty) essBrowse(state, actions)
+                if (Search.parse(state.query).isEmpty) {
+                    if (recentSearches.isNotEmpty()) {
+                        item(key = "recent") {
+                            RecentSearches(recentSearches, actions.onQuery, actions.onRemoveRecentSearch, Modifier.padding(horizontal = SIDE.dp).padding(bottom = 26.dp))
+                        }
+                    }
+                    essBrowse(state, actions)
+                }
                 else essResults(state, currentId, labels, actions, playlists, semanticResults)
             }
-            LibraryMode.Biblioteca -> essLibrary(state, favorites, currentId, labels, actions, playlists, smartPlaylists)
+            LibraryMode.Biblioteca -> {
+                if (tagBannerCount > 0) {
+                    item(key = "tags-banner") {
+                        TagsBanner(tagBannerCount, actions.onOpenOrganize, actions.onDismissTagBanner, Modifier.padding(horizontal = SIDE.dp).padding(bottom = 16.dp))
+                    }
+                }
+                essLibrary(state, favorites, currentId, labels, actions, playlists, smartPlaylists)
+            }
         }
+    }
+    FastScroller(
+        listState,
+        scrollLetters,
+        Modifier
+            .align(Alignment.CenterEnd)
+            .padding(top = contentPadding.calculateTopPadding() + 150.dp, bottom = contentPadding.calculateBottomPadding() + 16.dp, end = 4.dp),
+    )
     }
 }
 
@@ -719,7 +771,7 @@ private fun LazyListScope.essLibrary(
             }
         }
         LibraryTab.Artistas -> {
-            val sorted = state.artists.sortedBy { essSortKey(it.name) }
+            val sorted = state.artists.sortedBy { sortKey(it.name) }
             essCoverGrid("ar", sorted, { it.name }) { a, mod ->
                 EssCoverCard(a.name, null, mod, round = true, onClick = { actions.onOpenArtist(a.name) }) { m -> AlbumArt(a.tracks.firstOrNull(), m, corner = 999.dp) }
             }
@@ -764,7 +816,7 @@ private object EssAlbumSort {
 }
 
 private fun essSortAlbums(albums: List<Album>, sort: EssAlbumMode): List<Album> = when (sort) {
-    EssAlbumMode.AZ -> albums.sortedBy { essSortKey(it.title) }
+    EssAlbumMode.AZ -> albums.sortedBy { sortKey(it.title) }
     EssAlbumMode.Added -> albums.sortedByDescending { a -> a.tracks.maxOfOrNull { it.dateAdded } ?: 0L }
 }
 

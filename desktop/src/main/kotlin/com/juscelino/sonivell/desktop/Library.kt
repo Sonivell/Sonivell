@@ -149,15 +149,15 @@ class Library(val tracks: List<Track>) {
     val albums: List<Album> = tracks.filter { it.album.isNotBlank() }.groupBy { it.albumKey }.map { (key, list) ->
         val sorted = list.sortedWith(compareBy({ it.trackNo }, { it.title.lowercase() }))
         Album(key, sorted.first().album, sorted.first().albumArtist.ifBlank { sorted.first().artist }, sorted.maxOf { it.year }, sorted)
-    }.sortedBy { it.title.lowercase() }
+    }.sortedBy { sortKey(it.title) }
 
     val artists: List<Pair<String, List<Track>>> = tracks.filter { it.artist.isNotBlank() }.groupBy { it.artist }
-        .toList().sortedBy { it.first.lowercase() }
+        .toList().sortedBy { sortKey(it.first) }
 
     val genres: List<Pair<String, List<Track>>> = tracks.filter { it.genre.isNotBlank() }.groupBy { it.genre }
         .toList().sortedByDescending { it.second.size }
 
-    val folders: List<Pair<String, List<Track>>> = tracks.groupBy { it.folder }.toList().sortedBy { it.first.lowercase() }
+    val folders: List<Pair<String, List<Track>>> = tracks.groupBy { it.folder }.toList().sortedBy { sortKey(it.first.substringAfterLast('/')) }
 
     val recentlyAdded: List<Track> get() = tracks.sortedByDescending { it.addedMs }
 

@@ -15,6 +15,9 @@ dependencies {
     implementation(project(":desktop-smart"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.swing)
+    // MPRIS (teclas de mídia, controle de música do painel) pelo D-Bus da sessão.
+    implementation("com.github.hypfvieh:dbus-java-core:5.1.1")
+    implementation("com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.1.1")
     testImplementation(kotlin("test"))
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.12.2")
 }
