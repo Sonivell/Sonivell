@@ -35,12 +35,6 @@ class LibraryBrowser(private val context: Context, private val prefs: SharedPref
         }
     }
 
-    /** Itens prontos para a fila a partir dos ids (despertador). */
-    suspend fun queueItems(ids: List<Long>): List<MediaItem> {
-        val byId = library().associateBy { it.id }
-        return ids.mapNotNull(byId::get).map(::queueItem)
-    }
-
     fun root(): MediaItem = folder(ROOT, context.getString(R.string.app_name))
 
     suspend fun children(parentId: String): List<MediaItem> {

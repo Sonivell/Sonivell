@@ -118,7 +118,6 @@ import com.juscelino.sonivell.ui.library.LibraryScreenContraste
 import com.juscelino.sonivell.system.AppShortcuts
 import androidx.compose.material.icons.rounded.NotificationsActive
 import com.juscelino.sonivell.ui.extras.CarModeScreen
-import com.juscelino.sonivell.ui.extras.AlarmScreen
 import com.juscelino.sonivell.ui.extras.RetroScreen
 import com.juscelino.sonivell.ui.extras.TagEditorScreen
 import com.juscelino.sonivell.system.Backup
@@ -166,7 +165,6 @@ private object Routes {
     const val SMART_EDIT = "inteligente-editar/{id}"
     const val ORGANIZE = "organizar"
     const val CAR = "carro"
-    const val ALARM = "despertador"
     const val TAGS = "tags/{id}"
     const val RETRO = "retrospectiva"
     fun tags(id: Long) = "tags/$id"
@@ -759,9 +757,6 @@ private fun MainContent(vm: MainViewModel) {
                     },
                 )
             }
-            composable(Routes.ALARM) {
-                AlarmScreen(playlists = playlists, contentPadding = listPadding, onBack = { nav.popBackStack() })
-            }
             composable(Routes.ORGANIZE) {
                 OrganizeScreen(
                     duplicates = duplicates,
@@ -797,7 +792,6 @@ private fun MainContent(vm: MainViewModel) {
                         onReset = { confirmReset = true },
                         onPickLyricsFolder = { lyricsFolderLauncher.launch(null) },
                         onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
-                        onOpenAlarm = { nav.navigate(Routes.ALARM) },
                         onOpenCarMode = { nav.navigate(Routes.CAR) },
                         onOpenRetro = { nav.navigate(Routes.RETRO) },
                         onBackup = { backupLauncher.launch("sonivell-backup.zip") },

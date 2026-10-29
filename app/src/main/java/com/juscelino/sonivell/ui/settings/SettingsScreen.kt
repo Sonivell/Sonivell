@@ -4,7 +4,6 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.DirectionsCar
@@ -107,7 +106,6 @@ data class SettingsActions(
     val onUnblockArtist: (String) -> Unit = {},
     val onRetrainTaste: () -> Unit = {},
     val onForgetTaste: () -> Unit = {},
-    val onOpenAlarm: () -> Unit = {},
     val onOpenCarMode: () -> Unit = {},
     val onOpenRetro: () -> Unit = {},
     val onBackup: () -> Unit = {},
@@ -214,7 +212,6 @@ private fun IndexPage(
     actions: SettingsActions,
     open: (SettingsPage) -> Unit,
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
     var query by rememberSaveable { mutableStateOf("") }
     SearchField(query) { query = it }
 
@@ -290,15 +287,6 @@ private fun IndexPage(
         NavRow(Icons.Rounded.Insights, stringResource(R.string.settings_history_page), stringResource(R.string.sum_history)) { open(SettingsPage.Historico) }
     }
     Card {
-        val alarm = remember { com.juscelino.sonivell.system.MusicAlarm.load(context) }
-        val next = com.juscelino.sonivell.system.MusicAlarm.nextTrigger(alarm)
-        NavRow(
-            Icons.Rounded.Alarm,
-            stringResource(R.string.alarm_title),
-            if (next == null) stringResource(R.string.sum_off)
-            else java.text.SimpleDateFormat("EEE HH:mm", java.util.Locale.getDefault()).format(java.util.Date(next)),
-            onClick = actions.onOpenAlarm,
-        )
         NavRow(Icons.Rounded.DirectionsCar, stringResource(R.string.car_mode), stringResource(R.string.sum_car), onClick = actions.onOpenCarMode)
         NavRow(Icons.Rounded.Backup, stringResource(R.string.backup_section), stringResource(R.string.sum_data)) { open(SettingsPage.Dados) }
         NavRow(Icons.Rounded.Info, stringResource(R.string.settings_about), stringResource(R.string.sum_about, versionName)) { open(SettingsPage.Sobre) }
@@ -349,7 +337,6 @@ private fun searchEntries(smartAvailable: Boolean): List<SearchEntry> {
         add(e(R.string.thanks_title, null, SettingsPage.Sobre))
         add(e(R.string.settings_reset, null, SettingsPage.Sobre))
         add(SearchEntry(stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), SettingsPage.Index) { it.onOpenEqualizer() })
-        add(SearchEntry(stringResource(R.string.alarm_title), stringResource(R.string.alarm_hint), SettingsPage.Index) { it.onOpenAlarm() })
         add(SearchEntry(stringResource(R.string.car_mode), stringResource(R.string.car_mode_hint), SettingsPage.Index) { it.onOpenCarMode() })
     }
 }

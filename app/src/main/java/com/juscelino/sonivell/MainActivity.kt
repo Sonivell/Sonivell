@@ -25,8 +25,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         AppShortcuts.publish(this)
-        // Reagenda o despertador (o Android apaga alarmes agendados em algumas atualizações).
-        com.juscelino.sonivell.system.MusicAlarm.schedule(this)
+        removeOldAlarm()
         if (savedInstanceState == null) handleShortcut(intent)
         setContent {
             val settings by vm.settings.collectAsStateWithLifecycle()
@@ -64,5 +63,23 @@ class MainActivity : ComponentActivity() {
     private fun handleShortcut(intent: Intent?) {
         val action = intent?.action ?: return
         if (action in AppShortcuts.ALL) vm.requestShortcut(action)
+    }
+
+    /**
+     * O despertador foi removido: cancela um alarme que tenha ficado agendado por uma versão
+     * anterior (senão o relógio do sistema continuaria mostrando o horário) e apaga a config.
+     */
+    private fun removeOldAlarm() {
+        val prefs = getSharedPreferences("sonivell_alarm", MODE_PRIVATE)
+        if (prefs.all.isEmpty()) return
+        val intent = android.content.Intent("com.juscelino.sonivell.alarm.FIRE")
+            .setComponent(android.content.ComponentName(packageName, "com.juscelino.sonivell.system.MusicAlarm\$AlarmReceiver"))
+        android.app.PendingIntent.getBroadcast(
+            this, 40, intent, android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_NO_CREATE,
+        )?.let { pending ->
+            getSystemService(android.app.AlarmManager::class.java).cancel(pending)
+            pending.cancel()
+        }
+        prefs.edit().clear().apply()
     }
 }

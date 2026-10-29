@@ -55,8 +55,6 @@ class PlaybackService : MediaLibraryService() {
     private val handler = Handler(Looper.getMainLooper())
 
     /** Multiplicador do volume durante o despertador (sobe de ~0 a 1). */
-    private var rampFactor = 1f
-    private var baseGain = 1f
     private lateinit var prefs: SharedPreferences
     private lateinit var effects: AudioEffects
     private var crossfader: Crossfader? = null
@@ -107,12 +105,6 @@ class PlaybackService : MediaLibraryService() {
             override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) = publishWidget(player)
             override fun onIsPlayingChanged(isPlaying: Boolean) = publishWidget(player)
         })
-        // Pausou o despertador: o som volta a ser de música.
-        player.addListener(object : Player.Listener {
-            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                if (!playWhenReady && alarmAudio) useAlarmAudio(player, false)
-            }
-        })
 
         val openApp = PendingIntent.getActivity(
             this,
@@ -135,53 +127,11 @@ class PlaybackService : MediaLibraryService() {
     }
 
     /**
-     * Sessão com navegação (Android Auto e afins) e o comando do despertador.
+     * Sessão com navegação (Android Auto e afins).
      * Garante também que todo item adicionado tenha URI tocável: itens vindos de
      * controladores externos podem chegar só com o mediaId.
      */
     private inner class LibraryCallback : MediaLibrarySession.Callback {
-        override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
-            val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
-                .add(SessionCommand(ALARM_COMMAND, Bundle.EMPTY))
-                .build()
-            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
-                .setAvailableSessionCommands(commands)
-                .build()
-        }
-
-        override fun onCustomCommand(
-            session: MediaSession,
-            controller: MediaSession.ControllerInfo,
-            customCommand: SessionCommand,
-            args: Bundle,
-        ): ListenableFuture<SessionResult> {
-            if (customCommand.customAction != ALARM_COMMAND) {
-                return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
-            }
-            val rampSec = args.getInt(EXTRA_RAMP_SEC, 0)
-            val stopMin = args.getInt(EXTRA_STOP_MIN, 0)
-            val config = com.juscelino.sonivell.system.AlarmConfig(
-                source = com.juscelino.sonivell.system.AlarmSource.entries.firstOrNull { it.name == args.getString(EXTRA_SOURCE) }
-                    ?: com.juscelino.sonivell.system.AlarmSource.Curtidas,
-                playlistId = args.getLong(EXTRA_PLAYLIST, 0L),
-            )
-            return scope.future {
-                val ids = args.getLongArray(EXTRA_IDS)?.toList()
-                    ?: com.juscelino.sonivell.system.MusicAlarm.trackIds(this@PlaybackService, config)
-                val items = browser.queueItems(ids)
-                val player = session.player
-                if (items.isEmpty() && player.mediaItemCount == 0) return@future SessionResult(SessionError.ERROR_BAD_VALUE)
-                if (items.isNotEmpty()) player.setMediaItems(items, 0, 0L)
-                (player as? ExoPlayer)?.let { useAlarmAudio(it, true) }
-                player.prepare()
-                startAlarmRamp(rampSec)
-                player.play()
-                handler.removeCallbacks(alarmStop)
-                if (stopMin > 0) handler.postDelayed(alarmStop, stopMin * 60_000L)
-                SessionResult(SessionResult.RESULT_SUCCESS)
-            }
-        }
-
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -248,53 +198,6 @@ class PlaybackService : MediaLibraryService() {
         }
     }
 
-    // ---- Despertador: o volume sobe aos poucos e a música para sozinha depois de um tempo ----
-
-    private val alarmStop = Runnable { session?.player?.pause() }
-
-    /**
-     * Enquanto o despertador toca, o som sai como alarme: toca mesmo com o "Não perturbe"
-     * ligado e usa o volume de alarme. Ao pausar, volta a ser música normal.
-     */
-    private var alarmAudio = false
-
-    private fun useAlarmAudio(player: ExoPlayer, on: Boolean) {
-        if (alarmAudio == on) return
-        alarmAudio = on
-        player.setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(if (on) C.USAGE_ALARM else C.USAGE_MEDIA)
-                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                .build(),
-            /* handleAudioFocus = */ true,
-        )
-    }
-    private var rampStep: Runnable? = null
-
-    private fun startAlarmRamp(seconds: Int) {
-        rampStep?.let(handler::removeCallbacks)
-        val player = session?.player as? ExoPlayer ?: return
-        if (seconds <= 0) {
-            rampFactor = 1f
-            setGain(player, baseGain)
-            return
-        }
-        val steps = (seconds * 1000 / RAMP_TICK_MS).toInt().coerceAtLeast(1)
-        var step = 0
-        rampFactor = RAMP_START
-        setGain(player, baseGain)
-        val tick = object : Runnable {
-            override fun run() {
-                step++
-                rampFactor = (RAMP_START + (1f - RAMP_START) * step / steps).coerceAtMost(1f)
-                setGain(player, baseGain)
-                if (step < steps) handler.postDelayed(this, RAMP_TICK_MS)
-            }
-        }
-        rampStep = tick
-        handler.postDelayed(tick, RAMP_TICK_MS)
-    }
-
     /**
      * Normalização: volume = 10^(ganho/20), sem passar de 100%. Faixas sem ReplayGain tocam
      * com −6 dB, perto do nível típico das que têm a tag, para não "saltarem" mais altas.
@@ -321,9 +224,7 @@ class PlaybackService : MediaLibraryService() {
 
     /** O crossfade multiplica o volume dele por cima do da normalização. */
     private fun setGain(player: ExoPlayer, gain: Float) {
-        baseGain = gain
-        val actual = gain * rampFactor
-        crossfader?.setMainGain(actual) ?: run { player.volume = actual }
+        crossfader?.setMainGain(gain) ?: run { player.volume = gain }
     }
 
     private fun publishWidget(player: Player) {
@@ -364,16 +265,6 @@ class PlaybackService : MediaLibraryService() {
 
     companion object {
         private const val UNTAGGED_GAIN_DB = -6f
-        private const val RAMP_TICK_MS = 500L
-        private const val RAMP_START = 0.05f
-
-        /** Comando do despertador: toca [EXTRA_IDS] com o volume subindo em [EXTRA_RAMP_SEC]. */
-        const val ALARM_COMMAND = "com.juscelino.sonivell.ALARM"
-        const val EXTRA_IDS = "ids"
-        const val EXTRA_RAMP_SEC = "ramp_sec"
-        const val EXTRA_STOP_MIN = "stop_min"
-        const val EXTRA_SOURCE = "source"
-        const val EXTRA_PLAYLIST = "playlist"
 
         /** Sessão de áudio do player (o visualizador do app se liga nela). 0 = serviço parado. */
         @Volatile
