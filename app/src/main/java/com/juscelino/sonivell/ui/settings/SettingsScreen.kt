@@ -1,6 +1,7 @@
 package com.juscelino.sonivell.ui.settings
 
 import android.os.Build
+import com.juscelino.sonivell.system.PlaylistPublisher
 import androidx.compose.ui.res.pluralStringResource
 import com.juscelino.sonivell.data.MIN_DURATION_STEPS
 import com.juscelino.sonivell.data.SPEED_STEPS
@@ -83,6 +84,8 @@ data class SettingsActions(
     val onUnblockArtist: (String) -> Unit = {},
     val onRetrainTaste: () -> Unit = {},
     val onForgetTaste: () -> Unit = {},
+    val onOpenAlarm: () -> Unit = {},
+    val onOpenCarMode: () -> Unit = {},
 )
 
 @Composable
@@ -294,6 +297,8 @@ fun SettingsScreen(
                 settings.skipSilence,
             ) { on -> actions.onUpdate { it.copy(skipSilence = on) } }
             LinkRow(stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), actions.onOpenEqualizer)
+            LinkRow(stringResource(R.string.alarm_title), stringResource(R.string.alarm_hint), actions.onOpenAlarm)
+            LinkRow(stringResource(R.string.car_mode), stringResource(R.string.car_mode_hint), actions.onOpenCarMode)
             SwitchRow(
                 stringResource(R.string.settings_eq_per_output),
                 stringResource(R.string.settings_eq_per_output_hint),
@@ -372,6 +377,13 @@ fun SettingsScreen(
             }
             IgnoredFolders(folders, settings.ignoredFolders) { folder, ignore ->
                 actions.onUpdate { s -> s.copy(ignoredFolders = if (ignore) s.ignoredFolders + folder else s.ignoredFolders - folder) }
+            }
+            if (PlaylistPublisher.supported) {
+                SwitchRow(
+                    stringResource(R.string.settings_publish_playlists),
+                    stringResource(R.string.settings_publish_playlists_hint),
+                    settings.publishPlaylists,
+                ) { on -> actions.onUpdate { it.copy(publishPlaylists = on) } }
             }
             LinkRow(stringResource(R.string.cd_refresh), stringResource(R.string.settings_refresh_hint), actions.onRefreshLibrary)
             LinkRow(stringResource(R.string.lyrics_pick_folder), stringResource(R.string.lyrics_folder_hint), actions.onPickLyricsFolder)

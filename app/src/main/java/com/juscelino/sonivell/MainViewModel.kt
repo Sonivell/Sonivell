@@ -43,6 +43,8 @@ import com.juscelino.sonivell.smart.createSmartEngine
 import com.juscelino.sonivell.data.ForYou
 import com.juscelino.sonivell.data.ForYouState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import com.juscelino.sonivell.system.PlaylistPublisher
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.distinctUntilChanged
 import android.os.Looper
@@ -887,10 +889,34 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    // ---- Playlists publicadas para outros apps ----
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            combine(settings.map { it.publishPlaylists }.distinctUntilChanged(), playlists, allTracks) { on, lists, all -> Triple(on, lists, all) }
+                .collectLatest { (on, lists, all) ->
+                    if (all == null) return@collectLatest
+                    delay(PUBLISH_DEBOUNCE_MS)
+                    val app = getApplication<Application>()
+                    if (on) PlaylistPublisher.publish(app, lists, ::tracksOf) else PlaylistPublisher.unpublishAll(app)
+                }
+        }
+    }
+
     fun dismissWelcome() {
         _showWelcome.value = false
         prefs.edit().putBoolean(KEY_WELCOME_SEEN, true).apply()
     }
+
+    // ---- Atalhos do ícone ----
+
+    private val _pendingShortcut = MutableStateFlow<String?>(null)
+
+    /** Ação pedida por um atalho do ícone, esperando a biblioteca carregar para ser feita. */
+    val pendingShortcut: StateFlow<String?> = _pendingShortcut
+
+    fun requestShortcut(action: String) { _pendingShortcut.value = action }
+    fun consumeShortcut() { _pendingShortcut.value = null }
 
     // ---- Buscas recentes ----
 
@@ -956,6 +982,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         const val MAX_RECENT_SEARCHES = 8
         const val KEY_WELCOME_SEEN = "welcome_seen"
         const val AUTO_REFRESH_DEBOUNCE_MS = 3_000L
+        const val PUBLISH_DEBOUNCE_MS = 2_000L
     }
 
     override fun onCleared() {

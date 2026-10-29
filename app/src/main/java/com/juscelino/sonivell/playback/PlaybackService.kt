@@ -23,7 +23,22 @@ import com.google.common.util.concurrent.ListenableFuture
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.MediaLibraryService.LibraryParams
+import androidx.media3.session.MediaLibraryService.MediaLibrarySession
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionError
+import androidx.media3.session.SessionResult
+import com.google.common.collect.ImmutableList
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.guava.future
 import com.juscelino.sonivell.MainActivity
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.smart.createSmartEngine
@@ -32,9 +47,16 @@ import com.juscelino.sonivell.smart.createSmartEngine
  * Serviço de reprodução: mantém o ExoPlayer vivo em segundo plano e publica a
  * MediaSession (notificação, tela de bloqueio, fones Bluetooth, Android Auto).
  */
-class PlaybackService : MediaSessionService() {
+class PlaybackService : MediaLibraryService() {
 
-    private var session: MediaSession? = null
+    private var session: MediaLibrarySession? = null
+    private lateinit var browser: LibraryBrowser
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val handler = Handler(Looper.getMainLooper())
+
+    /** Multiplicador do volume durante o despertador (sobe de ~0 a 1). */
+    private var rampFactor = 1f
+    private var baseGain = 1f
     private lateinit var prefs: SharedPreferences
     private lateinit var effects: AudioEffects
     private var crossfader: Crossfader? = null
@@ -92,9 +114,9 @@ class PlaybackService : MediaSessionService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
-        session = MediaSession.Builder(this, player)
+        browser = LibraryBrowser(this, getSharedPreferences(SettingsStore.PREFS, MODE_PRIVATE))
+        session = MediaLibrarySession.Builder(this, player, LibraryCallback())
             .setSessionActivity(openApp)
-            .setCallback(SessionCallback())
             .build()
 
         // Notificação do player com a silhueta das ondas do ícone.
@@ -106,27 +128,139 @@ class PlaybackService : MediaSessionService() {
     }
 
     /**
-     * Garante que todo item adicionado tenha URI tocável. Itens vindos de
-     * controladores externos (ex.: Android Auto) podem chegar só com o mediaId.
+     * Sessão com navegação (Android Auto e afins) e o comando do despertador.
+     * Garante também que todo item adicionado tenha URI tocável: itens vindos de
+     * controladores externos podem chegar só com o mediaId.
      */
-    private inner class SessionCallback : MediaSession.Callback {
+    private inner class LibraryCallback : MediaLibrarySession.Callback {
+        override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
+            val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
+                .add(SessionCommand(ALARM_COMMAND, Bundle.EMPTY))
+                .build()
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                .setAvailableSessionCommands(commands)
+                .build()
+        }
+
+        override fun onCustomCommand(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            customCommand: SessionCommand,
+            args: Bundle,
+        ): ListenableFuture<SessionResult> {
+            if (customCommand.customAction != ALARM_COMMAND) {
+                return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
+            }
+            val ids = args.getLongArray(EXTRA_IDS)?.toList().orEmpty()
+            val rampSec = args.getInt(EXTRA_RAMP_SEC, 0)
+            val stopMin = args.getInt(EXTRA_STOP_MIN, 0)
+            return scope.future {
+                val items = browser.queueItems(ids)
+                val player = session.player
+                if (items.isEmpty() && player.mediaItemCount == 0) return@future SessionResult(SessionError.ERROR_BAD_VALUE)
+                if (items.isNotEmpty()) player.setMediaItems(items, 0, 0L)
+                player.prepare()
+                startAlarmRamp(rampSec)
+                player.play()
+                handler.removeCallbacks(alarmStop)
+                if (stopMin > 0) handler.postDelayed(alarmStop, stopMin * 60_000L)
+                SessionResult(SessionResult.RESULT_SUCCESS)
+            }
+        }
+
+        override fun onGetLibraryRoot(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<MediaItem>> =
+            Futures.immediateFuture(LibraryResult.ofItem(this@PlaybackService.browser.root(), params))
+
+        override fun onGetChildren(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?,
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = scope.future {
+            val all = this@PlaybackService.browser.children(parentId)
+            val from = (page * pageSize).coerceAtMost(all.size)
+            val to = (from + pageSize).coerceAtMost(all.size)
+            LibraryResult.ofItemList(ImmutableList.copyOf(all.subList(from, to)), params)
+        }
+
+        override fun onGetItem(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            mediaId: String,
+        ): ListenableFuture<LibraryResult<MediaItem>> = scope.future {
+            this@PlaybackService.browser.item(mediaId)?.let { LibraryResult.ofItem(it, null) }
+                ?: LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+        }
+
+        /** Tocar uma faixa pelo carro toca a lista dela inteira, a partir dali. */
+        override fun onSetMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>,
+            startIndex: Int,
+            startPositionMs: Long,
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = scope.future {
+            val single = mediaItems.singleOrNull()
+            val expanded = single?.let { browser.expand(it.mediaId) }
+            if (expanded != null) {
+                MediaSession.MediaItemsWithStartPosition(expanded.first, expanded.second, C.TIME_UNSET)
+            } else {
+                MediaSession.MediaItemsWithStartPosition(resolve(mediaItems), startIndex, startPositionMs)
+            }
+        }
+
         override fun onAddMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>,
-        ): ListenableFuture<MutableList<MediaItem>> {
-            val resolved = mediaItems.mapNotNull { item ->
-                when {
-                    item.localConfiguration != null -> item
-                    else -> item.mediaId.toLongOrNull()?.let { id ->
-                        item.buildUpon()
-                            .setUri(ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id))
-                            .build()
-                    }
-                }
-            }.toMutableList()
-            return Futures.immediateFuture(resolved)
+        ): ListenableFuture<MutableList<MediaItem>> = Futures.immediateFuture(resolve(mediaItems).toMutableList())
+    }
+
+    private fun resolve(mediaItems: List<MediaItem>): List<MediaItem> = mediaItems.mapNotNull { item ->
+        when {
+            item.localConfiguration != null -> item
+            else -> item.mediaId.substringAfterLast('|').toLongOrNull()?.let { id ->
+                item.buildUpon()
+                    .setMediaId(id.toString())
+                    .setUri(ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id))
+                    .build()
+            }
         }
+    }
+
+    // ---- Despertador: o volume sobe aos poucos e a música para sozinha depois de um tempo ----
+
+    private val alarmStop = Runnable { session?.player?.pause() }
+    private var rampStep: Runnable? = null
+
+    private fun startAlarmRamp(seconds: Int) {
+        rampStep?.let(handler::removeCallbacks)
+        val player = session?.player as? ExoPlayer ?: return
+        if (seconds <= 0) {
+            rampFactor = 1f
+            setGain(player, baseGain)
+            return
+        }
+        val steps = (seconds * 1000 / RAMP_TICK_MS).toInt().coerceAtLeast(1)
+        var step = 0
+        rampFactor = RAMP_START
+        setGain(player, baseGain)
+        val tick = object : Runnable {
+            override fun run() {
+                step++
+                rampFactor = (RAMP_START + (1f - RAMP_START) * step / steps).coerceAtMost(1f)
+                setGain(player, baseGain)
+                if (step < steps) handler.postDelayed(this, RAMP_TICK_MS)
+            }
+        }
+        rampStep = tick
+        handler.postDelayed(tick, RAMP_TICK_MS)
     }
 
     /**
@@ -155,7 +289,9 @@ class PlaybackService : MediaSessionService() {
 
     /** O crossfade multiplica o volume dele por cima do da normalização. */
     private fun setGain(player: ExoPlayer, gain: Float) {
-        crossfader?.setMainGain(gain) ?: run { player.volume = gain }
+        baseGain = gain
+        val actual = gain * rampFactor
+        crossfader?.setMainGain(actual) ?: run { player.volume = actual }
     }
 
     private fun publishWidget(player: Player) {
@@ -163,7 +299,7 @@ class PlaybackService : MediaSessionService() {
         SonivellWidgets.publish(this, md.title?.toString(), md.artist?.toString(), md.artworkUri, player.isPlaying)
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = session
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val player = session?.player
@@ -180,6 +316,8 @@ class PlaybackService : MediaSessionService() {
         prefs.unregisterOnSharedPreferenceChangeListener(settingsListener)
         outputs?.release()
         outputs = null
+        handler.removeCallbacksAndMessages(null)
+        scope.cancel()
         effects.release()
         crossfader?.release()
         crossfader = null
@@ -191,7 +329,15 @@ class PlaybackService : MediaSessionService() {
         super.onDestroy()
     }
 
-    private companion object {
-        const val UNTAGGED_GAIN_DB = -6f
+    companion object {
+        private const val UNTAGGED_GAIN_DB = -6f
+        private const val RAMP_TICK_MS = 500L
+        private const val RAMP_START = 0.05f
+
+        /** Comando do despertador: toca [EXTRA_IDS] com o volume subindo em [EXTRA_RAMP_SEC]. */
+        const val ALARM_COMMAND = "com.juscelino.sonivell.ALARM"
+        const val EXTRA_IDS = "ids"
+        const val EXTRA_RAMP_SEC = "ramp_sec"
+        const val EXTRA_STOP_MIN = "stop_min"
     }
 }

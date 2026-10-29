@@ -538,4 +538,28 @@
         <item quantity="other">%d folders ignored</item>
     </plurals>
     <string name="settings_ignored_folders_empty">No folders found yet.</string>
+    <string name="shortcut_mix_now">Mix for now</string>
+    <string name="set_ringtone">Set as ringtone</string>
+    <string name="ringtone_set">Ringtone changed</string>
+    <string name="ringtone_failed">Couldn\'t change the ringtone</string>
+    <string name="ringtone_permission">Allow Sonivell to change system settings, then try again</string>
+    <string name="settings_publish_playlists">Playlists for other apps</string>
+    <string name="settings_publish_playlists_hint">Saves your playlists in Music/Playlists so the car, watch and other players can see them</string>
+    <string name="alarm_title">Music alarm</string>
+    <string name="alarm_hint">Wake up to your songs, with the volume rising slowly</string>
+    <string name="alarm_off">The alarm is off</string>
+    <string name="alarm_next">Next: %1$s</string>
+    <string name="alarm_permission">Allow exact alarms</string>
+    <string name="alarm_permission_hint">Android asks for this to ring on time. Tap to open the setting.</string>
+    <string name="alarm_days">Days</string>
+    <string name="alarm_wake_with">Wake up with</string>
+    <string name="alarm_shuffle_library">Shuffle the whole library</string>
+    <string name="alarm_ramp">Volume rising</string>
+    <string name="alarm_ramp_off">Off</string>
+    <string name="alarm_minutes">%1$d min</string>
+    <string name="alarm_stop">Stop by itself after</string>
+    <string name="alarm_stop_never">Never</string>
+    <string name="car_mode">Car mode</string>
+    <string name="car_mode_hint">Big buttons and the cover, to use at a glance (car, gym)</string>
+    <string name="car_mode_exit">Exit</string>
 </resources>

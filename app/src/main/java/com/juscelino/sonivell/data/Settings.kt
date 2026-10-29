@@ -68,6 +68,8 @@ data class AppSettings(
     val minDurationSec: Int = 0,
     /** Pastas cujas músicas ficam fora da biblioteca. */
     val ignoredFolders: Set<String> = emptySet(),
+    /** Publicar as playlists como .m3u para o Android e outros apps (Android 10+). */
+    val publishPlaylists: Boolean = false,
 )
 
 /** Velocidades oferecidas. */
@@ -112,6 +114,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putBoolean(KEY_AUTO_REFRESH, next.autoRefresh)
             .putInt(KEY_MIN_DURATION, next.minDurationSec)
             .putStringSet(KEY_IGNORED_FOLDERS, next.ignoredFolders)
+            .putBoolean(KEY_PUBLISH_PLAYLISTS, next.publishPlaylists)
             .apply()
     }
 
@@ -141,6 +144,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         autoRefresh = prefs.getBoolean(KEY_AUTO_REFRESH, true),
         minDurationSec = prefs.getInt(KEY_MIN_DURATION, 0),
         ignoredFolders = prefs.getStringSet(KEY_IGNORED_FOLDERS, null)?.toSet().orEmpty(),
+        publishPlaylists = prefs.getBoolean(KEY_PUBLISH_PLAYLISTS, false),
     )
 
     companion object {
@@ -168,6 +172,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_AUTO_REFRESH = "auto_refresh"
         const val KEY_MIN_DURATION = "min_duration"
         const val KEY_IGNORED_FOLDERS = "ignored_folders"
+        const val KEY_PUBLISH_PLAYLISTS = "publish_playlists"
         /** Escrita pelo MainViewModel: a fila atual é do SMART. */
         const val KEY_SMART_MODE = "smart_mode"
     }

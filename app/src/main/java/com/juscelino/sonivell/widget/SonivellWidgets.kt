@@ -86,6 +86,7 @@ object SonivellWidgets {
             .putBoolean("playing", playing)
             .apply()
         refresh(app)
+        com.juscelino.sonivell.system.PlayTileService.refresh(app)
     }
 
     /** Redesenha todos os widgets com o último estado salvo. A capa é lida fora da thread principal. */

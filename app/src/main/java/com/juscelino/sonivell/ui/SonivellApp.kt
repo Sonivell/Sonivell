@@ -115,6 +115,11 @@ import com.juscelino.sonivell.ui.library.LibraryActions
 import com.juscelino.sonivell.ui.library.LibraryMode
 import com.juscelino.sonivell.ui.library.LibraryScreenClassica
 import com.juscelino.sonivell.ui.library.LibraryScreenContraste
+import com.juscelino.sonivell.system.AppShortcuts
+import androidx.compose.material.icons.rounded.NotificationsActive
+import com.juscelino.sonivell.ui.extras.CarModeScreen
+import com.juscelino.sonivell.ui.extras.AlarmScreen
+import com.juscelino.sonivell.system.Ringtones
 import com.juscelino.sonivell.ui.components.miniPlayerGestures
 import com.juscelino.sonivell.ui.library.LibraryScreenEssencial
 import com.juscelino.sonivell.ui.library.LibraryScreenOndas
@@ -148,6 +153,8 @@ private object Routes {
     const val SMARTLIST = "inteligente/{id}"
     const val SMART_EDIT = "inteligente-editar/{id}"
     const val ORGANIZE = "organizar"
+    const val CAR = "carro"
+    const val ALARM = "despertador"
     fun auto(key: String) = "auto/$key"
     fun smartlist(id: Long) = "inteligente/$id"
     fun smartEdit(id: Long) = "inteligente-editar/$id"
@@ -399,6 +406,27 @@ private fun MainContent(vm: MainViewModel) {
         onDismissTagBanner = vm::dismissTagBanner,
     )
 
+    // Atalhos do ícone: esperam a biblioteca carregar e então fazem a ação.
+    val pendingShortcut by vm.pendingShortcut.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingShortcut, library.loading) {
+        val action = pendingShortcut ?: return@LaunchedEffect
+        if (library.loading) return@LaunchedEffect
+        when (action) {
+            AppShortcuts.ACTION_MIX_NOW -> {
+                val mix = forYou.thisHour
+                if (mix.isNotEmpty()) {
+                    source = res.getString(R.string.shortcut_mix_now)
+                    vm.playFrom(mix, 0)
+                } else libraryActions.onShuffleAll()
+            }
+            AppShortcuts.ACTION_SHUFFLE -> libraryActions.onShuffleAll()
+            AppShortcuts.ACTION_LIKED -> nav.navigate(Routes.auto("curtidas"))
+            AppShortcuts.ACTION_SEARCH -> libraryActions.onOpenSearch()
+            AppShortcuts.ACTION_CAR -> nav.navigate(Routes.CAR)
+        }
+        vm.consumeShortcut()
+    }
+
     val chromeRoutes = remember { tabs.map { it.route }.toSet() + Routes.COLLECTIONS + setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS) }
     val showChrome = route in chromeRoutes
 
@@ -629,6 +657,23 @@ private fun MainContent(vm: MainViewModel) {
                     ),
                 )
             }
+            composable(Routes.CAR) {
+                val t = current
+                CarModeScreen(
+                    track = t,
+                    isPlaying = player.isPlaying,
+                    liked = t != null && t.id in favorites,
+                    onPrevious = { vm.player.previous() },
+                    onTogglePlay = vm.player::togglePlay,
+                    onNext = { vm.player.next() },
+                    onLike = { t?.let { vm.toggleFavorite(it.id) } },
+                    onMixNow = { vm.requestShortcut(AppShortcuts.ACTION_MIX_NOW) },
+                    onExit = { nav.popBackStack() },
+                )
+            }
+            composable(Routes.ALARM) {
+                AlarmScreen(playlists = playlists, contentPadding = listPadding, onBack = { nav.popBackStack() })
+            }
             composable(Routes.ORGANIZE) {
                 OrganizeScreen(
                     duplicates = duplicates,
@@ -664,6 +709,8 @@ private fun MainContent(vm: MainViewModel) {
                         onReset = { confirmReset = true },
                         onPickLyricsFolder = { lyricsFolderLauncher.launch(null) },
                         onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
+                        onOpenAlarm = { nav.navigate(Routes.ALARM) },
+                        onOpenCarMode = { nav.navigate(Routes.CAR) },
                         onUnblockTrack = { vm.recommendations.blockTrack(it, false) },
                         onUnblockArtist = { vm.recommendations.blockArtist(it, false) },
                         onRetrainTaste = { vm.maybeTrainTaste(force = true) },
@@ -839,6 +886,14 @@ private fun MainContent(vm: MainViewModel) {
             add(MenuOption(SonivellTheme.icons.album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) })
             add(MenuOption(SonivellTheme.icons.artist, stringResource(R.string.go_to_artist)) { openArtist(track.artist) })
             add(MenuOption(SonivellTheme.icons.share, stringResource(R.string.share)) { share(track) })
+            add(MenuOption(Icons.Rounded.NotificationsActive, stringResource(R.string.set_ringtone)) {
+                if (Ringtones.canWrite(context)) {
+                    toast(res.getString(if (Ringtones.setAsRingtone(context, track)) R.string.ringtone_set else R.string.ringtone_failed))
+                } else {
+                    toast(res.getString(R.string.ringtone_permission))
+                    runCatching { context.startActivity(Ringtones.permissionIntent(context)) }
+                }
+            })
             val trackBlocked = track.id in blockedTracks
             add(MenuOption(Icons.Rounded.Block, stringResource(if (trackBlocked) R.string.recommend_again else R.string.dont_recommend)) {
                 vm.recommendations.blockTrack(track.id, !trackBlocked)
