@@ -22,6 +22,12 @@ enum class UiStyle {
 
     /** Enxuto: capas em destaque e só o essencial em cada tela (usa o player do Ondas). */
     ESSENCIAL,
+
+    /**
+     * Tema "Sonivell": preto quente, creme e dourado, tipografia fina, capas circulares e
+     * navegação em Início, Explorar, Biblioteca e Perfil. Não é o padrão: o padrão segue o Ondas.
+     */
+    SONIVELL,
 }
 
 data class AppSettings(

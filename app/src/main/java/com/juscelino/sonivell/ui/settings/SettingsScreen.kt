@@ -242,6 +242,7 @@ private fun IndexPage(
             UiStyle.ESSENCIAL -> R.string.layout_essencial
             UiStyle.CONTRASTE -> R.string.layout_contrast
             UiStyle.CLASSICA -> R.string.layout_classic
+            UiStyle.SONIVELL -> R.string.layout_sonivell
         }
     )
     val theme = stringResource(
@@ -383,6 +384,7 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
             listOf(
                 Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
                 Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
+                Triple(UiStyle.SONIVELL, R.string.layout_sonivell, R.string.layout_sonivell_hint),
             ).forEach { (style, name, hint) ->
                 LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
                     actions.onUpdate { it.copy(uiStyle = style) }
