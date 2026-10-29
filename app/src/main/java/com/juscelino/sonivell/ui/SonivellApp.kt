@@ -416,7 +416,7 @@ private fun MainContent(vm: MainViewModel) {
                 if (tracks.isEmpty()) toast(res.getString(R.string.mood_empty))
                 else {
                     source = res.getString(mood.label)
-                    vm.playShuffled(tracks)
+                    vm.playMood(tracks)
                 }
             }
         },

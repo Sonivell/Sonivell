@@ -519,6 +519,17 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         player.play(tracks, tracks.indices.random(), shuffle = true)
     }
 
+    /**
+     * Toca um mix "Para o momento" sem mexer no modo escolhido: a lista já vem ordenada pelo
+     * SMART (mais parecidas primeiro). Só embaralha se o aleatório comum já estiver ligado.
+     */
+    fun playMood(tracks: List<Track>) {
+        if (tracks.isEmpty()) return
+        val shuffle = shuffleMode.value == ShuffleMode.ON
+        planningJob?.cancel()
+        player.play(tracks, if (shuffle) tracks.indices.random() else 0, shuffle = shuffle)
+    }
+
     fun playNext(tracks: List<Track>) = player.playNext(tracks)
     fun addToQueue(tracks: List<Track>) = player.append(tracks)
     fun removeFromQueue(index: Int) = player.removeItem(index)
