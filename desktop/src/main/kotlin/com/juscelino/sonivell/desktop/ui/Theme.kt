@@ -46,8 +46,9 @@ fun accentColor(a: Accent, dark: Boolean): Color = when (a) {
     Accent.Verde -> if (dark) Color(0xFF1DB954) else Color(0xFF117A37)
 }
 
-fun paletteOf(accent: Accent, dark: Boolean, bg: DarkBg): Palette {
+fun paletteOf(accent: Accent, dark: Boolean, bg: DarkBg, tinted: Boolean = false): Palette {
     val a = accentColor(accent, dark)
+    if (tinted) return tintedPalette(a, dark)
     return when {
         !dark -> Palette(
             Color(0xFFF6F6F3), Color(0xFFEBEBE6), Color(0xFFF0F0EC), Color(0xFFE0E0DA), Color(0xFFCFCFC8), Color(0xFFD6D6CF),
@@ -62,6 +63,38 @@ fun paletteOf(accent: Accent, dark: Boolean, bg: DarkBg): Palette {
             Color(0xFFF2F3F5), Color(0xFF9BA1A9), Color(0xFFC9CDD3), a, Color(0xFF0E0F11), true,
         )
     }
+}
+
+/**
+ * "Fundo colorido": fundo, superfícies e textos de apoio no tom da cor de destaque (a mesma
+ * conta do app Android). No escuro, tons bem fundos da cor; no claro, tons pastel.
+ */
+private fun tintedPalette(a: Color, dark: Boolean): Palette {
+    val (h, sat) = a.hueSat()
+    fun tone(s: Float, l: Float) = Color.hsl(h, (sat * s).coerceIn(0f, 1f), l)
+    return if (dark) Palette(
+        tone(0.55f, 0.10f), tone(0.45f, 0.15f), tone(0.50f, 0.125f), tone(0.42f, 0.19f), tone(0.38f, 0.25f), tone(0.38f, 0.24f),
+        Color(0xFFF6F4F0), tone(0.35f, 0.78f), tone(0.25f, 0.88f), a, tone(0.60f, 0.09f), true,
+    ) else Palette(
+        tone(0.55f, 0.955f), tone(0.45f, 0.91f), tone(0.50f, 0.935f), tone(0.42f, 0.87f), tone(0.35f, 0.80f), tone(0.35f, 0.84f),
+        Color(0xFF141518), tone(0.30f, 0.33f), tone(0.25f, 0.22f), a, Color(0xFFFFFFFF), false,
+    )
+}
+
+/** Matiz (0–360) e saturação (0–1) de uma cor. */
+private fun Color.hueSat(): Pair<Float, Float> {
+    val max = maxOf(red, green, blue)
+    val min = minOf(red, green, blue)
+    val d = max - min
+    if (d == 0f) return 0f to 0f
+    val l = (max + min) / 2f
+    val s = d / (1f - kotlin.math.abs(2f * l - 1f))
+    val h = when (max) {
+        red -> 60f * (((green - blue) / d) % 6f)
+        green -> 60f * ((blue - red) / d + 2f)
+        else -> 60f * ((red - green) / d + 4f)
+    }
+    return (h + 360f) % 360f to s.coerceIn(0f, 1f)
 }
 
 val Manrope = FontFamily(
@@ -79,9 +112,9 @@ object SonivellTheme {
 }
 
 @Composable
-fun SonivellTheme(accent: Accent, mode: ThemeMode, bg: DarkBg, content: @Composable () -> Unit) {
+fun SonivellTheme(accent: Accent, mode: ThemeMode, bg: DarkBg, tinted: Boolean = false, content: @Composable () -> Unit) {
     val dark = when (mode) { ThemeMode.AUTO -> isSystemInDarkTheme(); ThemeMode.DARK -> true; ThemeMode.LIGHT -> false }
-    val p = paletteOf(accent, dark, bg)
+    val p = paletteOf(accent, dark, bg, tinted)
     val scheme = (if (dark) darkColorScheme() else lightColorScheme()).copy(
         primary = p.accent, onPrimary = p.onAccent, background = p.background, onBackground = p.textPrimary,
         surface = p.background, onSurface = p.textPrimary, surfaceVariant = p.surface, onSurfaceVariant = p.textSecondary, outline = p.outline,

@@ -68,10 +68,17 @@ fun SettingsScreen(ctl: Controller) {
                     }
                 }
             }
-            Label(str("settings_dark_background"))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Pill(str("background_graphite"), settings.darkBg == DarkBg.Grafite, { ctl.updateSettings { it.copy(darkBg = DarkBg.Grafite) } })
-                Pill(str("background_black"), settings.darkBg == DarkBg.Preto, { ctl.updateSettings { it.copy(darkBg = DarkBg.Preto) } })
+            Label(str("settings_tinted_background"))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Pill(str(if (settings.tinted) "desktop_on" else "desktop_off"), settings.tinted, { ctl.updateSettings { it.copy(tinted = !it.tinted) } })
+                Txt(str("settings_tinted_background_hint"), 13, FontWeight.Medium, c.textSecondary, maxLines = 2)
+            }
+            if (!settings.tinted) {
+                Label(str("settings_dark_background"))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Pill(str("background_graphite"), settings.darkBg == DarkBg.Grafite, { ctl.updateSettings { it.copy(darkBg = DarkBg.Grafite) } })
+                    Pill(str("background_black"), settings.darkBg == DarkBg.Preto, { ctl.updateSettings { it.copy(darkBg = DarkBg.Preto) } })
+                }
             }
         }
 

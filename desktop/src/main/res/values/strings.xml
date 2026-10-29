@@ -36,4 +36,6 @@
     <string name="desktop_exit_compact">Back to the full player</string>
     <string name="desktop_mute">Mute</string>
     <string name="desktop_unmute">Unmute</string>
+    <string name="desktop_on">On</string>
+    <string name="desktop_off">Off</string>
 </resources>

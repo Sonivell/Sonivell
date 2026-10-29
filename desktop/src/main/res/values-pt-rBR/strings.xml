@@ -36,4 +36,6 @@
     <string name="desktop_exit_compact">Voltar ao player completo</string>
     <string name="desktop_mute">Silenciar</string>
     <string name="desktop_unmute">Tirar do mudo</string>
+    <string name="desktop_on">Ligado</string>
+    <string name="desktop_off">Desligado</string>
 </resources>

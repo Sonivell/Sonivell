@@ -26,7 +26,7 @@ import com.juscelino.sonivell.desktop.str
 @Composable
 fun SonivellApp(ctl: Controller) {
     val settings by ctl.settings.collectAsState()
-    SonivellTheme(settings.accent, settings.theme, settings.darkBg) {
+    SonivellTheme(settings.accent, settings.theme, settings.darkBg, settings.tinted) {
         val c = SonivellTheme.colors
         val nav = remember { Nav() }
         val actions = remember { Actions(ctl, nav) }

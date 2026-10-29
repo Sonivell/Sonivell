@@ -466,4 +466,8 @@
     <string name="thanks_title">Agradecimentos</string>
     <string name="thanks_message">O motor SMART só foi possível neste projeto graças ao esforço de Nikita-sud e do seu projeto LatentJam.\nMeus sinceros agradecimentos.</string>
     <string name="thanks_link">Ver o LatentJam no GitHub</string>
+    <string name="settings_tinted_background">Fundo colorido</string>
+    <string name="settings_tinted_background_hint">Fundo e cartões no tom da cor de destaque, em todos os layouts</string>
+    <string name="settings_system_colors">Cores do Android</string>
+    <string name="settings_system_colors_hint">Usa a cor do papel de parede (Material You) no lugar da cor de destaque</string>
 </resources>

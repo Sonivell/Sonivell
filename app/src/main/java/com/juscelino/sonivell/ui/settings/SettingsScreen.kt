@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.settings
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -130,37 +131,49 @@ fun SettingsScreen(
                     }
                 }
             }
-            RowLabel(stringResource(R.string.settings_dark_background))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(
-                    DarkBackground.Grafite to R.string.background_graphite,
-                    DarkBackground.Preto to R.string.background_black,
-                ).forEach { (bg, label) ->
-                    Chip(stringResource(label), selected = settings.darkBackground == bg) {
-                        actions.onUpdate { it.copy(darkBackground = bg) }
+            SwitchRow(stringResource(R.string.settings_tinted_background), stringResource(R.string.settings_tinted_background_hint), settings.tintedBackground) { on ->
+                actions.onUpdate { it.copy(tintedBackground = on) }
+            }
+            if (!settings.tintedBackground) {
+                RowLabel(stringResource(R.string.settings_dark_background))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(
+                        DarkBackground.Grafite to R.string.background_graphite,
+                        DarkBackground.Preto to R.string.background_black,
+                    ).forEach { (bg, label) ->
+                        Chip(stringResource(label), selected = settings.darkBackground == bg) {
+                            actions.onUpdate { it.copy(darkBackground = bg) }
+                        }
                     }
                 }
+                if (!c.isDark) {
+                    Text(stringResource(R.string.settings_dark_background_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+                }
             }
-            if (!c.isDark) {
-                Text(stringResource(R.string.settings_dark_background_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                SwitchRow(stringResource(R.string.settings_system_colors), stringResource(R.string.settings_system_colors_hint), settings.systemColors) { on ->
+                    actions.onUpdate { it.copy(systemColors = on) }
+                }
             }
-            RowLabel(stringResource(R.string.settings_accent))
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AccentChoice.entries.forEach { choice ->
-                    val color = if (c.isDark) choice.dark else choice.light
-                    val selected = settings.accent == choice
-                    val label = stringResource(accentNames[choice.ordinal])
-                    Box(
-                        Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(color)
-                            .then(if (selected) Modifier.border(3.dp, c.textPrimary, CircleShape) else Modifier)
-                            .clickable(role = Role.RadioButton) { actions.onUpdate { it.copy(accent = choice) } }
-                            .semantics { contentDescription = label; this.selected = selected },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.onAccent)
+            if (!settings.systemColors || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                RowLabel(stringResource(R.string.settings_accent))
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AccentChoice.entries.forEach { choice ->
+                        val color = if (c.isDark) choice.dark else choice.light
+                        val selected = settings.accent == choice
+                        val label = stringResource(accentNames[choice.ordinal])
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(color)
+                                .then(if (selected) Modifier.border(3.dp, c.textPrimary, CircleShape) else Modifier)
+                                .clickable(role = Role.RadioButton) { actions.onUpdate { it.copy(accent = choice) } }
+                                .semantics { contentDescription = label; this.selected = selected },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.onAccent)
+                        }
                     }
                 }
             }

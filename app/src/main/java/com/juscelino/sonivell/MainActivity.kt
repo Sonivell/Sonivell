@@ -40,6 +40,8 @@ class MainActivity : ComponentActivity() {
                 darkTheme = dark,
                 iconStyle = settings.iconStyle,
                 darkBackground = settings.darkBackground,
+                tintedBackground = settings.tintedBackground,
+                systemColors = settings.systemColors,
             ) {
                 SonivellApp(vm)
             }

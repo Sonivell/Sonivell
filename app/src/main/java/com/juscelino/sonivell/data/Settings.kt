@@ -32,6 +32,10 @@ data class AppSettings(
     val iconStyle: IconStyle = IconStyle.TRACO,
     /** Fundo usado no tema escuro. */
     val darkBackground: DarkBackground = DarkBackground.Grafite,
+    /** Fundo e superfícies no tom da cor de destaque (vale para todos os layouts). */
+    val tintedBackground: Boolean = false,
+    /** Usar a cor do sistema (Material You, Android 12+) no lugar da cor de destaque escolhida. */
+    val systemColors: Boolean = false,
     /** Pausar quando o fone é desconectado (Media3 "becoming noisy"). */
     val pauseOnUnplug: Boolean = true,
     /** Não registrar novas escutas (o SMART e o Para você param de aprender). */
@@ -70,6 +74,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putString(KEY_ICON_STYLE, next.iconStyle.name)
             .putString(KEY_UI_STYLE, next.uiStyle.name)
             .putString(KEY_DARK_BACKGROUND, next.darkBackground.name)
+            .putBoolean(KEY_TINTED_BACKGROUND, next.tintedBackground)
+            .putBoolean(KEY_SYSTEM_COLORS, next.systemColors)
             .putBoolean(KEY_PAUSE_ON_UNPLUG, next.pauseOnUnplug)
             .putBoolean(KEY_HISTORY_PAUSED, next.historyPaused)
             .putInt(KEY_ARTIST_VARIETY, next.artistVariety)
@@ -90,6 +96,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         uiStyle = UiStyle.entries.firstOrNull { it.name == prefs.getString(KEY_UI_STYLE, null) } ?: UiStyle.ONDAS,
         iconStyle = IconStyle.entries.firstOrNull { it.name == prefs.getString(KEY_ICON_STYLE, null) } ?: IconStyle.TRACO,
         darkBackground = DarkBackground.entries.firstOrNull { it.name == prefs.getString(KEY_DARK_BACKGROUND, null) } ?: DarkBackground.Grafite,
+        tintedBackground = prefs.getBoolean(KEY_TINTED_BACKGROUND, false),
+        systemColors = prefs.getBoolean(KEY_SYSTEM_COLORS, false),
         pauseOnUnplug = prefs.getBoolean(KEY_PAUSE_ON_UNPLUG, true),
         historyPaused = prefs.getBoolean(KEY_HISTORY_PAUSED, false),
         artistVariety = prefs.getInt(KEY_ARTIST_VARIETY, 2),
@@ -108,6 +116,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_ICON_STYLE = "icon_style"
         const val KEY_UI_STYLE = "ui_style"
         const val KEY_DARK_BACKGROUND = "dark_background"
+        const val KEY_TINTED_BACKGROUND = "tinted_background"
+        const val KEY_SYSTEM_COLORS = "system_colors"
         const val KEY_PAUSE_ON_UNPLUG = "pause_on_unplug"
         const val KEY_HISTORY_PAUSED = "history_paused"
         const val KEY_ARTIST_VARIETY = "artist_variety"

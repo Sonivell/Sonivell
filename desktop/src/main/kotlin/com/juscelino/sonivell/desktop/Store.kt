@@ -16,6 +16,8 @@ data class Settings(
     val accent: Accent = Accent.Lima,
     val darkBg: DarkBg = DarkBg.Grafite,
     val layout: ScreenLayout = ScreenLayout.ONDAS,
+    /** Fundo e superfícies no tom da cor de destaque. */
+    val tinted: Boolean = false,
     val volume: Float = 0.8f,
     val shuffle: Boolean = false,
     val repeat: Int = 0,
@@ -42,6 +44,7 @@ object SettingsStore {
             accent = enumOf("accent", Accent.values(), Accent.Lima),
             darkBg = enumOf("darkBg", DarkBg.values(), DarkBg.Grafite),
             layout = enumOf("layout", ScreenLayout.values(), ScreenLayout.ONDAS),
+            tinted = p.getProperty("tinted") == "true",
             volume = p.getProperty("volume")?.toFloatOrNull()?.coerceIn(0f, 1f) ?: 0.8f,
             shuffle = p.getProperty("shuffle") == "true",
             repeat = p.getProperty("repeat")?.toIntOrNull()?.coerceIn(0, 2) ?: 0,
@@ -60,6 +63,7 @@ object SettingsStore {
         p.setProperty("accent", s.accent.name)
         p.setProperty("darkBg", s.darkBg.name)
         p.setProperty("layout", s.layout.name)
+        p.setProperty("tinted", s.tinted.toString())
         p.setProperty("volume", s.volume.toString())
         p.setProperty("shuffle", s.shuffle.toString())
         p.setProperty("repeat", s.repeat.toString())
