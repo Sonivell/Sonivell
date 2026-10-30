@@ -13,6 +13,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -292,13 +293,13 @@ private fun NowPlayingGlass(
                 GlassRound(icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore)
             }
 
-            // Capa com brilho na cor dela
-            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            // Capa com brilho na cor dela. Quadrada no maior tamanho que cabe (largura ou altura que sobra):
+            // presa só à largura, ela transbordava por cima do topo e do título em telas mais baixas.
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                val side = minOf(maxWidth, maxHeight, 400.dp)
                 Box(
                     Modifier
-                        .widthIn(max = 400.dp)
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
+                        .size(side)
                         .drawBehind {
                             drawRect(
                                 Brush.radialGradient(

@@ -49,9 +49,66 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.material3.SheetState
+import androidx.compose.ui.graphics.Color
+import com.juscelino.sonivell.ui.theme.glassSurface
 
 /** Uma opção de menu: ícone, texto e ação. */
 data class MenuOption(val icon: ImageVector, val label: String, val onClick: () -> Unit)
+
+/**
+ * Folha inferior do app. Nos temas comuns é a do Material, na cor de superfície. No vidro (tema
+ * Desenvolvimento) vira um cartão de vidro flutuante, com margem e cantos arredondados embaixo também,
+ * um pouco mais opaco que os outros cartões para o texto ficar legível sobre a capa.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SonivellSheet(
+    onDismissRequest: () -> Unit,
+    sheetState: SheetState,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val c = SonivellTheme.colors
+    if (!SonivellTheme.glass) {
+        ModalBottomSheet(
+            onDismissRequest = onDismissRequest,
+            sheetState = sheetState,
+            containerColor = c.surface,
+            contentColor = c.textPrimary,
+            content = content,
+        )
+        return
+    }
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+        containerColor = Color.Transparent,
+        contentColor = c.textPrimary,
+        tonalElevation = 0.dp,
+        scrimColor = Color.Black.copy(alpha = 0.5f),
+        dragHandle = null,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                // Consome as barras do sistema aqui: o conteúdo de dentro não soma o espaço de novo.
+                .navigationBarsPadding()
+                .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
+                .glassSurface(RoundedCornerShape(28.dp), c.surface, c.outline, elevation = 16.dp, surfaceAlpha = 0.9f),
+        ) {
+            Box(
+                Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(top = 10.dp, bottom = 6.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(c.outline),
+            )
+            content()
+        }
+    }
+}
 
 /**
  * Menu em folha inferior (bottom sheet). [header] aparece no topo, por exemplo a faixa
@@ -66,12 +123,7 @@ fun OptionsSheet(
 ) {
     val c = SonivellTheme.colors
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = state,
-        containerColor = c.surface,
-        contentColor = c.textPrimary,
-    ) {
+    SonivellSheet(onDismissRequest = onDismiss, sheetState = state) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp)) {
             if (header != null) {
                 Box(Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) { header() }
@@ -127,12 +179,7 @@ fun AddToPlaylistSheet(
     onDismiss: () -> Unit,
 ) {
     val c = SonivellTheme.colors
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = c.surface,
-        contentColor = c.textPrimary,
-    ) {
+    SonivellSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp)) {
             Text(
                 stringResource(R.string.add_to_playlist),

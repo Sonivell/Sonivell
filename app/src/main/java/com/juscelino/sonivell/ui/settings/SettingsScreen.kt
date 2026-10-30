@@ -91,6 +91,7 @@ import com.juscelino.sonivell.ui.theme.icons
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.ThemeMode
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.components.SonivellSheet
 
 data class SettingsActions(
     val onBack: () -> Unit,
@@ -939,7 +940,7 @@ private fun ChoiceRow(title: String, hint: String?, options: List<String>, selec
     }
     if (open) {
         val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(onDismissRequest = { open = false }, sheetState = state, containerColor = c.surface) {
+        SonivellSheet(onDismissRequest = { open = false }, sheetState = state) {
             Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, modifier = Modifier.padding(horizontal = 8.dp))
                 if (hint != null) {
