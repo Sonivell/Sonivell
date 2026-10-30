@@ -1,0 +1,199 @@
+/* Fontes livres (SIL OFL), empacotadas para funcionar offline. */
+@font-face { font-family: 'Inter'; src: url(../fonts/inter-400.woff2) format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Inter'; src: url(../fonts/inter-400i.woff2) format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Inter'; src: url(../fonts/inter-600.woff2) format('woff2'); font-weight: 500 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Inter'; src: url(../fonts/inter-700.woff2) format('woff2'); font-weight: 700 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Manrope'; src: url(../fonts/manrope-var.woff2) format('woff2'); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: 'Carlito'; src: url(../fonts/carlito-400.woff2) format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Carlito'; src: url(../fonts/carlito-400i.woff2) format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Carlito'; src: url(../fonts/carlito-700.woff2) format('woff2'); font-weight: 500 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Caladea'; src: url(../fonts/caladea-400.woff2) format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Caladea'; src: url(../fonts/caladea-400i.woff2) format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Caladea'; src: url(../fonts/caladea-700.woff2) format('woff2'); font-weight: 500 900; font-style: normal; font-display: swap; }
+
+/* ===== Base comum a todos os modelos ===== */
+.cv {
+  --px: 15mm; --py: 13mm; --side-w: 66mm;
+  --ink: #23262b; --muted: #5f6670; --line: #d9dde3;
+  --soft: color-mix(in srgb, var(--accent) 10%, white);
+  --sgap: calc(5.5mm * var(--gap));
+  position: relative; box-sizing: border-box;
+  width: 210mm; min-height: 297mm; background: #fff; color: var(--ink);
+  font-family: var(--font); font-size: var(--fs); line-height: var(--lh);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  text-align: left; overflow-wrap: anywhere;
+}
+.cv *, .cv *::before, .cv *::after { box-sizing: border-box; }
+.cv a { color: inherit; text-decoration: none; }
+.cv p, .cv ul, .cv h1, .cv h2, .cv h3, .cv table { margin: 0; padding: 0; }
+.cv ul { list-style: none; }
+
+.cv-head { display: flex; align-items: center; gap: 6mm; padding: var(--py) var(--px) 0; }
+.cv-head-text { flex: 1; min-width: 0; }
+.cv-name { font-size: 2.2em; line-height: 1.1; font-weight: 700; letter-spacing: -0.01em; }
+.cv-role { font-size: 1.15em; color: var(--accent); font-weight: 600; margin-top: 1mm; }
+.cv-kicker { font-size: 1.5em; font-weight: 700; text-align: center; }
+
+.cv-contact { display: flex; flex-wrap: wrap; gap: 1mm 4.5mm; margin-top: 2.5mm; color: var(--muted); font-size: 0.92em; }
+.cv-contact li { display: flex; align-items: center; gap: 1.4mm; }
+.cv-ico { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.cv-contact.labeled { display: block; color: inherit; margin: 0; }
+.cv-contact.labeled li { display: block; margin-bottom: 2mm; }
+.cv-lbl { display: block; font-weight: 600; font-size: 0.88em; opacity: 0.75; }
+.cv-val { display: block; }
+
+.cv-photo { display: block; width: 30mm; height: 30mm; object-fit: cover; flex: none; }
+.cv-photo.ph-round { border-radius: 50%; }
+.cv-photo.ph-rounded { border-radius: 3mm; }
+
+.cv-body { padding: 0; }
+/* O padding superior se repete em cada página impressa (box-decoration-break);
+   a margem negativa o anula na primeira página, logo abaixo do cabeçalho. */
+.cv-main { padding: var(--py) var(--px); margin-top: calc(-1 * var(--py)); }
+.cv-main, .cv-side { -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+
+.cv-sec { margin-top: var(--sgap); }
+.cv-h2 { font-size: 1.12em; font-weight: 700; margin-bottom: 2.5mm; color: var(--accent); break-after: avoid; }
+.cv-h2 span { display: inline-block; }
+.cv-entry { margin-bottom: 3.2mm; break-inside: avoid; }
+.cv-entry:last-child { margin-bottom: 0; }
+.cv-entry-head { display: flex; justify-content: space-between; gap: 4mm; align-items: baseline; }
+.cv-entry h3, .cv-ref h3 { font-size: 1em; font-weight: 700; }
+.cv-dates { color: var(--muted); font-size: 0.9em; white-space: nowrap; }
+.cv-org { color: var(--muted); font-style: italic; }
+.cv-desc { margin-top: 1mm; }
+.cv-desc p + p, .cv-desc ul + p, .cv-desc p + ul { margin-top: 1mm; }
+.cv-desc ul li { position: relative; padding-left: 4mm; }
+.cv-desc ul li::before { content: ''; position: absolute; left: 0.8mm; top: calc(0.5em * var(--lh)); width: 1.3mm; height: 1.3mm; border-radius: 50%; background: var(--accent); transform: translateY(-40%); }
+.cv-entry.dl { display: grid; grid-template-columns: 31mm 1fr; gap: 4mm; }
+.cv-when .cv-dates { white-space: normal; color: var(--accent); font-weight: 600; }
+
+/* Níveis */
+.cv-levels { display: grid; grid-template-columns: 1fr 1fr; gap: 1.8mm 8mm; }
+.cv-levels li { display: flex; align-items: center; justify-content: space-between; gap: 3mm; break-inside: avoid; }
+.lv-bar { flex: none; width: 24mm; height: 1.6mm; background: var(--line); border-radius: 1mm; overflow: hidden; }
+.lv-bar i { display: block; height: 100%; background: var(--accent); }
+.lv-dots { flex: none; display: inline-flex; gap: 1mm; }
+.lv-dots i { width: 2.2mm; height: 2.2mm; border-radius: 50%; background: var(--line); }
+.lv-dots i.on { background: var(--accent); }
+.lv-text { color: var(--muted); font-size: 0.92em; white-space: nowrap; }
+.cv-side .cv-levels { grid-template-columns: 1fr; gap: 2.2mm; }
+.cv-side .cv-levels.lvs-bar li { display: block; }
+.cv-side .cv-levels.lvs-bar .lv-bar { display: block; width: 100%; margin-top: 1mm; }
+
+.cv-tags { display: flex; flex-wrap: wrap; gap: 1mm 0; }
+.cv-tags li:not(:last-child)::after { content: '•'; margin: 0 2.2mm; color: var(--accent); }
+.cv-side .cv-tags { display: block; }
+.cv-side .cv-tags li { margin-bottom: 1.2mm; }
+.cv-side .cv-tags li::after { content: none; }
+
+.cv-refs { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 8mm; }
+.cv-ref { break-inside: avoid; }
+.cv-sign { break-inside: avoid; }
+.cv-sign img { display: block; max-width: 55mm; max-height: 22mm; margin: 2mm 0 1mm; }
+.cv-sign-line { width: 60mm; border-bottom: 1px solid var(--ink); height: 14mm; margin-bottom: 1mm; }
+.cv-sign-name { font-weight: 600; }
+.cv-footer { padding: 0 var(--px) var(--py); color: var(--muted); font-size: 0.85em; text-align: center; }
+
+.cv-ptable { display: flex; gap: 6mm; align-items: flex-start; }
+.cv-ptable table { flex: 1; border-collapse: collapse; }
+.cv-ptable th { text-align: left; font-weight: 600; width: 38mm; padding: 0.6mm 0; vertical-align: top; color: var(--muted); }
+.cv-ptable td { padding: 0.6mm 0; }
+
+/* ===== Duas colunas ===== */
+.layout-side-left .cv-body, .layout-side-right .cv-body { display: grid; grid-template-columns: var(--side-w) 1fr; min-height: inherit; }
+.layout-side-right .cv-body { grid-template-columns: 1fr var(--side-w); }
+.layout-side-right .cv-side { order: 2; }
+.cv-side { position: relative; z-index: 1; padding: var(--py) 7mm; }
+.cv-side .cv-sec:first-child, .cv-side .cv-photo + .cv-sec { margin-top: 0; }
+.cv-side .cv-photo { margin: 0 auto 6mm; width: 34mm; height: 34mm; }
+.cv-side .cv-h2 { font-size: 1.05em; }
+.cv-sidebg { position: absolute; top: 0; bottom: 0; width: var(--side-w); left: 0; z-index: 0; }
+.layout-side-right .cv-sidebg { left: auto; right: 0; }
+.layout-side-left .cv-main, .layout-side-right .cv-main { position: relative; z-index: 1; margin-top: 0; padding: var(--py) 10mm var(--py) 9mm; }
+.layout-side-left .cv-main .cv-head, .layout-side-right .cv-main .cv-head { padding: 0; }
+.layout-side-left .cv-levels, .layout-side-right .cv-levels { grid-template-columns: 1fr; }
+.layout-side-left .cv-refs, .layout-side-right .cv-refs { grid-template-columns: 1fr; }
+
+/* ===== Modelos ===== */
+
+/* Essencial: uma coluna, títulos com fio, máximo para ATS */
+.tpl-essencial .cv-head { padding-bottom: 1mm; }
+.tpl-essencial .cv-name { color: var(--ink); }
+.tpl-essencial .cv-h2 { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.98em; border-bottom: 0.6pt solid var(--accent); padding-bottom: 1mm; }
+
+/* Cronológico: datas à esquerda, nome em destaque */
+.tpl-cronologico .cv-head { flex-direction: row-reverse; justify-content: space-between; padding-bottom: 4mm; border-bottom: 0.6pt solid var(--line); margin: 0 var(--px); padding-left: 0; padding-right: 0; }
+.tpl-cronologico .cv-name { color: var(--accent); }
+.tpl-cronologico .cv-role { color: var(--muted); }
+.tpl-cronologico .cv-sec:not(.sec-personal) > :not(.cv-h2):not(.cv-entry),
+.tpl-tabela .cv-sec:not(.sec-personal) > :not(.cv-h2):not(.cv-entry) { margin-left: 35mm; }
+
+/* Executivo: nome em caixa alta, títulos em etiqueta */
+.tpl-executivo .cv-head { margin: 0 var(--px); padding: var(--py) 0 4mm; border-bottom: 2pt solid var(--ink); }
+.tpl-executivo .cv-name { text-transform: uppercase; letter-spacing: 0.04em; }
+.tpl-executivo .cv-role { color: var(--ink); font-weight: 500; }
+.tpl-executivo .cv-h2 span { background: var(--accent); color: #fff; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.9em; padding: 0.4mm 2.2mm; }
+.tpl-executivo .cv-desc ul li::before { background: var(--ink); }
+
+/* Clássico: centralizado, títulos entre fios */
+.tpl-classico .cv-head { flex-direction: column; text-align: center; gap: 3mm; padding-bottom: 2mm; }
+.tpl-classico .cv-contact { justify-content: center; }
+.tpl-classico .cv-name { font-weight: 600; letter-spacing: 0.02em; }
+.tpl-classico .cv-role { color: var(--muted); font-weight: 400; font-style: italic; }
+.tpl-classico .cv-h2 { display: flex; align-items: center; gap: 3mm; text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.92em; color: var(--ink); }
+.tpl-classico .cv-h2::before, .tpl-classico .cv-h2::after { content: ''; flex: 1; border-top: 0.6pt solid var(--accent); }
+
+/* Tabela: dados pessoais rotulados, datas à esquerda */
+.tpl-tabela .cv-head { justify-content: center; padding-bottom: 0; }
+.tpl-tabela .cv-h2 { color: var(--ink); border-bottom: 0.6pt solid var(--line); padding-bottom: 1mm; }
+.tpl-tabela .cv-when .cv-dates { color: var(--ink); }
+.tpl-tabela .cv-ptable th { width: 35mm; }
+
+/* Coluna: lateral clara */
+.tpl-coluna .cv-sidebg { background: var(--soft); }
+.tpl-coluna .cv-h2 { border-bottom: 0.6pt solid color-mix(in srgb, var(--accent) 40%, white); padding-bottom: 1mm; }
+.tpl-coluna .cv-name { color: var(--accent); }
+
+/* Contraste: lateral na cor de destaque, texto branco */
+.tpl-contraste .cv-sidebg { background: var(--accent); }
+.tpl-contraste .cv-side { color: #fff; }
+.tpl-contraste .cv-side .cv-h2 { color: #fff; border-bottom: 0.6pt solid rgba(255, 255, 255, 0.5); padding-bottom: 1mm; }
+.tpl-contraste .cv-side .lv-dots i { background: rgba(255, 255, 255, 0.3); }
+.tpl-contraste .cv-side .lv-dots i.on, .tpl-contraste .cv-side .lv-bar i { background: #fff; }
+.tpl-contraste .cv-side .lv-bar { background: rgba(255, 255, 255, 0.3); }
+.tpl-contraste .cv-side .lv-text { color: rgba(255, 255, 255, 0.8); }
+.tpl-contraste .cv-side .cv-photo { border: 1mm solid rgba(255, 255, 255, 0.85); }
+.tpl-contraste .cv-main .cv-h2 { text-transform: uppercase; letter-spacing: 0.06em; font-size: 1em; }
+
+/* Faixa: cabeçalho colorido de ponta a ponta, lateral à direita */
+.tpl-faixa .cv-head { background: var(--accent); color: #fff; padding: 11mm var(--px) 9mm; position: relative; z-index: 2; }
+.tpl-faixa .cv-role { color: rgba(255, 255, 255, 0.9); }
+.tpl-faixa .cv-contact { color: rgba(255, 255, 255, 0.92); }
+.tpl-faixa .cv-ico { stroke: #fff; }
+.tpl-faixa .cv-photo { border: 1mm solid rgba(255, 255, 255, 0.85); }
+.tpl-faixa .cv-sidebg { background: #f3f4f6; }
+.tpl-faixa .cv-h2 { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.98em; }
+
+/* Elegante: lateral escura com detalhe colorido */
+.tpl-elegante .cv-sidebg { background: #2a2e35; border-top: 9mm solid var(--accent); }
+.tpl-elegante .cv-side { color: #e8eaee; padding-top: calc(var(--py) + 5mm); }
+.tpl-elegante .cv-side .cv-h2 { color: #fff; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.86em; font-weight: 600; }
+.tpl-elegante .cv-side .cv-photo { border: 1mm solid var(--accent); }
+.tpl-elegante .cv-side .lv-bar { background: rgba(255, 255, 255, 0.18); }
+.tpl-elegante .cv-side .lv-text { color: #c9ccd3; }
+.tpl-elegante .cv-name { font-weight: 600; letter-spacing: 0.02em; }
+.tpl-elegante .cv-main .cv-h2 span { border-bottom: 0.8mm solid var(--accent); padding-bottom: 0.6mm; color: var(--ink); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.92em; }
+
+/* Vertical: faixa fina colorida e lateral suave */
+.tpl-vertical .cv-sidebg { background: color-mix(in srgb, var(--accent) 6%, white); border-left: 5mm solid var(--accent); }
+.tpl-vertical .cv-side { padding-left: 11mm; }
+.tpl-vertical .cv-name { color: var(--accent); }
+.tpl-vertical .cv-h2 { font-weight: 600; }
+
+/* ===== Impressão ===== */
+@media print {
+  .cv { width: 210mm; min-height: 0 !important; }
+  .cv-sidebg { position: fixed; }
+  .cv-entry, .cv-levels li, .cv-ref { break-inside: avoid; }
+}
