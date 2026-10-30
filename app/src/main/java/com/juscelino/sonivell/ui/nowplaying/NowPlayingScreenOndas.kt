@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.nowplaying
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +44,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -66,6 +72,8 @@ import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.components.WaveSeekBar
 import com.juscelino.sonivell.ui.lyrics.LyricsState
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.glassAccent
+import com.juscelino.sonivell.ui.theme.glassSurface
 import kotlinx.coroutines.delay
 
 /** Por que a faixa atual está tocando (aba "Por que tocou"). */
@@ -100,6 +108,13 @@ fun NowPlayingScreenOndas(
     reason: PlayReason = PlayReason.Chosen,
     visualizer: Boolean = false,
 ) {
+    if (SonivellTheme.glass) {
+        NowPlayingGlass(
+            track, state, shuffleMode, smartAvailable, isFavorite, sourceLabel, actions,
+            sleepTimer, lyrics, lyricsOffsetMs, upNext, reason, visualizer,
+        )
+        return
+    }
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val durationMs = state.durationMs.takeIf { it > 0 } ?: track.durationMs
@@ -214,6 +229,234 @@ fun NowPlayingScreenOndas(
     }
 }
 
+/**
+ * Player do tema Desenvolvimento: o do Ondas mais limpo e em vidro. A capa ganha um brilho na cor dela
+ * (e uma luz suave no topo da tela), aleatório e repetir viram ícones ao lado dos controles, o SMART
+ * vira um selo translúcido e o painel de baixo flutua em vidro. As ondas do progresso continuam.
+ */
+@Composable
+private fun NowPlayingGlass(
+    track: Track,
+    state: PlayerState,
+    shuffleMode: ShuffleMode,
+    smartAvailable: Boolean,
+    isFavorite: Boolean,
+    sourceLabel: String,
+    actions: NowPlayingActions,
+    sleepTimer: SleepTimer,
+    lyrics: LyricsState,
+    lyricsOffsetMs: Long,
+    upNext: List<Track>,
+    reason: PlayReason,
+    visualizer: Boolean,
+) {
+    val c = SonivellTheme.colors
+    val icons = SonivellTheme.icons
+    val durationMs = state.durationMs.takeIf { it > 0 } ?: track.durationMs
+    val tone by animateColorAsState(artTint(track, ::glowTone), tween(600), label = "tone")
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(c.background)
+            // Luz ambiente da capa, bem fraca, no alto da tela.
+            .drawBehind {
+                drawRect(
+                    Brush.radialGradient(
+                        listOf(tone.copy(alpha = 0.20f), Color.Transparent),
+                        center = Offset(size.width / 2f, size.height * 0.24f),
+                        radius = size.width * 1.1f,
+                    ),
+                )
+            },
+    ) {
+        Column(
+            Modifier
+                .weight(1f)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            // Topo
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                GlassRound(icons.collapse, stringResource(R.string.cd_close_player), actions.onClose)
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        stringResource(R.string.playing_from).uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+                        fontWeight = FontWeight.ExtraBold,
+                        color = c.textSecondary,
+                    )
+                    Text(sourceLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                GlassRound(icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore)
+            }
+
+            // Capa com brilho na cor dela
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier
+                        .widthIn(max = 400.dp)
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .drawBehind {
+                            drawRect(
+                                Brush.radialGradient(
+                                    listOf(tone.copy(alpha = 0.42f), Color.Transparent),
+                                    center = Offset(size.width / 2f, size.height * 0.62f),
+                                    radius = size.width * 0.78f,
+                                ),
+                                topLeft = Offset(-size.width * 0.3f, -size.height * 0.2f),
+                                size = Size(size.width * 1.6f, size.height * 1.5f),
+                            )
+                        },
+                ) {
+                    AlbumArt(
+                        track,
+                        Modifier.fillMaxSize().border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(28.dp)),
+                        corner = 28.dp,
+                        detailed = true,
+                    )
+                    if (visualizer) {
+                        AudioBars(
+                            playing = state.isPlaying,
+                            color = c.accent,
+                            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.32f).padding(horizontal = 16.dp, vertical = 14.dp),
+                        )
+                    }
+                }
+            }
+
+            // Título + curtir (só o coração, sem caixa)
+            Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(track.title, style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp), color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        listOf(track.artist, track.album).filter { it.isNotBlank() }.joinToString(" · "),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = c.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                IconBtn(
+                    if (isFavorite) icons.liked else icons.like,
+                    stringResource(if (isFavorite) R.string.cd_unlike else R.string.cd_like),
+                    actions.onFavorite,
+                    iconSize = 24.dp,
+                    tint = if (isFavorite) c.accent else c.textPrimary,
+                )
+            }
+
+            // Progresso em onda, sem o selo do formato no meio
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                WaveSeekBar(track.id, state.positionMs, durationMs, actions.onSeek)
+                Row {
+                    TimeLabel(formatDuration(state.positionMs))
+                    Box(Modifier.weight(1f))
+                    TimeLabel(formatDuration(durationMs))
+                }
+            }
+
+            // Controles: aleatório e repetir como ícones nas pontas
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                ModeIcon(icons.shuffle, stringResource(R.string.mode_shuffle), shuffleMode == ShuffleMode.ON) {
+                    actions.onSetShuffle(if (shuffleMode == ShuffleMode.ON) ShuffleMode.OFF else ShuffleMode.ON)
+                }
+                IconBtn(icons.skipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 52.dp, iconSize = 30.dp)
+                PlaySquircle(
+                    state.isPlaying,
+                    actions.onTogglePlay,
+                    // Brilho suave na cor de destaque por baixo do play.
+                    Modifier.drawBehind {
+                        drawCircle(
+                            Brush.radialGradient(
+                                listOf(c.accent.copy(alpha = 0.28f), Color.Transparent),
+                                center = Offset(size.width / 2f, size.height * 0.62f),
+                                radius = size.width * 0.95f,
+                            ),
+                            radius = size.width * 0.95f,
+                            center = Offset(size.width / 2f, size.height * 0.62f),
+                        )
+                    },
+                    size = 76.dp,
+                    corner = 26.dp,
+                    iconSize = 30.dp,
+                )
+                IconBtn(icons.skipNext, stringResource(R.string.cd_next), actions.onNext, size = 52.dp, iconSize = 30.dp)
+                ModeIcon(
+                    if (state.repeat == RepeatMode.ONE) icons.repeatOne else icons.repeat,
+                    stringResource(if (state.repeat == RepeatMode.ONE) R.string.mode_repeat_one else R.string.mode_repeat),
+                    state.repeat != RepeatMode.OFF,
+                    onClick = actions.onRepeat,
+                )
+            }
+
+            // SMART: selo translúcido; ligado, na cor de destaque.
+            if (smartAvailable) {
+                val on = shuffleMode == ShuffleMode.SMART
+                val shape = RoundedCornerShape(16.dp)
+                Row(
+                    Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .height(32.dp)
+                        .then(if (on) Modifier.glassAccent(shape, c.accent) else Modifier.glassSurface(shape, c.surface, c.outline, elevation = 0.dp))
+                        .toggleable(value = on, role = Role.Switch, onValueChange = {
+                            actions.onSetShuffle(if (on) ShuffleMode.OFF else ShuffleMode.SMART)
+                        })
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Icon(icons.smart, null, Modifier.size(14.dp), tint = if (on) c.accent else c.textSecondary)
+                    Text(
+                        stringResource(if (on) R.string.np_smart_on else R.string.source_smart),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (on) c.accent else c.textSecondary,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+
+        BottomPanel(track, state, lyrics, lyricsOffsetMs, upNext, reason, sourceLabel, sleepTimer, actions, glass = true, tone = tone)
+    }
+}
+
+/** Botão redondo em vidro do topo do player (fechar, mais opções). */
+@Composable
+private fun GlassRound(icon: ImageVector, label: String, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    Box(
+        Modifier
+            .size(44.dp)
+            .glassSurface(CircleShape, c.surface, c.outline, elevation = 6.dp)
+            .clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) { Icon(icon, null, Modifier.size(20.dp), tint = c.textPrimary) }
+}
+
+/** Aleatório/repetir no player em vidro: ícone discreto; ligado, na cor de destaque com um ponto embaixo. */
+@Composable
+private fun ModeIcon(icon: ImageVector, label: String, on: Boolean, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    Box(
+        Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .toggleable(value = on, role = Role.Switch, onValueChange = { onClick() })
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, null, Modifier.size(22.dp), tint = if (on) c.accent else c.textSecondary)
+        if (on) {
+            Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp).size(4.dp).clip(CircleShape).background(c.accent))
+        }
+    }
+}
+
 @Composable
 private fun Square(icon: ImageVector, label: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
@@ -261,6 +504,9 @@ private fun BottomPanel(
     sourceLabel: String,
     sleepTimer: SleepTimer,
     actions: NowPlayingActions,
+    /** Vidro (tema Desenvolvimento): barra flutuante com cantos arredondados e o brilho de [tone]. */
+    glass: Boolean = false,
+    tone: Color? = null,
 ) {
     val c = SonivellTheme.colors
     var tab by rememberSaveable { mutableIntStateOf(0) }
@@ -271,8 +517,16 @@ private fun BottomPanel(
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp))
-            .background(c.surface)
+            .then(
+                if (glass) {
+                    Modifier
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+                        .glassSurface(RoundedCornerShape(22.dp), c.surface, c.outline, tone = tone, elevation = 12.dp)
+                } else {
+                    Modifier.clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)).background(c.surface)
+                },
+            )
             .pointerInput(Unit) {
                 var drag = 0f
                 detectVerticalDragGestures(
@@ -284,12 +538,18 @@ private fun BottomPanel(
                     },
                 )
             }
-            .windowInsetsPadding(WindowInsets.navigationBars)
+            .then(if (glass) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars))
             .animateContentSize(tween(220))
-            .padding(start = 20.dp, end = 12.dp, top = 4.dp, bottom = if (expanded) 16.dp else 6.dp),
+            .padding(
+                start = if (glass) 12.dp else 20.dp,
+                end = 12.dp,
+                top = if (glass && !expanded) 8.dp else 4.dp,
+                bottom = if (expanded) 16.dp else if (glass) 8.dp else 6.dp,
+            ),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(
+        // No vidro a alça só aparece com o painel aberto (fechado, a barra fica limpa; arrastar ainda abre).
+        if (!glass || expanded) Box(
             Modifier
                 .align(Alignment.CenterHorizontally)
                 .size(width = 64.dp, height = 20.dp)
