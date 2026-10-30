@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Track
-import com.juscelino.sonivell.ui.theme.NoraColors
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 
 /**
@@ -46,6 +45,7 @@ fun SvMomentsScreen(
     onBack: () -> Unit,
     onOpenAuto: (String) -> Unit,
 ) {
+    val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val resources = androidx.compose.ui.platform.LocalContext.current.resources
     val phases = remember(tracks) {
@@ -66,7 +66,7 @@ fun SvMomentsScreen(
         Box(
             Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_back), onClick = onBack),
             contentAlignment = Alignment.Center,
-        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = NoraColors.Text) }
+        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = nc.textPrimary) }
         SvTitle(stringResource(R.string.sv_moments_title), stringResource(R.string.sv_moments_sub), Modifier.padding(bottom = 10.dp))
 
         phases.forEachIndexed { i, (decade, list) ->
@@ -97,8 +97,8 @@ fun SvMomentsScreen(
         recall?.let { (decade, _) ->
             SvCard(Modifier.fillMaxWidth().padding(top = 8.dp), onClick = { onOpenAuto("decada-$decade") }) {
                 Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(R.string.sv_moments_recall), style = MaterialTheme.typography.titleMedium, color = NoraColors.Text)
-                    Text(stringResource(R.string.sv_moments_recall_hint), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = NoraColors.Muted)
+                    Text(stringResource(R.string.sv_moments_recall), style = MaterialTheme.typography.titleMedium, color = nc.textPrimary)
+                    Text(stringResource(R.string.sv_moments_recall_hint), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary)
                 }
             }
         }
@@ -108,6 +108,7 @@ fun SvMomentsScreen(
 /** A linha vertical com um ponto, na lateral de cada fase. */
 @Composable
 private fun Timeline(first: Boolean, last: Boolean) {
+    val nc = SonivellTheme.colors
     Box(
         Modifier
             .width(14.dp)
@@ -116,8 +117,8 @@ private fun Timeline(first: Boolean, last: Boolean) {
                 val x = size.width / 2f
                 val top = if (first) size.height / 2f else 0f
                 val bottom = if (last) size.height / 2f else size.height
-                drawLine(NoraColors.Line, Offset(x, top), Offset(x, bottom), strokeWidth = 1.dp.toPx())
-                drawCircle(if (last) NoraColors.Gold else NoraColors.Muted, radius = 4.dp.toPx(), center = Offset(x, size.height / 2f))
+                drawLine(nc.outline, Offset(x, top), Offset(x, bottom), strokeWidth = 1.dp.toPx())
+                drawCircle(if (last) nc.accent else nc.textSecondary, radius = 4.dp.toPx(), center = Offset(x, size.height / 2f))
             },
     )
 }

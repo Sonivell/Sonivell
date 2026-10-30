@@ -41,7 +41,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.R
-import com.juscelino.sonivell.ui.theme.NoraColors
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.PI
 import kotlin.math.sin
@@ -56,6 +55,7 @@ fun SvBreatheScreen(
     onTogglePlay: () -> Unit,
     onTimer: () -> Unit,
 ) {
+    val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val transition = rememberInfiniteTransition(label = "respira")
     val scale by transition.animateFloat(
@@ -71,7 +71,7 @@ fun SvBreatheScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .background(NoraColors.Bg)
+            .background(nc.background)
             .pointerInput(isPlaying) {
                 var total = 0f
                 detectVerticalDragGestures(
@@ -87,13 +87,13 @@ fun SvBreatheScreen(
         Box(
             Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_back), onClick = onBack),
             contentAlignment = Alignment.Center,
-        ) { Icon(icons.close, null, Modifier.size(22.dp), tint = NoraColors.Text) }
+        ) { Icon(icons.close, null, Modifier.size(22.dp), tint = nc.textPrimary) }
 
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             SvPlanet(Modifier.fillMaxWidth(0.82f).aspectRatio(1f).scale(scale))
         }
-        Text(stringResource(R.string.sv_breathe_title), style = MaterialTheme.typography.titleLarge, color = NoraColors.Text, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-        Text(stringResource(R.string.sv_breathe_sub), style = MaterialTheme.typography.bodyMedium, color = NoraColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text(stringResource(R.string.sv_breathe_title), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text(stringResource(R.string.sv_breathe_sub), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
 
         Canvas(Modifier.fillMaxWidth().height(40.dp)) {
             val path = Path()
@@ -103,11 +103,11 @@ fun SvBreatheScreen(
                 val y = mid + sin(xf / size.width * 4f * PI.toFloat() + phase) * (size.height * 0.28f)
                 if (x == 0) path.moveTo(xf, y) else path.lineTo(xf, y)
             }
-            drawPath(path, Brush.horizontalGradient(listOf(Color.Transparent, NoraColors.Gold, Color.Transparent)), style = Stroke(1.6.dp.toPx()))
+            drawPath(path, Brush.horizontalGradient(listOf(Color.Transparent, nc.accent, Color.Transparent)), style = Stroke(1.6.dp.toPx()))
         }
 
         if (isPlaying) {
-            Text(stringResource(R.string.sv_breathe_swipe), style = MaterialTheme.typography.bodyMedium.copy(), color = NoraColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text(stringResource(R.string.sv_breathe_swipe), style = MaterialTheme.typography.bodyMedium.copy(), color = nc.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         } else {
             SvPill(stringResource(R.string.sv_breathe_start), onStart, Modifier.fillMaxWidth())
         }

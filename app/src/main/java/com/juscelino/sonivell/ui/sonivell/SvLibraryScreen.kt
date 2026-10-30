@@ -39,7 +39,6 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.SmartPlaylist
 import com.juscelino.sonivell.ui.library.LibraryActions
-import com.juscelino.sonivell.ui.theme.NoraColors
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 
 /** Biblioteca do tema Sonivell: filtros em cápsula, coleções e uma fileira de artistas. */
@@ -52,6 +51,7 @@ fun SvLibraryScreen(
     contentPadding: PaddingValues,
     actions: LibraryActions,
 ) {
+    val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val tabs = listOf(R.string.sv_all, R.string.sv_albums, R.string.sv_artists, R.string.sv_genres)
@@ -69,11 +69,11 @@ fun SvLibraryScreen(
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.sv_library_title), style = MaterialTheme.typography.headlineSmall, color = NoraColors.Text, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.sv_library_title), style = MaterialTheme.typography.headlineSmall, color = nc.textPrimary, modifier = Modifier.weight(1f))
                 Box(
                     Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_search), onClick = actions.onOpenSearch),
                     contentAlignment = Alignment.Center,
-                ) { Icon(icons.search, null, Modifier.size(22.dp), tint = NoraColors.Text) }
+                ) { Icon(icons.search, null, Modifier.size(22.dp), tint = nc.textPrimary) }
             }
         }
         item {
@@ -84,12 +84,12 @@ fun SvLibraryScreen(
                         Modifier
                             .heightIn(min = 40.dp)
                             .clip(RoundedCornerShape(50))
-                            .background(if (on) NoraColors.Cream else NoraColors.Card)
+                            .background(if (on) nc.accent else nc.surface)
                             .clickable(role = Role.Tab) { tab = i }
                             .padding(horizontal = 18.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(stringResource(tabs[i]), style = MaterialTheme.typography.labelLarge, color = if (on) Color(0xFF1A1612) else NoraColors.Muted)
+                        Text(stringResource(tabs[i]), style = MaterialTheme.typography.labelLarge, color = if (on) nc.onAccent else nc.textSecondary)
                     }
                 }
             }
@@ -98,11 +98,11 @@ fun SvLibraryScreen(
             0 -> {
                 item {
                     Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.sv_collections), style = MaterialTheme.typography.titleLarge, color = NoraColors.Text, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.sv_collections), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary, modifier = Modifier.weight(1f))
                         Box(
                             Modifier.size(40.dp).clip(CircleShape).clickable(role = Role.Button, onClick = actions.onNewPlaylist),
                             contentAlignment = Alignment.Center,
-                        ) { Icon(icons.add, null, Modifier.size(22.dp), tint = NoraColors.Text) }
+                        ) { Icon(icons.add, null, Modifier.size(22.dp), tint = nc.textPrimary) }
                     }
                 }
                 item { collection(stringResource(R.string.source_liked), songs(favorites.size), Color(0xFFA86A3A), Color(0xFF2A1A10)) { actions.onOpenAuto("curtidas") } }
@@ -116,7 +116,7 @@ fun SvLibraryScreen(
                 }
                 if (state.artists.isNotEmpty()) {
                     item {
-                        Text(stringResource(R.string.sv_artists), style = MaterialTheme.typography.titleLarge, color = NoraColors.Text, modifier = Modifier.padding(top = 14.dp))
+                        Text(stringResource(R.string.sv_artists), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary, modifier = Modifier.padding(top = 14.dp))
                     }
                     item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -127,7 +127,7 @@ fun SvLibraryScreen(
                                     verticalArrangement = Arrangement.spacedBy(6.dp),
                                 ) {
                                     SvCircleArt(artist.tracks.firstOrNull(), 64.dp)
-                                    Text(artist.name, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp), color = NoraColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.size(width = 72.dp, height = 16.dp))
+                                    Text(artist.name, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp), color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.size(width = 72.dp, height = 16.dp))
                                 }
                             }
                         }

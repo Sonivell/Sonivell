@@ -29,7 +29,6 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.ForYouState
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.components.AlbumArt
-import com.juscelino.sonivell.ui.theme.NoraColors
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 
 /** Seu Flow de hoje: uma sequência do "Para você" (o que você ouve neste horário), com um botão só. */
@@ -43,6 +42,7 @@ fun SvFlowScreen(
     onResume: (Track, Long) -> Unit,
     onCustomize: () -> Unit,
 ) {
+    val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val flow = forYou.thisHour.ifEmpty { listOfNotNull(forYou.pick) }.ifEmpty { allTracks.take(30) }
     Column(
@@ -56,7 +56,7 @@ fun SvFlowScreen(
         Box(
             Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_back), onClick = onBack),
             contentAlignment = Alignment.Center,
-        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = NoraColors.Text) }
+        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = nc.textPrimary) }
         SvTitle(stringResource(R.string.nav_home), stringResource(R.string.sv_flow_sub))
 
         Box(Modifier.fillMaxWidth().aspectRatio(1.6f), contentAlignment = Alignment.Center) {
@@ -66,25 +66,25 @@ fun SvFlowScreen(
                 contentAlignment = Alignment.Center,
             ) { Icon(icons.play, stringResource(R.string.cd_play), Modifier.size(30.dp), tint = Color.White) }
         }
-        Text(stringResource(R.string.sv_flow_title), style = MaterialTheme.typography.titleLarge, color = NoraColors.Text)
-        Text(stringResource(R.string.sv_flow_desc), style = MaterialTheme.typography.bodyMedium, color = NoraColors.Muted)
+        Text(stringResource(R.string.sv_flow_title), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary)
+        Text(stringResource(R.string.sv_flow_desc), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary)
         SvPill(stringResource(R.string.sv_play_now), { if (flow.isNotEmpty()) onPlay(flow, 0) }, Modifier.fillMaxWidth())
         Text(
             stringResource(R.string.sv_customize),
             style = MaterialTheme.typography.labelLarge,
-            color = NoraColors.Text,
+            color = nc.textPrimary,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().clip(CircleShape).clickable(role = Role.Button, onClick = onCustomize).padding(14.dp),
         )
 
         if (forYou.unfinished.isNotEmpty()) {
-            Text(stringResource(R.string.fy_continue), style = MaterialTheme.typography.titleLarge, color = NoraColors.Text)
+            Text(stringResource(R.string.fy_continue), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary)
             forYou.unfinished.take(4).forEach { t ->
                 SvRow(t.title, t.artist, { onResume(t, forYou.resumeAtMs[t.id] ?: 0L) }, art = { SvCircleArt(t, 48.dp) })
             }
         }
         if (forYou.forgottenFavorites.isNotEmpty()) {
-            Text(stringResource(R.string.fy_forgotten), style = MaterialTheme.typography.titleLarge, color = NoraColors.Text)
+            Text(stringResource(R.string.fy_forgotten), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary)
             forYou.forgottenFavorites.take(4).forEachIndexed { i, t ->
                 SvRow(t.title, t.artist, { onPlay(forYou.forgottenFavorites, i) }, art = { SvCircleArt(t, 48.dp) })
             }

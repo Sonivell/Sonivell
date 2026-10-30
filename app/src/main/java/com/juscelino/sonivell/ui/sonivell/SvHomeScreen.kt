@@ -39,7 +39,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.smart.SmartProgress
-import com.juscelino.sonivell.ui.theme.NoraColors
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 
 /** Início do tema Sonivell: "Como você quer se sentir agora?", com as sensações em círculos. */
@@ -54,6 +53,7 @@ fun SvHomeScreen(
     onOpenMap: () -> Unit,
     onOpenAnalysis: () -> Unit,
 ) {
+    val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
     var text by rememberSaveable { mutableStateOf("") }
     Column(
@@ -84,13 +84,13 @@ fun SvHomeScreen(
                     ) {
                         if (mood == SvMood.Outro) {
                             Box(
-                                Modifier.size(76.dp).clip(CircleShape).background(NoraColors.Card).border(1.dp, NoraColors.Line, CircleShape),
+                                Modifier.size(76.dp).clip(CircleShape).background(nc.surface).border(1.dp, nc.outline, CircleShape),
                                 contentAlignment = Alignment.Center,
-                            ) { Text("•••", color = NoraColors.Muted, style = MaterialTheme.typography.titleMedium) }
+                            ) { Text("•••", color = nc.textSecondary, style = MaterialTheme.typography.titleMedium) }
                         } else {
                             SvOrb(mood.top, mood.bottom, Modifier.size(76.dp), seed = mood.ordinal)
                         }
-                        Text(label, style = MaterialTheme.typography.bodyMedium, color = NoraColors.Text)
+                        Text(label, style = MaterialTheme.typography.bodyMedium, color = nc.textPrimary)
                     }
                 }
             }
@@ -99,7 +99,7 @@ fun SvHomeScreen(
             Text(
                 stringResource(R.string.sv_analysis_lite),
                 style = MaterialTheme.typography.bodyMedium,
-                color = NoraColors.Muted,
+                color = nc.textSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -119,24 +119,24 @@ fun SvHomeScreen(
         ) {
             Box(Modifier.weight(1f)) {
                 if (text.isEmpty()) {
-                    Text(stringResource(R.string.sv_describe_hint), style = MaterialTheme.typography.bodyLarge, color = NoraColors.Muted)
+                    Text(stringResource(R.string.sv_describe_hint), style = MaterialTheme.typography.bodyLarge, color = nc.textSecondary)
                 }
                 BasicTextField(
                     value = text,
                     onValueChange = { text = it },
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = NoraColors.Text),
-                    cursorBrush = SolidColor(NoraColors.Cream),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = nc.textPrimary),
+                    cursorBrush = SolidColor(nc.accent),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { if (text.isNotBlank()) onDescribe(text) }),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
             Box(
-                Modifier.size(38.dp).clip(CircleShape).background(NoraColors.Cream)
+                Modifier.size(38.dp).clip(CircleShape).background(nc.accent)
                     .clickable(role = Role.Button) { if (text.isNotBlank()) onDescribe(text) },
                 contentAlignment = Alignment.Center,
-            ) { Icon(icons.search, null, Modifier.size(20.dp), tint = Color(0xFF1A1612)) }
+            ) { Icon(icons.search, null, Modifier.size(20.dp), tint = nc.onAccent) }
         }
 
         // Atalhos para as outras telas do tema.

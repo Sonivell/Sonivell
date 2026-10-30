@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.components.AlbumArt
-import com.juscelino.sonivell.ui.theme.NoraColors
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.cos
 import kotlin.math.sin
@@ -88,12 +87,13 @@ fun SvOrb(top: Color, bottom: Color, modifier: Modifier = Modifier, seed: Int = 
 /** Planeta rochoso iluminado de um lado, usado no mapa e na tela Respira. */
 @Composable
 fun SvPlanet(modifier: Modifier = Modifier) {
+    val nc = SonivellTheme.colors
     Canvas(modifier) {
         val r = size.minDimension / 2f
         val c = center
         val light = Offset(c.x - r * 0.35f, c.y - r * 0.4f)
         drawCircle(
-            Brush.radialGradient(listOf(NoraColors.Gold.copy(alpha = 0.28f), Color.Transparent), center = c, radius = r * 1.25f),
+            Brush.radialGradient(listOf(nc.accent.copy(alpha = 0.28f), Color.Transparent), center = c, radius = r * 1.25f),
             radius = r * 1.25f, center = c,
         )
         drawCircle(
@@ -119,18 +119,19 @@ fun SvPlanet(modifier: Modifier = Modifier) {
             ),
             radius = r, center = c,
         )
-        drawCircle(NoraColors.Gold.copy(alpha = 0.5f), radius = r, center = c, style = Stroke(1.5.dp.toPx()))
+        drawCircle(nc.accent.copy(alpha = 0.5f), radius = r, center = c, style = Stroke(1.5.dp.toPx()))
     }
 }
 
 @Composable
 fun SvCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable BoxScope.() -> Unit) {
+    val nc = SonivellTheme.colors
     val shape = RoundedCornerShape(18.dp)
     Box(
         modifier
             .clip(shape)
-            .background(NoraColors.Card)
-            .border(1.dp, NoraColors.Line, shape)
+            .background(nc.surface)
+            .border(1.dp, nc.outline, shape)
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
         content = content,
     )
@@ -139,34 +140,37 @@ fun SvCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content
 /** Botão em cápsula: creme cheio (principal) ou só com contorno. */
 @Composable
 fun SvPill(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, filled: Boolean = true) {
+    val nc = SonivellTheme.colors
     val shape = RoundedCornerShape(50)
     Box(
         modifier
             .heightIn(min = 54.dp)
             .clip(shape)
-            .then(if (filled) Modifier.background(NoraColors.Cream) else Modifier.border(1.dp, NoraColors.Line, shape))
+            .then(if (filled) Modifier.background(nc.accent) else Modifier.border(1.dp, nc.outline, shape))
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, style = MaterialTheme.typography.titleMedium, color = if (filled) Color(0xFF1A1612) else NoraColors.Text)
+        Text(label, style = MaterialTheme.typography.titleMedium, color = if (filled) nc.onAccent else nc.textPrimary)
     }
 }
 
 @Composable
 fun SvWordmark(modifier: Modifier = Modifier) {
+    val nc = SonivellTheme.colors
     Text(
         "S O N I V E L L",
         style = MaterialTheme.typography.labelMedium.copy(fontSize = 14.sp, letterSpacing = 3.sp),
-        color = NoraColors.Text,
+        color = nc.textPrimary,
         modifier = modifier,
     )
 }
 
 @Composable
 fun SvTitle(title: String, sub: String? = null, modifier: Modifier = Modifier) {
+    val nc = SonivellTheme.colors
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineSmall, color = NoraColors.Text)
-        if (sub != null) Text(sub, style = MaterialTheme.typography.bodyMedium, color = NoraColors.Muted)
+        Text(title, style = MaterialTheme.typography.headlineSmall, color = nc.textPrimary)
+        if (sub != null) Text(sub, style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary)
     }
 }
 
@@ -180,6 +184,7 @@ fun SvRow(
     art: @Composable () -> Unit,
     trailing: @Composable () -> Unit = {},
 ) {
+    val nc = SonivellTheme.colors
     SvCard(modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
@@ -188,8 +193,8 @@ fun SvRow(
         ) {
             art()
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = NoraColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = NoraColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, style = MaterialTheme.typography.titleMedium, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             trailing()
         }
@@ -205,12 +210,13 @@ fun SvCircleArt(track: Track?, size: androidx.compose.ui.unit.Dp, modifier: Modi
 /** Barra de navegação do tema: ícone e nome, só o creme marca a aba atual. */
 @Composable
 fun BottomNavSonivell(route: String?, tabs: List<SvTab>, onSelect: (String) -> Unit) {
-    Column(Modifier.fillMaxWidth().background(NoraColors.Bg)) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(NoraColors.Line))
+    val nc = SonivellTheme.colors
+    Column(Modifier.fillMaxWidth().background(nc.background)) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(nc.outline))
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
             tabs.forEach { tab ->
                 val selected = tab.route == route
-                val color = if (selected) NoraColors.Cream else NoraColors.Muted
+                val color = if (selected) nc.accent else nc.textSecondary
                 Column(
                     Modifier
                         .weight(1f)
@@ -237,6 +243,7 @@ fun MiniPlayerSonivell(
     onTogglePlay: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val openPlayer = stringResource(R.string.cd_open_player)
     SvCard(modifier.padding(horizontal = 12.dp).fillMaxWidth(), onClick = onOpen) {
@@ -248,18 +255,18 @@ fun MiniPlayerSonivell(
             ) {
                 SvCircleArt(track, 44.dp)
                 Column(Modifier.weight(1f)) {
-                    Text(track.title, style = MaterialTheme.typography.titleSmall, color = NoraColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(track.artist, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = NoraColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(track.title, style = MaterialTheme.typography.titleSmall, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(track.artist, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Box(
-                    Modifier.size(44.dp).clip(CircleShape).background(NoraColors.Cream).clickable(role = Role.Button, onClickLabel = openPlayer, onClick = onTogglePlay),
+                    Modifier.size(44.dp).clip(CircleShape).background(nc.accent).clickable(role = Role.Button, onClickLabel = openPlayer, onClick = onTogglePlay),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(if (isPlaying) icons.pause else icons.play, null, Modifier.size(22.dp), tint = Color(0xFF1A1612))
+                    Icon(if (isPlaying) icons.pause else icons.play, null, Modifier.size(22.dp), tint = nc.onAccent)
                 }
             }
-            Box(Modifier.fillMaxWidth().height(2.dp).background(NoraColors.Line)) {
-                Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(2.dp).background(NoraColors.Gold))
+            Box(Modifier.fillMaxWidth().height(2.dp).background(nc.outline)) {
+                Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(2.dp).background(nc.accent))
             }
         }
     }

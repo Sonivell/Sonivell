@@ -387,7 +387,12 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
                 Triple(UiStyle.SONIVELL, R.string.layout_sonivell, R.string.layout_sonivell_hint),
             ).forEach { (style, name, hint) ->
                 LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
-                    actions.onUpdate { it.copy(uiStyle = style) }
+                    // Ao escolher o tema Sonivell com a cor padrão (Lima), já vem no creme do tema;
+                    // qualquer outra cor escolhida antes é mantida.
+                    actions.onUpdate {
+                        val accent = if (style == UiStyle.SONIVELL && it.accent == AccentChoice.Lima) AccentChoice.Creme else it.accent
+                        it.copy(uiStyle = style, accent = accent)
+                    }
                 }
             }
             Text(
@@ -804,7 +809,7 @@ private fun IconStyleOption(
 private val accentNames = listOf(
     R.string.accent_lime, R.string.accent_blue, R.string.accent_orange,
     R.string.accent_lilac, R.string.accent_pink, R.string.accent_teal,
-    R.string.accent_green,
+    R.string.accent_green, R.string.accent_cream,
 )
 
 /** Rótulo pequeno acima de um bloco (FONE E BLUETOOTH, SOM…). */

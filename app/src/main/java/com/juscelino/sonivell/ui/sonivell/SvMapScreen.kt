@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Genre
-import com.juscelino.sonivell.ui.theme.NoraColors
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.cos
 import kotlin.math.sin
@@ -50,6 +49,7 @@ fun SvMapScreen(
     onBack: () -> Unit,
     onOpenGenre: (String) -> Unit,
 ) {
+    val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val worlds = genres.sortedByDescending { it.tracks.size }.take(6)
     Column(
@@ -63,7 +63,7 @@ fun SvMapScreen(
         Box(
             Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_back), onClick = onBack),
             contentAlignment = Alignment.Center,
-        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = NoraColors.Text) }
+        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = nc.textPrimary) }
         SvTitle(stringResource(R.string.sv_map_title), stringResource(R.string.sv_map_sub))
 
         BoxWithConstraints(Modifier.fillMaxWidth().aspectRatio(1f)) {
@@ -71,7 +71,7 @@ fun SvMapScreen(
             Canvas(Modifier.fillMaxWidth().aspectRatio(1f)) {
                 val r = size.minDimension / 2f
                 listOf(0.42f, 0.72f, 1f).forEach { f ->
-                    drawCircle(NoraColors.Line, radius = r * f * 0.98f, center = center, style = Stroke(1.dp.toPx()))
+                    drawCircle(nc.outline, radius = r * f * 0.98f, center = center, style = Stroke(1.dp.toPx()))
                 }
             }
             SvPlanet(Modifier.align(Alignment.Center).size(maxWidth * 0.26f))
@@ -88,7 +88,7 @@ fun SvMapScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     SvCircleArt(genre.tracks.firstOrNull(), 52.dp)
-                    Text(genre.name, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp), color = NoraColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.size(width = 72.dp, height = 16.dp))
+                    Text(genre.name, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp), color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.size(width = 72.dp, height = 16.dp))
                 }
             }
         }
@@ -96,11 +96,11 @@ fun SvMapScreen(
         SvCard(Modifier.fillMaxWidth(), onClick = { worlds.firstOrNull()?.let { onOpenGenre(it.name) } }) {
             Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(R.string.sv_map_explore), style = MaterialTheme.typography.titleMedium, color = NoraColors.Text)
-                    Text(stringResource(R.string.sv_map_hint), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = NoraColors.Muted)
+                    Text(stringResource(R.string.sv_map_explore), style = MaterialTheme.typography.titleMedium, color = nc.textPrimary)
+                    Text(stringResource(R.string.sv_map_hint), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary)
                 }
-                Box(Modifier.size(40.dp).clip(CircleShape).background(NoraColors.Cream), contentAlignment = Alignment.Center) {
-                    Icon(icons.chevron, null, Modifier.size(22.dp), tint = Color(0xFF1A1612))
+                Box(Modifier.size(40.dp).clip(CircleShape).background(nc.accent), contentAlignment = Alignment.Center) {
+                    Icon(icons.chevron, null, Modifier.size(22.dp), tint = nc.onAccent)
                 }
             }
         }

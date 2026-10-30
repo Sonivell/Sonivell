@@ -72,6 +72,8 @@ enum class AccentChoice(val dark: Color, val light: Color) {
     Turquesa(Color(0xFF5FE3D0), Color(0xFF00756A)),
     /** Verde #1DB954 (RGB 29, 185, 84); no tema claro, um tom mais escuro para o texto passar 4,5:1. */
     Verde(Color(0xFF1DB954), Color(0xFF117A37)),
+    /** Creme do tema "Sonivell"; no claro, um dourado escuro para o texto passar 4,5:1. */
+    Creme(Color(0xFFEFE3CC), Color(0xFF7A5A1E)),
 }
 
 /** Fundo do tema escuro: grafite (padrão do Sonivell) ou preto. */
@@ -144,8 +146,8 @@ object NoraColors {
     val Gold = Color(0xFFC9A56A)
 }
 
-/** Paleta do tema "Sonivell": sempre escura, com o creme como único acento. */
-fun noraColors() = SonivellColors(
+/** Paleta do tema "Sonivell": sempre escura, com a cor de destaque escolhida (creme por padrão). */
+fun noraColors(accent: Color = NoraColors.Cream) = SonivellColors(
     background = NoraColors.Bg,
     surface = NoraColors.Card,
     surfaceLow = Color(0xFF0E0C0B),
@@ -155,7 +157,7 @@ fun noraColors() = SonivellColors(
     textPrimary = NoraColors.Text,
     textSecondary = NoraColors.Muted,
     textTertiary = Color(0xFFB8B0A2),
-    accent = NoraColors.Cream,
+    accent = accent,
     onAccent = Color(0xFF1A1612),
     miniPlayer = NoraColors.Card,
     isDark = true,
@@ -260,12 +262,15 @@ fun SonivellTheme(
     tintedBackground: Boolean = false,
     /** Cor de destaque tirada do papel de parede (Material You, Android 12+). */
     systemColors: Boolean = false,
-    /** Tema "Sonivell": paleta e tipografia próprias, sempre escuras (ignora acento e fundo). */
+    /**
+     * Tema "Sonivell": tipografia própria e sempre escuro. A cor de destaque, as cores do sistema,
+     * o fundo colorido e o fundo preto valem aqui também; sem eles, fica o preto quente.
+     */
     noraStyle: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val dynamic = !noraStyle && systemColors && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val dynamic = systemColors && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val accentColor = when {
         dynamic && darkTheme -> dynamicDarkColorScheme(context).primary
         dynamic -> dynamicLightColorScheme(context).primary
@@ -273,7 +278,9 @@ fun SonivellTheme(
         else -> accent.light
     }
     val base = when {
-        noraStyle -> noraColors()
+        noraStyle && tintedBackground -> tintedColors(accentColor, dark = true)
+        noraStyle && darkBackground == DarkBackground.Preto -> blackColors(accentColor)
+        noraStyle -> noraColors(accentColor)
         tintedBackground -> tintedColors(accentColor, darkTheme)
         !darkTheme -> lightColors(accentColor)
         darkBackground == DarkBackground.Preto -> blackColors(accentColor)

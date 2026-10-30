@@ -57,7 +57,6 @@ import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.nowplaying.AudioBars
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingActions
 import com.juscelino.sonivell.ui.nowplaying.PlayReason
-import com.juscelino.sonivell.ui.theme.NoraColors
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 
 /** Player do tema Sonivell: capa circular com brilho, progresso em fio, controles em creme e o porquê da escolha. */
@@ -74,12 +73,13 @@ fun NowPlayingScreenSonivell(
     reason: PlayReason = PlayReason.Chosen,
     visualizer: Boolean = false,
 ) {
+    val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val durationMs = state.durationMs.takeIf { it > 0 } ?: track.durationMs
     Column(
         Modifier
             .fillMaxSize()
-            .background(NoraColors.Bg)
+            .background(nc.background)
             .windowInsetsPadding(WindowInsets.statusBars)
             .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(horizontal = 24.dp, vertical = 12.dp),
@@ -90,7 +90,7 @@ fun NowPlayingScreenSonivell(
             Text(
                 sourceLabel,
                 style = MaterialTheme.typography.labelMedium,
-                color = NoraColors.Muted,
+                color = nc.textSecondary,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -107,7 +107,7 @@ fun NowPlayingScreenSonivell(
                     .aspectRatio(1f)
                     .drawBehind {
                         drawCircle(
-                            Brush.radialGradient(listOf(NoraColors.Gold.copy(alpha = 0.28f), Color.Transparent), radius = size.minDimension * 0.7f),
+                            Brush.radialGradient(listOf(nc.accent.copy(alpha = 0.28f), Color.Transparent), radius = size.minDimension * 0.7f),
                             radius = size.minDimension * 0.7f,
                         )
                     },
@@ -118,11 +118,11 @@ fun NowPlayingScreenSonivell(
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(track.title, style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp), color = NoraColors.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(track.title, style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp), color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     listOf(track.artist, track.album).filter { it.isNotBlank() }.joinToString(" · "),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = NoraColors.Muted,
+                    color = nc.textSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -131,16 +131,16 @@ fun NowPlayingScreenSonivell(
                 if (isFavorite) icons.liked else icons.like,
                 stringResource(if (isFavorite) R.string.cd_unlike else R.string.cd_like),
                 actions.onFavorite,
-                tint = if (isFavorite) NoraColors.Cream else NoraColors.Text,
+                tint = if (isFavorite) nc.accent else nc.textPrimary,
             )
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             SvSeek(state.positionMs, durationMs, actions.onSeek)
             Row(Modifier.fillMaxWidth()) {
-                Text(formatDuration(state.positionMs), style = MaterialTheme.typography.labelMedium, color = NoraColors.Muted)
+                Text(formatDuration(state.positionMs), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary)
                 Box(Modifier.weight(1f))
-                Text(formatDuration(durationMs), style = MaterialTheme.typography.labelMedium, color = NoraColors.Muted)
+                Text(formatDuration(durationMs), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary)
             }
         }
 
@@ -151,31 +151,31 @@ fun NowPlayingScreenSonivell(
                 if (shuffleMode == ShuffleMode.SMART && smartAvailable) icons.smart else icons.shuffle,
                 stringResource(R.string.mode_shuffle),
                 { actions.onSetShuffle(if (shuffleOn) ShuffleMode.OFF else if (smartAvailable) ShuffleMode.SMART else ShuffleMode.ON) },
-                tint = if (shuffleOn) NoraColors.Cream else NoraColors.Muted,
+                tint = if (shuffleOn) nc.accent else nc.textSecondary,
             )
             SvIcon(icons.skipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 52.dp, iconSize = 28.dp)
             Box(
-                Modifier.size(68.dp).clip(CircleShape).background(NoraColors.Cream)
+                Modifier.size(68.dp).clip(CircleShape).background(nc.accent)
                     .clickable(role = Role.Button, onClick = actions.onTogglePlay),
                 contentAlignment = Alignment.Center,
-            ) { Icon(if (state.isPlaying) icons.pause else icons.play, stringResource(if (state.isPlaying) R.string.cd_pause else R.string.cd_play), Modifier.size(30.dp), tint = Color(0xFF1A1612)) }
+            ) { Icon(if (state.isPlaying) icons.pause else icons.play, stringResource(if (state.isPlaying) R.string.cd_pause else R.string.cd_play), Modifier.size(30.dp), tint = nc.onAccent) }
             SvIcon(icons.skipNext, stringResource(R.string.cd_next), actions.onNext, size = 52.dp, iconSize = 28.dp)
             SvIcon(
                 if (state.repeat == RepeatMode.ONE) icons.repeatOne else icons.repeat,
                 stringResource(R.string.mode_repeat),
                 actions.onRepeat,
-                tint = if (state.repeat != RepeatMode.OFF) NoraColors.Cream else NoraColors.Muted,
+                tint = if (state.repeat != RepeatMode.OFF) nc.accent else nc.textSecondary,
             )
         }
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            SvIcon(icons.lyrics, stringResource(R.string.cd_lyrics), actions.onLyrics, tint = NoraColors.Muted)
-            SvIcon(icons.queue, stringResource(R.string.queue_title), actions.onQueue, tint = NoraColors.Muted)
+            SvIcon(icons.lyrics, stringResource(R.string.cd_lyrics), actions.onLyrics, tint = nc.textSecondary)
+            SvIcon(icons.queue, stringResource(R.string.queue_title), actions.onQueue, tint = nc.textSecondary)
             SvIcon(
                 if (sleepTimer.active) icons.timer else icons.sleep,
                 stringResource(R.string.sleep_timer),
                 actions.onSleepTimer,
-                tint = if (sleepTimer.active) NoraColors.Cream else NoraColors.Muted,
+                tint = if (sleepTimer.active) nc.accent else nc.textSecondary,
             )
         }
 
@@ -189,11 +189,11 @@ fun NowPlayingScreenSonivell(
         SvCard(Modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(R.string.sv_why_title), style = MaterialTheme.typography.titleSmall, color = NoraColors.Text)
-                    Text(why, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = NoraColors.Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.sv_why_title), style = MaterialTheme.typography.titleSmall, color = nc.textPrimary)
+                    Text(why, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
                 if (visualizer) {
-                    AudioBars(playing = state.isPlaying, color = NoraColors.Gold, modifier = Modifier.size(width = 64.dp, height = 28.dp))
+                    AudioBars(playing = state.isPlaying, color = nc.accent, modifier = Modifier.size(width = 64.dp, height = 28.dp))
                 }
             }
         }
@@ -205,7 +205,7 @@ private fun SvIcon(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
-    tint: Color = NoraColors.Text,
+    tint: Color = SonivellTheme.colors.textPrimary,
     size: androidx.compose.ui.unit.Dp = 44.dp,
     iconSize: androidx.compose.ui.unit.Dp = 22.dp,
 ) {
@@ -218,6 +218,7 @@ private fun SvIcon(
 /** Progresso em fio: toque ou arraste para buscar. */
 @Composable
 private fun SvSeek(positionMs: Long, durationMs: Long, onSeek: (Long) -> Unit) {
+    val nc = SonivellTheme.colors
     var drag by remember { mutableStateOf<Float?>(null) }
     val fraction = drag ?: if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
     val seekLabel = stringResource(R.string.cd_seek)
@@ -241,7 +242,7 @@ private fun SvSeek(positionMs: Long, durationMs: Long, onSeek: (Long) -> Unit) {
         val y = size.height / 2f
         val w = size.width
         drawLine(Color(0x25FFFFFF), Offset(0f, y), Offset(w, y), strokeWidth = 2.dp.toPx())
-        drawLine(NoraColors.Cream, Offset(0f, y), Offset(w * fraction, y), strokeWidth = 3.dp.toPx())
-        drawCircle(NoraColors.Cream, radius = 5.dp.toPx(), center = Offset(w * fraction, y))
+        drawLine(nc.accent, Offset(0f, y), Offset(w * fraction, y), strokeWidth = 3.dp.toPx())
+        drawCircle(nc.accent, radius = 5.dp.toPx(), center = Offset(w * fraction, y))
     }
 }
