@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.glassSurface
 
 /** Perfil do tema: "Sua jornada", com números da biblioteca, atalhos e os ajustes do app. */
 @Composable
@@ -76,8 +77,15 @@ fun SvProfileScreen(
 @Composable
 private fun Stat(value: String, label: String, modifier: Modifier = Modifier, highlight: Boolean = false) {
     val nc = SonivellTheme.colors
+    val shape = RoundedCornerShape(18.dp)
     Column(
-        modifier.clip(RoundedCornerShape(18.dp)).background(nc.surface).padding(vertical = 14.dp, horizontal = 8.dp),
+        modifier
+            .then(
+                // Vidro: o destaque ("este mês") ganha o brilho na cor de destaque.
+                if (SonivellTheme.glass) Modifier.glassSurface(shape, nc.surface, nc.outline, if (highlight) nc.accent else null, elevation = 8.dp)
+                else Modifier.clip(shape).background(nc.surface),
+            )
+            .padding(vertical = 14.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {

@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.glassSurface
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
@@ -176,9 +177,11 @@ fun MiniPlayerOndas(
         modifier
             .padding(horizontal = 12.dp)
             .fillMaxWidth()
-            .clip(shape)
-            .background(c.surface)
-            .border(1.dp, c.outline, shape)
+            // Tema Desenvolvimento: o mini player também em vidro (os outros temas seguem como estavam).
+            .then(
+                if (SonivellTheme.glass) Modifier.glassSurface(shape, c.surface, c.outline, elevation = 12.dp)
+                else Modifier.clip(shape).background(c.surface).border(1.dp, c.outline, shape),
+            )
             .clickable(onClickLabel = openPlayer, onClick = onOpen)
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,

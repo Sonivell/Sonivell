@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
@@ -45,6 +46,8 @@ import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.MiniPlayerOndas
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.glassAccent
+import com.juscelino.sonivell.ui.theme.glassSurface
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -131,15 +134,26 @@ fun SvPlanet(modifier: Modifier = Modifier) {
     }
 }
 
-/** Cartão do Ondas: superfície, cantos de 20 dp, sem contorno. */
+/**
+ * Cartão do Ondas: superfície, cantos de 20 dp, sem contorno. No tema Desenvolvimento vira vidro
+ * ([glassSurface]), com o brilho em [tone] quando dado; [elevation] 0 tira a sombra (listas longas).
+ */
 @Composable
-fun SvCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable BoxScope.() -> Unit) {
+fun SvCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    tone: Color? = null,
+    elevation: Dp = 10.dp,
+    content: @Composable BoxScope.() -> Unit,
+) {
     val nc = SonivellTheme.colors
     val shape = RoundedCornerShape(20.dp)
     Box(
         modifier
-            .clip(shape)
-            .background(nc.surface)
+            .then(
+                if (SonivellTheme.glass) Modifier.glassSurface(shape, nc.surface, nc.outline, tone, elevation)
+                else Modifier.clip(shape).background(nc.surface),
+            )
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
         content = content,
     )
@@ -162,19 +176,33 @@ fun SvPill(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, fi
     }
 }
 
-/** Botão quadrado com contorno do Ondas (voltar, fechar, buscar…). */
+/** Botão quadrado com contorno do Ondas (voltar, fechar, buscar…). No vidro, o cheio vira translúcido na cor de destaque. */
 @Composable
 fun SvSquare(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier, filled: Boolean = false) {
     val nc = SonivellTheme.colors
+    val glass = SonivellTheme.glass
     val shape = RoundedCornerShape(14.dp)
     Box(
         modifier
             .size(44.dp)
-            .clip(shape)
-            .then(if (filled) Modifier.background(nc.accent) else Modifier.border(1.dp, nc.outline, shape))
+            .then(
+                when {
+                    glass && filled -> Modifier.glassAccent(shape, nc.accent)
+                    glass -> Modifier.glassSurface(shape, nc.surface, nc.outline, elevation = 6.dp)
+                    filled -> Modifier.clip(shape).background(nc.accent)
+                    else -> Modifier.clip(shape).border(1.dp, nc.outline, shape)
+                },
+            )
             .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
         contentAlignment = Alignment.Center,
-    ) { Icon(icon, label, Modifier.size(22.dp), tint = if (filled) nc.onAccent else nc.textPrimary) }
+    ) {
+        val tint = when {
+            glass && filled -> nc.accent
+            filled -> nc.onAccent
+            else -> nc.textPrimary
+        }
+        Icon(icon, label, Modifier.size(22.dp), tint = tint)
+    }
 }
 
 /** Título de tela do Ondas: grande e pesado, com uma linha de apoio opcional. */
@@ -221,9 +249,13 @@ fun SvRow(
     modifier: Modifier = Modifier,
     art: @Composable () -> Unit,
     trailing: @Composable () -> Unit = {},
+    /** Brilho do cartão no tema Desenvolvimento. */
+    tone: Color? = null,
+    /** Sombra no tema Desenvolvimento; 0 nas listas longas (álbuns, artistas, pastas). */
+    elevation: Dp = 10.dp,
 ) {
     val nc = SonivellTheme.colors
-    SvCard(modifier.fillMaxWidth(), onClick = onClick) {
+    SvCard(modifier.fillMaxWidth(), onClick = onClick, tone = tone, elevation = elevation) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -251,26 +283,41 @@ fun SvCircleArt(track: Track?, size: androidx.compose.ui.unit.Dp, modifier: Modi
 @Composable
 fun BottomNavSonivell(route: String?, tabs: List<SvTab>, onSelect: (String) -> Unit) {
     val nc = SonivellTheme.colors
+    val glass = SonivellTheme.glass
+    val barShape = RoundedCornerShape(22.dp)
+    val tabShape = RoundedCornerShape(16.dp)
     Row(
         Modifier
             .fillMaxWidth()
             .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)
             .height(60.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(nc.surface)
+            .then(
+                if (glass) Modifier.glassSurface(barShape, nc.surface, nc.outline, elevation = 12.dp)
+                else Modifier.clip(barShape).background(nc.surface),
+            )
             .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         tabs.forEach { tab ->
             val selected = tab.route == route
-            val color = if (selected) nc.onAccent else nc.textSecondary
-            // Com quatro abas não cabe o nome em todas: só a atual mostra o nome.
+            // No vidro a aba atual é translúcida, com ícone e nome na cor de destaque.
+            val color = when {
+                !selected -> nc.textSecondary
+                glass -> nc.accent
+                else -> nc.onAccent
+            }
+            // Só a aba atual mostra o nome.
             Row(
                 Modifier
                     .weight(if (selected) 1.6f else 1f)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(if (selected) nc.accent else Color.Transparent)
+                    .then(
+                        when {
+                            !selected -> Modifier.clip(tabShape)
+                            glass -> Modifier.glassAccent(tabShape, nc.accent)
+                            else -> Modifier.clip(tabShape).background(nc.accent)
+                        },
+                    )
                     .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(tab.route) }),
                 horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,

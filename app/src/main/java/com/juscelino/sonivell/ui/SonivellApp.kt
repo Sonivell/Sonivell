@@ -110,6 +110,7 @@ import com.juscelino.sonivell.MainViewModel
 import com.juscelino.sonivell.ShuffleMode
 import com.juscelino.sonivell.playback.toTrack
 import com.juscelino.sonivell.data.UiStyle
+import com.juscelino.sonivell.data.usesSonivellScreens
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.filled.Person
 import com.juscelino.sonivell.ui.sonivell.BottomNavSonivell
@@ -551,7 +552,7 @@ private fun MainContent(vm: MainViewModel) {
                                 onOpen = { nav.navigate(Routes.PLAYER) },
                                 onTogglePlay = vm.player::togglePlay,
                             )
-                            UiStyle.SONIVELL -> MiniPlayerSonivell(
+                            UiStyle.SONIVELL, UiStyle.DESENVOLVIMENTO -> MiniPlayerSonivell(
                                 track = t,
                                 isPlaying = player.isPlaying,
                                 progress = progress,
@@ -565,7 +566,7 @@ private fun MainContent(vm: MainViewModel) {
                     val onTab: (String) -> Unit = { r ->
                         // Sonivell: a biblioteca abre por cima do Início e não é aba. Sai dela antes de trocar de
                         // aba; senão ela entra no estado salvo do Início e volta no lugar dele.
-                        if (uiStyle == UiStyle.SONIVELL && route == Routes.LIBRARY && nav.previousBackStackEntry != null) {
+                        if (uiStyle.usesSonivellScreens && route == Routes.LIBRARY && nav.previousBackStackEntry != null) {
                             nav.popBackStack()
                         }
                         nav.navigate(r) {
@@ -579,7 +580,8 @@ private fun MainContent(vm: MainViewModel) {
                         UiStyle.CONTRASTE -> BottomNav(route, onTab)
                         UiStyle.CLASSICA -> BottomNavClassica(route, onTab)
                         // A biblioteca é parte do Início: a aba Para você fica marcada nela.
-                        UiStyle.SONIVELL -> BottomNavSonivell(if (route == Routes.LIBRARY) Routes.HOME else route, svTabs, onTab)
+                        UiStyle.SONIVELL, UiStyle.DESENVOLVIMENTO ->
+                            BottomNavSonivell(if (route == Routes.LIBRARY) Routes.HOME else route, svTabs, onTab)
                     }
                 }
             }
@@ -638,7 +640,7 @@ private fun MainContent(vm: MainViewModel) {
                 Routes.LIBRARY to LibraryMode.Biblioteca,
             ).forEach { (r, mode) ->
                 composable(r) {
-                    if (r == Routes.LIBRARY && initialStyle == UiStyle.SONIVELL && !startRouted) {
+                    if (r == Routes.LIBRARY && initialStyle.usesSonivellScreens && !startRouted) {
                         LaunchedEffect(Unit) {
                             startRouted = true
                             nav.navigate(Routes.HOME) {
@@ -668,7 +670,7 @@ private fun MainContent(vm: MainViewModel) {
                             recentSearches = recentSearches, tagBannerCount = tagBannerCount,
                             lyricHits = lyricHits,
                         )
-                        UiStyle.SONIVELL -> when (mode) {
+                        UiStyle.SONIVELL, UiStyle.DESENVOLVIMENTO -> when (mode) {
                             LibraryMode.Inicio -> {
                                 // Início é a raiz do tema: voltar daqui sai do app, não cai na biblioteca
                                 // (o destino inicial do grafo), que deixou de ser uma aba.
@@ -1033,7 +1035,7 @@ private fun MainContent(vm: MainViewModel) {
                         onSetShuffle = vm::setShuffleMode,
                     )
                     when (uiStyle) {
-                        UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL -> {
+                        UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL, UiStyle.DESENVOLVIMENTO -> {
                             val byId = remember(library.allTracks) { library.allTracks.associateBy { it.id } }
                             val upNext = player.upNext.take(3).mapNotNull { iv -> byId[iv.value.mediaId.toLongOrNull()] }
                             val seed = smartSeeds[t.id]?.let(byId::get)

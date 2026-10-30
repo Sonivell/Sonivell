@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +45,7 @@ import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.components.Waveform
 import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.glassSurface
 import java.util.Calendar
 
 /**
@@ -112,7 +116,7 @@ fun SvHomeScreen(
         }
 
         // Seu Flow de hoje: cartão do Ondas com a onda embaixo.
-        SvCard(Modifier.fillMaxWidth(), onClick = onOpenFlow) {
+        SvCard(Modifier.fillMaxWidth(), onClick = onOpenFlow, tone = nc.accent) {
             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SvIconTile(icons.smart, 52.dp)
@@ -137,16 +141,23 @@ fun SvHomeScreen(
                     itemsIndexed(mixSeeds, key = { _, seed -> "mix-" + seed.id }) { i, seed ->
                         val label = stringResource(R.string.fy_mix_of, seed.artist)
                         Column(
-                            Modifier.width(136.dp).clip(RoundedCornerShape(20.dp))
+                            Modifier.width(136.dp)
+                                // No vidro não corta: o recorte comeria a sombra da capa.
+                                .then(if (SonivellTheme.glass) Modifier else Modifier.clip(RoundedCornerShape(20.dp)))
                                 .clickable(role = Role.Button, onClickLabel = label) { onPlayMix(seed) },
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            SvOrb(
-                                top = ArtTones.cores[i % ArtTones.cores.size],
-                                bottom = ArtTones.backgrounds[i % ArtTones.backgrounds.size],
-                                modifier = Modifier.size(width = 136.dp, height = 120.dp),
-                                seed = 0,
-                            )
+                            val tone = ArtTones.cores[i % ArtTones.cores.size]
+                            if (SonivellTheme.glass) {
+                                GlassMixCover(seed.artist, tone, Modifier.size(width = 136.dp, height = 120.dp))
+                            } else {
+                                SvOrb(
+                                    top = tone,
+                                    bottom = ArtTones.backgrounds[i % ArtTones.backgrounds.size],
+                                    modifier = Modifier.size(width = 136.dp, height = 120.dp),
+                                    seed = 0,
+                                )
+                            }
                             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                                 Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(stringResource(R.string.fy_sounds_like, seed.title), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -162,6 +173,7 @@ fun SvHomeScreen(
             subtitle = stringResource(R.string.sv_map_sub),
             onClick = onOpenMap,
             art = { SvIconTile(icons.genre) },
+            tone = ArtTones.cores[1 % ArtTones.cores.size],
             trailing = { Icon(icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
         )
         if (smartAvailable && (smartProgress.running || smartProgress.analysed < smartProgress.total)) {
@@ -186,6 +198,7 @@ private class SvShortcut(val label: String, val detail: String, val onClick: () 
 @Composable
 private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: Int) {
     val nc = SonivellTheme.colors
+    val glass = SonivellTheme.glass
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             title.uppercase(),
@@ -203,22 +216,22 @@ private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: In
                         Modifier
                             .weight(1f)
                             .height(68.dp)
-                            .clip(shape)
-                            .background(nc.surface)
-                            .border(1.dp, nc.outline, shape)
+                            .then(
+                                if (glass) Modifier.glassSurface(shape, nc.surface, nc.outline, tone, elevation = 8.dp)
+                                else Modifier.clip(shape).background(nc.surface).border(1.dp, nc.outline, shape),
+                            )
                             .clickable(role = Role.Button, onClickLabel = item.label, onClick = item.onClick)
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
+                            // Encolhe até caber ("Mais ouvidas" cortava em telas estreitas) em vez de virar "Mais ouvid…".
+                            BasicText(
                                 item.label,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = nc.textPrimary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f, fill = false),
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold, color = nc.textPrimary),
+                                maxLines = 1,
+                                autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = 14.sp, stepSize = 0.5.sp),
                             )
                             Box(Modifier.size(7.dp).clip(CircleShape).background(tone))
                         }
@@ -227,7 +240,8 @@ private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: In
                             if (item.detail.isNotEmpty()) {
                                 Text(
                                     item.detail,
-                                    style = MaterialTheme.typography.labelSmall,
+                                    // Sem o espaçamento entre letras do labelSmall, que separava os dígitos ("1 9 9 0").
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
                                     fontWeight = FontWeight.Bold,
                                     color = nc.textSecondary,
                                     maxLines = 1,
@@ -242,6 +256,24 @@ private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: In
                 repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
+    }
+}
+
+/**
+ * Capa de mix no tema Desenvolvimento: o cartão dos atalhos (vidro, ponto colorido no canto e a onda
+ * curta embaixo), no mesmo tamanho da capa do Sonivell.
+ */
+@Composable
+private fun GlassMixCover(seedText: String, tone: Color, modifier: Modifier = Modifier) {
+    val nc = SonivellTheme.colors
+    Column(
+        modifier
+            .glassSurface(RoundedCornerShape(20.dp), nc.surface, nc.outline, tone, elevation = 10.dp)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Box(Modifier.size(8.dp).clip(CircleShape).background(tone))
+        SvMiniWave(seedText, tone, Modifier.size(width = 64.dp, height = 22.dp))
     }
 }
 
