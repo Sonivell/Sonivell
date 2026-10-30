@@ -51,7 +51,8 @@ import kotlin.math.sin
 /** Sensações da tela Início do tema Sonivell. Cada uma é uma descrição que o SMART compara com o som. */
 enum class SvMood(@StringRes val label: Int, val query: String, val top: Color, val bottom: Color) {
     Calmo(R.string.sv_mood_calm, "calm relaxing soft acoustic music", Color(0xFF8D949C), Color(0xFF2A2D31)),
-    Foco(R.string.sv_mood_focus, "instrumental ambient music for concentration", Color(0xFF1A1F2A), Color(0xFF05060A)),
+    // Azul cobalto: no tom escurecido (#1F3E66) contrasta com o verde-lima e não some no fundo.
+    Foco(R.string.sv_mood_focus, "instrumental ambient music for concentration", Color(0xFF458AE3), Color(0xFF0B1A2E)),
     Energia(R.string.sv_mood_energy, "happy upbeat energetic dance music", Color(0xFFE08A4A), Color(0xFF3A1F4A)),
     Criativo(R.string.sv_mood_creative, "creative experimental inventive instrumental music", Color(0xFF6E8E90), Color(0xFF16262A)),
     Nostalgia(R.string.sv_mood_nostalgia, "nostalgic retro classic songs", Color(0xFFD9A867), Color(0xFF3A2A1A)),
@@ -92,6 +93,27 @@ fun SvOrb(top: Color, bottom: Color, modifier: Modifier = Modifier, seed: Int = 
         }
         line(0.56f, size.height * 0.09f, 1f, stroke)
         line(0.70f, size.height * 0.06f, 0.45f, stroke * 0.8f)
+    }
+}
+
+/** Onda curta dos cartões de Gêneros do Ondas: altura e frequência saem do texto, para cada um ter a sua. */
+@Composable
+fun SvMiniWave(seedText: String, color: Color, modifier: Modifier = Modifier) {
+    val h = kotlin.math.abs(seedText.lowercase().hashCode())
+    val amp = 0.18f + (h % 5) * 0.05f
+    val turns = 1.5f + (h / 5 % 4) * 0.5f
+    Canvas(modifier) {
+        val stroke = 2.dp.toPx()
+        val path = Path()
+        val mid = size.height / 2f
+        var x = stroke
+        path.moveTo(x, mid)
+        while (x <= size.width - stroke) {
+            val t = x / size.width
+            path.lineTo(x, mid + sin(t * turns * 2 * PI).toFloat() * size.height * amp)
+            x += 1.5f
+        }
+        drawPath(path, color, style = Stroke(stroke, cap = StrokeCap.Round))
     }
 }
 

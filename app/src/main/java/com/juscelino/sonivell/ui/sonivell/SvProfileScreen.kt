@@ -67,18 +67,9 @@ fun SvProfileScreen(
         Item(icons.sleep, stringResource(R.string.sv_breathe_title), stringResource(R.string.sv_breathe_sub), onBreathe)
         if (smartAvailable) Item(icons.smart, stringResource(R.string.sv_analysis_title), stringResource(R.string.sv_analysis_sub), onAnalysis)
 
-        SvSection(stringResource(R.string.sv_profile_title), Modifier.padding(top = 8.dp))
-        Item(icons.musicNote, stringResource(R.string.sv_row_profile), stringResource(R.string.sv_row_profile_hint), onStats)
-        Item(icons.smart, stringResource(R.string.sv_row_prefs), stringResource(R.string.sv_row_prefs_hint), onSettings)
-        Item(icons.grid, stringResource(R.string.sv_row_visual), stringResource(R.string.sv_row_visual_hint), onSettings)
+        Item(icons.musicNote, stringResource(R.string.sv_row_profile), stringResource(R.string.sv_row_profile_hint), onStats, Modifier.padding(top = 6.dp))
         Item(icons.settings, stringResource(R.string.sv_row_settings), stringResource(R.string.sv_row_settings_hint), onSettings)
 
-        SvCard(Modifier.fillMaxWidth().padding(top = 8.dp)) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(stringResource(R.string.sv_tagline), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary)
-                Text(stringResource(R.string.sv_tagline_sub), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary)
-            }
-        }
     }
 }
 
@@ -96,10 +87,10 @@ private fun Stat(value: String, label: String, modifier: Modifier = Modifier, hi
 }
 
 @Composable
-private fun Item(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+private fun Item(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val nc = SonivellTheme.colors
     SvRow(
-        title, subtitle, onClick,
+        title, subtitle, onClick, modifier,
         art = { SvIconTile(icon) },
         trailing = { Icon(SonivellTheme.icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
     )

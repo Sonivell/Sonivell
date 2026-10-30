@@ -701,7 +701,7 @@
     <string name="sv_row_visual">Visual</string>
     <string name="sv_row_visual_hint">Layouts, cores e ícones</string>
     <string name="sv_row_settings">Configurações</string>
-    <string name="sv_row_settings_hint">Equalizador, letras e volume</string>
+    <string name="sv_row_settings_hint">Aparência, reprodução, SMART e mais</string>
     <string name="sv_tagline">Sua história, em som.</string>
     <string name="sv_tagline_sub">O que te move, o que te acalma, o que te faz voltar.</string>
     <string name="sv_why_title">Por que tocou</string>

@@ -37,6 +37,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.LibraryState
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.juscelino.sonivell.data.formatDuration
+import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.SmartPlaylist
@@ -56,7 +62,7 @@ fun SvLibraryScreen(
     val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    val tabs = listOf(R.string.sv_all, R.string.sv_albums, R.string.sv_artists, R.string.sv_genres)
+    val tabs = listOf(R.string.sv_all, R.string.tab_songs, R.string.sv_albums, R.string.sv_artists, R.string.sv_genres, R.string.tab_folders)
     val resources = androidx.compose.ui.platform.LocalContext.current.resources
     val songs = { n: Int -> resources.getString(R.string.sv_songs_count, n) }
 
@@ -79,18 +85,18 @@ fun SvLibraryScreen(
         item {
             // Abas no segmentado do Ondas: a atual num degrau acima da superfície.
             Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(nc.surface).padding(4.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(nc.surface).horizontalScroll(rememberScrollState()).padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 tabs.forEachIndexed { i, label ->
                     val on = tab == i
                     Box(
                         Modifier
-                            .weight(1f)
                             .height(36.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(if (on) nc.surfaceHigh else Color.Transparent)
-                            .clickable(role = Role.Tab) { tab = i },
+                            .clickable(role = Role.Tab) { tab = i }
+                            .padding(horizontal = 14.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -138,14 +144,76 @@ fun SvLibraryScreen(
                     }
                 }
             }
-            1 -> items(state.albums.take(300), key = { it.id }) { album ->
+            1 -> {
+                val list = state.tracks.ifEmpty { state.allTracks }
+                val source = resources.getString(R.string.tab_songs)
+                item {
+                    Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(songs(list.size), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = nc.textSecondary, modifier = Modifier.weight(1f))
+                        Box(
+                            Modifier.height(36.dp).clip(RoundedCornerShape(12.dp)).background(nc.accent)
+                                .clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_shuffle_all), onClick = actions.onShuffleAll)
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) { Text(stringResource(R.string.mode_shuffle), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = nc.onAccent) }
+                    }
+                }
+                itemsIndexed(list, key = { _, t -> t.id }) { i, t ->
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { actions.onPlay(list, i, source) }.padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        SvCircleArt(t, 48.dp)
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(t.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(t.artist, style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                        Text(formatDuration(t.durationMs), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary)
+                        Box(
+                            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_more_options)) { actions.onTrackMenu(t) },
+                            contentAlignment = Alignment.Center,
+                        ) { Icon(icons.more, null, Modifier.size(20.dp), tint = nc.textSecondary) }
+                    }
+                }
+            }
+            2 -> items(state.albums.take(300), key = { it.id }) { album ->
                 SvRow(album.title, album.artist, { actions.onOpenAlbum(album.id) }, art = { SvCircleArt(album.tracks.firstOrNull(), 48.dp) })
             }
-            2 -> items(state.artists.take(300), key = { it.name }) { artist ->
+            3 -> items(state.artists.take(300), key = { it.name }) { artist ->
                 SvRow(artist.name, songs(artist.tracks.size), { actions.onOpenArtist(artist.name) }, art = { SvCircleArt(artist.tracks.firstOrNull(), 48.dp) })
             }
-            else -> items(state.genres, key = { it.name }) { genre ->
-                SvRow(genre.name, songs(genre.tracks.size), { actions.onOpenGenre(genre.name) }, art = { SvCircleArt(genre.tracks.firstOrNull(), 48.dp) })
+            4 -> {
+                // Cartões de dois por linha, cada gênero no seu tom, com a onda curta.
+                val rows = state.genres.chunked(2)
+                itemsIndexed(rows, key = { _, r -> "g-" + r.first().name }) { r, pair ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        pair.forEachIndexed { col, genre ->
+                            val n = r * 2 + col
+                            val bg = ArtTones.backgrounds[n % ArtTones.backgrounds.size]
+                            val wave = ArtTones.cores[n % ArtTones.cores.size]
+                            Box(
+                                Modifier.weight(1f).height(96.dp).clip(RoundedCornerShape(18.dp)).background(bg)
+                                    .clickable(role = Role.Button) { actions.onOpenGenre(genre.name) }
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                            ) {
+                                Column(Modifier.align(Alignment.TopStart), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(genre.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = Color(0xFFF2F2EE), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                                Text(songs(genre.tracks.size), style = MaterialTheme.typography.labelMedium, color = Color(0xFFF2F2EE).copy(alpha = 0.72f), modifier = Modifier.align(Alignment.BottomStart))
+                                SvMiniWave(genre.name, wave, Modifier.align(Alignment.BottomEnd).size(width = 64.dp, height = 22.dp))
+                            }
+                        }
+                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+            }
+            else -> items(state.folders, key = { it.path }) { folder ->
+                SvRow(
+                    folder.name, folder.path, { actions.onOpenFolder(folder.path) },
+                    art = { SvIconTile(icons.folder) },
+                    trailing = { Text(folder.tracks.size.toString(), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = nc.textSecondary) },
+                )
             }
         }
     }

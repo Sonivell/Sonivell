@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.components.Waveform
+import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
 
@@ -81,34 +83,42 @@ fun SvHomeScreen(
             )
         }
 
-        // Sensações em botões de três por linha, no tom de cada uma; "Outro" leva à busca por descrição.
+        // Sensações em cartões pequenos no modelo dos Gêneros do Ondas: nome, ponto colorido e uma
+        // onda curta. "Outro" é uma ação (leva à busca por descrição): contorno e tudo na cor de destaque.
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SvMood.entries.chunked(3).forEach { row ->
+            SvMood.entries.chunked(3).forEachIndexed { r, row ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    row.forEach { mood ->
+                    row.forEachIndexed { col, mood ->
                         val label = stringResource(mood.label)
                         val other = mood == SvMood.Outro
+                        val tone = if (other) nc.accent else ArtTones.cores[(r * 3 + col) % ArtTones.cores.size]
                         val shape = RoundedCornerShape(16.dp)
-                        Box(
+                        Column(
                             Modifier
                                 .weight(1f)
-                                .height(52.dp)
+                                .height(64.dp)
                                 .clip(shape)
-                                .then(if (other) Modifier.border(1.dp, nc.outline, shape) else Modifier.background(mood.tone()))
+                                .then(if (other) Modifier else Modifier.background(nc.surface))
+                                .border(if (other) 1.5.dp else 1.dp, if (other) nc.accent else nc.outline, shape)
                                 .clickable(role = Role.Button, onClickLabel = label) {
                                     if (other) onDescribe(text) else onMood(mood)
                                 }
-                                .padding(horizontal = 12.dp),
-                            contentAlignment = Alignment.CenterStart,
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text(
-                                label,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = if (other) nc.textTertiary else Color(0xFFF2F2EE),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    label,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = if (other) nc.accent else nc.textPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                )
+                                Box(Modifier.size(7.dp).clip(CircleShape).background(tone))
+                            }
+                            SvMiniWave(label, tone, Modifier.size(width = 44.dp, height = 14.dp))
                         }
                     }
                     repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }

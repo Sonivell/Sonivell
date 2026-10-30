@@ -704,7 +704,7 @@
     <string name="sv_row_visual">Appearance</string>
     <string name="sv_row_visual_hint">Layout, colors and icons</string>
     <string name="sv_row_settings">Settings</string>
-    <string name="sv_row_settings_hint">Equalizer, lyrics and volume</string>
+    <string name="sv_row_settings_hint">Appearance, playback, SMART and more</string>
     <string name="sv_tagline">Your story, in sound.</string>
     <string name="sv_tagline_sub">What moves you, what calms you, what makes you come back.</string>
     <string name="sv_why_title">Why it played</string>
