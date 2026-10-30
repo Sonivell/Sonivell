@@ -90,6 +90,7 @@ import com.juscelino.sonivell.ui.theme.IconStyle
 import com.juscelino.sonivell.ui.theme.icons
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.ThemeMode
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 data class SettingsActions(
     val onBack: () -> Unit,
@@ -351,7 +352,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit) {
     val c = SonivellTheme.colors
     val label = stringResource(R.string.settings_search)
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(999.dp)).background(c.surface).padding(horizontal = 16.dp),
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).cardSurface(RoundedCornerShape(999.dp)).padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -710,7 +711,7 @@ private fun AppearancePreview() {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.settings_preview).uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.7.sp), color = c.textSecondary)
-        Row(Modifier.clip(RoundedCornerShape(18.dp)).background(c.surface).padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.cardSurface(RoundedCornerShape(18.dp)).padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
                 Icon(SonivellTheme.icons.musicNote, null, Modifier.size(22.dp), tint = c.textSecondary)
             }
@@ -729,7 +730,7 @@ private fun AppearancePreview() {
             Box(Modifier.height(30.dp).clip(RoundedCornerShape(999.dp)).background(c.accent).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.nav_home), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = c.onAccent)
             }
-            Box(Modifier.height(30.dp).clip(RoundedCornerShape(999.dp)).background(c.surface).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+            Box(Modifier.height(30.dp).cardSurface(RoundedCornerShape(999.dp)).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.nav_search), style = MaterialTheme.typography.labelMedium, color = c.textTertiary)
             }
         }
@@ -747,8 +748,7 @@ private fun LayoutOption(name: String, hint: String, selected: Boolean, onClick:
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(if (selected) c.surfaceHigh else c.surface)
+            .cardSurface(shape, if (selected) c.surfaceHigh else c.surface, elevation = 0.dp)
             .border(if (selected) 2.dp else 1.dp, if (selected) c.accent else c.outline, shape)
             .clickable(role = Role.RadioButton, onClick = onClick)
             .semantics { this.selected = selected }
@@ -778,8 +778,7 @@ private fun IconStyleOption(
     val shape = RoundedCornerShape(16.dp)
     Column(
         modifier
-            .clip(shape)
-            .background(if (selected) c.surfaceHigh else c.surface)
+            .cardSurface(shape, if (selected) c.surfaceHigh else c.surface, elevation = 0.dp)
             .border(if (selected) 2.dp else 1.dp, if (selected) c.accent else c.outline, shape)
             .clickable(role = Role.RadioButton, onClick = onClick)
             .semantics { this.selected = selected }
@@ -824,8 +823,7 @@ private fun Card(content: @Composable ColumnScope.() -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(SonivellTheme.colors.surface)
+            .cardSurface(RoundedCornerShape(22.dp))
             .padding(vertical = 4.dp),
         content = content,
     )

@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.glassAccent
+import com.juscelino.sonivell.ui.theme.glassSurface
 
 /** Botão de ícone com área de toque de no mínimo 44 dp. */
 @Composable
@@ -54,8 +56,14 @@ fun IconBtn(
     Box(
         modifier
             .size(size)
-            .clip(CircleShape)
-            .background(background)
+            .then(
+                // Com fundo, no vidro (Desenvolvimento) o botão redondo também fica em vidro (voltar, etc.).
+                if (SonivellTheme.glass && background != Color.Transparent) {
+                    Modifier.glassSurface(CircleShape, background, SonivellTheme.colors.outline, elevation = 4.dp)
+                } else {
+                    Modifier.clip(CircleShape).background(background)
+                },
+            )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -76,14 +84,19 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
 @Composable
 fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
     val c = SonivellTheme.colors
+    val glass = SonivellTheme.glass
     val shape = RoundedCornerShape(18.dp)
     Box(
         Modifier
             .height(36.dp)
-            .clip(shape)
             .then(
-                if (selected) Modifier.background(c.accent)
-                else Modifier.border(1.dp, c.outline, shape)
+                when {
+                    // Vidro (Desenvolvimento): o escolhido fica translúcido na cor de destaque, como a aba atual.
+                    glass && selected -> Modifier.glassAccent(shape, c.accent)
+                    glass -> Modifier.glassSurface(shape, c.surface, c.outline, elevation = 0.dp)
+                    selected -> Modifier.clip(shape).background(c.accent)
+                    else -> Modifier.clip(shape).border(1.dp, c.outline, shape)
+                }
             )
             .clickable(role = Role.Tab, onClick = onClick)
             .padding(horizontal = 16.dp),
@@ -93,7 +106,7 @@ fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
             label,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-            color = if (selected) c.onAccent else c.textTertiary,
+            color = if (selected) (if (glass) c.accent else c.onAccent) else c.textTertiary,
         )
     }
 }

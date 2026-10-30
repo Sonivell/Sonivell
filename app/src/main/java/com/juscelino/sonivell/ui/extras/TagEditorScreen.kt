@@ -44,6 +44,7 @@ import com.juscelino.sonivell.data.isGenericGenre
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 /**
  * Editor de tags: corrige título, artista, álbum, gênero e ano. As correções ficam no
@@ -138,8 +139,7 @@ private fun Field(label: String, value: String, warning: String?, number: Boolea
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = 50.dp)
-                .clip(shape)
-                .background(c.surface)
+                .cardSurface(shape)
                 .border(1.dp, if (warning != null) Color_Warning else c.outline, shape)
                 .padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,

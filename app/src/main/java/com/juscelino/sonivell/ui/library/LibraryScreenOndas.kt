@@ -96,6 +96,7 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
 import kotlin.math.PI
 import kotlin.math.sin
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 /** Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
 private data class OndasLabels(val search: String, val library: String, val liked: String, val forYou: String)
@@ -440,8 +441,7 @@ private fun Segmented(tabs: List<LibraryTab>, selected: LibraryTab, onSelect: (L
     Row(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(16.dp))
             .horizontalScroll(rememberScrollState())
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -803,8 +803,7 @@ private fun ContinueCard(track: Track, resumeAtMs: Long, onPlay: (Long) -> Unit)
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(20.dp))
             .clickable { onPlay(resumeAtMs) }
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -833,8 +832,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(20.dp))
             .clickable(onClick = onPlay)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -884,7 +882,7 @@ private fun AnalysisCard(progress: SmartProgress) {
     val c = SonivellTheme.colors
     val fraction = if (progress.total > 0) progress.analysed.toFloat() / progress.total else 0f
     Column(
-        Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(RoundedCornerShape(20.dp)).background(c.surface).padding(14.dp),
+        Modifier.fillMaxWidth().padding(bottom = 12.dp).cardSurface(RoundedCornerShape(20.dp)).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1119,8 +1117,7 @@ private fun BestCard(title: String, subtitle: String, track: Track?, round: Bool
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(22.dp))
             .clickable(onClick = onOpen)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1152,8 +1149,7 @@ private fun OndasSearchField(value: String, onChange: (String) -> Unit, modifier
         modifier
             .fillMaxWidth()
             .height(52.dp)
-            .clip(shape)
-            .background(c.surface)
+            .cardSurface(shape)
             .border(2.dp, if (focused) c.accent else c.outline, shape)
             .padding(start = 16.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,

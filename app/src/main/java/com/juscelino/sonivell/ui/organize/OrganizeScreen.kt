@@ -45,6 +45,7 @@ import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Locale
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 data class OrganizeActions(
     val onBack: () -> Unit,
@@ -114,8 +115,7 @@ fun OrganizeScreen(
                         Modifier
                             .fillMaxWidth()
                             .heightIn(min = 52.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(c.surface)
+                            .cardSurface(RoundedCornerShape(14.dp))
                             .clickable(enabled = tracks.isNotEmpty()) { openIssue = if (openIssue == i) -1 else i }
                             .padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -138,7 +138,7 @@ fun OrganizeScreen(
 private fun DuplicateCard(g: DuplicateGroup, canDelete: Boolean, actions: OrganizeActions) {
     val c = SonivellTheme.colors
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(c.surface).padding(14.dp),
+        Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(18.dp)).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(g.keep.title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)

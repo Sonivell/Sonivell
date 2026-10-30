@@ -2,6 +2,7 @@ package com.juscelino.sonivell.ui.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,3 +56,17 @@ fun Modifier.glassAccent(shape: Shape, accent: Color): Modifier = this
     .border(1.dp, accent.copy(alpha = 0.55f), shape)
 
 private const val GLOW_ALPHA = 0.18f
+
+/**
+ * Fundo de cartão que segue o tema: em vidro no Desenvolvimento ([glassSurface], com sombra leve) e,
+ * nos outros, o fundo liso de sempre. Usado nos cartões das telas comuns (ajustes, equalizador,
+ * estatísticas, fila…), para o vidro valer no app inteiro sem mudar os outros temas.
+ */
+@Composable
+fun Modifier.cardSurface(
+    shape: Shape,
+    color: Color = SonivellTheme.colors.surface,
+    elevation: Dp = 6.dp,
+): Modifier =
+    if (SonivellTheme.glass) glassSurface(shape, color, SonivellTheme.colors.outline, elevation = elevation)
+    else clip(shape).background(color)

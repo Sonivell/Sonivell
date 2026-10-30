@@ -52,6 +52,7 @@ import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.roundToInt
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 data class QueueActions(
     val onClose: () -> Unit,
@@ -109,8 +110,7 @@ fun QueueScreen(
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(c.surface)
+                        .cardSurface(RoundedCornerShape(18.dp))
                         .padding(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
