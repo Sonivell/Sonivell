@@ -563,6 +563,11 @@ private fun MainContent(vm: MainViewModel) {
                         }
                     }
                     val onTab: (String) -> Unit = { r ->
+                        // Sonivell: a biblioteca abre por cima do Início e não é aba. Sai dela antes de trocar de
+                        // aba; senão ela entra no estado salvo do Início e volta no lugar dele.
+                        if (uiStyle == UiStyle.SONIVELL && route == Routes.LIBRARY && nav.previousBackStackEntry != null) {
+                            nav.popBackStack()
+                        }
                         nav.navigate(r) {
                             popUpTo(nav.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
@@ -573,7 +578,8 @@ private fun MainContent(vm: MainViewModel) {
                         UiStyle.ONDAS, UiStyle.ESSENCIAL -> BottomNavOndas(route, onTab)
                         UiStyle.CONTRASTE -> BottomNav(route, onTab)
                         UiStyle.CLASSICA -> BottomNavClassica(route, onTab)
-                        UiStyle.SONIVELL -> BottomNavSonivell(route, svTabs, onTab)
+                        // A biblioteca é parte do Início: a aba Para você fica marcada nela.
+                        UiStyle.SONIVELL -> BottomNavSonivell(if (route == Routes.LIBRARY) Routes.HOME else route, svTabs, onTab)
                     }
                 }
             }
