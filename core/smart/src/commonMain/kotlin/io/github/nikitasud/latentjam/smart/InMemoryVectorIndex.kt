@@ -133,9 +133,24 @@ public class InMemoryVectorIndex(
         var sumOfSquares = 0f
         for (component in vector) sumOfSquares += component * component
         val norm = sqrt(sumOfSquares)
-        if (norm == 0f) return vector
+        // A Float sum of squares overflows from components near 1e19 (the vector then became all zeros)
+        // and underflows below about 1e-23 (it was then kept unnormalised, scoring ~0 against every
+        // query). Only those cases take the Double path, so ordinary vectors keep their exact floats.
+        if (!norm.isFinite() || norm < MIN_FLOAT_SAFE_NORM) {
+            var wide = 0.0
+            for (component in vector) wide += component.toDouble() * component
+            if (wide == 0.0) return vector
+            val wideNorm = kotlin.math.sqrt(wide)
+            for (i in vector.indices) vector[i] = (vector[i] / wideNorm).toFloat()
+            return vector
+        }
         for (i in vector.indices) vector[i] /= norm
         return vector
+    }
+
+    private companion object {
+        /** Below this Float norm the squares may have lost precision to underflow (subnormals start near 1e-38). */
+        const val MIN_FLOAT_SAFE_NORM = 1e-15f
     }
 
     private fun dot(a: FloatArray, b: FloatArray): Float {
