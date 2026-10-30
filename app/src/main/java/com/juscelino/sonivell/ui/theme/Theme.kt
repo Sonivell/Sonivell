@@ -72,7 +72,7 @@ enum class AccentChoice(val dark: Color, val light: Color) {
     Turquesa(Color(0xFF5FE3D0), Color(0xFF00756A)),
     /** Verde #1DB954 (RGB 29, 185, 84); no tema claro, um tom mais escuro para o texto passar 4,5:1. */
     Verde(Color(0xFF1DB954), Color(0xFF117A37)),
-    /** Creme do tema "Sonivell"; no claro, um dourado escuro para o texto passar 4,5:1. */
+    /** Creme; no claro, um dourado escuro para o texto passar 4,5:1. */
     Creme(Color(0xFFEFE3CC), Color(0xFF7A5A1E)),
 }
 
@@ -135,34 +135,6 @@ fun tintedColors(accent: Color, dark: Boolean): SonivellColors {
     )
 }
 
-/** Cores do tema "Sonivell": preto quente, creme e dourado. */
-object NoraColors {
-    val Bg = Color(0xFF080706)
-    val Card = Color(0xFF14110F)
-    val Line = Color(0xFF2B2621)
-    val Cream = Color(0xFFEFE3CC)
-    val Text = Color(0xFFEFE8DC)
-    val Muted = Color(0xFF8F877B)
-    val Gold = Color(0xFFC9A56A)
-}
-
-/** Paleta do tema "Sonivell": sempre escura, com a cor de destaque escolhida (creme por padrão). */
-fun noraColors(accent: Color = NoraColors.Cream) = SonivellColors(
-    background = NoraColors.Bg,
-    surface = NoraColors.Card,
-    surfaceLow = Color(0xFF0E0C0B),
-    surfaceHigh = Color(0xFF1C1814),
-    outline = NoraColors.Line,
-    track = Color(0xFF2B2621),
-    textPrimary = NoraColors.Text,
-    textSecondary = NoraColors.Muted,
-    textTertiary = Color(0xFFB8B0A2),
-    accent = accent,
-    onAccent = Color(0xFF1A1612),
-    miniPlayer = NoraColors.Card,
-    isDark = true,
-)
-
 /** Matiz (0–360), saturação e luminosidade (0–1) de uma cor. */
 private fun Color.toHsl(): Triple<Float, Float, Float> {
     val max = maxOf(red, green, blue)
@@ -208,27 +180,6 @@ val Manrope = FontFamily(
     manrope(400), manrope(500), manrope(600), manrope(700), manrope(800),
 )
 
-/**
- * Manrope mais fina para o tema "Sonivell". Sem os pesos 700 e 800: textos que pedem negrito
- * pesado caem no 600, o que mantém a tipografia leve em todas as telas.
- */
-val ManropeFina = FontFamily(
-    manrope(200), manrope(300), manrope(400), manrope(500), manrope(600),
-)
-
-private val NoraTypography = Typography(
-    displaySmall = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Light, fontSize = 30.sp, letterSpacing = (-0.3).sp),
-    headlineSmall = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Light, fontSize = 26.sp, letterSpacing = (-0.2).sp),
-    titleLarge = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Normal, fontSize = 18.sp),
-    titleMedium = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Normal, fontSize = 15.sp),
-    titleSmall = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Normal, fontSize = 14.sp),
-    bodyLarge = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Normal, fontSize = 15.sp),
-    bodyMedium = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Normal, fontSize = 13.sp),
-    labelLarge = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Medium, fontSize = 14.sp),
-    labelMedium = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Normal, fontSize = 12.sp),
-    labelSmall = TextStyle(fontFamily = ManropeFina, fontWeight = FontWeight.Normal, fontSize = 12.sp, letterSpacing = 1.4.sp),
-)
-
 private val SonivellTypography = Typography(
     displaySmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, letterSpacing = (-0.6).sp),
     headlineSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, letterSpacing = (-0.5).sp),
@@ -262,11 +213,6 @@ fun SonivellTheme(
     tintedBackground: Boolean = false,
     /** Cor de destaque tirada do papel de parede (Material You, Android 12+). */
     systemColors: Boolean = false,
-    /**
-     * Tema "Sonivell": tipografia própria e sempre escuro. A cor de destaque, as cores do sistema,
-     * o fundo colorido e o fundo preto valem aqui também; sem eles, fica o preto quente.
-     */
-    noraStyle: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -278,9 +224,6 @@ fun SonivellTheme(
         else -> accent.light
     }
     val base = when {
-        noraStyle && tintedBackground -> tintedColors(accentColor, dark = true)
-        noraStyle && darkBackground == DarkBackground.Preto -> blackColors(accentColor)
-        noraStyle -> noraColors(accentColor)
         tintedBackground -> tintedColors(accentColor, darkTheme)
         !darkTheme -> lightColors(accentColor)
         darkBackground == DarkBackground.Preto -> blackColors(accentColor)
@@ -290,7 +233,7 @@ fun SonivellTheme(
     val colors = if (dynamic) {
         base.copy(onAccent = if (darkTheme) dynamicDarkColorScheme(context).onPrimary else dynamicLightColorScheme(context).onPrimary)
     } else base
-    val scheme = (if (darkTheme || noraStyle) darkColorScheme() else lightColorScheme()).copy(
+    val scheme = (if (darkTheme) darkColorScheme() else lightColorScheme()).copy(
         primary = colors.accent,
         onPrimary = colors.onAccent,
         background = colors.background,
@@ -305,6 +248,6 @@ fun SonivellTheme(
         LocalSonivellColors provides colors,
         LocalSonivellIcons provides iconStyle.icons(),
     ) {
-        MaterialTheme(colorScheme = scheme, typography = if (noraStyle) NoraTypography else SonivellTypography, content = content)
+        MaterialTheme(colorScheme = scheme, typography = SonivellTypography, content = content)
     }
 }

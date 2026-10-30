@@ -387,12 +387,7 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
                 Triple(UiStyle.SONIVELL, R.string.layout_sonivell, R.string.layout_sonivell_hint),
             ).forEach { (style, name, hint) ->
                 LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
-                    // Ao escolher o tema Sonivell com a cor padrão (Lima), já vem no creme do tema;
-                    // qualquer outra cor escolhida antes é mantida.
-                    actions.onUpdate {
-                        val accent = if (style == UiStyle.SONIVELL && it.accent == AccentChoice.Lima) AccentChoice.Creme else it.accent
-                        it.copy(uiStyle = style, accent = accent)
-                    }
+                    actions.onUpdate { it.copy(uiStyle = style) }
                 }
             }
             Text(

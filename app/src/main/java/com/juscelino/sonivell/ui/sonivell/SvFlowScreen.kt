@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.ForYouState
 import com.juscelino.sonivell.data.Track
@@ -53,38 +54,28 @@ fun SvFlowScreen(
             .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Box(
-            Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_back), onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = nc.textPrimary) }
-        SvTitle(stringResource(R.string.nav_home), stringResource(R.string.sv_flow_sub))
+        SvSquare(icons.back, stringResource(R.string.cd_back), onBack)
+        SvTitle(stringResource(R.string.sv_flow_title), stringResource(R.string.sv_flow_sub))
 
         Box(Modifier.fillMaxWidth().aspectRatio(1.6f), contentAlignment = Alignment.Center) {
             AlbumArt(flow.firstOrNull(), Modifier.fillMaxWidth().aspectRatio(1.6f), corner = 24.dp, detailed = true)
             Box(
-                Modifier.size(64.dp).clip(CircleShape).background(Color(0x99000000)).clickable(role = Role.Button) { if (flow.isNotEmpty()) onPlay(flow, 0) },
+                Modifier.size(64.dp).clip(RoundedCornerShape(20.dp)).background(nc.accent).clickable(role = Role.Button) { if (flow.isNotEmpty()) onPlay(flow, 0) },
                 contentAlignment = Alignment.Center,
-            ) { Icon(icons.play, stringResource(R.string.cd_play), Modifier.size(30.dp), tint = Color.White) }
+            ) { Icon(icons.play, stringResource(R.string.cd_play), Modifier.size(28.dp), tint = nc.onAccent) }
         }
-        Text(stringResource(R.string.sv_flow_title), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary)
         Text(stringResource(R.string.sv_flow_desc), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary)
         SvPill(stringResource(R.string.sv_play_now), { if (flow.isNotEmpty()) onPlay(flow, 0) }, Modifier.fillMaxWidth())
-        Text(
-            stringResource(R.string.sv_customize),
-            style = MaterialTheme.typography.labelLarge,
-            color = nc.textPrimary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().clip(CircleShape).clickable(role = Role.Button, onClick = onCustomize).padding(14.dp),
-        )
+        SvPill(stringResource(R.string.sv_customize), onCustomize, Modifier.fillMaxWidth(), filled = false)
 
         if (forYou.unfinished.isNotEmpty()) {
-            Text(stringResource(R.string.fy_continue), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary)
+            SvSection(stringResource(R.string.fy_continue), Modifier.padding(top = 8.dp))
             forYou.unfinished.take(4).forEach { t ->
                 SvRow(t.title, t.artist, { onResume(t, forYou.resumeAtMs[t.id] ?: 0L) }, art = { SvCircleArt(t, 48.dp) })
             }
         }
         if (forYou.forgottenFavorites.isNotEmpty()) {
-            Text(stringResource(R.string.fy_forgotten), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary)
+            SvSection(stringResource(R.string.fy_forgotten), Modifier.padding(top = 8.dp))
             forYou.forgottenFavorites.take(4).forEachIndexed { i, t ->
                 SvRow(t.title, t.artist, { onPlay(forYou.forgottenFavorites, i) }, art = { SvCircleArt(t, 48.dp) })
             }

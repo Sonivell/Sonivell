@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.LibraryState
+import androidx.compose.ui.text.font.FontWeight
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.SmartPlaylist
@@ -68,28 +70,36 @@ fun SvLibraryScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.sv_library_title), style = MaterialTheme.typography.headlineSmall, color = nc.textPrimary, modifier = Modifier.weight(1f))
-                Box(
-                    Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_search), onClick = actions.onOpenSearch),
-                    contentAlignment = Alignment.Center,
-                ) { Icon(icons.search, null, Modifier.size(22.dp), tint = nc.textPrimary) }
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 6.dp)) {
+                SvTitle(stringResource(R.string.sv_library_title), modifier = Modifier.weight(1f))
+                SvSquare(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
+                SvSquare(icons.add, stringResource(R.string.cd_new_playlist), actions.onNewPlaylist, filled = true)
             }
         }
         item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(tabs.size) { i ->
+            // Abas no segmentado do Ondas: a atual num degrau acima da superfície.
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(nc.surface).padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                tabs.forEachIndexed { i, label ->
                     val on = tab == i
                     Box(
                         Modifier
-                            .heightIn(min = 40.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(if (on) nc.accent else nc.surface)
-                            .clickable(role = Role.Tab) { tab = i }
-                            .padding(horizontal = 18.dp),
+                            .weight(1f)
+                            .height(36.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (on) nc.surfaceHigh else Color.Transparent)
+                            .clickable(role = Role.Tab) { tab = i },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(stringResource(tabs[i]), style = MaterialTheme.typography.labelLarge, color = if (on) nc.onAccent else nc.textSecondary)
+                        Text(
+                            stringResource(label),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
+                            color = if (on) nc.textPrimary else nc.textSecondary,
+                            maxLines = 1,
+                        )
                     }
                 }
             }
@@ -97,13 +107,7 @@ fun SvLibraryScreen(
         when (tab) {
             0 -> {
                 item {
-                    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.sv_collections), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary, modifier = Modifier.weight(1f))
-                        Box(
-                            Modifier.size(40.dp).clip(CircleShape).clickable(role = Role.Button, onClick = actions.onNewPlaylist),
-                            contentAlignment = Alignment.Center,
-                        ) { Icon(icons.add, null, Modifier.size(22.dp), tint = nc.textPrimary) }
-                    }
+                    SvSection(stringResource(R.string.sv_collections), Modifier.padding(top = 10.dp))
                 }
                 item { collection(stringResource(R.string.source_liked), songs(favorites.size), Color(0xFFA86A3A), Color(0xFF2A1A10)) { actions.onOpenAuto("curtidas") } }
                 item { collection(stringResource(R.string.auto_most), "", Color(0xFF6A7A8A), Color(0xFF1A1F26)) { actions.onOpenAuto("mais-ouvidas") } }
@@ -116,7 +120,7 @@ fun SvLibraryScreen(
                 }
                 if (state.artists.isNotEmpty()) {
                     item {
-                        Text(stringResource(R.string.sv_artists), style = MaterialTheme.typography.titleLarge, color = nc.textPrimary, modifier = Modifier.padding(top = 14.dp))
+                        SvSection(stringResource(R.string.sv_artists), Modifier.padding(top = 14.dp))
                     }
                     item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -127,7 +131,7 @@ fun SvLibraryScreen(
                                     verticalArrangement = Arrangement.spacedBy(6.dp),
                                 ) {
                                     SvCircleArt(artist.tracks.firstOrNull(), 64.dp)
-                                    Text(artist.name, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp), color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.size(width = 72.dp, height = 16.dp))
+                                    Text(artist.name, style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.size(width = 72.dp, height = 16.dp))
                                 }
                             }
                         }

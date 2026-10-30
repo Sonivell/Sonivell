@@ -109,9 +109,9 @@ import com.juscelino.sonivell.ShuffleMode
 import com.juscelino.sonivell.playback.toTrack
 import com.juscelino.sonivell.data.UiStyle
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.filled.Person
 import com.juscelino.sonivell.ui.sonivell.BottomNavSonivell
 import com.juscelino.sonivell.ui.sonivell.MiniPlayerSonivell
-import com.juscelino.sonivell.ui.sonivell.NowPlayingScreenSonivell
 import com.juscelino.sonivell.ui.sonivell.SvAnalysisScreen
 import com.juscelino.sonivell.ui.sonivell.SvBreatheScreen
 import com.juscelino.sonivell.ui.sonivell.SvFlowScreen
@@ -339,10 +339,10 @@ private fun MainContent(vm: MainViewModel) {
     val uiStyle = settings.uiStyle
     // Tema Sonivell: quatro abas e o app abre em Início (as outras seguem como antes).
     val svTabs = listOf(
-        SvTab(Routes.HOME, R.string.sv_nav_home, SonivellTheme.icons.home),
-        SvTab(Routes.SEARCH, R.string.nav_explore, SonivellTheme.icons.search),
-        SvTab(Routes.LIBRARY, R.string.nav_library, SonivellTheme.icons.library),
-        SvTab(Routes.PROFILE, R.string.nav_profile, Icons.Outlined.Person),
+        SvTab(Routes.HOME, R.string.sv_nav_home, SonivellTheme.icons.home, SonivellTheme.icons.homeActive),
+        SvTab(Routes.SEARCH, R.string.nav_explore, SonivellTheme.icons.search, SonivellTheme.icons.searchActive),
+        SvTab(Routes.LIBRARY, R.string.nav_library, SonivellTheme.icons.library, SonivellTheme.icons.libraryActive),
+        SvTab(Routes.PROFILE, R.string.nav_profile, Icons.Outlined.Person, Icons.Filled.Person),
     )
     val initialStyle = remember { settings.uiStyle }
     var startRouted by rememberSaveable { mutableStateOf(false) }
@@ -553,7 +553,7 @@ private fun MainContent(vm: MainViewModel) {
                                 progress = progress,
                                 onOpen = { nav.navigate(Routes.PLAYER) },
                                 onTogglePlay = vm.player::togglePlay,
-                                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
+                                modifier = Modifier.padding(top = 8.dp),
                             )
                         }
                         }
@@ -1030,13 +1030,8 @@ private fun MainContent(vm: MainViewModel) {
                                 shuffleMode == ShuffleMode.ON -> PlayReason.Shuffle
                                 else -> PlayReason.Chosen
                             }
-                            if (uiStyle == UiStyle.SONIVELL) {
-                                NowPlayingScreenSonivell(
-                                    track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                                    isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, sleepTimer = sleepTimer,
-                                    reason = reason, visualizer = settings.visualizer,
-                                )
-                            } else NowPlayingScreenOndas(
+                            // O tema Sonivell usa o player do Ondas.
+                            NowPlayingScreenOndas(
                                 track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
                                 isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, sleepTimer = sleepTimer,
                                 lyrics = lyricsState, lyricsOffsetMs = lyricsOffset, upNext = upNext, reason = reason,

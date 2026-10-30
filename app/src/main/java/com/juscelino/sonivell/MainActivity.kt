@@ -29,9 +29,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handleShortcut(intent)
         setContent {
             val settings by vm.settings.collectAsStateWithLifecycle()
-            val nora = settings.uiStyle == com.juscelino.sonivell.data.UiStyle.SONIVELL
-            // O tema "Sonivell" é sempre escuro.
-            val dark = nora || when (settings.theme) {
+            val dark = when (settings.theme) {
                 ThemeMode.AUTO -> isSystemInDarkTheme()
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
@@ -49,7 +47,6 @@ class MainActivity : ComponentActivity() {
                 darkBackground = settings.darkBackground,
                 tintedBackground = settings.tintedBackground,
                 systemColors = settings.systemColors,
-                noraStyle = nora,
             ) {
                 SonivellApp(vm)
             }

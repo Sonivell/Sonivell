@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -28,22 +29,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.components.AlbumArt
+import com.juscelino.sonivell.ui.components.MiniPlayerOndas
 import com.juscelino.sonivell.ui.theme.SonivellTheme
-import kotlin.math.cos
+import kotlin.math.PI
 import kotlin.math.sin
-import kotlin.math.sqrt
-import kotlin.random.Random
 
 /** Sensações da tela Início do tema Sonivell. Cada uma é uma descrição que o SMART compara com o som. */
 enum class SvMood(@StringRes val label: Int, val query: String, val top: Color, val bottom: Color) {
@@ -58,123 +61,136 @@ enum class SvMood(@StringRes val label: Int, val query: String, val top: Color, 
     Outro(R.string.sv_mood_other, "", Color(0xFF1A1815), Color(0xFF1A1815)),
 }
 
-/** Aba da barra de navegação do tema Sonivell. */
-data class SvTab(val route: String, @StringRes val label: Int, val icon: ImageVector)
+/** Aba da barra de navegação do tema Sonivell (ícone normal e o preenchido, da aba atual). */
+data class SvTab(val route: String, @StringRes val label: Int, val icon: ImageVector, val activeIcon: ImageVector = icon)
 
-/** Arte circular gerada: céu em degradê, serra escura e um ponto de luz. */
+/** Fundo das sensações: o tom da cor, escurecido para o texto claro passar 4,5:1 (como no "Para o momento" do Ondas). */
+fun SvMood.tone(): Color = lerp(top, Color.Black, 0.55f)
+
+/**
+ * Arte gerada no estilo do Ondas: quadrado arredondado no tom escuro, com duas ondas na cor clara
+ * (a mesma ideia da capa dos mixes).
+ */
 @Composable
 fun SvOrb(top: Color, bottom: Color, modifier: Modifier = Modifier, seed: Int = 0) {
-    Canvas(modifier.clip(CircleShape)) {
-        val w = size.width
-        val h = size.height
-        drawRect(Brush.verticalGradient(listOf(top, bottom)))
-        val ridge = Path().apply {
-            moveTo(0f, h * 0.72f)
-            lineTo(w * 0.28f, h * (0.46f + (seed % 3) * 0.03f))
-            lineTo(w * 0.52f, h * 0.62f)
-            lineTo(w * 0.76f, h * 0.40f)
-            lineTo(w, h * 0.64f)
-            lineTo(w, h)
-            lineTo(0f, h)
-            close()
+    Canvas(modifier.clip(RoundedCornerShape(30))) {
+        drawRect(lerp(bottom, top, 0.18f))
+        val stroke = size.minDimension * 0.05f
+        fun line(yFrac: Float, amp: Float, alpha: Float, width: Float) {
+            val path = Path()
+            val y0 = size.height * yFrac
+            val left = size.width * 0.14f
+            val right = size.width * 0.86f
+            var x = left
+            path.moveTo(x, y0)
+            while (x <= right) {
+                val t = (x - left) / (right - left)
+                path.lineTo(x, y0 + sin(t * 4 * PI + seed).toFloat() * amp)
+                x += 1.5f
+            }
+            drawPath(path, top.copy(alpha = alpha), style = Stroke(width, cap = StrokeCap.Round))
         }
-        drawPath(ridge, Color(0xFF0B0A09).copy(alpha = 0.72f))
-        drawCircle(Color.White.copy(alpha = 0.6f), radius = w * 0.07f, center = Offset(w * 0.62f, h * 0.28f))
-        drawCircle(Color.White.copy(alpha = 0.14f), radius = w / 2f, style = Stroke(1.dp.toPx()))
+        line(0.56f, size.height * 0.09f, 1f, stroke)
+        line(0.70f, size.height * 0.06f, 0.45f, stroke * 0.8f)
     }
 }
 
-/** Planeta rochoso iluminado de um lado, usado no mapa e na tela Respira. */
+/** Centro do mapa e da tela Respira: anéis no tom do contorno e um núcleo na cor de destaque. */
 @Composable
 fun SvPlanet(modifier: Modifier = Modifier) {
     val nc = SonivellTheme.colors
     Canvas(modifier) {
         val r = size.minDimension / 2f
-        val c = center
-        val light = Offset(c.x - r * 0.35f, c.y - r * 0.4f)
-        drawCircle(
-            Brush.radialGradient(listOf(nc.accent.copy(alpha = 0.28f), Color.Transparent), center = c, radius = r * 1.25f),
-            radius = r * 1.25f, center = c,
-        )
-        drawCircle(
-            Brush.radialGradient(
-                0f to Color(0xFFE9D2AE), 0.55f to Color(0xFF9A7B52), 1f to Color(0xFF1A130C),
-                center = light, radius = r * 1.5f,
-            ),
-            radius = r, center = c,
-        )
-        val rnd = Random(7)
-        repeat(26) {
-            val a = rnd.nextFloat() * 6.2832f
-            val d = sqrt(rnd.nextFloat()) * r * 0.85f
-            val cr = r * (0.03f + rnd.nextFloat() * 0.09f)
-            val p = Offset(c.x + d * cos(a), c.y + d * sin(a))
-            drawCircle(Color.Black.copy(alpha = 0.14f), cr, p)
-            drawCircle(Color(0xFFFFE9C4).copy(alpha = 0.10f), cr * 0.8f, Offset(p.x - cr * 0.2f, p.y - cr * 0.2f))
-        }
-        drawCircle(
-            Brush.radialGradient(
-                0f to Color.Transparent, 0.55f to Color.Black.copy(alpha = 0.25f), 1f to Color.Black.copy(alpha = 0.92f),
-                center = light, radius = r * 1.5f,
-            ),
-            radius = r, center = c,
-        )
-        drawCircle(nc.accent.copy(alpha = 0.5f), radius = r, center = c, style = Stroke(1.5.dp.toPx()))
+        drawCircle(nc.accent.copy(alpha = 0.10f), radius = r, center = center)
+        drawCircle(nc.outline, radius = r * 0.98f, center = center, style = Stroke(1.dp.toPx()))
+        drawCircle(nc.outline, radius = r * 0.70f, center = center, style = Stroke(1.dp.toPx()))
+        drawCircle(nc.surfaceHigh, radius = r * 0.46f, center = center)
+        drawCircle(nc.accent, radius = r * 0.24f, center = center)
     }
 }
 
+/** Cartão do Ondas: superfície, cantos de 20 dp, sem contorno. */
 @Composable
 fun SvCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable BoxScope.() -> Unit) {
     val nc = SonivellTheme.colors
-    val shape = RoundedCornerShape(18.dp)
+    val shape = RoundedCornerShape(20.dp)
     Box(
         modifier
             .clip(shape)
             .background(nc.surface)
-            .border(1.dp, nc.outline, shape)
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
         content = content,
     )
 }
 
-/** Botão em cápsula: creme cheio (principal) ou só com contorno. */
+/** Botão largo do Ondas: cheio na cor de destaque (principal) ou só com contorno. */
 @Composable
 fun SvPill(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, filled: Boolean = true) {
     val nc = SonivellTheme.colors
-    val shape = RoundedCornerShape(50)
+    val shape = RoundedCornerShape(16.dp)
     Box(
         modifier
-            .heightIn(min = 54.dp)
+            .heightIn(min = 52.dp)
             .clip(shape)
             .then(if (filled) Modifier.background(nc.accent) else Modifier.border(1.dp, nc.outline, shape))
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, style = MaterialTheme.typography.titleMedium, color = if (filled) nc.onAccent else nc.textPrimary)
+        Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = if (filled) nc.onAccent else nc.textPrimary)
     }
 }
 
+/** Botão quadrado com contorno do Ondas (voltar, fechar, buscar…). */
 @Composable
-fun SvWordmark(modifier: Modifier = Modifier) {
+fun SvSquare(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier, filled: Boolean = false) {
     val nc = SonivellTheme.colors
-    Text(
-        "S O N I V E L L",
-        style = MaterialTheme.typography.labelMedium.copy(fontSize = 14.sp, letterSpacing = 3.sp),
-        color = nc.textPrimary,
-        modifier = modifier,
-    )
+    val shape = RoundedCornerShape(14.dp)
+    Box(
+        modifier
+            .size(44.dp)
+            .clip(shape)
+            .then(if (filled) Modifier.background(nc.accent) else Modifier.border(1.dp, nc.outline, shape))
+            .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { Icon(icon, label, Modifier.size(22.dp), tint = if (filled) nc.onAccent else nc.textPrimary) }
 }
 
+/** Título de tela do Ondas: grande e pesado, com uma linha de apoio opcional. */
 @Composable
 fun SvTitle(title: String, sub: String? = null, modifier: Modifier = Modifier) {
     val nc = SonivellTheme.colors
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineSmall, color = nc.textPrimary)
-        if (sub != null) Text(sub, style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(title, style = MaterialTheme.typography.displaySmall.copy(fontSize = 30.sp, letterSpacing = (-0.9).sp), color = nc.textPrimary)
+        if (sub != null) Text(sub, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = nc.textSecondary)
     }
 }
 
-/** Linha de lista: arte circular, título, subtítulo e um complemento opcional à direita. */
+/** Título de seção do Ondas (19 sp, ExtraBold), com um complemento opcional à direita. */
+@Composable
+fun SvSection(text: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text,
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 19.sp, letterSpacing = (-0.2).sp),
+            fontWeight = FontWeight.ExtraBold,
+            color = SonivellTheme.colors.textPrimary,
+            modifier = Modifier.weight(1f),
+        )
+        trailing?.invoke()
+    }
+}
+
+/** Ícone num quadrado com fundo na cor de destaque bem clara (como nos ajustes). */
+@Composable
+fun SvIconTile(icon: ImageVector, size: androidx.compose.ui.unit.Dp = 44.dp) {
+    val nc = SonivellTheme.colors
+    Box(
+        Modifier.size(size).clip(RoundedCornerShape(size * 0.3f)).background(nc.accent.copy(alpha = 0.16f)),
+        contentAlignment = Alignment.Center,
+    ) { Icon(icon, null, Modifier.size(size * 0.46f), tint = nc.accent) }
+}
+
+/** Linha de lista do Ondas: arte, título, subtítulo e um complemento opcional à direita. */
 @Composable
 fun SvRow(
     title: String,
@@ -187,53 +203,67 @@ fun SvRow(
     val nc = SonivellTheme.colors
     SvCard(modifier.fillMaxWidth(), onClick = onClick) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             art()
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (subtitle.isNotEmpty()) {
+                    Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
             trailing()
         }
     }
 }
 
-/** Capa circular de uma faixa (ou a arte gerada, se não houver). */
+/** Capa de uma faixa (ou a arte gerada) em quadrado arredondado, como no Ondas. */
 @Composable
 fun SvCircleArt(track: Track?, size: androidx.compose.ui.unit.Dp, modifier: Modifier = Modifier) {
-    AlbumArt(track, modifier.size(size), corner = size / 2, detailed = false)
+    AlbumArt(track, modifier.size(size), corner = size * 0.28f, detailed = false)
 }
 
-/** Barra de navegação do tema: ícone e nome, só o creme marca a aba atual. */
+/** Barra de navegação do Ondas com as abas do tema: a aba atual fica preenchida na cor de destaque. */
 @Composable
 fun BottomNavSonivell(route: String?, tabs: List<SvTab>, onSelect: (String) -> Unit) {
     val nc = SonivellTheme.colors
-    Column(Modifier.fillMaxWidth().background(nc.background)) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(nc.outline))
-        Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-            tabs.forEach { tab ->
-                val selected = tab.route == route
-                val color = if (selected) nc.accent else nc.textSecondary
-                Column(
-                    Modifier
-                        .weight(1f)
-                        .heightIn(min = 48.dp)
-                        .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(tab.route) }),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically),
-                ) {
-                    Icon(tab.icon, null, Modifier.size(22.dp), tint = color)
-                    Text(stringResource(tab.label), style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.sp), color = color, maxLines = 1)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)
+            .height(60.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(nc.surface)
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        tabs.forEach { tab ->
+            val selected = tab.route == route
+            val color = if (selected) nc.onAccent else nc.textSecondary
+            // Com quatro abas não cabe o nome em todas: só a atual mostra o nome.
+            Row(
+                Modifier
+                    .weight(if (selected) 1.6f else 1f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(if (selected) nc.accent else Color.Transparent)
+                    .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(tab.route) }),
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val label = stringResource(tab.label)
+                Icon(if (selected) tab.activeIcon else tab.icon, if (selected) null else label, Modifier.size(20.dp), tint = color)
+                if (selected) {
+                    Text(label, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp), fontWeight = FontWeight.ExtraBold, color = color, maxLines = 1)
                 }
             }
         }
     }
 }
 
-/** Mini player do tema: capa circular, título e botão de tocar em creme, com um fio de progresso. */
+/** Mini player do tema: o mesmo do Ondas. */
 @Composable
 fun MiniPlayerSonivell(
     track: Track,
@@ -243,31 +273,5 @@ fun MiniPlayerSonivell(
     onTogglePlay: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val nc = SonivellTheme.colors
-    val icons = SonivellTheme.icons
-    val openPlayer = stringResource(R.string.cd_open_player)
-    SvCard(modifier.padding(horizontal = 12.dp).fillMaxWidth(), onClick = onOpen) {
-        Column {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                SvCircleArt(track, 44.dp)
-                Column(Modifier.weight(1f)) {
-                    Text(track.title, style = MaterialTheme.typography.titleSmall, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(track.artist, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                Box(
-                    Modifier.size(44.dp).clip(CircleShape).background(nc.accent).clickable(role = Role.Button, onClickLabel = openPlayer, onClick = onTogglePlay),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(if (isPlaying) icons.pause else icons.play, null, Modifier.size(22.dp), tint = nc.onAccent)
-                }
-            }
-            Box(Modifier.fillMaxWidth().height(2.dp).background(nc.outline)) {
-                Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(2.dp).background(nc.accent))
-            }
-        }
-    }
+    MiniPlayerOndas(track, isPlaying, progress, onOpen, onTogglePlay, modifier)
 }

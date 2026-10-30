@@ -24,8 +24,8 @@ enum class UiStyle {
     ESSENCIAL,
 
     /**
-     * Tema "Sonivell": preto quente, creme e dourado, tipografia fina, capas circulares e
-     * navegação em Início, Explorar, Biblioteca e Perfil. Não é o padrão: o padrão segue o Ondas.
+     * Tema "Sonivell": o visual do Ondas (cores, fonte e componentes, seguindo os ajustes de
+     * tema) com as telas de descoberta: sensações, Flow, Mapa, Momentos, Respira e Perfil.
      */
     SONIVELL,
 }

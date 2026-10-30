@@ -84,10 +84,7 @@ fun SvBreatheScreen(
             .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Box(
-            Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_back), onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) { Icon(icons.close, null, Modifier.size(22.dp), tint = nc.textPrimary) }
+        SvSquare(icons.close, stringResource(R.string.cd_back), onBack)
 
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             SvPlanet(Modifier.fillMaxWidth(0.82f).aspectRatio(1f).scale(scale))

@@ -23,6 +23,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 
@@ -53,18 +56,18 @@ fun SvProfileScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         SvTitle(stringResource(R.string.sv_profile_title), stringResource(R.string.sv_profile_sub))
-        Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            Stat(trackCount.toString(), stringResource(R.string.sv_stat_songs))
-            Stat(artistCount.toString(), stringResource(R.string.sv_stat_artists))
-            Stat("$hours h", stringResource(R.string.sv_stat_hours))
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Stat(trackCount.toString(), stringResource(R.string.sv_stat_songs), Modifier.weight(1f))
+            Stat(artistCount.toString(), stringResource(R.string.sv_stat_artists), Modifier.weight(1f))
+            Stat("$hours h", stringResource(R.string.sv_stat_hours), Modifier.weight(1f), highlight = true)
         }
-        Text(stringResource(R.string.sv_discover), style = MaterialTheme.typography.titleMedium, color = nc.textSecondary)
+        SvSection(stringResource(R.string.sv_discover), Modifier.padding(top = 4.dp))
         Item(icons.artist, stringResource(R.string.sv_map_title), stringResource(R.string.sv_map_sub), onMap)
         Item(icons.album, stringResource(R.string.sv_moments_title), stringResource(R.string.sv_moments_sub), onMoments)
         Item(icons.sleep, stringResource(R.string.sv_breathe_title), stringResource(R.string.sv_breathe_sub), onBreathe)
         if (smartAvailable) Item(icons.smart, stringResource(R.string.sv_analysis_title), stringResource(R.string.sv_analysis_sub), onAnalysis)
 
-        Text(stringResource(R.string.sv_profile_title), style = MaterialTheme.typography.titleMedium, color = nc.textSecondary, modifier = Modifier.padding(top = 8.dp))
+        SvSection(stringResource(R.string.sv_profile_title), Modifier.padding(top = 8.dp))
         Item(icons.musicNote, stringResource(R.string.sv_row_profile), stringResource(R.string.sv_row_profile_hint), onStats)
         Item(icons.smart, stringResource(R.string.sv_row_prefs), stringResource(R.string.sv_row_prefs_hint), onSettings)
         Item(icons.grid, stringResource(R.string.sv_row_visual), stringResource(R.string.sv_row_visual_hint), onSettings)
@@ -80,11 +83,15 @@ fun SvProfileScreen(
 }
 
 @Composable
-private fun Stat(value: String, label: String) {
+private fun Stat(value: String, label: String, modifier: Modifier = Modifier, highlight: Boolean = false) {
     val nc = SonivellTheme.colors
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(value, style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp), color = nc.textPrimary, textAlign = TextAlign.Center)
-        Text(label, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp), color = nc.textSecondary)
+    Column(
+        modifier.clip(RoundedCornerShape(18.dp)).background(nc.surface).padding(vertical = 14.dp, horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(value, style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp), color = if (highlight) nc.accent else nc.textPrimary, textAlign = TextAlign.Center, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1)
     }
 }
 
@@ -93,11 +100,7 @@ private fun Item(icon: ImageVector, title: String, subtitle: String, onClick: ()
     val nc = SonivellTheme.colors
     SvRow(
         title, subtitle, onClick,
-        art = {
-            Box(Modifier.size(40.dp).border(1.dp, nc.textSecondary.copy(alpha = 0.6f), CircleShape), contentAlignment = Alignment.Center) {
-                Icon(icon, null, Modifier.size(20.dp), tint = nc.textSecondary)
-            }
-        },
+        art = { SvIconTile(icon) },
         trailing = { Icon(SonivellTheme.icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
     )
 }

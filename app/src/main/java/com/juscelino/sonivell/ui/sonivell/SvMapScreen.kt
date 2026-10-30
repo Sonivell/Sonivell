@@ -60,10 +60,7 @@ fun SvMapScreen(
             .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Box(
-            Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_back), onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = nc.textPrimary) }
+        SvSquare(icons.back, stringResource(R.string.cd_back), onBack)
         SvTitle(stringResource(R.string.sv_map_title), stringResource(R.string.sv_map_sub))
 
         BoxWithConstraints(Modifier.fillMaxWidth().aspectRatio(1f)) {
@@ -99,7 +96,7 @@ fun SvMapScreen(
                     Text(stringResource(R.string.sv_map_explore), style = MaterialTheme.typography.titleMedium, color = nc.textPrimary)
                     Text(stringResource(R.string.sv_map_hint), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary)
                 }
-                Box(Modifier.size(40.dp).clip(CircleShape).background(nc.accent), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(nc.accent), contentAlignment = Alignment.Center) {
                     Icon(icons.chevron, null, Modifier.size(22.dp), tint = nc.onAccent)
                 }
             }

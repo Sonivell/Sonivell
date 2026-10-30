@@ -642,7 +642,7 @@
 
     <!-- Tema Sonivell -->
     <string name="layout_sonivell">Sonivell</string>
-    <string name="layout_sonivell_hint">Warm black and cream, thin type, round covers and a new menu</string>
+    <string name="layout_sonivell_hint">Ondas look with moods, Flow, music map, moments and profile</string>
     <string name="nav_explore">Explore</string>
     <string name="nav_profile">Profile</string>
     <string name="sv_mood_title">How do you want to feel right now?</string>

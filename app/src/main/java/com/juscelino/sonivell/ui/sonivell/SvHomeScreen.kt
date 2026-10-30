@@ -8,12 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -34,14 +34,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.smart.SmartProgress
+import com.juscelino.sonivell.ui.components.Waveform
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import java.util.Calendar
 
-/** Início do tema Sonivell: "Como você quer se sentir agora?", com as sensações em círculos. */
+/**
+ * Início do tema Sonivell, no visual do Ondas: a pergunta "Como você quer se sentir agora?" com as
+ * sensações em botões, o campo para descrever e os atalhos para Flow, Mapa e Análise.
+ */
 @Composable
 fun SvHomeScreen(
     contentPadding: PaddingValues,
@@ -60,66 +67,73 @@ fun SvHomeScreen(
         Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp)
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+            .padding(top = contentPadding.calculateTopPadding() + 12.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp)
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        SvWordmark()
-        SvTitle(stringResource(R.string.sv_mood_title), stringResource(R.string.sv_mood_sub))
+        // Cabeçalho do Ondas: saudação pequena e o título grande.
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(greeting()), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = nc.textSecondary)
+            Text(
+                stringResource(R.string.sv_mood_title),
+                style = MaterialTheme.typography.displaySmall.copy(fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-0.6).sp),
+                color = nc.textPrimary,
+            )
+        }
 
-        // Três por linha, como no modelo; a última é "Outro" e leva à busca por descrição.
-        SvMood.entries.chunked(3).forEach { row ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                row.forEach { mood ->
-                    val label = stringResource(mood.label)
-                    Column(
-                        Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable(role = Role.Button, onClickLabel = label) {
-                                if (mood == SvMood.Outro) onDescribe(text) else onMood(mood)
-                            }
-                            .padding(6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        if (mood == SvMood.Outro) {
-                            Box(
-                                Modifier.size(76.dp).clip(CircleShape).background(nc.surface).border(1.dp, nc.outline, CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) { Text("•••", color = nc.textSecondary, style = MaterialTheme.typography.titleMedium) }
-                        } else {
-                            SvOrb(mood.top, mood.bottom, Modifier.size(76.dp), seed = mood.ordinal)
+        // Sensações em botões de três por linha, no tom de cada uma; "Outro" leva à busca por descrição.
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SvMood.entries.chunked(3).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    row.forEach { mood ->
+                        val label = stringResource(mood.label)
+                        val other = mood == SvMood.Outro
+                        val shape = RoundedCornerShape(16.dp)
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .height(52.dp)
+                                .clip(shape)
+                                .then(if (other) Modifier.border(1.dp, nc.outline, shape) else Modifier.background(mood.tone()))
+                                .clickable(role = Role.Button, onClickLabel = label) {
+                                    if (other) onDescribe(text) else onMood(mood)
+                                }
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (other) nc.textTertiary else Color(0xFFF2F2EE),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
-                        Text(label, style = MaterialTheme.typography.bodyMedium, color = nc.textPrimary)
                     }
+                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
         }
         if (!smartAvailable) {
-            Text(
-                stringResource(R.string.sv_analysis_lite),
-                style = MaterialTheme.typography.bodyMedium,
-                color = nc.textSecondary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            Text(stringResource(R.string.sv_analysis_lite), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary)
         }
 
         // Campo "descreva o que sente": vira uma busca pelo sentido (SMART) na aba Explorar.
-        val shape = RoundedCornerShape(50)
+        val fieldShape = RoundedCornerShape(16.dp)
         Row(
             Modifier
                 .fillMaxWidth()
-                .heightIn(min = 52.dp)
-                .clip(shape)
-                .background(Color(0x14FFFFFF))
-                .border(1.dp, Color(0x30FFFFFF), shape)
-                .padding(start = 22.dp, end = 8.dp),
+                .height(52.dp)
+                .clip(fieldShape)
+                .background(nc.surface)
+                .padding(start = 16.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Box(Modifier.weight(1f)) {
                 if (text.isEmpty()) {
-                    Text(stringResource(R.string.sv_describe_hint), style = MaterialTheme.typography.bodyLarge, color = nc.textSecondary)
+                    Text(stringResource(R.string.sv_describe_hint), style = MaterialTheme.typography.bodyLarge, color = nc.textSecondary, maxLines = 1)
                 }
                 BasicTextField(
                     value = text,
@@ -133,32 +147,50 @@ fun SvHomeScreen(
                 )
             }
             Box(
-                Modifier.size(38.dp).clip(CircleShape).background(nc.accent)
-                    .clickable(role = Role.Button) { if (text.isNotBlank()) onDescribe(text) },
+                Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(nc.accent)
+                    .clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_search)) { if (text.isNotBlank()) onDescribe(text) },
                 contentAlignment = Alignment.Center,
-            ) { Icon(icons.search, null, Modifier.size(20.dp), tint = nc.onAccent) }
+            ) { Icon(icons.search, null, Modifier.size(18.dp), tint = nc.onAccent) }
         }
 
-        // Atalhos para as outras telas do tema.
-        SvRow(
-            title = stringResource(R.string.sv_flow_title),
-            subtitle = stringResource(R.string.sv_flow_sub),
-            onClick = onOpenFlow,
-            art = { SvOrb(Color(0xFFB8956A), Color(0xFF1A1410), Modifier.size(44.dp), seed = 1) },
-        )
+        // Seu Flow de hoje: cartão do Ondas com a onda embaixo.
+        SvCard(Modifier.fillMaxWidth(), onClick = onOpenFlow) {
+            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SvIconTile(icons.smart, 52.dp)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(stringResource(R.string.sv_flow_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary)
+                        Text(stringResource(R.string.sv_flow_sub), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary, maxLines = 2)
+                    }
+                    Box(
+                        Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(nc.accent),
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(icons.play, null, Modifier.size(20.dp), tint = nc.onAccent) }
+                }
+                Waveform(seed = 7L, progress = 0f, modifier = Modifier.fillMaxWidth().height(22.dp), bars = 44)
+            }
+        }
         SvRow(
             title = stringResource(R.string.sv_map_title),
             subtitle = stringResource(R.string.sv_map_sub),
             onClick = onOpenMap,
-            art = { SvOrb(Color(0xFF8A7A6A), Color(0xFF14110F), Modifier.size(44.dp), seed = 2) },
+            art = { SvIconTile(icons.genre) },
+            trailing = { Icon(icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
         )
         if (smartAvailable && (smartProgress.running || smartProgress.analysed < smartProgress.total)) {
             SvRow(
                 title = stringResource(R.string.sv_analysis_title),
                 subtitle = stringResource(R.string.sv_analysis_count, smartProgress.analysed, smartProgress.total),
                 onClick = onOpenAnalysis,
-                art = { SvOrb(Color(0xFF6A7A8A), Color(0xFF101418), Modifier.size(44.dp), seed = 0) },
+                art = { SvIconTile(icons.smart) },
+                trailing = { Icon(icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
             )
         }
     }
+}
+
+private fun greeting(): Int = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+    in 5..11 -> R.string.greeting_morning
+    in 12..17 -> R.string.greeting_afternoon
+    else -> R.string.greeting_evening
 }

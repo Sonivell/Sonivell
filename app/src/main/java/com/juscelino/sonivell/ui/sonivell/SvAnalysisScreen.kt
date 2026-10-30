@@ -52,10 +52,7 @@ fun SvAnalysisScreen(
             .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Box(
-            Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_back), onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = nc.textPrimary) }
+        SvSquare(icons.back, stringResource(R.string.cd_back), onBack)
         SvTitle(stringResource(R.string.sv_analysis_title), stringResource(R.string.sv_analysis_sub))
 
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {

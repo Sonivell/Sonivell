@@ -63,10 +63,7 @@ fun SvMomentsScreen(
             .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Box(
-            Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_back), onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) { Icon(icons.back, null, Modifier.size(22.dp), tint = nc.textPrimary) }
+        SvSquare(icons.back, stringResource(R.string.cd_back), onBack)
         SvTitle(stringResource(R.string.sv_moments_title), stringResource(R.string.sv_moments_sub), Modifier.padding(bottom = 10.dp))
 
         phases.forEachIndexed { i, (decade, list) ->
