@@ -35,10 +35,12 @@ internal object JourneySequencer {
      *   times (1 - the playlist's specificity) and save [togetherCost] times its specificity, in the same unit
      *   ([CompanionPoints.together]); null leaves the order as without marked playlists
      * @param before the row that plays right before [rows] when [from] is null (a new plan's seed); it is
-     *   never moved or returned, and only counts toward the run of one artist the order may not lengthen
+     *   never moved or returned, and only counts toward its artist's run, which the order may not lengthen
      *
-     * With [sameArtistCost] above 0 the order never makes a run of one artist longer than the longest
-     * run [rows] already had (after [from] or [before]). The selection sized its runs with the same
+     * With [sameArtistCost] above 0 the order never makes the artist of [from] or [before] repeat longer
+     * than the selection had it, nor any run of one artist longer than the longest run [rows] already
+     * had (after [from] or [before]). This holds for tracks of a marked playlist too: variety comes
+     * before keeping them together. The selection sized its runs with the same
      * penalty, growing with each track in a row; the flat cost per same-artist neighbour here does
      * not grow, and on its own regrouped what the selection had alternated — at the default 0.5, the
      * seed's artist could come back six times in a row (SmartQueueQualityTest, EngineMathTest).
@@ -65,7 +67,11 @@ internal object JourneySequencer {
         }
         val artists = { row: Int -> snapshot.tracks[row].meta.artistKey }
         val lead = listOfNotNull(from ?: before)
-        val limit = longestArtistRun(lead + rows, artists)
+        // The lead's artist keeps its own run; every other artist may grow up to the longest run.
+        val runs = artistRuns(lead + rows, artists)
+        val longest = runs.values.maxOrNull() ?: 0
+        val leadArtist = lead.firstOrNull()?.let(artists).orEmpty()
+        val limits = runs.mapValues { (artist, run) -> if (artist == leadArtist) run else longest }
         val ordered = ArrayList<Int>(rows.size)
         var start = 0
         for ((index, window) in windows.withIndex()) {
@@ -75,7 +81,7 @@ internal object JourneySequencer {
             val route = orderWindow(
                 snapshot, if (withFrom) listOf(from!!) + window else window,
                 sameArtistCost, companions, togetherCost,
-            ) { candidate -> longestArtistRun(prefix + candidate + rest, artists) <= limit }
+            ) { candidate -> withinRuns(prefix + candidate + rest, artists, limits) }
             ordered += if (withFrom) route.drop(1) else route
             start += window.size
         }
@@ -83,17 +89,34 @@ internal object JourneySequencer {
     }
 
     /** The longest stretch of consecutive rows by one artist; rows without an artist never form one. */
-    internal fun longestArtistRun(rows: List<Int>, artistOf: (Int) -> String): Int {
-        var longest = 0
+    internal fun longestArtistRun(rows: List<Int>, artistOf: (Int) -> String): Int =
+        artistRuns(rows, artistOf).values.maxOrNull() ?: 0
+
+    /** Each artist's longest stretch of consecutive rows; rows without an artist never form one. */
+    internal fun artistRuns(rows: List<Int>, artistOf: (Int) -> String): Map<String, Int> {
+        val longest = HashMap<String, Int>()
         var run = 0
         var previous = ""
         for (row in rows) {
             val artist = artistOf(row)
             run = if (artist.isNotEmpty() && artist == previous) run + 1 else if (artist.isEmpty()) 0 else 1
             previous = artist
-            if (run > longest) longest = run
+            if (run > (longest[artist] ?: 0)) longest[artist] = run
         }
         return longest
+    }
+
+    /** Whether no artist has a longer stretch of consecutive rows in [rows] than [limits] gives it. */
+    private fun withinRuns(rows: List<Int>, artistOf: (Int) -> String, limits: Map<String, Int>): Boolean {
+        var run = 0
+        var previous = ""
+        for (row in rows) {
+            val artist = artistOf(row)
+            run = if (artist.isNotEmpty() && artist == previous) run + 1 else if (artist.isEmpty()) 0 else 1
+            previous = artist
+            if (run > (limits[artist] ?: 0)) return false
+        }
+        return true
     }
 
     private fun orderWindow(

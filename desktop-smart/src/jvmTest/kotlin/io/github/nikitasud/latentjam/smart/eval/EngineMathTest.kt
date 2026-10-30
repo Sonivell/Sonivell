@@ -87,24 +87,49 @@ class EngineMathTest {
     @Test
     fun sequencerNoLongerRegroupsWhatTheChainAlternated() {
         // Biblioteca em que o próprio artista é o vizinho mais próximo: o caso que reagrupava a fila.
-        val lib = SmartEval.library(seed = 1, genres = 6, artistsPerGenre = 8, tracksPerArtist = 10, genreSpread = 0.5f)
+        checkSequencerKeepsArtistRuns(SmartEval.library(seed = 1, genres = 6, artistsPerGenre = 8, tracksPerArtist = 10, genreSpread = 0.5f), 7)
+    }
+
+    @Test
+    fun sequencerDoesNotLengthenTheSeedArtistsRun() {
+        // Poucos artistas por gênero: com só o teto da maior sequência da fila, o artista da inicial
+        // voltava a se agrupar (1 -> 5 seguidas) sem passar desse teto.
+        checkSequencerKeepsArtistRuns(SmartEval.library(seed = 1, genres = 6, artistsPerGenre = 4, tracksPerArtist = 10, genreSpread = 0.3f), 3)
+    }
+
+    private fun checkSequencerKeepsArtistRuns(lib: SmartEval.Library, step: Int) {
         val snapshot = SmartSnapshot.build(lib.tracks.map {
             SmartTrack(it.descriptor.id, it.vector, meta = TrackMeta(it.descriptor.title, it.descriptor.artist, it.descriptor.album, it.descriptor.genre, it.descriptor.year))
         })!!
         val artistOf = { row: Int -> snapshot.tracks[row].meta.artistKey }
-        for (seedIndex in listOf(0, 77, 222, 401)) {
+        for (seedIndex in (0 until lib.tracks.size step step)) {
             val seed = lib.tracks[seedIndex].descriptor.id
             val seedRow = snapshot.rowOf(seed)
+            val seedArtist = artistOf(seedRow)
             val chain = SmartChain(snapshot, null, tuning = judged(0.5f)).build(seed, 30, PredictorRuntime.timeFeatures(20, 3))
-            val before = JourneySequencer.longestArtistRun(listOf(seedRow) + chain.rows, artistOf)
+            val before = JourneySequencer.artistRuns(listOf(seedRow) + chain.rows, artistOf)
             val ordered = JourneySequencer.order(snapshot, chain.rows, sameArtistCost = 0.5f, before = seedRow)
             assertEquals(chain.rows.sorted(), ordered.sorted(), "o reordenamento só permuta")
             assertEquals(chain.rows.first(), ordered.first(), "a primeira recomendação fica")
-            val after = JourneySequencer.longestArtistRun(listOf(seedRow) + ordered, artistOf)
-            assertTrue(after <= before, "seed=$seedIndex: sequência $before -> $after")
+            // O artista da inicial não fica com sequência maior que a da seleção, e nenhum outro passa da
+            // maior sequência que a fila já tinha.
+            val longest = before.values.max()
+            val after = JourneySequencer.artistRuns(listOf(seedRow) + ordered, artistOf)
+            assertTrue(
+                after.getValue(seedArtist) <= before.getValue(seedArtist),
+                "seed=$seedIndex: artista da inicial ${before[seedArtist]} -> ${after[seedArtist]}",
+            )
+            assertTrue(after.values.max() <= longest, "seed=$seedIndex: sequência $longest -> ${after.values.max()}")
             // Continuação a partir da faixa em reprodução: a mesma garantia.
-            val continued = JourneySequencer.order(snapshot, chain.rows, from = seedRow, sameArtistCost = 0.5f)
-            assertTrue(JourneySequencer.longestArtistRun(listOf(seedRow) + continued, artistOf) <= before)
+            val continued = JourneySequencer.artistRuns(
+                listOf(seedRow) + JourneySequencer.order(snapshot, chain.rows, from = seedRow, sameArtistCost = 0.5f),
+                artistOf,
+            )
+            assertTrue(
+                continued.getValue(seedArtist) <= before.getValue(seedArtist),
+                "seed=$seedIndex (continuação): artista da inicial ${before[seedArtist]} -> ${continued[seedArtist]}",
+            )
+            assertTrue(continued.values.max() <= longest, "seed=$seedIndex (continuação): sequência $longest -> ${continued.values.max()}")
         }
     }
 
