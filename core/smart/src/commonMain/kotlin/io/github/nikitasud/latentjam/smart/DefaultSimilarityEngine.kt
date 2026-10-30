@@ -840,11 +840,15 @@ internal class DefaultSimilarityEngine(
             // Otherwise bridge the selected tracks locally before handing the plan to playback; a
             // continued walk is bridged from the queue's last track, which plays right before it.
             val continuedFrom = if (continued != null) snapshot.rowOf(seed.id).takeIf { it >= 0 } else null
+            // A new plan plays right after its seed: the order may not lengthen the seed artist's run.
+            val seedRow = snapshot.rowOf(seed.id).takeIf { it >= 0 }
             val rows = if (companionGroups.isEmpty()) {
-                JourneySequencer.order(snapshot, chain.rows, from = continuedFrom, sameArtistCost = runPenalty)
+                JourneySequencer.order(
+                    snapshot, chain.rows, from = continuedFrom, sameArtistCost = runPenalty, before = seedRow,
+                )
             } else if (judged) {
                 JourneySequencer.order(
-                    snapshot, chain.rows, from = continuedFrom, sameArtistCost = runPenalty,
+                    snapshot, chain.rows, from = continuedFrom, sameArtistCost = runPenalty, before = seedRow,
                     companions = CompanionMembership.build(snapshot.tracks.map { it.id }, companionGroups),
                     togetherCost = Rerank.COMPANION_POINTS.together,
                 )

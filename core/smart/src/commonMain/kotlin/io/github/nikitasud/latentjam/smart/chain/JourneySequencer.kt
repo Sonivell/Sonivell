@@ -34,6 +34,17 @@ internal object JourneySequencer {
      * @param companions the listener's marked playlists: two neighbours sharing one pay [sameArtistCost] only
      *   times (1 - the playlist's specificity) and save [togetherCost] times its specificity, in the same unit
      *   ([CompanionPoints.together]); null leaves the order as without marked playlists
+     * @param before the row that plays right before [rows] when [from] is null (a new plan's seed); it is
+     *   never moved or returned, and only counts toward its artist's run, which the order may not lengthen
+     *
+     * With [sameArtistCost] above 0 the order never makes the artist of [from] or [before] repeat longer
+     * than the selection had it, nor any run of one artist longer than the longest run [rows] already
+     * had (after [from] or [before]). This holds for tracks of a marked playlist too: variety comes
+     * before keeping them together. The selection sized its runs with the same
+     * penalty, growing with each track in a row; the flat cost per same-artist neighbour here does
+     * not grow, and on its own regrouped what the selection had alternated — at the default 0.5, the
+     * seed's artist could come back six times in a row (SmartQueueQualityTest, EngineMathTest).
+     * At 0 the order is exactly as before.
      */
     fun order(
         snapshot: SmartSnapshot,
@@ -42,14 +53,71 @@ internal object JourneySequencer {
         sameArtistCost: Float = 0f,
         companions: CompanionMembership? = null,
         togetherCost: Float = 0f,
-    ): List<Int> =
-        rows.chunked(WINDOW_SIZE).flatMapIndexed { index, window ->
-            if (index == 0 && from != null) {
-                orderWindow(snapshot, listOf(from) + window, sameArtistCost, companions, togetherCost).drop(1)
-            } else {
-                orderWindow(snapshot, window, sameArtistCost, companions, togetherCost)
+        before: Int? = null,
+    ): List<Int> {
+        val windows = rows.chunked(WINDOW_SIZE)
+        if (sameArtistCost <= 0f) {
+            return windows.flatMapIndexed { index, window ->
+                if (index == 0 && from != null) {
+                    orderWindow(snapshot, listOf(from) + window, sameArtistCost, companions, togetherCost).drop(1)
+                } else {
+                    orderWindow(snapshot, window, sameArtistCost, companions, togetherCost)
+                }
             }
         }
+        val artists = { row: Int -> snapshot.tracks[row].meta.artistKey }
+        val lead = listOfNotNull(from ?: before)
+        // The lead's artist keeps its own run; every other artist may grow up to the longest run.
+        val runs = artistRuns(lead + rows, artists)
+        val longest = runs.values.maxOrNull() ?: 0
+        val leadArtist = lead.firstOrNull()?.let(artists).orEmpty()
+        val limits = runs.mapValues { (artist, run) -> if (artist == leadArtist) run else longest }
+        val ordered = ArrayList<Int>(rows.size)
+        var start = 0
+        for ((index, window) in windows.withIndex()) {
+            val withFrom = index == 0 && from != null
+            val prefix = if (withFrom) emptyList() else lead + ordered
+            val rest = rows.subList(start + window.size, rows.size)
+            val route = orderWindow(
+                snapshot, if (withFrom) listOf(from!!) + window else window,
+                sameArtistCost, companions, togetherCost,
+            ) { candidate -> withinRuns(prefix + candidate + rest, artists, limits) }
+            ordered += if (withFrom) route.drop(1) else route
+            start += window.size
+        }
+        return ordered
+    }
+
+    /** The longest stretch of consecutive rows by one artist; rows without an artist never form one. */
+    internal fun longestArtistRun(rows: List<Int>, artistOf: (Int) -> String): Int =
+        artistRuns(rows, artistOf).values.maxOrNull() ?: 0
+
+    /** Each artist's longest stretch of consecutive rows; rows without an artist never form one. */
+    internal fun artistRuns(rows: List<Int>, artistOf: (Int) -> String): Map<String, Int> {
+        val longest = HashMap<String, Int>()
+        var run = 0
+        var previous = ""
+        for (row in rows) {
+            val artist = artistOf(row)
+            run = if (artist.isNotEmpty() && artist == previous) run + 1 else if (artist.isEmpty()) 0 else 1
+            previous = artist
+            if (run > (longest[artist] ?: 0)) longest[artist] = run
+        }
+        return longest
+    }
+
+    /** Whether no artist has a longer stretch of consecutive rows in [rows] than [limits] gives it. */
+    private fun withinRuns(rows: List<Int>, artistOf: (Int) -> String, limits: Map<String, Int>): Boolean {
+        var run = 0
+        var previous = ""
+        for (row in rows) {
+            val artist = artistOf(row)
+            run = if (artist.isNotEmpty() && artist == previous) run + 1 else if (artist.isEmpty()) 0 else 1
+            previous = artist
+            if (run > (limits[artist] ?: 0)) return false
+        }
+        return true
+    }
 
     private fun orderWindow(
         snapshot: SmartSnapshot,
@@ -57,6 +125,7 @@ internal object JourneySequencer {
         sameArtistCost: Float,
         companions: CompanionMembership?,
         togetherCost: Float,
+        accepts: ((List<Int>) -> Boolean)? = null,
     ): List<Int> {
         if (rows.size < 4) return rows
         val n = rows.size
@@ -87,7 +156,7 @@ internal object JourneySequencer {
                 for (j in i + 1 until n - 1) {
                     val before = costs[route[i - 1]][route[i]] + costs[route[j]][route[j + 1]]
                     val after = costs[route[i - 1]][route[j]] + costs[route[i]][route[j + 1]]
-                    if (before - after > gain) {
+                    if (before - after > gain && (accepts == null || accepts(reversed(route, i, j).map { rows[it] }))) {
                         gain = before - after
                         left = i
                         right = j
@@ -104,6 +173,21 @@ internal object JourneySequencer {
             }
         }
         return route.map { rows[it] }
+    }
+
+    /** [route] with positions [left]..[right] reversed, as the 2-opt move applies it. */
+    private fun reversed(route: List<Int>, left: Int, right: Int): List<Int> {
+        val out = route.toMutableList()
+        var l = left
+        var r = right
+        while (l < r) {
+            val previous = out[l]
+            out[l] = out[r]
+            out[r] = previous
+            l++
+            r--
+        }
+        return out
     }
 
     /** Same-artist neighbours cost more and neighbours from one marked playlist less, in spreads of the costs. */

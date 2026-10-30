@@ -23,6 +23,13 @@ kotlin {
             resources.srcDir(rootProject.file("app/src/smart/assets"))
             resources.srcDir(layout.buildDirectory.dir("native-res"))
         }
+        // Avaliação e regressões do motor (cenários sintéticos, sem modelos ONNX):
+        //   ./gradlew -Psonivell.desktop=only :desktop-smart:jvmTest
+        jvmTest {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
 

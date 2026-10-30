@@ -1,0 +1,52 @@
+name: SMART — testes do motor
+
+# Testes de regressão e de qualidade da fila do SMART (desktop-smart/src/jvmTest), mais os testes do
+# PC que usam o motor. Roda em pull requests que mexem no motor e sob demanda.
+on:
+  pull_request:
+    paths:
+      - 'core/smart/**'
+      - 'desktop-smart/**'
+      - '.github/workflows/smart-audit.yml'
+  workflow_dispatch:
+
+jobs:
+  smart-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Dependências (cmake para a libljq4, ffmpeg para o teste de ponta a ponta)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq cmake g++ ffmpeg >/dev/null
+
+      - name: Testes do motor (cenários sintéticos e regressões numéricas)
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew -Psonivell.desktop=only :desktop-smart:jvmTest -i 2>&1 | tee smart-tests.log
+          echo "### Métricas SMART-EVAL" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -o 'SMART-EVAL.*' smart-tests.log >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Testes do PC (ONNX Runtime, ffmpeg e fila de ponta a ponta)
+        run: ./gradlew -Psonivell.desktop=only :desktop:test
+
+      - name: Relatórios
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smart-test-reports
+          path: |
+            desktop-smart/build/reports/tests/
+            desktop/build/reports/tests/
+            smart-tests.log
+          if-no-files-found: ignore
