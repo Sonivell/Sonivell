@@ -21,10 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,7 +45,11 @@ import com.juscelino.sonivell.data.SmartPlaylist
 import com.juscelino.sonivell.ui.library.LibraryActions
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 
-/** Biblioteca do tema Sonivell: filtros em cápsula, coleções e uma fileira de artistas. */
+/**
+ * Biblioteca do tema Sonivell: filtros em cápsula, coleções e uma fileira de artistas. Não é mais uma aba:
+ * abre pelos cartões do Início já no filtro do cartão ([tab]: 0 Todas, 1 Músicas, 2 Álbuns, 3 Artistas,
+ * 4 Gêneros, 5 Pastas) e tem o botão de voltar.
+ */
 @Composable
 fun SvLibraryScreen(
     state: LibraryState,
@@ -58,10 +58,12 @@ fun SvLibraryScreen(
     smartPlaylists: List<SmartPlaylist>,
     contentPadding: PaddingValues,
     actions: LibraryActions,
+    tab: Int,
+    onTab: (Int) -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
-    var tab by rememberSaveable { mutableIntStateOf(0) }
     val tabs = listOf(R.string.sv_all, R.string.tab_songs, R.string.sv_albums, R.string.sv_artists, R.string.sv_genres, R.string.tab_folders)
     val resources = androidx.compose.ui.platform.LocalContext.current.resources
     val songs = { n: Int -> resources.getString(R.string.sv_songs_count, n) }
@@ -77,6 +79,7 @@ fun SvLibraryScreen(
     ) {
         item {
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 6.dp)) {
+                if (onBack != null) SvSquare(icons.back, stringResource(R.string.cd_back), onBack)
                 SvTitle(stringResource(R.string.sv_library_title), modifier = Modifier.weight(1f))
                 SvSquare(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
                 SvSquare(icons.add, stringResource(R.string.cd_new_playlist), actions.onNewPlaylist, filled = true)
@@ -95,7 +98,7 @@ fun SvLibraryScreen(
                             .height(36.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(if (on) nc.surfaceHigh else Color.Transparent)
-                            .clickable(role = Role.Tab) { tab = i }
+                            .clickable(role = Role.Tab) { onTab(i) }
                             .padding(horizontal = 14.dp),
                         contentAlignment = Alignment.Center,
                     ) {

@@ -185,8 +185,9 @@ val RoundedIcons = SonivellIcons(
     homeActive = Icons.Rounded.Home,
     library = Icons.Rounded.LibraryMusic,
     libraryActive = Icons.Rounded.LibraryMusic,
-    forYou = Icons.Rounded.Home,
-    forYouActive = Icons.Rounded.Home,
+    // A onda do Sonivell em todos os estilos (traço mais grosso, como os ícones cheios daqui).
+    forYou = waveIcon("Rounded.forYou", 2.2f),
+    forYouActive = waveIcon("Rounded.forYouActive", 2.8f),
     grid = Icons.Rounded.GridView,
     list = Icons.AutoMirrored.Rounded.List,
 )
@@ -260,8 +261,9 @@ val FinoIcons: SonivellIcons by lazy {
         homeActive = symbol("homeActive", p.HOME_FILL),
         library = symbol("library", p.LIBRARY),
         libraryActive = symbol("libraryActive", p.LIBRARY_FILL),
-        forYou = symbol("forYou", p.HOME),
-        forYouActive = symbol("forYouActive", p.HOME_FILL),
+        // A onda do Sonivell também no Fino (traço leve; mais firme na aba atual).
+        forYou = waveIcon("Fino.forYou", 1.4f),
+        forYouActive = waveIcon("Fino.forYouActive", 2.2f),
         grid = TracoIcons.grid,
         list = TracoIcons.list,
     )

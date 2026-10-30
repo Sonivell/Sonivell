@@ -645,7 +645,7 @@
     <string name="layout_sonivell_hint">Ondas look with moods, Flow, music map, moments and profile</string>
     <string name="nav_explore">Explore</string>
     <string name="nav_profile">Profile</string>
-    <string name="sv_mood_title">How do you want to feel right now?</string>
+    <string name="sv_home_title">What shall we play now?</string>
     <string name="sv_mood_sub">Pick a feeling and let the music take you further.</string>
     <string name="sv_mood_calm">Calm</string>
     <string name="sv_mood_focus">Focus</string>
@@ -656,7 +656,9 @@
     <string name="sv_mood_balance">Balance</string>
     <string name="sv_mood_freedom">Freedom</string>
     <string name="sv_mood_other">Other</string>
-    <string name="sv_describe_hint">or describe how you feel…</string>
+    <string name="sv_most_sub">Top 100</string>
+    <string name="sv_new">New</string>
+    <string name="sv_new_sub">30 days · %1$d</string>
     <string name="sv_flow_title">Your Flow today</string>
     <string name="sv_flow_sub">A sequence made for your moment.</string>
     <string name="sv_flow_desc">Based on what you listen to at this time, your recent skips and your favorites.</string>
@@ -709,5 +711,4 @@
     <string name="sv_tagline_sub">What moves you, what calms you, what makes you come back.</string>
     <string name="sv_why_title">Why it played</string>
     <string name="sv_discover">Discover</string>
-    <string name="sv_nav_home">Home</string>
 </resources>

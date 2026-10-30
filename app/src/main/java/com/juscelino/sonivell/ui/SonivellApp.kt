@@ -45,6 +45,7 @@ import com.juscelino.sonivell.ui.components.OptionsSheet
 import com.juscelino.sonivell.ui.components.TrackHeader
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
@@ -83,6 +84,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -207,13 +209,14 @@ private data class Tab(
     @StringRes val label: Int,
     val icon: (SonivellIcons) -> ImageVector,
     val activeIcon: (SonivellIcons) -> ImageVector,
-    /** Ícones no layout Ondas (o Para você usa a onda). */
+    /** Ícones no layout Ondas (hoje iguais aos dos outros layouts). */
     val ondasIcon: (SonivellIcons) -> ImageVector = icon,
     val ondasActiveIcon: (SonivellIcons) -> ImageVector = activeIcon,
 )
 
 private val tabs = listOf(
-    Tab(Routes.HOME, R.string.nav_home, { it.home }, { it.homeActive }, { it.forYou }, { it.forYouActive }),
+    // A aba inicial usa a onda do Sonivell em todos os layouts (antes só no Ondas; os outros, a casa).
+    Tab(Routes.HOME, R.string.nav_home, { it.forYou }, { it.forYouActive }),
     Tab(Routes.SEARCH, R.string.nav_search, { it.search }, { it.searchActive }),
     Tab(Routes.LIBRARY, R.string.nav_library, { it.library }, { it.libraryActive }),
 )
@@ -337,13 +340,14 @@ private fun MainContent(vm: MainViewModel) {
     val tasteStatus by vm.tasteStatus.collectAsStateWithLifecycle()
     val tasteBoosts by vm.tasteBoosts.collectAsStateWithLifecycle()
     val uiStyle = settings.uiStyle
-    // Tema Sonivell: quatro abas e o app abre em Início (as outras seguem como antes).
+    // Tema Sonivell: três abas e o app abre em Início. A biblioteca entra pelos cartões do Início.
     val svTabs = listOf(
-        SvTab(Routes.HOME, R.string.sv_nav_home, SonivellTheme.icons.home, SonivellTheme.icons.homeActive),
+        SvTab(Routes.HOME, R.string.nav_home, SonivellTheme.icons.forYou, SonivellTheme.icons.forYouActive),
         SvTab(Routes.SEARCH, R.string.nav_explore, SonivellTheme.icons.search, SonivellTheme.icons.searchActive),
-        SvTab(Routes.LIBRARY, R.string.nav_library, SonivellTheme.icons.library, SonivellTheme.icons.libraryActive),
         SvTab(Routes.PROFILE, R.string.nav_profile, Icons.Outlined.Person, Icons.Filled.Person),
     )
+    // Aba da biblioteca aberta por um cartão do Início (0 Todas, 1 Músicas, 2 Álbuns, 3 Artistas, 4 Gêneros, 5 Pastas).
+    var svLibraryTab by rememberSaveable { mutableIntStateOf(0) }
     val initialStyle = remember { settings.uiStyle }
     var startRouted by rememberSaveable { mutableStateOf(false) }
     val equalizer by vm.equalizer.collectAsStateWithLifecycle()
@@ -659,28 +663,29 @@ private fun MainContent(vm: MainViewModel) {
                             lyricHits = lyricHits,
                         )
                         UiStyle.SONIVELL -> when (mode) {
-                            LibraryMode.Inicio -> SvHomeScreen(
-                                contentPadding = listPadding,
-                                smartAvailable = vm.smart.isAvailable,
-                                smartProgress = smartProgress,
-                                onMood = { m ->
-                                    scope.launch {
-                                        val found = vm.queryTracks(m.query)
-                                        if (found.isEmpty()) toast(res.getString(R.string.mood_empty))
-                                        else {
-                                            source = res.getString(m.label)
-                                            vm.playMood(found)
-                                        }
-                                    }
-                                },
-                                onDescribe = { q ->
-                                    vm.setQuery(q)
-                                    libraryActions.onOpenSearch()
-                                },
-                                onOpenFlow = { nav.navigate(Routes.SV_FLOW) },
-                                onOpenMap = { nav.navigate(Routes.SV_MAP) },
-                                onOpenAnalysis = { nav.navigate(Routes.SV_ANALYSIS) },
-                            )
+                            LibraryMode.Inicio -> {
+                                // Início é a raiz do tema: voltar daqui sai do app, não cai na biblioteca
+                                // (o destino inicial do grafo), que deixou de ser uma aba.
+                                val activity = LocalContext.current as? android.app.Activity
+                                BackHandler { activity?.finish() }
+                                SvHomeScreen(
+                                    contentPadding = listPadding,
+                                    state = library,
+                                    favoritesCount = favorites.size,
+                                    mixSeeds = forYou.mixSeeds,
+                                    smartAvailable = vm.smart.isAvailable,
+                                    smartProgress = smartProgress,
+                                    onOpenAuto = libraryActions.onOpenAuto,
+                                    onOpenLibrary = { t ->
+                                        svLibraryTab = t
+                                        nav.navigate(Routes.LIBRARY)
+                                    },
+                                    onPlayMix = libraryActions.onPlayMix,
+                                    onOpenFlow = { nav.navigate(Routes.SV_FLOW) },
+                                    onOpenMap = { nav.navigate(Routes.SV_MAP) },
+                                    onOpenAnalysis = { nav.navigate(Routes.SV_ANALYSIS) },
+                                )
+                            }
                             LibraryMode.Buscar -> LibraryScreenOndas(
                                 mode = mode, state = library, favorites = favorites, currentId = current?.id,
                                 contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
@@ -691,6 +696,8 @@ private fun MainContent(vm: MainViewModel) {
                             LibraryMode.Biblioteca -> SvLibraryScreen(
                                 state = library, favorites = favorites, playlists = playlists, smartPlaylists = smartPlaylists,
                                 contentPadding = listPadding, actions = libraryActions,
+                                tab = svLibraryTab, onTab = { svLibraryTab = it },
+                                onBack = { if (!nav.popBackStack()) nav.navigate(Routes.HOME) },
                             )
                         }
                         UiStyle.CLASSICA -> LibraryScreenClassica(

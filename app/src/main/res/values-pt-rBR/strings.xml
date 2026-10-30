@@ -642,7 +642,7 @@
     <string name="layout_sonivell_hint">Visual do Ondas com sensações, Flow, mapa musical, momentos e perfil</string>
     <string name="nav_explore">Explorar</string>
     <string name="nav_profile">Perfil</string>
-    <string name="sv_mood_title">Como você quer se sentir agora?</string>
+    <string name="sv_home_title">O que vamos ouvir agora?</string>
     <string name="sv_mood_sub">Escolha um estado e deixe a música te levar mais longe.</string>
     <string name="sv_mood_calm">Calmo</string>
     <string name="sv_mood_focus">Foco</string>
@@ -653,7 +653,9 @@
     <string name="sv_mood_balance">Equilíbrio</string>
     <string name="sv_mood_freedom">Liberdade</string>
     <string name="sv_mood_other">Outro</string>
-    <string name="sv_describe_hint">ou descreva o que sente…</string>
+    <string name="sv_most_sub">Top 100</string>
+    <string name="sv_new">Novas</string>
+    <string name="sv_new_sub">30 dias · %1$d</string>
     <string name="sv_flow_title">Seu Flow de hoje</string>
     <string name="sv_flow_sub">Uma sequência feita para o seu momento.</string>
     <string name="sv_flow_desc">Com base no que você ouve neste horário, nos pulos recentes e nas favoritas.</string>
@@ -706,5 +708,4 @@
     <string name="sv_tagline_sub">O que te move, o que te acalma, o que te faz voltar.</string>
     <string name="sv_why_title">Por que tocou</string>
     <string name="sv_discover">Descobrir</string>
-    <string name="sv_nav_home">Início</string>
 </resources>

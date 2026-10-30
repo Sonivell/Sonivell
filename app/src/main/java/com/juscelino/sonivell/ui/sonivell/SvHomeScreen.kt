@@ -13,34 +13,31 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.juscelino.sonivell.LibraryState
 import com.juscelino.sonivell.R
+import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.components.Waveform
 import com.juscelino.sonivell.ui.theme.ArtTones
@@ -48,23 +45,48 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
 
 /**
- * Início do tema Sonivell, no visual do Ondas: a pergunta "Como você quer se sentir agora?" com as
- * sensações em botões, o campo para descrever e os atalhos para Flow, Mapa e Análise.
+ * Início do tema Sonivell, no visual do Ondas: atalhos em cartões pequenos (Coleções e Sua biblioteca),
+ * o Flow de hoje, os mixes pelo som (edição SMART) e o mapa. A biblioteca deixou de ser uma aba: os
+ * cartões abrem as coleções automáticas e a biblioteca já no filtro escolhido.
  */
 @Composable
 fun SvHomeScreen(
     contentPadding: PaddingValues,
+    state: LibraryState,
+    favoritesCount: Int,
+    mixSeeds: List<Track>,
     smartAvailable: Boolean,
     smartProgress: SmartProgress,
-    onMood: (SvMood) -> Unit,
-    onDescribe: (String) -> Unit,
+    /** Coleção automática por chave ("curtidas", "mais-ouvidas", "recentes"). */
+    onOpenAuto: (String) -> Unit,
+    /** Biblioteca no filtro dado: 0 Todas, 1 Músicas, 2 Álbuns, 3 Artistas, 4 Gêneros, 5 Pastas. */
+    onOpenLibrary: (Int) -> Unit,
+    onPlayMix: (Track) -> Unit,
     onOpenFlow: () -> Unit,
     onOpenMap: () -> Unit,
     onOpenAnalysis: () -> Unit,
 ) {
     val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
-    var text by rememberSaveable { mutableStateOf("") }
+    // Adicionadas nos últimos 30 dias: a mesma regra da coleção automática "recentes".
+    val newCount = remember(state.allTracks) {
+        val since = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000
+        state.allTracks.count { it.dateAdded * 1000 >= since }
+    }
+    val forYou = listOf(
+        SvShortcut(stringResource(R.string.source_liked), favoritesCount.toString()) { onOpenAuto("curtidas") },
+        SvShortcut(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub)) { onOpenAuto("mais-ouvidas") },
+        SvShortcut(stringResource(R.string.sv_new), stringResource(R.string.sv_new_sub, newCount)) { onOpenAuto("recentes") },
+    )
+    val library = listOf(
+        SvShortcut(stringResource(R.string.tab_songs), state.allTracks.size.toString()) { onOpenLibrary(1) },
+        SvShortcut(stringResource(R.string.sv_albums), state.albums.size.toString()) { onOpenLibrary(2) },
+        SvShortcut(stringResource(R.string.sv_artists), state.artists.size.toString()) { onOpenLibrary(3) },
+        SvShortcut(stringResource(R.string.sv_genres), state.genres.size.toString()) { onOpenLibrary(4) },
+        SvShortcut(stringResource(R.string.tab_folders), state.folders.size.toString()) { onOpenLibrary(5) },
+        // As playlists moravam na aba Biblioteca; sem ela, entram por aqui ("Todas": coleções e playlists).
+        SvShortcut(stringResource(R.string.tab_playlists), "") { onOpenLibrary(0) },
+    )
     Column(
         Modifier
             .fillMaxWidth()
@@ -77,90 +99,16 @@ fun SvHomeScreen(
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(greeting()), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = nc.textSecondary)
             Text(
-                stringResource(R.string.sv_mood_title),
+                stringResource(R.string.sv_home_title),
                 style = MaterialTheme.typography.displaySmall.copy(fontSize = 26.sp, lineHeight = 30.sp, letterSpacing = (-0.6).sp),
                 color = nc.textPrimary,
             )
         }
 
-        // Sensações em cartões pequenos no modelo dos Gêneros do Ondas: nome, ponto colorido e uma
-        // onda curta. "Outro" é uma ação (leva à busca por descrição): contorno e tudo na cor de destaque.
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SvMood.entries.chunked(3).forEachIndexed { r, row ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    row.forEachIndexed { col, mood ->
-                        val label = stringResource(mood.label)
-                        val other = mood == SvMood.Outro
-                        val tone = if (other) nc.accent else ArtTones.cores[(r * 3 + col) % ArtTones.cores.size]
-                        val shape = RoundedCornerShape(16.dp)
-                        Column(
-                            Modifier
-                                .weight(1f)
-                                .height(64.dp)
-                                .clip(shape)
-                                .then(if (other) Modifier else Modifier.background(nc.surface))
-                                .border(if (other) 1.5.dp else 1.dp, if (other) nc.accent else nc.outline, shape)
-                                .clickable(role = Role.Button, onClickLabel = label) {
-                                    if (other) onDescribe(text) else onMood(mood)
-                                }
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(
-                                    label,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = if (other) nc.accent else nc.textPrimary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f, fill = false),
-                                )
-                                Box(Modifier.size(7.dp).clip(CircleShape).background(tone))
-                            }
-                            SvMiniWave(label, tone, Modifier.size(width = 44.dp, height = 14.dp))
-                        }
-                    }
-                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
-        }
+        ShortcutGroup(stringResource(R.string.sv_collections), forYou, toneOffset = 0)
+        ShortcutGroup(stringResource(R.string.sv_library_title), library, toneOffset = 3)
         if (!smartAvailable) {
             Text(stringResource(R.string.sv_analysis_lite), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary)
-        }
-
-        // Campo "descreva o que sente": vira uma busca pelo sentido (SMART) na aba Explorar.
-        val fieldShape = RoundedCornerShape(16.dp)
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .clip(fieldShape)
-                .background(nc.surface)
-                .padding(start = 16.dp, end = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Box(Modifier.weight(1f)) {
-                if (text.isEmpty()) {
-                    Text(stringResource(R.string.sv_describe_hint), style = MaterialTheme.typography.bodyLarge, color = nc.textSecondary, maxLines = 1)
-                }
-                BasicTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = nc.textPrimary),
-                    cursorBrush = SolidColor(nc.accent),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { if (text.isNotBlank()) onDescribe(text) }),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            Box(
-                Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(nc.accent)
-                    .clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_search)) { if (text.isNotBlank()) onDescribe(text) },
-                contentAlignment = Alignment.Center,
-            ) { Icon(icons.search, null, Modifier.size(18.dp), tint = nc.onAccent) }
         }
 
         // Seu Flow de hoje: cartão do Ondas com a onda embaixo.
@@ -180,6 +128,35 @@ fun SvHomeScreen(
                 Waveform(seed = 7L, progress = 0f, modifier = Modifier.fillMaxWidth().height(22.dp), bars = 44)
             }
         }
+
+        // Mixes pelo som (edição SMART): os mesmos do Para você do Ondas, um por artista que você ouve.
+        if (smartAvailable && mixSeeds.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SvSection(stringResource(R.string.fy_mixes), Modifier.padding(top = 4.dp)) { SvSmartTag() }
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    itemsIndexed(mixSeeds, key = { _, seed -> "mix-" + seed.id }) { i, seed ->
+                        val label = stringResource(R.string.fy_mix_of, seed.artist)
+                        Column(
+                            Modifier.width(136.dp).clip(RoundedCornerShape(20.dp))
+                                .clickable(role = Role.Button, onClickLabel = label) { onPlayMix(seed) },
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            SvOrb(
+                                top = ArtTones.cores[i % ArtTones.cores.size],
+                                bottom = ArtTones.backgrounds[i % ArtTones.backgrounds.size],
+                                modifier = Modifier.size(width = 136.dp, height = 120.dp),
+                                seed = 0,
+                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(stringResource(R.string.fy_sounds_like, seed.title), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         SvRow(
             title = stringResource(R.string.sv_map_title),
             subtitle = stringResource(R.string.sv_map_sub),
@@ -196,6 +173,85 @@ fun SvHomeScreen(
                 trailing = { Icon(icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
             )
         }
+    }
+}
+
+/** Um atalho do Início: nome, um número ou dica curta embaixo e para onde leva. */
+private class SvShortcut(val label: String, val detail: String, val onClick: () -> Unit)
+
+/**
+ * Grupo de atalhos com rótulo pequeno, em cartões de três por linha no modelo das antigas sensações:
+ * nome, ponto colorido e onda curta, com o número à direita da onda.
+ */
+@Composable
+private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: Int) {
+    val nc = SonivellTheme.colors
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            title.uppercase(),
+            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.2.sp),
+            fontWeight = FontWeight.ExtraBold,
+            color = nc.textSecondary,
+            modifier = Modifier.padding(start = 2.dp),
+        )
+        items.chunked(3).forEachIndexed { r, row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEachIndexed { col, item ->
+                    val tone = ArtTones.cores[(toneOffset + r * 3 + col) % ArtTones.cores.size]
+                    val shape = RoundedCornerShape(16.dp)
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .height(68.dp)
+                            .clip(shape)
+                            .background(nc.surface)
+                            .border(1.dp, nc.outline, shape)
+                            .clickable(role = Role.Button, onClickLabel = item.label, onClick = item.onClick)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                item.label,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = nc.textPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                            Box(Modifier.size(7.dp).clip(CircleShape).background(tone))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            SvMiniWave(item.label, tone, Modifier.size(width = 40.dp, height = 14.dp))
+                            if (item.detail.isNotEmpty()) {
+                                Text(
+                                    item.detail,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = nc.textSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.End,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+                    }
+                }
+                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+/** Selo "SMART" com contorno na cor de destaque, como no Para você do Ondas. */
+@Composable
+private fun SvSmartTag() {
+    val nc = SonivellTheme.colors
+    val shape = RoundedCornerShape(7.dp)
+    Box(Modifier.height(22.dp).clip(shape).border(1.dp, nc.accent, shape).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+        Text(stringResource(R.string.source_smart), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.8.sp), fontWeight = FontWeight.ExtraBold, color = nc.accent)
     }
 }
 
