@@ -41,6 +41,7 @@ import com.juscelino.sonivell.playback.PlayerState
 import com.juscelino.sonivell.playback.SleepTimerPrefs
 import com.juscelino.sonivell.playback.AppUi
 import com.juscelino.sonivell.data.visibleLibrary
+import com.juscelino.sonivell.data.BoundedRead
 import com.juscelino.sonivell.playback.toTrack
 import com.juscelino.sonivell.smart.SmartEngine
 import com.juscelino.sonivell.smart.SmartProgress
@@ -591,7 +592,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun importPlaylist(source: Uri, name: String): Int {
         val text = withContext(Dispatchers.IO) {
             runCatching {
-                getApplication<Application>().contentResolver.openInputStream(source)!!.use { it.readBytes().decodeToString() }
+                getApplication<Application>().contentResolver.openInputStream(source)!!.use {
+                    // Com limite: um arquivo enorme não é uma playlist (e levaria à falta de memória).
+                    BoundedRead.bytes(it, BoundedRead.PLAYLIST_MAX)?.decodeToString()
+                }
             }.getOrNull()
         } ?: return -1
         val ids = M3u.import(text, allTracks.value.orEmpty())
