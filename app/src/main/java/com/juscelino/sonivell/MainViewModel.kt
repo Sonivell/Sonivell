@@ -39,6 +39,8 @@ import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.playback.PlayerConnection
 import com.juscelino.sonivell.playback.PlayerState
 import com.juscelino.sonivell.playback.SleepTimerPrefs
+import com.juscelino.sonivell.playback.AppUi
+import com.juscelino.sonivell.data.visibleLibrary
 import com.juscelino.sonivell.playback.toTrack
 import com.juscelino.sonivell.smart.SmartEngine
 import com.juscelino.sonivell.smart.SmartProgress
@@ -365,6 +367,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         prefs.registerOnSharedPreferenceChangeListener(sleepListener)
+        // Com a tela viva, quem abastece a fila SMART é o app; sem ela, o serviço (SmartQueueFiller).
+        AppUi.opened()
 
         // Cada escuta encerrada (registrada pelo serviço): treina o gosto e, se foi um pulo, replaneja.
         viewModelScope.launch {
@@ -675,9 +679,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val scannedFolders: StateFlow<List<String>> = _scannedFolders
 
     private fun applyLibraryFilter(): List<Track> {
-        val s = settings.value
-        val minMs = s.minDurationSec * 1000L
-        val tracks = tagOverrides.apply(scanned).filter { t -> (minMs == 0L || t.durationMs >= minMs) && t.folder !in s.ignoredFolders }
+        // A mesma regra que o serviço usa para abastecer a fila SMART com o app fechado.
+        val tracks = visibleLibrary(scanned, tagOverrides, settings.value)
         allTracks.value = tracks
         return tracks
     }
@@ -1055,6 +1058,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     override fun onCleared() {
+        AppUi.closed()
         prefs.unregisterOnSharedPreferenceChangeListener(sleepListener)
         runCatching { getApplication<Application>().contentResolver.unregisterContentObserver(mediaObserver) }
         player.release()
