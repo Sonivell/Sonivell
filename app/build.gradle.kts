@@ -132,4 +132,7 @@ dependencies {
     // Só a edição SMART leva o motor e o ONNX Runtime.
     "smartImplementation"(project(":core:smart"))
     "smartImplementation"(libs.koin.core)
+
+    // Testes unitários no JVM (lógica sem Android: backup, gravações, busca…). ./gradlew testLiteDebugUnitTest
+    testImplementation(libs.junit)
 }

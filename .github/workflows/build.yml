@@ -23,6 +23,10 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
+      # Testes unitários do app (JVM): backup, gravações, busca. Rodam antes de empacotar.
+      - name: Testes unitários do app
+        run: ./gradlew :app:testLiteDebugUnitTest
+
       # Chave de release: vem dos secrets (SONIVELL_KEYSTORE_BASE64 e as senhas). Sem ela (secrets ainda
       # não cadastrados, ou PR de fork), o APK sai com a chave de TESTE, pública, marcado "-teste".
       - name: Chave de assinatura

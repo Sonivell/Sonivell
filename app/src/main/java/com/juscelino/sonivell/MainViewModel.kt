@@ -619,6 +619,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun saveTags(id: Long, edit: TagEdit) {
         tagOverrides.put(id, edit)
         applyLibraryFilter()
+        // A gravação no disco sai da thread principal (antes travava a tela durante o I/O).
+        viewModelScope.launch(Dispatchers.IO) { tagOverrides.save() }
     }
 
     // ---- Notas (estrelas) ----

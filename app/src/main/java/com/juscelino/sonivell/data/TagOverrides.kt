@@ -22,16 +22,20 @@ data class TagEdit(
  */
 class TagOverrides(context: Context) {
     private val file = File(context.filesDir, "tag_edits.json")
-    private var edits: Map<Long, TagEdit> = read()
+    @Volatile private var edits: Map<Long, TagEdit> = read()
 
     fun get(id: Long): TagEdit? = edits[id]
 
     fun all(): Map<Long, TagEdit> = edits
 
+    /** Muda na hora (em memória); grave com [save], fora da thread principal. */
     fun put(id: Long, edit: TagEdit) {
         edits = if (edit.isEmpty) edits - id else edits + (id to edit)
-        write()
     }
+
+    /** Grava as correções no disco, de uma vez ([AtomicFiles]). Fora da thread principal. */
+    @Synchronized
+    fun save() = write()
 
     /** Aplica as correções na lista lida do aparelho. */
     fun apply(tracks: List<Track>): List<Track> {
@@ -51,9 +55,8 @@ class TagOverrides(context: Context) {
         }
     }
 
-    private fun read(): Map<Long, TagEdit> = runCatching {
-        if (!file.exists()) return emptyMap()
-        val root = JSONObject(file.readText())
+    private fun read(): Map<Long, TagEdit> = AtomicFiles.readOrQuarantine(file) { text ->
+        val root = JSONObject(text)
         root.keys().asSequence().mapNotNull { key ->
             val id = key.toLongOrNull() ?: return@mapNotNull null
             val o = root.getJSONObject(key)
@@ -65,7 +68,7 @@ class TagOverrides(context: Context) {
                 year = if (o.has("year")) o.optInt("year").takeIf { it > 0 } else null,
             )
         }.toMap()
-    }.getOrDefault(emptyMap())
+    }.orEmpty()
 
     private fun write() {
         val root = JSONObject()
@@ -78,6 +81,6 @@ class TagOverrides(context: Context) {
                 e.year?.let { put("year", it) }
             })
         }
-        runCatching { file.writeText(root.toString()) }
+        runCatching { AtomicFiles.writeText(file, root.toString()) }
     }
 }

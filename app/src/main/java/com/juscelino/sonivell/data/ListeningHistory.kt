@@ -100,7 +100,8 @@ class ListeningHistory private constructor(context: Context) {
                 val keep = list.takeLast(MAX_EVENTS)
                 list.clear()
                 list += keep
-                file.writeText(keep.joinToString("\n", postfix = "\n") { it.toLine() })
+                // De uma vez: um crash no meio não deixa o histórico pela metade.
+                AtomicFiles.writeText(file, keep.joinToString("\n", postfix = "\n") { it.toLine() })
             } else {
                 file.appendText(event.toLine() + "\n")
             }

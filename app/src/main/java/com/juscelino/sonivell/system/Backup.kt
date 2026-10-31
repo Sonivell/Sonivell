@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import java.io.File
 import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import kotlin.system.exitProcess
 
@@ -15,9 +14,9 @@ import kotlin.system.exitProcess
  * (continuam no aparelho), nem os índices do SMART, que são refeitos sozinhos.
  */
 object Backup {
-    private const val PREFS_DIR = "shared_prefs/"
-    private const val FILES_DIR = "files/"
-    private const val MARKER = "sonivell-backup.txt"
+    private const val PREFS_DIR = BackupArchive.PREFS_DIR
+    private const val FILES_DIR = BackupArchive.FILES_DIR
+    private const val MARKER = BackupArchive.MARKER
     /** Pastas dentro de filesDir que entram no backup (o resto é índice/cache). */
     private val KEEP_DIRS = setOf("covers")
     private const val MAX_FILE = 20L * 1024 * 1024
@@ -52,37 +51,21 @@ object Backup {
     }
 
     /**
-     * Restaura um backup. Valida o arquivo antes de tocar em qualquer coisa: só substitui os
-     * dados se o .zip for mesmo do Sonivell. Depois é preciso reiniciar o app ([restart]).
+     * Restaura um backup. Extrai tudo para uma pasta temporária com limites de tamanho e de
+     * quantidade e só com os nomes que o próprio backup gera ([BackupArchive]); só depois de o .zip
+     * se mostrar do Sonivell e caber nos limites, troca os arquivos, um a um e de uma vez cada.
+     * Depois é preciso reiniciar o app ([restart]).
      */
     fun restore(context: Context, source: Uri): Boolean = runCatching {
         val staging = File(context.cacheDir, "restore").apply { deleteRecursively(); mkdirs() }
-        var valid = false
-        context.contentResolver.openInputStream(source)?.use { input ->
-            ZipInputStream(input.buffered()).use { zip ->
-                generateSequence { zip.nextEntry }.forEach { e ->
-                    if (e.isDirectory) return@forEach
-                    val name = e.name
-                    if (name == MARKER) { valid = true; return@forEach }
-                    // Só aceita caminhos conhecidos e sem "..".
-                    if (".." in name || !(name.startsWith(PREFS_DIR) || name.startsWith(FILES_DIR))) return@forEach
-                    val out = File(staging, name)
-                    out.parentFile?.mkdirs()
-                    out.outputStream().use { zip.copyTo(it) }
-                }
-            }
-        } ?: return false
-        if (!valid) {
+        try {
+            val valid = context.contentResolver.openInputStream(source)?.use { BackupArchive.extract(it, staging) }
+            if (valid != true) return false
+            BackupArchive.install(staging, prefsDir(context), context.filesDir)
+            true
+        } finally {
             staging.deleteRecursively()
-            return false
         }
-        File(staging, PREFS_DIR).listFiles()?.forEach { f -> f.copyTo(File(prefsDir(context), f.name), overwrite = true) }
-        File(staging, FILES_DIR).walkTopDown().filter { it.isFile }.forEach { f ->
-            val rel = f.relativeTo(File(staging, FILES_DIR)).path
-            File(context.filesDir, rel).also { it.parentFile?.mkdirs() }.let { f.copyTo(it, overwrite = true) }
-        }
-        staging.deleteRecursively()
-        true
     }.getOrDefault(false)
 
     /** Reabre o app do zero para que tudo seja lido do backup restaurado. */
