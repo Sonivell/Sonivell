@@ -13,6 +13,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # A chave de release fica nos secrets do environment "release": só este job os recebe, e as
+    # regras de proteção do environment (Settings > Environments) decidem quais branches podem usá-la.
+    environment: release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
