@@ -4,6 +4,14 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Assinatura do release (ver signingConfigs): a chave real vem do ambiente; a de teste só se pedida.
+val releaseKeystore: String? = System.getenv("SONIVELL_KEYSTORE")?.takeIf { it.isNotBlank() }
+val useTestKey: Boolean = providers.gradleProperty("sonivell.chaveDeTeste").orNull == "true"
+
+fun requiredEnv(name: String): String =
+    System.getenv(name)?.takeIf { it.isNotEmpty() }
+        ?: throw GradleException("SONIVELL_KEYSTORE foi definido, mas falta $name.")
+
 android {
     namespace = "com.juscelino.sonivell"
     compileSdk = 36
@@ -35,20 +43,32 @@ android {
     }
 
     signingConfigs {
-        // Chave de TESTE versionada no repositório. Para publicar de verdade, defina
-        // SONIVELL_KEYSTORE, SONIVELL_STORE_PASSWORD, SONIVELL_KEY_ALIAS e
-        // SONIVELL_KEY_PASSWORD (ex.: secrets do GitHub) com a chave real.
-        create("release") {
-            storeFile = file(System.getenv("SONIVELL_KEYSTORE") ?: "../keystore/sonivell-teste.jks")
-            storePassword = System.getenv("SONIVELL_STORE_PASSWORD") ?: "sonivell123"
-            keyAlias = System.getenv("SONIVELL_KEY_ALIAS") ?: "sonivell-teste"
-            keyPassword = System.getenv("SONIVELL_KEY_PASSWORD") ?: "sonivell123"
+        // Chave de release: só pelas variáveis SONIVELL_KEYSTORE, SONIVELL_STORE_PASSWORD,
+        // SONIVELL_KEY_ALIAS e SONIVELL_KEY_PASSWORD (secrets do CI ou do seu computador).
+        // A chave de TESTE versionada (keystore/sonivell-teste.jks) é pública: qualquer um assina com ela.
+        // Por isso só é usada quando pedida de propósito (-Psonivell.chaveDeTeste=true), e o APK sai
+        // com "-teste" na versão. Sem nenhuma das duas, o release não é empacotado (ver abaixo).
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = requiredEnv("SONIVELL_STORE_PASSWORD")
+                keyAlias = requiredEnv("SONIVELL_KEY_ALIAS")
+                keyPassword = requiredEnv("SONIVELL_KEY_PASSWORD")
+            }
+        } else if (useTestKey) {
+            create("release") {
+                storeFile = file("../keystore/sonivell-teste.jks")
+                storePassword = "sonivell123"
+                keyAlias = "sonivell-teste"
+                keyPassword = "sonivell123"
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.findByName("release")
+            if (releaseKeystore == null && useTestKey) versionNameSuffix = "-teste"
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -68,6 +88,21 @@ android {
     androidResources {
         // Os modelos já são compactos; comprimir de novo só deixa a leitura mais lenta.
         noCompress += listOf("onnx", "bin")
+    }
+}
+
+// Sem chave de release e sem pedir a de teste, empacotar o release falha com uma explicação, em vez
+// de assinar em silêncio com uma chave pública (auditoria SEC-01) ou gerar um APK que não instala.
+val missingReleaseKey = releaseKeystore == null && !useTestKey
+tasks.matching { it.name.startsWith("package") && it.name.endsWith("Release") }.configureEach {
+    val missing = missingReleaseKey
+    doFirst {
+        if (missing) {
+            throw GradleException(
+                "Sem chave de release. Defina SONIVELL_KEYSTORE, SONIVELL_STORE_PASSWORD, SONIVELL_KEY_ALIAS e " +
+                    "SONIVELL_KEY_PASSWORD, ou rode com -Psonivell.chaveDeTeste=true para um APK de teste (não distribua).",
+            )
+        }
     }
 }
 

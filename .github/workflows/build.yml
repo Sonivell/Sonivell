@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Só leitura: este workflow compila e publica artefatos, não escreve no repositório.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,17 +23,41 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
+      # Chave de release: vem dos secrets (SONIVELL_KEYSTORE_BASE64 e as senhas). Sem ela (secrets ainda
+      # não cadastrados, ou PR de fork), o APK sai com a chave de TESTE, pública, marcado "-teste".
+      - name: Chave de assinatura
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SONIVELL_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/sonivell-release.jks"
+            echo "SONIVELL_KEYSTORE=$RUNNER_TEMP/sonivell-release.jks" >> "$GITHUB_ENV"
+            echo "SIGNING_ARGS=" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sem a chave de release nos secrets: os APKs desta execução foram assinados com a chave de TESTE (pública). Não distribua."
+            echo "SIGNING_ARGS=-Psonivell.chaveDeTeste=true" >> "$GITHUB_ENV"
+          fi
+
       - name: Compilar APKs de release (lite e SMART)
         shell: bash
+        env:
+          SONIVELL_STORE_PASSWORD: ${{ secrets.SONIVELL_STORE_PASSWORD }}
+          SONIVELL_KEY_ALIAS: ${{ secrets.SONIVELL_KEY_ALIAS }}
+          SONIVELL_KEY_PASSWORD: ${{ secrets.SONIVELL_KEY_PASSWORD }}
         run: |
           set -o pipefail
-          ./gradlew assembleLiteRelease assembleSmartRelease 2>&1 | tee build.log || {
+          ./gradlew $SIGNING_ARGS assembleLiteRelease assembleSmartRelease 2>&1 | tee build.log || {
             # Em caso de erro, destaca as mensagens como anotações (visíveis no resumo da execução).
             grep -E "^e: |What went wrong|Execution failed|error:|Error:|Lint found" -A3 build.log | head -n 60 | while IFS= read -r line; do
               echo "::error::${line}"
             done
             exit 1
           }
+
+      - name: Apagar a chave do disco
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sonivell-release.jks"
 
       - uses: actions/upload-artifact@v7
         with:
