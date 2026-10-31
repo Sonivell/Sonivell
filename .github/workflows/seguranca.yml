@@ -47,7 +47,7 @@ jobs:
         run: |
           mkdir -p relatorio
           set +e
-          zizmor --format plain --min-severity medium --config .github/zizmor.yml .github/workflows > zizmor.txt 2>&1
+          zizmor --format plain --min-severity medium .github/workflows > zizmor.txt 2>&1
           rc=$?
           {
             echo "### Workflows: zizmor"

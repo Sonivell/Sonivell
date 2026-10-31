@@ -69,7 +69,7 @@ Localmente: `./gradlew assembleLiteRelease` ou `./gradlew assembleSmartRelease` 
 
 ### Assinatura
 
-O release é assinado com a **chave de release**, que nunca fica no repositório. Ela entra pelas variáveis `SONIVELL_KEYSTORE` (caminho do `.jks`), `SONIVELL_STORE_PASSWORD`, `SONIVELL_KEY_ALIAS` e `SONIVELL_KEY_PASSWORD`. No GitHub Actions, cadastre em *Settings → Secrets and variables → Actions* os secrets `KEYSTORE_BASE64` (o `.jks` em base64), `KEYSTORE_PASSWORD`, `KEY_ALIAS` e `KEY_PASSWORD`; o workflow os repassa ao Gradle com os nomes acima.
+O release é assinado com a **chave de release**, que nunca fica no repositório. Ela entra pelas variáveis `SONIVELL_KEYSTORE` (caminho do `.jks`), `SONIVELL_STORE_PASSWORD`, `SONIVELL_KEY_ALIAS` e `SONIVELL_KEY_PASSWORD`. No GitHub Actions, cadastre os secrets `KEYSTORE_BASE64` (o `.jks` em base64), `KEYSTORE_PASSWORD`, `KEY_ALIAS` e `KEY_PASSWORD` no environment **`release`** (*Settings → Environments → release → Environment secrets*), não nos secrets do repositório: só o job de build usa esse environment, então nenhum outro workflow recebe a chave. O workflow os repassa ao Gradle com os nomes acima.
 
 Não há chave de teste no repositório. Sem a chave de release, o build de release para com uma explicação; para testar no aparelho, use `./gradlew assembleLiteDebug`. No CI, o build confere a chave antes de compilar e, no fim, registra a impressão digital (SHA-256) do certificado de cada APK, para conferir que saíram com a sua chave.
 
