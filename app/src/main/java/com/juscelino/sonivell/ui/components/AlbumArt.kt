@@ -45,7 +45,8 @@ private val GlassTextMinWidth = 110.dp
 /**
  * Capa gerada para faixas sem arte: sol com brilho e anéis atrás de um painel de vidro
  * translúcido, com sombra, trazendo [title] e [subtitle] em branco.
- * O [seed] escolhe a combinação de cores; sem [title] (ou em tamanhos pequenos) fica só o sol.
+ * O [seed] escolhe a combinação de cores; sem [title], em tamanhos pequenos ou em capas
+ * redondas ([corner] perto da metade da largura) fica só o sol.
  */
 @Composable
 fun GeneratedArt(
@@ -54,12 +55,14 @@ fun GeneratedArt(
     detailed: Boolean = true,
     title: String? = null,
     subtitle: String? = null,
+    corner: Dp = 0.dp,
 ) {
     val i = (abs(seed) % ArtTones.backgrounds.size).toInt()
     val bg = ArtTones.backgrounds[i]
     val core = ArtTones.cores[i]
     BoxWithConstraints(modifier) {
-        val showText = !title.isNullOrBlank() && maxWidth >= GlassTextMinWidth
+        val round = corner * 2 >= maxWidth * 0.9f
+        val showText = !title.isNullOrBlank() && maxWidth >= GlassTextMinWidth && !round
         Canvas(Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
@@ -91,8 +94,8 @@ fun GeneratedArt(
         }
         if (showText) {
             val unit = maxWidth.value
-            val corner = (unit * 0.09f).dp
-            val glass = RoundedCornerShape(corner)
+            val paneCorner = (unit * 0.09f).dp
+            val glass = RoundedCornerShape(paneCorner)
             val shadow = Shadow(Color.Black.copy(alpha = 0.55f), Offset(0f, unit * 0.012f), unit * 0.04f)
             Column(
                 Modifier
@@ -101,7 +104,7 @@ fun GeneratedArt(
                     .fillMaxWidth()
                     .drawBehind {
                         // Sombra suave do painel: camadas crescentes de preto bem transparente.
-                        val cr = corner.toPx()
+                        val cr = paneCorner.toPx()
                         for (k in 1..6) {
                             val grow = k * unit * 0.012f * density
                             drawRoundRect(
@@ -182,6 +185,7 @@ fun AlbumArt(
                         detailed,
                         title = track.rawAlbum?.takeIf { it.isNotBlank() } ?: track.title,
                         subtitle = track.albumArtist?.takeIf { it.isNotBlank() } ?: track.artist,
+                        corner = corner,
                     )
                 },
             )
