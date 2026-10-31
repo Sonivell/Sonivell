@@ -1,0 +1,8 @@
+Picked up JAVA_TOOL_OPTIONS: -Duser.language=pt -Duser.country=BR
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+[0;93m2026-10-31 15:20:25.216479570 [W:onnxruntime:ort-java, device_discovery.cc:133 GetPciBusId] Skipping pci_bus_id for PCI path at "/sys/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/MSFT1000:00/5620e0c7-8062-4dce-aeb7-520c7ef76171" because filename "5620e0c7-8062-4dce-aeb7-520c7ef76171" did not match expected pattern of [0-9a-f]+:[0-9a-f]+:[0-9a-f]+[.][0-9a-f]+[m
+SMART: models audio=lazy, scorer=unavailable, text=ready
+SMART: audio model loaded on first use
+SMART: queue=audio-geometry indexed=11/11, required=11, text=ready

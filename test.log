@@ -1,0 +1,50 @@
+rc=0
+The client will now receive all logging from the daemon (pid: 2577). The daemon log file: /home/runner/.gradle/daemon/9.4.1/daemon-2577.out.log
+Starting 3rd build in daemon [uptime: 3 mins 59.135 secs, performance: 100%, GC rate: 0.00/s, heap usage: 0% of 4 GiB]
+Execution stopped by some action with message: null
+    SMART: models audio=lazy, scorer=unavailable, text=ready
+    SMART: audio model loaded on first use
+    SMART progress: SmartProgress(running=false, analysed=8, total=8, metadataReady=true, failed=false)
+    SMART: queue=audio-geometry indexed=8/8, required=8, text=ready
+    SMART queue: [3586386157687708348, 3808164707038052287, 4408804829847246704, 6127083611740510605, 3057636346039049046]
+----
+[0;93m2026-10-31 15:21:32.353143787 [W:onnxruntime:ort-java, device_discovery.cc:133 GetPciBusId] Skipping pci_bus_id for PCI path at "/sys/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/MSFT1000:00/5620e0c7-8062-4dce-aeb7-520c7ef76171" because filename "5620e0c7-8062-4dce-aeb7-520c7ef76171" did not match expected pattern of [0-9a-f]+:[0-9a-f]+:[0-9a-f]+[.][0-9a-f]+[m
+
+> Task :desktop:test
+Caching disabled for task ':desktop:test' because:
+  Build cache is disabled
+Task ':desktop:test' is not up-to-date because:
+  No history is available.
+file or directory '/home/runner/work/Sonivell/Sonivell/desktop/build/classes/java/test', not found
+Starting process 'Gradle Test Executor 1'. Working directory: /home/runner/work/Sonivell/Sonivell/desktop Command: /usr/lib/jvm/temurin-21-jdk-amd64/bin/java -Dorg.gradle.internal.worker.tmpdir=/home/runner/work/Sonivell/Sonivell/desktop/build/tmp/test/work @/home/runner/.gradle/.tmp/gradle-worker-classpath10585570692271402541txt -Xmx512m -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -ea worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 1'
+Successfully started process 'Gradle Test Executor 1'
+
+OrtSmokeTest > modelRunsOnce() STANDARD_OUT
+    SMOKE: dim=960 norm=0.9999995789284208
+
+SmartEngineTest > analysesAndBuildsQueue() STANDARD_OUT
+    SMART: models audio=lazy, scorer=unavailable, text=ready
+    SMART: audio model loaded on first use
+    SMART progress: SmartProgress(running=false, analysed=8, total=8, metadataReady=true, failed=false)
+    SMART: queue=audio-geometry indexed=8/8, required=8, text=ready
+    SMART queue: [3586386157687708348, 3808164707038052287, 4408804829847246704, 6127083611740510605, 3057636346039049046]
+
+Gradle Test Executor 1 finished executing tests.
+
+> Task :desktop:test
+Generating HTML test report...
+Finished generating test html results (0.02 secs) into: /home/runner/work/Sonivell/Sonivell/desktop/build/reports/tests/test
+Finished generating test XML results (0.014 secs) into: /home/runner/work/Sonivell/Sonivell/desktop/build/test-results/test
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1793460089057.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/Sonivell/Sonivell/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 6s
+14 actionable tasks: 5 executed, 9 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html
