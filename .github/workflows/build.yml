@@ -27,23 +27,43 @@ jobs:
       - name: Testes unitários do app
         run: ./gradlew :app:testLiteDebugUnitTest
 
-      # Chave de release: vem dos secrets (SONIVELL_KEYSTORE_BASE64 e as senhas). Sem ela (secrets ainda
-      # não cadastrados, ou PR de fork), o APK sai com a chave de TESTE, pública, marcado "-teste".
+      # Chave de release: só pelos secrets (não há chave de teste no repositório). Sem ela, o build falha,
+      # exceto em PR de fork, onde o GitHub não entrega os secrets: aí só os APKs de debug são compilados.
       - name: Chave de assinatura
         shell: bash
         env:
           KEYSTORE_BASE64: ${{ secrets.SONIVELL_KEYSTORE_BASE64 }}
+          SONIVELL_STORE_PASSWORD: ${{ secrets.SONIVELL_STORE_PASSWORD }}
+          SONIVELL_KEY_ALIAS: ${{ secrets.SONIVELL_KEY_ALIAS }}
+          SONIVELL_KEY_PASSWORD: ${{ secrets.SONIVELL_KEY_PASSWORD }}
+          PR_DE_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/sonivell-release.jks"
-            echo "SONIVELL_KEYSTORE=$RUNNER_TEMP/sonivell-release.jks" >> "$GITHUB_ENV"
-            echo "SIGNING_ARGS=" >> "$GITHUB_ENV"
-          else
-            echo "::warning::Sem a chave de release nos secrets: os APKs desta execução foram assinados com a chave de TESTE (pública). Não distribua."
-            echo "SIGNING_ARGS=-Psonivell.chaveDeTeste=true" >> "$GITHUB_ENV"
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            if [ "$PR_DE_FORK" = true ]; then
+              echo "::warning::PR de fork: sem acesso aos secrets, só os APKs de debug foram compilados."
+              echo "SONIVELL_BUILD=debug" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            echo "::error::Falta o secret SONIVELL_KEYSTORE_BASE64 (o .jks em base64). Veja a seção Assinatura do README."
+            exit 1
           fi
+          for v in SONIVELL_STORE_PASSWORD SONIVELL_KEY_ALIAS SONIVELL_KEY_PASSWORD; do
+            [ -n "${!v:-}" ] || { echo "::error::Falta o secret $v."; exit 1; }
+          done
+          jks="$RUNNER_TEMP/sonivell-release.jks"
+          # Tolera quebras de linha e espaços no secret (comum ao colar o base64).
+          printf '%s' "$KEYSTORE_BASE64" | tr -d ' \r\n' | base64 -d > "$jks" 2>/dev/null \
+            || { echo "::error::SONIVELL_KEYSTORE_BASE64 não é um base64 válido."; exit 1; }
+          # Confere a senha do arquivo e o alias antes de compilar, com uma mensagem clara.
+          if ! keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" -alias "$SONIVELL_KEY_ALIAS" > /dev/null 2>&1; then
+            echo "::error::A chave não abriu: confira SONIVELL_STORE_PASSWORD e SONIVELL_KEY_ALIAS (aliases no arquivo: $(keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" 2>/dev/null | grep -oE '^[^,]+, ' | tr -d ',' | tr '\n' ' ' || true))."
+            exit 1
+          fi
+          echo "SONIVELL_KEYSTORE=$jks" >> "$GITHUB_ENV"
+          echo "SONIVELL_BUILD=release" >> "$GITHUB_ENV"
 
-      - name: Compilar APKs de release (lite e SMART)
+      - name: Compilar APKs (lite e SMART)
         shell: bash
         env:
           # O número desta execução vira o versionCode: cada APK novo atualiza o anterior.
@@ -53,13 +73,35 @@ jobs:
           SONIVELL_KEY_PASSWORD: ${{ secrets.SONIVELL_KEY_PASSWORD }}
         run: |
           set -o pipefail
-          ./gradlew ${SIGNING_ARGS:+"$SIGNING_ARGS"} assembleLiteRelease assembleSmartRelease 2>&1 | tee build.log || {
+          if [ "$SONIVELL_BUILD" = release ]; then tarefas="assembleLiteRelease assembleSmartRelease"; else tarefas="assembleLiteDebug assembleSmartDebug"; fi
+          # shellcheck disable=SC2086 # $tarefas são duas palavras de propósito
+          ./gradlew $tarefas 2>&1 | tee build.log || {
             # Em caso de erro, destaca as mensagens como anotações (visíveis no resumo da execução).
             grep -E "^e: |What went wrong|Execution failed|error:|Error:|Lint found" -A3 build.log | head -n 60 | while IFS= read -r line; do
               echo "::error::${line}"
             done
             exit 1
           }
+
+      # Prova de que os APKs saíram com a SUA chave: imprime o SHA-256 do certificado e reprova se for
+      # a antiga chave de teste (pública) ou se a assinatura não validar.
+      - name: Conferir a assinatura dos APKs
+        if: env.SONIVELL_BUILD == 'release'
+        shell: bash
+        run: |
+          set -euo pipefail
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          chave_teste=882ef7c4a4ff1dcce21802ac5eef4779473c90c304ac83770ef4f0535fa1477b
+          echo "### Assinatura dos APKs" >> "$GITHUB_STEP_SUMMARY"
+          for apk in app/build/outputs/apk/*/release/*.apk; do
+            "$apksigner" verify --print-certs "$apk" > certs.txt
+            sha=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' certs.txt)
+            dn=$(sed -n 's/^Signer #1 certificate DN: //p' certs.txt)
+            [ -n "$sha" ] || { echo "::error::$apk sem assinatura válida"; exit 1; }
+            [ "$sha" != "$chave_teste" ] || { echo "::error::$apk foi assinado com a antiga chave de TESTE"; exit 1; }
+            echo "::notice::$(basename "$apk"): $dn, SHA-256 $sha"
+            echo "- \`$(basename "$apk")\`: $dn · SHA-256 \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Apagar a chave do disco
         if: always()
@@ -68,9 +110,9 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: sonivell-lite-apk
-          path: app/build/outputs/apk/lite/release/*.apk
+          path: app/build/outputs/apk/lite/*/*.apk
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: sonivell-smart-apk
-          path: app/build/outputs/apk/smart/release/*.apk
+          path: app/build/outputs/apk/smart/*/*.apk

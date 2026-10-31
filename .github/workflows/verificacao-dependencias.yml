@@ -51,9 +51,10 @@ jobs:
         run: |
           cp .github/ci/verification-metadata.base.xml gradle/verification-metadata.xml
           # Tudo numa execução só, com o app e o PC juntos: assim o arquivo cobre os APKs, os testes,
-          # o lint, o .deb, o motor SMART do PC e a lista usada pelo OSV-Scanner.
+          # o lint, o .deb, o motor SMART do PC e a lista usada pelo OSV-Scanner. Sem a chave (este job não
+          # recebe secrets), só o empacotamento do release falha, depois de baixar tudo o que ele usa.
           ./gradlew --write-verification-metadata sha256 --continue --no-configuration-cache \
-            -Psonivell.desktop=true -Psonivell.chaveDeTeste=true \
+            -Psonivell.desktop=true \
             --init-script .github/ci/travar-runtime.gradle \
             assembleLiteRelease assembleSmartRelease :app:testLiteDebugUnitTest \
             :app:lintLiteDebug :app:lintSmartDebug \

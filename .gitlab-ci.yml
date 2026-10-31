@@ -37,18 +37,16 @@ apk:
     - echo "sdk.dir=$ANDROID_HOME" > local.properties
   script:
     # Chave de release pelas variáveis de CI (SONIVELL_KEYSTORE_BASE64 e as senhas, Masked e Protected).
-    # Sem ela, os APKs saem com a chave de TESTE, pública, marcados "-teste": não distribua.
+    # Não há chave de teste no repositório: sem a chave, o job falha.
     - |
-      if [ -n "${SONIVELL_KEYSTORE_BASE64:-}" ]; then
-        printf '%s' "$SONIVELL_KEYSTORE_BASE64" | base64 -d > /tmp/sonivell-release.jks
-        export SONIVELL_KEYSTORE=/tmp/sonivell-release.jks
-        SIGNING_ARGS=""
-      else
-        echo "AVISO: sem a chave de release; APKs assinados com a chave de TESTE (pública). Não distribua."
-        SIGNING_ARGS="-Psonivell.chaveDeTeste=true"
+      if [ -z "${SONIVELL_KEYSTORE_BASE64:-}" ]; then
+        echo "ERRO: falta a variável SONIVELL_KEYSTORE_BASE64 (o .jks em base64). Veja a seção Assinatura do README."
+        exit 1
       fi
+      printf '%s' "$SONIVELL_KEYSTORE_BASE64" | tr -d ' \r\n' | base64 -d > /tmp/sonivell-release.jks
+      export SONIVELL_KEYSTORE=/tmp/sonivell-release.jks
       export SONIVELL_VERSION_CODE="$CI_PIPELINE_IID"
-      ./gradlew $SIGNING_ARGS assembleLiteRelease assembleSmartRelease
+      ./gradlew assembleLiteRelease assembleSmartRelease
       rm -f /tmp/sonivell-release.jks
   artifacts:
     name: sonivell-apks
