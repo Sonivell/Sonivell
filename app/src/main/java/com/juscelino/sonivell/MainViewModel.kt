@@ -65,6 +65,7 @@ import com.juscelino.sonivell.data.Organize
 import com.juscelino.sonivell.data.PlayStats
 import com.juscelino.sonivell.data.RecommendationPrefs
 import com.juscelino.sonivell.data.Search
+import com.juscelino.sonivell.data.SortKeys
 import com.juscelino.sonivell.data.SmartPlaylist
 import com.juscelino.sonivell.data.SmartPlaylistStore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -257,17 +258,38 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     )
     val favorites: StateFlow<Set<Long>> = _favorites.asStateFlow()
 
-    val library: StateFlow<LibraryState> = combine(allTracks, query, tab, sort) { all, q, t, s ->
+    /** Índice de busca (campos já normalizados), refeito só quando a biblioteca muda, não a cada tecla. */
+    @Volatile private var searchIndex: Pair<List<Track>, List<Search.Indexed>>? = null
+
+    private fun searchIndexOf(all: List<Track>): List<Search.Indexed> =
+        searchIndex?.takeIf { it.first === all }?.second ?: all.map(Search::index).also { searchIndex = all to it }
+
+    /**
+     * A parte pesada da biblioteca (busca, ordenação e agrupamentos) roda fora da thread principal,
+     * com a busca esperando a digitação acalmar. Antes rodava na thread principal a cada tecla,
+     * normalizando os textos a cada comparação (auditoria PERF-01).
+     */
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    private val libraryComputed = combine(
+        allTracks,
+        query.debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS },
+        tab,
+        sort,
+    ) { all, q, t, s ->
         if (all == null) return@combine LibraryState(loading = true, query = q, tab = t, sort = s)
+        val keys = SortKeys()
         // Busca tolerante (sem acentos, fora de ordem, pequenos erros, anos/décadas).
         val parsed = Search.parse(q)
-        val scored = if (parsed.isEmpty) null else all.mapNotNull { t -> Search.score(parsed, t).takeIf { it > 0 }?.let { t to it } }
+        val scored = if (parsed.isEmpty) null else {
+            val index = searchIndexOf(all)
+            all.indices.mapNotNull { i -> Search.score(parsed, index[i]).takeIf { it > 0 }?.let { all[i] to it } }
+        }
         val filtered = scored?.map { it.first } ?: all
         val sorted = if (scored != null) scored.sortedByDescending { it.second }.map { it.first } else when (s) {
-            SortOrder.Titulo -> filtered.sortedBy { sortKey(it.title) }
-            SortOrder.Artista -> filtered.sortedWith(compareBy({ sortKey(it.artist) }, { sortKey(it.album) }))
+            SortOrder.Titulo -> filtered.sortedBy { keys.of(it.title) }
+            SortOrder.Artista -> filtered.sortedWith(compareBy({ keys.of(it.artist) }, { keys.of(it.album) }))
             SortOrder.Album -> filtered.sortedWith(
-                compareBy({ sortKey(it.album) }, { it.discNumber ?: 0 }, { it.trackNumber ?: 0 }, { sortKey(it.title) })
+                compareBy({ keys.of(it.album) }, { it.discNumber ?: 0 }, { it.trackNumber ?: 0 }, { keys.of(it.title) })
             )
             SortOrder.Duracao -> filtered.sortedByDescending { it.durationMs }
             SortOrder.Ano -> filtered.sortedWith(compareByDescending<Track> { it.year ?: 0 }.thenBy { it.album.lowercase() })
@@ -275,20 +297,20 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         val albums = filtered.groupBy { it.albumId }.map { (id, ts) ->
             Album(id, ts.first().album, ts.first().artist, ts)
-        }.sortedBy { sortKey(it.title) }
+        }.sortedBy { keys.of(it.title) }
         LibraryState(
             loading = false,
             allTracks = all,
             tracks = sorted,
             albums = albums,
-            artists = filtered.groupBy { it.artist }.map { (n, ts) -> Artist(n, ts) }.sortedBy { sortKey(it.name) },
-            folders = filtered.groupBy { it.folder }.map { (p, ts) -> Folder(p, ts) }.sortedBy { sortKey(it.name) },
+            artists = filtered.groupBy { it.artist }.map { (n, ts) -> Artist(n, ts) }.sortedBy { keys.of(it.name) },
+            folders = filtered.groupBy { it.folder }.map { (p, ts) -> Folder(p, ts) }.sortedBy { keys.of(it.name) },
             // Uma faixa pode ter vários gêneros na mesma tag ("Rock; Indie").
             genres = filtered
                 .flatMap { t -> t.genre.orEmpty().split(';', '/', ',').map { it.trim() }.filter { it.isNotEmpty() }.map { it to t } }
                 .groupBy({ it.first.lowercase() }, { it })
                 .map { (_, pairs) -> Genre(pairs.first().first, pairs.map { it.second }.distinctBy { it.id }) }
-                .sortedBy { sortKey(it.name) },
+                .sortedBy { keys.of(it.name) },
             recentAlbums = all.sortedByDescending { it.dateAdded }
                 .distinctBy { it.albumId }
                 .take(6)
@@ -297,11 +319,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             tab = t,
             sort = s,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryState())
+    }.flowOn(Dispatchers.Default)
 
-    /** Faixa atual com dados completos (da biblioteca, quando disponível). */
-    val currentTrack: StateFlow<Track?> = combine(playerState, allTracks) { st, all ->
-        val item = st.current ?: return@combine null
+    /** O texto digitado entra na hora (o campo de busca o lê daqui); o resultado chega logo depois. */
+    val library: StateFlow<LibraryState> = combine(libraryComputed, query) { lib, q -> lib.copy(query = q) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryState())
+
+    /**
+     * Faixa atual com dados completos (da biblioteca, quando disponível). Só recalcula quando a
+     * faixa muda, não a cada atualização de posição (500 ms) do player (auditoria PERF-02).
+     */
+    val currentTrack: StateFlow<Track?> = combine(playerState.map { it.current }.distinctUntilChanged(), allTracks) { current, all ->
+        val item = current ?: return@combine null
         val id = item.mediaId.toLongOrNull()
         all?.firstOrNull { it.id == id } ?: item.toTrack(getApplication<Application>())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -1021,6 +1050,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         const val KEY_WELCOME_SEEN = "welcome_seen"
         const val AUTO_REFRESH_DEBOUNCE_MS = 3_000L
         const val PUBLISH_DEBOUNCE_MS = 2_000L
+        const val SEARCH_DEBOUNCE_MS = 150L
         const val KEY_RATINGS = "ratings"
     }
 
