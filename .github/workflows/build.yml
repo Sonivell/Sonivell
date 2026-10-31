@@ -67,7 +67,12 @@ jobs:
           fi
           # Confere a senha do arquivo e o alias antes de compilar, com uma mensagem clara.
           if ! keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" -alias "$SONIVELL_KEY_ALIAS" > /dev/null 2>&1; then
-            echo "::error::A chave não abriu: confira os secrets KEYSTORE_PASSWORD e KEY_ALIAS (aliases no arquivo: $(keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" 2>/dev/null | grep -oE '^[^,]+, ' | tr -d ',' | tr '\n' ' ' || true))."
+            # Diagnóstico sem expor segredos: tamanho e tipo do arquivo, o erro do keytool e os aliases.
+            tipo=$(od -An -tx1 -N4 "$jks" | tr -d ' ')
+            case "$tipo" in feedfeed) tipo="JKS";; 3082*) tipo="PKCS12";; *) tipo="desconhecido ($tipo)";; esac
+            erro=$(keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" 2>&1 | grep -iE 'error|exception|incorrect|invalid' | head -n 1 || true)
+            aliases=$(keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" 2>/dev/null | grep -oE '^[^,]+, ' | tr -d ',' | tr '\n' ' ' || true)
+            echo "::error::A chave não abriu: arquivo $tipo de $(stat -c %s "$jks") bytes; keytool: ${erro:-sem mensagem}; aliases: ${aliases:-nenhum}. Confira os secrets KEYSTORE_PASSWORD e KEY_ALIAS."
             exit 1
           fi
           echo "SONIVELL_KEYSTORE=$jks" >> "$GITHUB_ENV"
