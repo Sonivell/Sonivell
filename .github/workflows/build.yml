@@ -54,9 +54,15 @@ jobs:
             [ -n "${!v:-}" ] || { echo "::error::Falta o secret ${par%%:*}."; exit 1; }
           done
           jks="$RUNNER_TEMP/sonivell-release.jks"
-          # Tolera quebras de linha e espaços no secret (comum ao colar o base64).
-          printf '%s' "$KEYSTORE_BASE64" | tr -d ' \r\n' | base64 -d > "$jks" 2>/dev/null \
-            || { echo "::error::KEYSTORE_BASE64 não é um base64 válido."; exit 1; }
+          # Tolera o que costuma vir junto ao colar: quebras de linha, tabs, aspas, as linhas
+          # "-----BEGIN/END" do certutil -encode (Windows) e o alfabeto url-safe (- e _).
+          b64=$(printf '%s' "$KEYSTORE_BASE64" | grep -v -- '-----' | tr -d '[:space:]"' | tr -- '-_' '+/')
+          if ! printf '%s' "$b64" | base64 -d > "$jks" 2>/dev/null; then
+            # Diagnóstico sem expor o conteúdo: tamanho, resto por 4 e caracteres fora do base64.
+            invalidos=$(printf '%s' "$b64" | tr -d 'A-Za-z0-9+/=' | wc -c)
+            echo "::error::KEYSTORE_BASE64 não é um base64 válido (${#b64} caracteres, resto por 4 = $(( ${#b64} % 4 )), $invalidos fora do alfabeto). Gere com: base64 -w0 sua-chave.jks"
+            exit 1
+          fi
           # Confere a senha do arquivo e o alias antes de compilar, com uma mensagem clara.
           if ! keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" -alias "$SONIVELL_KEY_ALIAS" > /dev/null 2>&1; then
             echo "::error::A chave não abriu: confira os secrets KEYSTORE_PASSWORD e KEY_ALIAS (aliases no arquivo: $(keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" 2>/dev/null | grep -oE '^[^,]+, ' | tr -d ',' | tr '\n' ' ' || true))."
