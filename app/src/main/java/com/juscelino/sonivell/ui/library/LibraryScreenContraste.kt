@@ -73,11 +73,13 @@ import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionTitle
+import com.juscelino.sonivell.ui.components.glassTone
 import com.juscelino.sonivell.ui.components.TrackRow
-import com.juscelino.sonivell.ui.theme.ArtTones
+import com.juscelino.sonivell.ui.sonivell.SvMiniWave
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.glassSurface
 
 /** Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
 private data class ContrasteLabels(val search: String, val library: String, val liked: String, val forYou: String)
@@ -530,20 +532,20 @@ private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouS
         }.take(6)
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        tiles.chunked(2).forEach { pair ->
+        tiles.chunked(2).forEachIndexed { row, pair ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                pair.forEach { q ->
+                pair.forEachIndexed { col, q ->
+                    val tone = glassTone(row * 2 + col, c)
                     Row(
                         Modifier
                             .weight(1f)
                             .height(56.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(c.surfaceHigh)
+                            .glassSurface(RoundedCornerShape(10.dp), c.surface, c.outline, tone = tone, elevation = 6.dp)
                             .clickable(onClick = q.onClick),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        QuickArt(q.art)
+                        QuickArt(q.art, tone)
                         Text(
                             q.label,
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 16.sp),
@@ -562,16 +564,16 @@ private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouS
 }
 
 @Composable
-private fun QuickArt(art: ContrasteArt) {
-    val c = SonivellTheme.colors
+private fun QuickArt(art: ContrasteArt, tone: Color) {
     val m = Modifier.size(56.dp)
     when (art) {
         is ContrasteArt.Of -> AlbumArt(art.track, m, corner = 0.dp)
-        ContrasteArt.Liked -> Box(m.background(LikedTone), contentAlignment = Alignment.Center) {
-            Icon(SonivellTheme.icons.liked, null, Modifier.size(22.dp), tint = Color.White)
+        // Ícones sobre um véu translúcido na cor do bloco, no estilo de vidro do tema Sonivell.
+        ContrasteArt.Liked -> Box(m.background(tone.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+            Icon(SonivellTheme.icons.liked, null, Modifier.size(22.dp), tint = tone)
         }
-        is ContrasteArt.Symbol -> Box(m.background(c.surface), contentAlignment = Alignment.Center) {
-            Icon(symbolIcon(art.kind), null, Modifier.size(22.dp), tint = c.accent)
+        is ContrasteArt.Symbol -> Box(m.background(tone.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+            Icon(symbolIcon(art.kind), null, Modifier.size(22.dp), tint = tone)
         }
     }
 }
@@ -862,6 +864,7 @@ private const val SONGS_PREVIEW = 4
 /** Busca vazia: blocos coloridos de gênero (e de década) para explorar a biblioteca. */
 private fun LazyListScope.browseContent(state: LibraryState, decades: List<Int>, actions: LibraryActions) {
     item(key = "browse") {
+        val c = SonivellTheme.colors
         val res = LocalContext.current.resources
         val tiles = remember(state.genres, decades, res) {
             state.genres.sortedByDescending { it.tracks.size }.take(12).map { g -> g.name to { actions.onOpenGenre(g.name) } } +
@@ -873,24 +876,28 @@ private fun LazyListScope.browseContent(state: LibraryState, decades: List<Int>,
             tiles.chunked(2).forEachIndexed { row, pair ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     pair.forEachIndexed { col, (label, onClick) ->
-                        val tone = ArtTones.rings[(row * 2 + col) % ArtTones.rings.size]
+                        val tone = glassTone(row * 2 + col, c)
                         Box(
                             Modifier
                                 .weight(1f)
                                 .height(92.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(tone)
+                                .glassSurface(RoundedCornerShape(16.dp), c.surface, c.outline, tone = tone, elevation = 6.dp)
                                 .clickable(onClick = onClick)
                                 .padding(14.dp),
                         ) {
-                            Text(label, style = MaterialTheme.typography.titleMedium, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Box(
-                                Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .size(28.dp)
-                                    .clip(CircleShape)
-                                    .background(ArtTones.cores[(row * 2 + col) % ArtTones.cores.size])
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    label,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = c.textPrimary,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                )
+                                Box(Modifier.size(8.dp).clip(CircleShape).background(tone))
+                            }
+                            SvMiniWave(label, tone, Modifier.align(Alignment.BottomStart).size(width = 44.dp, height = 14.dp))
                         }
                     }
                     if (pair.size == 1) Spacer(Modifier.weight(1f))

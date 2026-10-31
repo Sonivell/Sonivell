@@ -49,6 +49,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.material3.Text
 import com.juscelino.sonivell.desktop.ArtLoader
 import com.juscelino.sonivell.desktop.Track
 import com.juscelino.sonivell.desktop.str
@@ -100,10 +109,12 @@ object ArtCache {
 }
 
 private val artBackgrounds = listOf(Color(0xFF1B2A26), Color(0xFF1D2433), Color(0xFF2E221A), Color(0xFF2A1D30))
-private val artRings = listOf(Color(0xFF3B6457), Color(0xFF3A4A6B), Color(0xFF6B4A33), Color(0xFF5A3D66))
 private val artCores = listOf(Color(0xFFC8F04A), Color(0xFF7CC4FF), Color(0xFFFF9F5A), Color(0xFFE8A6FF))
 
-/** Capa da faixa: arte embutida, imagem da pasta ou uma capa gerada (círculos) quando não há. */
+/** Abaixo desta largura a capa gerada não mostra o painel de vidro com texto. */
+private val GlassTextMinWidth = 110.dp
+
+/** Capa da faixa: arte embutida, imagem da pasta ou uma capa gerada (vidro) quando não há. */
 @Composable
 fun AlbumArt(track: Track?, size: Dp, corner: Dp = 14.dp, modifier: Modifier = Modifier) {
     val bmp by produceState<ImageBitmap?>(null, track?.id) {
@@ -115,13 +126,99 @@ fun AlbumArt(track: Track?, size: Dp, corner: Dp = 14.dp, modifier: Modifier = M
         if (image != null) {
             Image(bitmap = image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
         } else {
-            Canvas(Modifier.fillMaxSize()) {
-                drawRect(artBackgrounds[seed])
-                val c = Offset(this.size.width / 2, this.size.height / 2)
-                val m = this.size.minDimension
-                drawCircle(artRings[seed], radius = m * 0.36f, center = c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = m * 0.03f))
-                drawCircle(artRings[seed], radius = m * 0.22f, center = c, style = androidx.compose.ui.graphics.drawscope.Stroke(width = m * 0.03f))
-                drawCircle(artCores[seed], radius = m * 0.09f, center = c)
+            // Painel com texto só em capas grandes e não redondas (artistas).
+            val showText = track != null && size >= GlassTextMinWidth && corner * 2 < size * 0.9f
+            GlassArt(
+                seed,
+                size,
+                title = if (showText) track!!.album.ifBlank { track.title } else null,
+                subtitle = track?.albumArtist?.ifBlank { track.artist },
+            )
+        }
+    }
+}
+
+/**
+ * Capa gerada: sol com brilho e anéis atrás de um painel de vidro translúcido, com sombra,
+ * trazendo [title] e [subtitle] em branco. Sem [title] fica só o sol.
+ */
+@Composable
+private fun GlassArt(seed: Int, size: Dp, title: String?, subtitle: String?) {
+    val bg = artBackgrounds[seed]
+    val core = artCores[seed]
+    val showText = !title.isNullOrBlank()
+    Box(Modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize()) {
+            val w = this.size.width
+            val h = this.size.height
+            drawRect(Brush.linearGradient(listOf(lerp(bg, Color.White, 0.06f), bg), Offset.Zero, Offset(w * 0.4f, h)))
+            drawRect(Brush.radialGradient(listOf(core.copy(alpha = 0.30f), Color.Transparent), Offset(w * 0.85f, 0f), w * 0.9f))
+            val c = Offset(w / 2f, if (showText) h * 0.40f else h / 2f)
+            val r = w * if (showText) 0.26f else 0.25f
+            drawCircle(Brush.radialGradient(listOf(core.copy(alpha = 0.45f), Color.Transparent), c, r * 2.2f), radius = r * 2.2f, center = c)
+            val stroke = Stroke(width = (w * 0.006f).coerceAtLeast(1.5f))
+            drawCircle(Color.White.copy(alpha = 0.11f), radius = w * 0.44f, center = c, style = stroke)
+            drawCircle(Color.White.copy(alpha = 0.15f), radius = w * 0.34f, center = c, style = stroke)
+            drawCircle(
+                Brush.radialGradient(
+                    0f to lerp(core, Color.White, 0.55f),
+                    0.45f to core,
+                    1f to lerp(core, Color.Black, 0.4f),
+                    center = c + Offset(-r * 0.3f, -r * 0.4f),
+                    radius = r * 1.4f,
+                ),
+                radius = r,
+                center = c,
+            )
+        }
+        if (showText) {
+            val unit = size.value
+            val paneCorner = (unit * 0.09f).dp
+            val glass = RoundedCornerShape(paneCorner)
+            val shadow = Shadow(Color.Black.copy(alpha = 0.55f), Offset(0f, unit * 0.012f), unit * 0.04f)
+            Column(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding((unit * 0.08f).dp)
+                    .fillMaxWidth()
+                    .drawBehind {
+                        // Sombra suave do painel: camadas crescentes de preto bem transparente.
+                        val cr = paneCorner.toPx()
+                        for (k in 1..6) {
+                            val grow = k * unit * 0.012f * density
+                            drawRoundRect(
+                                Color.Black.copy(alpha = 0.07f),
+                                topLeft = Offset(-grow * 0.5f, grow * 0.9f),
+                                size = Size(this.size.width + grow, this.size.height),
+                                cornerRadius = CornerRadius(cr + grow),
+                            )
+                        }
+                    }
+                    .clip(glass)
+                    .background(Brush.linearGradient(listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.07f))))
+                    .background(bg.copy(alpha = 0.25f))
+                    .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.32f), Color.White.copy(alpha = 0.08f))), glass)
+                    .padding(horizontal = (unit * 0.08f).dp, vertical = (unit * 0.07f).dp),
+                verticalArrangement = Arrangement.spacedBy((unit * 0.012f).dp),
+            ) {
+                Text(
+                    title!!,
+                    style = TextStyle(fontSize = (unit * 0.087f).sp, lineHeight = (unit * 0.105f).sp, letterSpacing = (-0.1).sp, shadow = shadow),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        subtitle,
+                        style = TextStyle(fontSize = (unit * 0.07f).sp, shadow = shadow),
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.8f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }
