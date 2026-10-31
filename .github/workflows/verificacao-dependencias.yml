@@ -10,10 +10,6 @@ name: Atualizar a verificação das dependências
 # Revise o diff antes do merge: hashes novos só devem aparecer para as versões que você mudou.
 on:
   workflow_dispatch:
-  # TEMPORÁRIO (primeira geração no PR #16); sai no commit seguinte.
-  push:
-    branches: [ auditoria-ciclo-2 ]
-    paths: [ '.github/workflows/verificacao-dependencias.yml' ]
 
 permissions:
   contents: read

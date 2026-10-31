@@ -49,9 +49,8 @@ def main():
         print(f"### {titulo}\n\n:x: Sem resultado do OSV-Scanner ({e}).\n")
         return 1
 
-    linhas, pacotes, reprovados, fontes = [], set(), 0, 0
+    linhas, pacotes, reprovados = [], set(), 0
     for resultado in dados.get("results") or []:
-        fontes += 1
         for p in resultado.get("packages") or []:
             pkg = p.get("package", {})
             nome, versao = pkg.get("name", "?"), pkg.get("version", "?")
@@ -70,8 +69,8 @@ def main():
     linhas.sort(reverse=True)
     saida = [f"### {titulo}", ""]
     if not linhas:
-        saida.append(f":white_check_mark: Nenhuma vulnerabilidade conhecida "
-                     f"({fontes} arquivo(s) de dependências lido(s)).")
+        # O JSON do OSV só lista os arquivos com achados; a quantidade lida fica no log do job.
+        saida.append(":white_check_mark: Nenhuma vulnerabilidade conhecida.")
     else:
         icone = ":x:" if reprovados else ":warning:"
         saida.append(f"{icone} {len(linhas)} vulnerabilidade(s) em {len(pacotes)} pacote(s)"
