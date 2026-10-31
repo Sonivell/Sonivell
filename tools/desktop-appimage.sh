@@ -12,13 +12,15 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
-FFMPEG_URL=${FFMPEG_URL:-https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz}
-APPIMAGETOOL_URL=${APPIMAGETOOL_URL:-https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage}
-# Integridade (auditoria SUP-02): com FFMPEG_SHA256 / APPIMAGETOOL_SHA256, o binário baixado só é
-# usado se o hash bater. Fixe também uma URL versionada (não "latest"/"continuous"), senão o hash
-# muda a cada build. Sem hash, o script avisa e registra no AppImage o hash e a versão usados.
-FFMPEG_SHA256=${FFMPEG_SHA256:-}
-APPIMAGETOOL_SHA256=${APPIMAGETOOL_SHA256:-}
+# Versões fixas, conferidas pelo SHA-256 (auditoria SUP-02): o mesmo binário em todo build.
+# O BtbN apaga os autobuilds antigos depois de algumas semanas; quando a URL der 404, escolha um
+# novo (git ls-remote --tags https://github.com/BtbN/FFmpeg-Builds; o nome do arquivo segue o
+# "ffmpeg -version": ffmpeg-N-<rev>-g<hash>-linux64-gpl.tar.xz) e atualize URL e hash juntos.
+FFMPEG_URL=${FFMPEG_URL:-https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-31-12-59/ffmpeg-N-128227-g4811625b5f-linux64-gpl.tar.xz}
+FFMPEG_SHA256=${FFMPEG_SHA256-67929be39bbb696f41d3295686597a439aeac902f61d82be660ccc1453c1fdfb}
+APPIMAGETOOL_URL=${APPIMAGETOOL_URL:-https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage}
+APPIMAGETOOL_SHA256=${APPIMAGETOOL_SHA256-ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0}
+# Com outra URL, passe também o hash dela; FFMPEG_SHA256= (vazio) só avisa, sem conferir.
 
 # Confere o SHA-256 de $1 contra $2 (vazio = só avisa). Imprime o hash calculado.
 verify() {

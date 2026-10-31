@@ -60,6 +60,7 @@ class PlaybackService : MediaLibraryService() {
     private var crossfader: Crossfader? = null
     private var outputs: OutputWatcher? = null
     private var keeper: PlaybackKeeper? = null
+    private var smartFiller: SmartQueueFiller? = null
 
     /** "Pausar ao desconectar o fone" muda na hora, sem reiniciar o player. */
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
@@ -117,6 +118,9 @@ class PlaybackService : MediaLibraryService() {
         )
 
         browser = LibraryBrowser(this, getSharedPreferences(SettingsStore.PREFS, MODE_PRIVATE))
+        // Fila SMART "infinita" com o app fechado (com ele aberto, quem abastece é o app).
+        smartFiller = SmartQueueFiller(this, player, prefs, scope, createSmartEngine(this)) { browser.tracks() }
+            .also { it.start() }
         session = MediaLibrarySession.Builder(this, player, LibraryCallback())
             .setSessionActivity(openApp)
             .build()
@@ -272,6 +276,8 @@ class PlaybackService : MediaLibraryService() {
         prefs.unregisterOnSharedPreferenceChangeListener(settingsListener)
         keeper?.release()
         keeper = null
+        smartFiller?.release()
+        smartFiller = null
         outputs?.release()
         outputs = null
         handler.removeCallbacksAndMessages(null)

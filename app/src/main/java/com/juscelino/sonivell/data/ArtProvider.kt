@@ -185,7 +185,7 @@ object CustomCovers {
     /** Copia a imagem escolhida, reduzida a no máximo 1024 px, como capa do álbum. */
     fun set(context: Context, albumId: Long, image: Uri): Boolean = runCatching {
         val d = dir ?: File(context.filesDir, "covers").apply { mkdirs() }
-        val bytes = context.contentResolver.openInputStream(image)?.use { it.readBytes() } ?: return false
+        val bytes = context.contentResolver.openInputStream(image)?.use { BoundedRead.bytes(it, BoundedRead.IMAGE_MAX) } ?: return false
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
         var sample = 1

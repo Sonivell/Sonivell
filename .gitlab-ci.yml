@@ -47,6 +47,7 @@ apk:
         echo "AVISO: sem a chave de release; APKs assinados com a chave de TESTE (pública). Não distribua."
         SIGNING_ARGS="-Psonivell.chaveDeTeste=true"
       fi
+      export SONIVELL_VERSION_CODE="$CI_PIPELINE_IID"
       ./gradlew $SIGNING_ARGS assembleLiteRelease assembleSmartRelease
       rm -f /tmp/sonivell-release.jks
   artifacts:

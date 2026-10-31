@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup do Android (Android 12+): nuvem e transferência para outro aparelho. Vão playlists,
+  curtidas, ajustes, correções de tags e capas escolhidas. Ficam de fora o histórico de escuta e o
+  modelo de gosto (dados pessoais que não precisam sair do aparelho) e os índices do SMART, que
+  são grandes e refeitos sozinhos (auditoria SEC-04). O backup manual do app (Ajustes > Seus
+  dados) continua levando tudo.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="historico.tsv" />
+        <exclude domain="file" path="gosto.bin" />
+        <exclude domain="file" path="smart_index.bin" />
+        <exclude domain="file" path="smart_text_index.bin" />
+        <exclude domain="file" path="map_layout.bin" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="smart_index.bin" />
+        <exclude domain="file" path="smart_text_index.bin" />
+        <exclude domain="file" path="map_layout.bin" />
+    </device-transfer>
+</data-extraction-rules>

@@ -35,6 +35,9 @@ class LibraryBrowser(private val context: Context, private val prefs: SharedPref
         }
     }
 
+    /** Todas as faixas do aparelho (com o cache de alguns minutos), para quem abastece a fila no serviço. */
+    suspend fun tracks(): List<Track> = library()
+
     fun root(): MediaItem = folder(ROOT, context.getString(R.string.app_name))
 
     suspend fun children(parentId: String): List<MediaItem> {

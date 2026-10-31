@@ -107,7 +107,7 @@ class LyricsRepository(private val context: Context, private val prefs: SharedPr
             ?: index["${track.artist} - ${track.title}".lowercase()]
             ?: index[track.title.lowercase()]
             ?: return null
-        val text = context.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } ?: return null
+        val text = context.contentResolver.openInputStream(uri)?.use { BoundedRead.bytes(it, BoundedRead.LYRICS_MAX)?.decodeToString() } ?: return null
         return parse(text, fromFile = true)
     }
 
@@ -123,7 +123,7 @@ class LyricsRepository(private val context: Context, private val prefs: SharedPr
                 val index = lrcIndex ?: buildIndex().also { lrcIndex = it }
                 index.mapNotNull { (stem, uri) ->
                     runCatching {
-                        context.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() }
+                        context.contentResolver.openInputStream(uri)?.use { BoundedRead.bytes(it, BoundedRead.LYRICS_MAX)?.decodeToString() }
                             ?.let { parse(it, fromFile = true) }?.let { stem to it }
                     }.getOrNull()
                 }.toMap().also { textIndex = it }

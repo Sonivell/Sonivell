@@ -23,6 +23,16 @@ Java_io_github_nikitasud_latentjam_smart_chain_AndroidBatchDotProducts_nativeCom
     env->ReleasePrimitiveArrayCritical(query, q, JNI_ABORT);
     env->ReleasePrimitiveArrayCritical(matrix, m, JNI_ABORT); return JNI_FALSE;
   }
+  // Defesa em profundidade: cada linha precisa existir na matriz e caber na saída, mesmo que o
+  // adaptador Kotlin já confira. Um índice fora disso leria/escreveria fora dos limites do heap.
+  const jsize matrixRows = matrixSize / dim;
+  for (jint i = 0; i < count; ++i) {
+    if (r[i] < 0 || r[i] >= matrixRows || r[i] >= outputSize) {
+      env->ReleasePrimitiveArrayCritical(rows, r, JNI_ABORT);
+      env->ReleasePrimitiveArrayCritical(query, q, JNI_ABORT);
+      env->ReleasePrimitiveArrayCritical(matrix, m, JNI_ABORT); return JNI_FALSE;
+    }
+  }
   auto* out = static_cast<float*>(env->GetPrimitiveArrayCritical(output, nullptr));
   if (!out) {
     env->ReleasePrimitiveArrayCritical(rows, r, JNI_ABORT);
