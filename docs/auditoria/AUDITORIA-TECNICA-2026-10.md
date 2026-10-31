@@ -4,8 +4,56 @@
 - **Commit auditado:** `1f6d1b9` (`main`, depois do merge do #13)
 - **Tipo:** análise estática do repositório inteiro (357 arquivos, ~42,6 mil linhas de Kotlin, mais C/C++ nativo, scripts e CI).
 - **Etapa:** 1 de 2. Nenhum arquivo de código foi alterado. Este documento é o único arquivo novo.
+- **Correções:** #15 (na `main`) e #16 (ciclo 2). Status de cada item na seção logo abaixo.
 
 ---
+
+## Status das correções
+
+_Atualizado em 31/10/2026. Legenda: ✅ na `main` (#15) · 🟢 corrigido no #16 (aguardando merge) · 🔵 pronto no CI de segurança (aguardando o push no #16) · 🟡 parcial · ⏳ pendente · 👤 depende de você · ⚪ risco aceito._
+
+| ID | Sev. | Status | Onde | Observação |
+|---|---|---|---|---|
+| SEC-01 | P1 | 🟢 🔵 | #15 + #16 | Release só assina com a chave dos *secrets* (#15). No #16 a chave de teste saiu do repositório e do build; o CI confere os secrets antes de compilar e registra o SHA-256 do certificado de cada APK, reprovando se for a antiga chave de teste. Falta a primeira execução com a sua chave. Depois: mover os secrets para um *environment* `release` (achado do zizmor). Quem tem APK assinado com a chave de teste precisa reinstalar. |
+| SEC-02 | P2 | ✅ | #15 | Navegação da biblioteca só para o próprio app, apps confiáveis, Android Auto, Wear e Assistente. |
+| SEC-03 | P2 | ✅ | #15 | `BackupArchive`: nomes permitidos, limites por arquivo/total/quantidade, troca arquivo a arquivo. 8 testes. |
+| SEC-04 | P3 | 🟢 | #16 | Regras de backup/extração: histórico, gosto e índices do SMART fora do backup do Android. |
+| SEC-05 | P3 | 🟢 | #16 | JNI do `ljdots` confere cada índice de linha. |
+| SEC-06 | P4 | ⚪ | #16 | Risco aceito: só ações fixas, sem dados; restringir quebraria atalhos e bloco rápido. |
+| SUP-01 | P3 | 🟡 🔵 | #16 + CI | Actions fixadas por SHA (#16). `verification-metadata.xml` e `distributionSha256Sum`: gerados pelo novo workflow "Atualizar a verificação das dependências". |
+| SUP-02 | P2 | 🟢 | #15 + #16 | ffmpeg `autobuild-2026-10-31-12-59` e appimagetool 1.9.1 conferidos por SHA-256. |
+| SUP-03 | P3 | 🟢 🔵 | #16 + CI | `build`, `desktop` e `smart-audit` só leitura (#16). `smart-test.yml` ainda tinha escrita no workflow inteiro: corrigido no patch de CI (escrita só no job que publica os logs). |
+| Licenças | P4 | 🟢 | #16 | NOTICE cita os componentes nativos e a BSD-4-Clause. |
+| REL-01 | P1 | 🟢 | #15 + #16 | Temporizador, histórico e "onde parei" no serviço (#15); fila SMART "infinita" com o app fechado (#16). |
+| REL-02 | P2 | ✅ | #15 | `AtomicFiles` no Android e no desktop. 5 testes. |
+| REL-03 | P2 | ✅ | #15 | Timeouts no ffprobe (20 s) e no ffmpeg da capa (15 s, 10 MB). |
+| REL-04 | P3 | 🟢 | #16 | Restaurar aplica as preferências pelo `SharedPreferences`; `PrefsXml` sem DTD/XXE. 3 testes. |
+| REL-05 | P3 | 🟢 | #16 | Leituras com limite: `.m3u` 5 MB, `.lrc` 2 MB, capa 30 MB. 3 testes. |
+| REL-06 | P4 | ✅ | #15 | Paginação em `Long`. |
+| PERF-01 | P2 | ✅ | #15 | Biblioteca e busca fora da thread principal, com *debounce*. Ordenação 1.447 → 186 ms, busca 105 → 36 ms (20 mil faixas, JVM). |
+| PERF-02 | P3 | ✅ | #15 | `currentTrack` só recalcula quando a faixa muda. |
+| PERF-03 | P3 | 🟡 | #16 | Cada letra lida com limite de 2 MB (REL-05); o índice das letras ainda não tem teto. |
+| PERF-04 | P4 | ⏳ | — | Mexe no motor; fica para uma revisão do SMART. |
+| PERF-05 | P4 | 🟢 | #16 | Itens de listas longas sem sombra. |
+| ARQ-01..03 | P3 | ⏳ | — | Refatorações grandes; ciclo próprio. |
+| TEST-01 | P2 | ✅ | #15 + #16 | 17 testes no #15 e mais 8 no #16, rodando no `build.yml`. |
+| CI-01 | P3 | 🟡 🔵 | #15 + CI | Testes no `build.yml` (#15). Lint completo (lite e smart) no novo `seguranca.yml`. Falta torná-lo obrigatório na proteção da `main` (👤). |
+| CI-02 | P4 | 👤 | — | Escolher qual CI é o oficial (GitHub ou GitLab). |
+| CI-03 | P3 | 🟢 | #16 | `versionCode` = número da execução do CI. |
+| Varredura de CVEs (0.3) | — | 🔵 | CI | OSV-Scanner no CI: dependências do app (reprova com CVSS ≥ 7) e ferramentas de build (informativo); roda em todo PR e toda segunda. |
+
+### CI de segurança (preparado para o #16)
+- **`seguranca.yml`**, só leitura, em todo PR, push na `main` e toda segunda:
+  - **workflows:** zizmor (segurança dos workflows, com as checagens online) e actionlint (sintaxe e shellcheck);
+  - **dependencias:** OSV-Scanner nas bibliotecas que vão nos APKs e no app do PC, reprovando com CVSS ≥ 7; e, só informativo, nas ferramentas de build;
+  - **lint:** Android Lint completo das versões lite e smart;
+  - **resumo:** um comentário único no PR com os três resultados, atualizado a cada push (só em PRs do próprio repositório).
+- **`verificacao-dependencias.yml`** (manual): gera `gradle/verification-metadata.xml` (SHA-256 de cada dependência e plugin) e o `distributionSha256Sum` do wrapper, e grava no branch escolhido. Depois disso, o Gradle recusa qualquer dependência cujo hash não confira. Rodar de novo a cada mudança de versão.
+- **Achados da auditoria local dos workflows** (zizmor 1.31.1 e actionlint 1.7.12 sobre o #16), todos corrigidos no patch: `actions/checkout` guardando a credencial no disco nos 4 workflows (`artipacked`); `smart-test.yml` com escrita no workflow inteiro (`excessive-permissions`); `$SIGNING_ARGS` sem aspas no `build.yml` (SC2086). Restou só `secrets-outside-env` no `build.yml`, registrado como exceção até SEC-01.
+- **Ainda sem resultado:** CVEs e lint dependem da primeira execução no GitHub. Este ambiente não alcança a base OSV nem o Maven, e esta sessão não tem permissão de escrita no repositório (detalhes no PR).
+
+---
+
 
 ## 0. Escopo, método e limitações
 
