@@ -200,7 +200,7 @@ class PlaybackService : MediaLibraryService() {
     private fun canBrowse(controller: MediaSession.ControllerInfo): Boolean =
         controller.packageName == packageName || controller.isTrusted || controller.packageName in BROWSE_ALLOWED
 
-    private fun <T> denied(): ListenableFuture<LibraryResult<T>> =
+    private fun <T : Any> denied(): ListenableFuture<LibraryResult<T>> =
         Futures.immediateFuture(LibraryResult.ofError<T>(SessionError.ERROR_PERMISSION_DENIED))
 
     /**
