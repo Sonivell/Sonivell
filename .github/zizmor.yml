@@ -1,0 +1,8 @@
+# Configuração do zizmor (seguranca.yml).
+rules:
+  secrets-outside-env:
+    # build.yml lê a chave de release dos secrets do repositório, sem um "environment".
+    # Pendente de SEC-01: quando a chave nova existir, crie o environment "release" com
+    # proteção e mova os secrets para ele; aí esta exceção sai.
+    ignore:
+      - build.yml

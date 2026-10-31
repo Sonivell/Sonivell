@@ -1,0 +1,20 @@
+// Init script usado só pelo CI (seguranca.yml, job "dependencias").
+// Grava um gradle.lockfile por módulo com as dependências que VÃO NO APP (configurações
+// *RuntimeClasspath, sem as de teste), para o OSV-Scanner procurar CVEs nelas.
+// Os lockfiles são temporários: o CI não os grava no repositório.
+gradle.allprojects { p ->
+    p.dependencyLocking { lockAllConfigurations() }
+    p.tasks.register('sonivellTravarRuntime') {
+        notCompatibleWithConfigurationCache('resolve configurações durante a execução')
+        doLast {
+            p.configurations.findAll { c ->
+                c.canBeResolved &&
+                    c.name.endsWith('RuntimeClasspath') &&
+                    !c.name.toLowerCase().contains('test')
+            }.each { c ->
+                // Resolver o grafo basta para o --write-locks registrar a configuração.
+                c.incoming.resolutionResult.root
+            }
+        }
+    }
+}

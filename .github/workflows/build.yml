@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
@@ -51,7 +53,7 @@ jobs:
           SONIVELL_KEY_PASSWORD: ${{ secrets.SONIVELL_KEY_PASSWORD }}
         run: |
           set -o pipefail
-          ./gradlew $SIGNING_ARGS assembleLiteRelease assembleSmartRelease 2>&1 | tee build.log || {
+          ./gradlew ${SIGNING_ARGS:+"$SIGNING_ARGS"} assembleLiteRelease assembleSmartRelease 2>&1 | tee build.log || {
             # Em caso de erro, destaca as mensagens como anotações (visíveis no resumo da execução).
             grep -E "^e: |What went wrong|Execution failed|error:|Error:|Lint found" -A3 build.log | head -n 60 | while IFS= read -r line; do
               echo "::error::${line}"

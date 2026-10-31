@@ -1,0 +1,5 @@
+# Ferramentas Python do CI (seguranca.yml). Instaladas com --require-hashes: o pip recusa
+# qualquer arquivo diferente do conferido aqui. Para atualizar, troque a versão e o SHA-256
+# (pypi.org/project/<nome>/#files).
+zizmor==1.31.1 \
+    --hash=sha256:58e878eb2dbd2c6183c105e1ac28c14f7dd1eca44a783f1fe2a69647d012c410
