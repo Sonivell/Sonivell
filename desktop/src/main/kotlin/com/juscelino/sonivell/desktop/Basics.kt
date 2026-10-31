@@ -4,6 +4,29 @@ import java.io.File
 import java.text.Normalizer
 import java.util.Locale
 import java.util.Properties
+import java.util.concurrent.TimeUnit
+
+/**
+ * Roda [block] (que lê a saída de [process]) com prazo: passados [seconds], o processo é
+ * encerrado, e a leitura termina junto. Um arquivo que travasse o ffprobe/ffmpeg prendia uma
+ * thread da varredura para sempre (auditoria REL-03).
+ */
+internal fun <T> withDeadline(process: Process, seconds: Long, block: () -> T): T {
+    val watchdog = Thread {
+        try {
+            if (!process.waitFor(seconds, TimeUnit.SECONDS)) process.destroyForcibly()
+        } catch (_: InterruptedException) {
+            // o bloco terminou antes do prazo
+        }
+    }
+    watchdog.isDaemon = true
+    watchdog.start()
+    try {
+        return block()
+    } finally {
+        watchdog.interrupt()
+    }
+}
 
 /** Pastas do usuário seguindo o padrão XDG (config, dados e cache). */
 object Dirs {

@@ -5,6 +5,9 @@ import java.nio.file.Files
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
+/** Prazo do ffprobe por arquivo: um arquivo que o trave é pulado, não prende a varredura. */
+private const val PROBE_TIMEOUT_S = 20L
+
 private val AUDIO_EXTENSIONS = setOf("mp3", "flac", "ogg", "oga", "opus", "m4a", "aac", "wav", "wma", "alac", "ape", "wv", "aiff", "aif")
 
 /** Lê as etiquetas dos arquivos com o ffprobe (o mesmo pacote ffmpeg usado para tocar). */
@@ -103,10 +106,10 @@ object Scanner {
             "ffprobe", "-v", "error", "-show_entries",
             "format=duration,bit_rate:format_tags:stream=codec_type,codec_name",
             "-of", "flat", file.path,
-        ).redirectErrorStream(false).start()
-        val text = p.inputStream.bufferedReader(Charsets.UTF_8).readText()
-        p.errorStream.readBytes()
-        p.waitFor()
+        ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+        // Com prazo e sem ler o stderr depois do stdout (que podiam travar um esperando o outro).
+        val text = withDeadline(p, PROBE_TIMEOUT_S) { p.inputStream.bufferedReader(Charsets.UTF_8).readText() }
+        if (!p.waitFor(PROBE_TIMEOUT_S, TimeUnit.SECONDS)) p.destroyForcibly()
         val tags = HashMap<String, String>()
         var duration = 0.0
         var bitrate = 0

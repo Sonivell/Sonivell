@@ -201,6 +201,9 @@ object AudioRoute {
  * dividiam a mesma capa — muitas vezes errada.
  */
 object ArtLoader {
+    private const val ART_TIMEOUT_S = 15L
+    private const val MAX_ART_BYTES = 10 * 1024 * 1024
+
     private val dir get() = File(Dirs.cache, "art-v2").also { it.mkdirs() }
 
     fun key(track: Track): String {
@@ -219,9 +222,10 @@ object ArtLoader {
                 "ffmpeg", "-nostdin", "-loglevel", "error", "-i", track.path, "-an", "-map", "0:v:0", "-frames:v", "1",
                 "-vf", "scale='min(1024,iw)':-2", "-f", "image2", "-c:v", "mjpeg", "-",
             ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
-            val data = p.inputStream.readBytes()
-            p.waitFor()
-            data.takeIf { it.size > 100 }
+            // Com prazo e tamanho máximo: a capa é uma imagem, não pode virar gigabytes.
+            val data = withDeadline(p, ART_TIMEOUT_S) { p.inputStream.readNBytes(MAX_ART_BYTES + 1) }
+            p.destroy()
+            data.takeIf { it.size in 101..MAX_ART_BYTES }
         }.getOrNull()
         val bytes = embedded ?: File(track.folder).listFiles { f ->
             f.isFile && f.nameWithoutExtension.lowercase() in setOf("cover", "folder", "front", "album", "artwork") &&
