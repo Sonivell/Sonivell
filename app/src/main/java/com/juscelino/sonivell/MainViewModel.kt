@@ -3,6 +3,7 @@ package com.juscelino.sonivell
 import androidx.annotation.StringRes
 import android.app.Application
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.juscelino.sonivell.data.Album
@@ -32,12 +33,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import com.juscelino.sonivell.data.ListenEvent
 import com.juscelino.sonivell.data.TasteModel
-import com.juscelino.sonivell.data.ListenSessionTracker
 import com.juscelino.sonivell.data.ListeningHistory
 import com.juscelino.sonivell.data.MusicRepository
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.playback.PlayerConnection
 import com.juscelino.sonivell.playback.PlayerState
+import com.juscelino.sonivell.playback.SleepTimerPrefs
 import com.juscelino.sonivell.playback.toTrack
 import com.juscelino.sonivell.smart.SmartEngine
 import com.juscelino.sonivell.smart.SmartProgress
@@ -151,19 +152,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Última faixa a partir da qual o SMART não achou continuação: evita pedir de novo em loop. */
     private var exhaustedSeedId: Long? = null
 
-    /** Histórico de escuta local: alimenta o SMART e a tela Para você. */
-    val history = ListeningHistory(app)
-    private val session = ListenSessionTracker()
+    /**
+     * Histórico de escuta local: alimenta o SMART e a tela Para você. Quem registra as escutas é o
+     * serviço de reprodução (PlaybackKeeper), que segue vivo com a tela fechada; aqui só se lê e reage.
+     */
+    val history = ListeningHistory.get(app)
 
     /** O que o SMART e o Para você não devem sugerir; grupos marcados como "não são duplicatas". */
     val recommendations = RecommendationPrefs(prefs)
     val smartPlaylistStore = SmartPlaylistStore(app)
 
-    /** Sessão salva: ao abrir o app, a fila e a posição voltam como estavam. */
+    /** Sessão salva (pelo serviço de reprodução): ao abrir o app, a fila e a posição voltam como estavam. */
     private val sessionStore = SessionStore(prefs)
-    private var lastSessionSaveMs = 0L
-    private var lastSavedQueue: List<String> = emptyList()
-    private var lastSavedPlaying = false
 
     val playlistStore = PlaylistStore(app)
     val playlists: StateFlow<List<Playlist>> = playlistStore.playlists
@@ -234,10 +234,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         return ordered
     }
 
-    private val _sleepTimer = MutableStateFlow(SleepTimer())
+    /** O temporizador vive nas preferências; quem pausa é o serviço (funciona com a tela fechada). */
+    private val _sleepTimer = MutableStateFlow(SleepTimerPrefs.read(prefs))
     val sleepTimer: StateFlow<SleepTimer> = _sleepTimer.asStateFlow()
-    private var sleepJob: Job? = null
-    private var sleepTrackId: String? = null
+
+    /** Acompanha o temporizador (o serviço o limpa ao pausar). Referência forte: o Android guarda fraca. */
+    private val sleepListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
+        if (key == SleepTimerPrefs.KEY_ENDS_AT || key == SleepTimerPrefs.KEY_TRACK || key == null) {
+            _sleepTimer.value = SleepTimerPrefs.read(p)
+        }
+    }
 
     private val allTracks = MutableStateFlow<List<Track>?>(null)
     private val query = MutableStateFlow("")
@@ -329,21 +335,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 ?.let(::restoreSession)
         }
 
+        prefs.registerOnSharedPreferenceChangeListener(sleepListener)
+
+        // Cada escuta encerrada (registrada pelo serviço): treina o gosto e, se foi um pulo, replaneja.
+        viewModelScope.launch {
+            history.finished.collect { event -> onListenFinished(event, playerState.value) }
+        }
+
         // Fila SMART "infinita": quando faltam poucas faixas, o motor planeja mais.
         viewModelScope.launch {
             playerState.collect { st ->
-                // Registra cada escuta quando a reprodução sai da faixa.
-                session.observe(
-                    currentId = st.current?.mediaId?.toLongOrNull(),
-                    positionMs = st.positionMs,
-                    durationMs = st.durationMs,
-                    isPlaying = st.isPlaying,
-                    nowMs = System.currentTimeMillis(),
-                )?.let { event -> onListenFinished(event, st) }
-
-                maybeSaveSession(st)
-                checkSleepAtEndOfTrack(st)
-
                 if (smartMode.value && st.hasMedia && st.upNext.size < SMART_TOP_UP_BELOW &&
                     planningJob?.isActive != true
                 ) {
@@ -364,26 +365,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val currentId = saved.queueIds.getOrNull(saved.index)
         val index = tracks.indexOfFirst { it.id == currentId }.takeIf { it >= 0 } ?: 0
         player.restore(tracks, index, if (index == saved.index) saved.positionMs else 0L, saved.shuffle, saved.repeatMode)
-    }
-
-    private fun maybeSaveSession(st: PlayerState) {
-        if (!st.hasMedia) return
-        val now = System.currentTimeMillis()
-        val ids = st.queue.map { it.mediaId }
-        val changed = ids != lastSavedQueue || st.isPlaying != lastSavedPlaying
-        if (!changed && now - lastSessionSaveMs < SESSION_SAVE_EVERY_MS) return
-        lastSessionSaveMs = now
-        lastSavedQueue = ids
-        lastSavedPlaying = st.isPlaying
-        sessionStore.save(
-            SavedSession(
-                queueIds = ids.mapNotNull { it.toLongOrNull() },
-                index = st.currentIndex,
-                positionMs = st.positionMs,
-                shuffle = st.shuffle,
-                repeatMode = player.rawRepeatMode,
-            )
-        )
     }
 
     // ---- Ajustes ----
@@ -588,39 +569,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     // ---- Temporizador ----
 
     fun setSleepTimer(minutes: Int) {
-        sleepJob?.cancel()
-        sleepTrackId = null
-        val endsAt = System.currentTimeMillis() + minutes * 60_000L
-        _sleepTimer.value = SleepTimer(endsAtMs = endsAt)
-        sleepJob = viewModelScope.launch {
-            delay(minutes * 60_000L)
-            player.pause()
-            _sleepTimer.value = SleepTimer()
-        }
+        SleepTimerPrefs.setEndsAt(prefs, System.currentTimeMillis() + minutes * 60_000L)
     }
 
     fun sleepAtEndOfTrack() {
-        sleepJob?.cancel()
-        sleepTrackId = playerState.value.current?.mediaId
-        _sleepTimer.value = SleepTimer(endOfTrack = true)
+        val current = playerState.value.current?.mediaId ?: return
+        SleepTimerPrefs.setEndOfTrack(prefs, current)
     }
 
     fun cancelSleepTimer() {
-        sleepJob?.cancel()
-        sleepTrackId = null
-        _sleepTimer.value = SleepTimer()
-    }
-
-    private fun checkSleepAtEndOfTrack(st: PlayerState) {
-        val armed = sleepTrackId ?: return
-        if (!_sleepTimer.value.endOfTrack) return
-        val currentId = st.current?.mediaId
-        // A faixa marcada acabou (passou para outra, ou a fila terminou): pausa no começo da próxima.
-        if (currentId != armed || (!st.isPlaying && st.durationMs > 0 && st.positionMs >= st.durationMs - 500)) {
-            player.pause()
-            if (currentId != armed) player.seekTo(0)
-            cancelSleepTimer()
-        }
+        SleepTimerPrefs.clear(prefs)
     }
 
     fun onPermissionGranted() {
@@ -807,10 +765,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun onListenFinished(event: ListenEvent, st: PlayerState) {
-        if (!settings.value.historyPaused) viewModelScope.launch {
-            history.record(event)
-            maybeTrainTaste()
-        }
+        // O serviço já gravou a escuta (se o histórico não está pausado); aqui só o treino do gosto.
+        if (!settings.value.historyPaused) maybeTrainTaste()
         // Pulou no modo SMART: o motor refaz o "a seguir" levando o pulo em conta, como no
         // LatentJam. (Se uma fila nova já está sendo montada, ela ganha.)
         if (smartMode.value && event.skipped && planningJob?.isActive != true) replanAfterSkip(st)
@@ -1057,7 +1013,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         const val RETRAIN_AFTER_MS = 24L * 60 * 60 * 1000
         const val SMART_TOP_UP_BELOW = 5
         const val SMART_HISTORY_LIMIT = 2_000
-        const val SESSION_SAVE_EVERY_MS = 5_000L
         const val KEY_RECENT_SEARCHES = "recent_searches"
         const val KEY_TAG_BANNER_DISMISSED = "tag_banner_dismissed"
         const val MAX_RECENT_SEARCHES = 8
@@ -1068,6 +1023,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     override fun onCleared() {
+        prefs.unregisterOnSharedPreferenceChangeListener(sleepListener)
         runCatching { getApplication<Application>().contentResolver.unregisterContentObserver(mediaObserver) }
         player.release()
         super.onCleared()

@@ -59,6 +59,7 @@ class PlaybackService : MediaLibraryService() {
     private lateinit var effects: AudioEffects
     private var crossfader: Crossfader? = null
     private var outputs: OutputWatcher? = null
+    private var keeper: PlaybackKeeper? = null
 
     /** "Pausar ao desconectar o fone" muda na hora, sem reiniciar o player. */
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
@@ -96,6 +97,8 @@ class PlaybackService : MediaLibraryService() {
         prefs.registerOnSharedPreferenceChangeListener(settingsListener)
         applySpeed(player)
         outputs = OutputWatcher(getSystemService(AudioManager::class.java), prefs, player).also { it.start() }
+        // Temporizador, escutas e "onde parei" seguem o serviço, não a tela (funcionam com o app fechado).
+        keeper = PlaybackKeeper(this, player, prefs, scope).also { it.start() }
         // A cada faixa nova, ajusta o volume pelo ReplayGain dela (se a opção estiver ligada).
         player.addListener(object : Player.Listener {
             override fun onTracksChanged(tracks: Tracks) = applyNormalization(player)
@@ -248,6 +251,8 @@ class PlaybackService : MediaLibraryService() {
         }
         currentAudioSession = 0
         prefs.unregisterOnSharedPreferenceChangeListener(settingsListener)
+        keeper?.release()
+        keeper = null
         outputs?.release()
         outputs = null
         handler.removeCallbacksAndMessages(null)
