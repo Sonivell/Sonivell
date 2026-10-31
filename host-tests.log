@@ -1,0 +1,6 @@
+== ljq4_test
+/home/runner/work/_temp/71b4562d-7071-4346-9b4e-c217e2aa62fd.sh: line 8: /tmp/ljq4-host/ljq4_test: No such file or directory
+rc=127
+== ljdots_test
+/home/runner/work/_temp/71b4562d-7071-4346-9b4e-c217e2aa62fd.sh: line 8: /tmp/ljq4-host/ljdots_test: No such file or directory
+rc=127
