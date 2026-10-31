@@ -77,6 +77,7 @@ import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 /** Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
 private data class ContrasteLabels(val search: String, val library: String, val liked: String, val forYou: String)
@@ -583,8 +584,7 @@ private fun ContinueCard(track: Track, resumeAtMs: Long, onPlay: (Long) -> Unit)
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(16.dp))
             .clickable { onPlay(resumeAtMs) }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -669,8 +669,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(c.surface)
+                .cardSurface(RoundedCornerShape(16.dp))
                 .clickable(onClick = onPlay)
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -699,8 +698,7 @@ private fun SmartAnalysisCard(progress: SmartProgress) {
         Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(16.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -906,7 +904,7 @@ private fun LazyListScope.browseContent(state: LibraryState, decades: List<Int>,
 private fun InterpChip(text: String) {
     val c = SonivellTheme.colors
     Box(
-        Modifier.height(30.dp).clip(RoundedCornerShape(15.dp)).background(c.surface).padding(horizontal = 12.dp),
+        Modifier.height(30.dp).cardSurface(RoundedCornerShape(15.dp)).padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textPrimary)
@@ -927,8 +925,7 @@ private fun BestCard(title: String, subtitle: String, track: Track?, round: Bool
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(12.dp))
             .clickable(onClick = onOpen)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,

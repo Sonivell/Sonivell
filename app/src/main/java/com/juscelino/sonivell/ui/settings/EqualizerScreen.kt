@@ -41,6 +41,7 @@ import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.roundToInt
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 data class EqualizerActions(
     val onBack: () -> Unit,
@@ -78,8 +79,7 @@ fun EqualizerScreen(state: EqualizerState, contentPadding: PaddingValues, action
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
-                .background(c.surface)
+                .cardSurface(RoundedCornerShape(18.dp))
                 .clickable(role = Role.Switch) { actions.onEnabled(!state.enabled) }
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -121,7 +121,7 @@ fun EqualizerScreen(state: EqualizerState, contentPadding: PaddingValues, action
 
         SectionLabel(stringResource(R.string.eq_bands))
         Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(c.surface).padding(16.dp),
+            Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(18.dp)).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             info.bandFrequencies.forEachIndexed { band, hz ->
@@ -138,7 +138,7 @@ fun EqualizerScreen(state: EqualizerState, contentPadding: PaddingValues, action
 
         if (info.bassSupported) {
             SectionLabel(stringResource(R.string.eq_bass))
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(c.surface).padding(16.dp)) {
+            Column(Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(18.dp)).padding(16.dp)) {
                 var bass by remember(state.bass) { mutableStateOf(state.bass.toFloat()) }
                 Text("${(bass / 10).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
                 val bassLabel = stringResource(R.string.eq_bass)

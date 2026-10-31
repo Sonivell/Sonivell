@@ -44,6 +44,7 @@ import com.juscelino.sonivell.data.Playlist
 import com.juscelino.sonivell.data.SmartPlaylist
 import com.juscelino.sonivell.ui.library.LibraryActions
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.glassSurface
 
 /**
  * Biblioteca do tema Sonivell: filtros em cápsula, coleções e uma fileira de artistas. Não é mais uma aba:
@@ -87,8 +88,14 @@ fun SvLibraryScreen(
         }
         item {
             // Abas no segmentado do Ondas: a atual num degrau acima da superfície.
+            val segShape = RoundedCornerShape(16.dp)
             Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(nc.surface).horizontalScroll(rememberScrollState()).padding(4.dp),
+                Modifier.fillMaxWidth()
+                    .then(
+                        if (SonivellTheme.glass) Modifier.glassSurface(segShape, nc.surface, nc.outline, elevation = 6.dp)
+                        else Modifier.clip(segShape).background(nc.surface),
+                    )
+                    .horizontalScroll(rememberScrollState()).padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 tabs.forEachIndexed { i, label ->
@@ -181,10 +188,10 @@ fun SvLibraryScreen(
                 }
             }
             2 -> items(state.albums.take(300), key = { it.id }) { album ->
-                SvRow(album.title, album.artist, { actions.onOpenAlbum(album.id) }, art = { SvCircleArt(album.tracks.firstOrNull(), 48.dp) })
+                SvRow(album.title, album.artist, { actions.onOpenAlbum(album.id) }, art = { SvCircleArt(album.tracks.firstOrNull(), 48.dp) }, elevation = 0.dp)
             }
             3 -> items(state.artists.take(300), key = { it.name }) { artist ->
-                SvRow(artist.name, songs(artist.tracks.size), { actions.onOpenArtist(artist.name) }, art = { SvCircleArt(artist.tracks.firstOrNull(), 48.dp) })
+                SvRow(artist.name, songs(artist.tracks.size), { actions.onOpenArtist(artist.name) }, art = { SvCircleArt(artist.tracks.firstOrNull(), 48.dp) }, elevation = 0.dp)
             }
             4 -> {
                 // Cartões de dois por linha, cada gênero no seu tom, com a onda curta.
@@ -195,15 +202,21 @@ fun SvLibraryScreen(
                             val n = r * 2 + col
                             val bg = ArtTones.backgrounds[n % ArtTones.backgrounds.size]
                             val wave = ArtTones.cores[n % ArtTones.cores.size]
+                            val glass = SonivellTheme.glass
+                            val genreShape = RoundedCornerShape(18.dp)
                             Box(
-                                Modifier.weight(1f).height(96.dp).clip(RoundedCornerShape(18.dp)).background(bg)
+                                Modifier.weight(1f).height(96.dp)
+                                    .then(
+                                        if (glass) Modifier.glassSurface(genreShape, nc.surface, nc.outline, wave, elevation = 0.dp)
+                                        else Modifier.clip(genreShape).background(bg),
+                                    )
                                     .clickable(role = Role.Button) { actions.onOpenGenre(genre.name) }
                                     .padding(horizontal = 14.dp, vertical = 12.dp),
                             ) {
                                 Column(Modifier.align(Alignment.TopStart), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    Text(genre.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = Color(0xFFF2F2EE), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(genre.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = if (glass) nc.textPrimary else Color(0xFFF2F2EE), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
-                                Text(songs(genre.tracks.size), style = MaterialTheme.typography.labelMedium, color = Color(0xFFF2F2EE).copy(alpha = 0.72f), modifier = Modifier.align(Alignment.BottomStart))
+                                Text(songs(genre.tracks.size), style = MaterialTheme.typography.labelMedium, color = if (glass) nc.textSecondary else Color(0xFFF2F2EE).copy(alpha = 0.72f), modifier = Modifier.align(Alignment.BottomStart))
                                 SvMiniWave(genre.name, wave, Modifier.align(Alignment.BottomEnd).size(width = 64.dp, height = 22.dp))
                             }
                         }
@@ -216,6 +229,7 @@ fun SvLibraryScreen(
                     folder.name, folder.path, { actions.onOpenFolder(folder.path) },
                     art = { SvIconTile(icons.folder) },
                     trailing = { Text(folder.tracks.size.toString(), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = nc.textSecondary) },
+                    elevation = 0.dp,
                 )
             }
         }
@@ -224,5 +238,5 @@ fun SvLibraryScreen(
 
 @Composable
 private fun collection(title: String, subtitle: String, top: Color, bottom: Color, onClick: () -> Unit) {
-    SvRow(title, subtitle, onClick, art = { SvOrb(top, bottom, Modifier.size(48.dp), seed = title.length) })
+    SvRow(title, subtitle, onClick, art = { SvOrb(top, bottom, Modifier.size(48.dp), seed = title.length) }, tone = top)
 }

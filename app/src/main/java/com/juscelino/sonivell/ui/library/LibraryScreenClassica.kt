@@ -64,6 +64,7 @@ import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 
 /** 1.0 (Clássica). Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
@@ -454,8 +455,7 @@ private fun MixRow(title: String, seeds: List<Track>, onPlayMix: (Track) -> Unit
                 Column(
                     Modifier
                         .width(148.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(c.surface)
+                        .cardSurface(RoundedCornerShape(16.dp))
                         .clickable { onPlayMix(seed) }
                         .padding(10.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -490,8 +490,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .padding(bottom = 24.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(20.dp))
             .clickable(onClick = onPlay)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -520,8 +519,7 @@ private fun SmartAnalysisCard(progress: SmartProgress) {
         Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(16.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -554,8 +552,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Mod
         modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(16.dp))
             .padding(start = 16.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -652,7 +649,7 @@ private fun GroupRow(icon: ImageVector, title: String, subtitle: String, onClick
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
-            Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)).background(c.surface),
+            Modifier.size(48.dp).cardSurface(RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center,
         ) { Icon(icon, null, tint = c.textSecondary) }
         Column(Modifier.weight(1f)) {

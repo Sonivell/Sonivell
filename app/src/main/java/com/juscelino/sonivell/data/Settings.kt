@@ -30,6 +30,10 @@ enum class UiStyle {
     SONIVELL,
 }
 
+/** Temas que usam as telas do Sonivell (Para você, Biblioteca pelos cartões, Perfil, Flow, Mapa…). */
+val UiStyle.usesSonivellScreens: Boolean
+    get() = this == UiStyle.SONIVELL
+
 data class AppSettings(
     val theme: ThemeMode = ThemeMode.AUTO,
     val accent: AccentChoice = AccentChoice.Lima,
@@ -132,7 +136,10 @@ class SettingsStore(private val prefs: SharedPreferences) {
     private fun read() = AppSettings(
         theme = ThemeMode.entries.getOrElse(prefs.getInt(KEY_THEME, 0)) { ThemeMode.AUTO },
         accent = AccentChoice.entries.getOrElse(prefs.getInt(KEY_ACCENT, AccentChoice.Lima.ordinal)) { AccentChoice.Lima },
-        uiStyle = UiStyle.entries.firstOrNull { it.name == prefs.getString(KEY_UI_STYLE, null) } ?: UiStyle.ONDAS,
+        uiStyle = prefs.getString(KEY_UI_STYLE, null).let { saved ->
+            // O tema Desenvolvimento (o Sonivell com vidro) virou o Sonivell: o vidro agora vale em todos.
+            UiStyle.entries.firstOrNull { it.name == saved } ?: if (saved == "DESENVOLVIMENTO") UiStyle.SONIVELL else UiStyle.ONDAS
+        },
         iconStyle = IconStyle.entries.firstOrNull { it.name == prefs.getString(KEY_ICON_STYLE, null) } ?: IconStyle.TRACO,
         darkBackground = DarkBackground.entries.firstOrNull { it.name == prefs.getString(KEY_DARK_BACKGROUND, null) } ?: DarkBackground.Grafite,
         tintedBackground = prefs.getBoolean(KEY_TINTED_BACKGROUND, false),

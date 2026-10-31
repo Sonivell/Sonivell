@@ -68,6 +68,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 /** Gêneros que não dizem nada ("Genre:", "Music", "Other"…): vão para "Tags para arrumar", não para a grade. */
 internal object GenreTags {
@@ -145,7 +146,7 @@ private fun Heading(text: String, trailing: String? = null) {
 private fun LoadingCard() {
     val c = SonivellTheme.colors
     Row(
-        Modifier.padding(top = 8.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.surface).padding(18.dp),
+        Modifier.padding(top = 8.dp).fillMaxWidth().cardSurface(RoundedCornerShape(22.dp)).padding(18.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -290,8 +291,7 @@ private fun GenreTile(genre: Genre, index: Int, tall: Boolean, actions: LibraryA
     val shape = RoundedCornerShape(22.dp)
     Column(
         modifier
-            .clip(shape)
-            .background(c.surface)
+            .cardSurface(shape)
             .border(1.dp, c.outline, shape)
             .clickable { actions.onOpenGenre(genre.name) }
             .padding(16.dp),

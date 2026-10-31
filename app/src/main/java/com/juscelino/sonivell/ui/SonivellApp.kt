@@ -110,6 +110,7 @@ import com.juscelino.sonivell.MainViewModel
 import com.juscelino.sonivell.ShuffleMode
 import com.juscelino.sonivell.playback.toTrack
 import com.juscelino.sonivell.data.UiStyle
+import com.juscelino.sonivell.data.usesSonivellScreens
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.filled.Person
 import com.juscelino.sonivell.ui.sonivell.BottomNavSonivell
@@ -160,6 +161,8 @@ import com.juscelino.sonivell.ui.queue.QueueScreen
 import com.juscelino.sonivell.ui.theme.SonivellIcons
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlinx.coroutines.launch
+import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.glassAccent
 
 private object Routes {
     const val HOME = "inicio"
@@ -565,7 +568,7 @@ private fun MainContent(vm: MainViewModel) {
                     val onTab: (String) -> Unit = { r ->
                         // Sonivell: a biblioteca abre por cima do Início e não é aba. Sai dela antes de trocar de
                         // aba; senão ela entra no estado salvo do Início e volta no lugar dele.
-                        if (uiStyle == UiStyle.SONIVELL && route == Routes.LIBRARY && nav.previousBackStackEntry != null) {
+                        if (uiStyle.usesSonivellScreens && route == Routes.LIBRARY && nav.previousBackStackEntry != null) {
                             nav.popBackStack()
                         }
                         nav.navigate(r) {
@@ -579,7 +582,8 @@ private fun MainContent(vm: MainViewModel) {
                         UiStyle.CONTRASTE -> BottomNav(route, onTab)
                         UiStyle.CLASSICA -> BottomNavClassica(route, onTab)
                         // A biblioteca é parte do Início: a aba Para você fica marcada nela.
-                        UiStyle.SONIVELL -> BottomNavSonivell(if (route == Routes.LIBRARY) Routes.HOME else route, svTabs, onTab)
+                        UiStyle.SONIVELL ->
+                            BottomNavSonivell(if (route == Routes.LIBRARY) Routes.HOME else route, svTabs, onTab)
                     }
                 }
             }
@@ -638,7 +642,7 @@ private fun MainContent(vm: MainViewModel) {
                 Routes.LIBRARY to LibraryMode.Biblioteca,
             ).forEach { (r, mode) ->
                 composable(r) {
-                    if (r == Routes.LIBRARY && initialStyle == UiStyle.SONIVELL && !startRouted) {
+                    if (r == Routes.LIBRARY && initialStyle.usesSonivellScreens && !startRouted) {
                         LaunchedEffect(Unit) {
                             startRouted = true
                             nav.navigate(Routes.HOME) {
@@ -1383,7 +1387,11 @@ private fun displayName(context: Context, uri: Uri): String? = runCatching {
 private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 8.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 8.dp)
+            .cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp)
+            .padding(4.dp),
     ) {
         tabs.forEach { tab ->
             val selected = tab.route == route
@@ -1416,7 +1424,13 @@ private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
 @Composable
 private fun BottomNavClassica(route: String?, onSelect: (String) -> Unit) {
     val c = SonivellTheme.colors
-    Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp)) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp)
+            .cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp)
+            .padding(4.dp),
+    ) {
         tabs.forEach { tab ->
             val selected = tab.route == route
             val color = if (selected) c.accent else c.textSecondary
@@ -1447,14 +1461,14 @@ private fun BottomNavClassica(route: String?, onSelect: (String) -> Unit) {
 @Composable
 private fun BottomNavOndas(route: String?, onSelect: (String) -> Unit) {
     val c = SonivellTheme.colors
+    val glass = SonivellTheme.glass
     val icons = SonivellTheme.icons
     Row(
         Modifier
             .fillMaxWidth()
             .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)
             .height(60.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp)
             .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -1464,13 +1478,18 @@ private fun BottomNavOndas(route: String?, onSelect: (String) -> Unit) {
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(if (selected) c.accent else Color.Transparent)
+                    .then(
+                        // Vidro: a aba atual fica translúcida na cor de destaque, como no Sonivell.
+                        when {
+                            glass && selected -> Modifier.glassAccent(RoundedCornerShape(16.dp), c.accent)
+                            else -> Modifier.clip(RoundedCornerShape(16.dp)).background(if (selected) c.accent else Color.Transparent)
+                        },
+                    )
                     .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(tab.route) }),
                 horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val color = if (selected) c.onAccent else c.textSecondary
+                val color = if (selected) (if (glass) c.accent else c.onAccent) else c.textSecondary
                 Icon(if (selected) tab.ondasActiveIcon(icons) else tab.ondasIcon(icons), null, Modifier.size(20.dp), tint = color)
                 Text(
                     stringResource(tab.label),
