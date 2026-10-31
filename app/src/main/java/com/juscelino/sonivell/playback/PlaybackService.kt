@@ -140,7 +140,8 @@ class PlaybackService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<MediaItem>> =
-            Futures.immediateFuture(LibraryResult.ofItem(this@PlaybackService.browser.root(), params))
+            if (!canBrowse(browser)) denied()
+            else Futures.immediateFuture(LibraryResult.ofItem(this@PlaybackService.browser.root(), params))
 
         override fun onGetChildren(
             session: MediaLibrarySession,
@@ -149,10 +150,11 @@ class PlaybackService : MediaLibraryService() {
             page: Int,
             pageSize: Int,
             params: LibraryParams?,
-        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = scope.future {
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = if (!canBrowse(browser)) denied() else scope.future {
             val all = this@PlaybackService.browser.children(parentId)
-            val from = (page * pageSize).coerceAtMost(all.size)
-            val to = (from + pageSize).coerceAtMost(all.size)
+            // Em Long: page e pageSize vêm do controlador; em Int, o produto podia estourar e ficar negativo.
+            val from = (page.coerceAtLeast(0).toLong() * pageSize.coerceAtLeast(1)).coerceAtMost(all.size.toLong()).toInt()
+            val to = (from.toLong() + pageSize.coerceAtLeast(1)).coerceAtMost(all.size.toLong()).toInt()
             LibraryResult.ofItemList(ImmutableList.copyOf(all.subList(from, to)), params)
         }
 
@@ -160,7 +162,7 @@ class PlaybackService : MediaLibraryService() {
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             mediaId: String,
-        ): ListenableFuture<LibraryResult<MediaItem>> = scope.future {
+        ): ListenableFuture<LibraryResult<MediaItem>> = if (!canBrowse(browser)) denied() else scope.future {
             this@PlaybackService.browser.item(mediaId)?.let { LibraryResult.ofItem(it, null) }
                 ?: LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
         }
@@ -178,7 +180,7 @@ class PlaybackService : MediaLibraryService() {
             if (expanded != null) {
                 MediaSession.MediaItemsWithStartPosition(expanded.first, expanded.second, C.TIME_UNSET)
             } else {
-                MediaSession.MediaItemsWithStartPosition(resolve(mediaItems), startIndex, startPositionMs)
+                MediaSession.MediaItemsWithStartPosition(resolve(mediaItems, controller), startIndex, startPositionMs)
             }
         }
 
@@ -186,12 +188,29 @@ class PlaybackService : MediaLibraryService() {
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>,
-        ): ListenableFuture<MutableList<MediaItem>> = Futures.immediateFuture(resolve(mediaItems).toMutableList())
+        ): ListenableFuture<MutableList<MediaItem>> = Futures.immediateFuture(resolve(mediaItems, controller).toMutableList())
     }
 
-    private fun resolve(mediaItems: List<MediaItem>): List<MediaItem> = mediaItems.mapNotNull { item ->
+    /**
+     * Quem pode navegar pela biblioteca (que inclui curtidas e playlists): o próprio app, apps do
+     * sistema e com MEDIA_CONTENT_CONTROL (isTrusted) e os de carro, relógio e assistente. Os
+     * controles de tocar/pausar seguem abertos a todos, como em qualquer player; a navegação não:
+     * antes qualquer app instalado, mesmo sem permissão de mídia, listava a biblioteca (auditoria SEC-02).
+     */
+    private fun canBrowse(controller: MediaSession.ControllerInfo): Boolean =
+        controller.packageName == packageName || controller.isTrusted || controller.packageName in BROWSE_ALLOWED
+
+    private fun <T> denied(): ListenableFuture<LibraryResult<T>> =
+        Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
+
+    /**
+     * Garante uma URI tocável para cada item. Só o próprio app manda itens com URI pronta; os de
+     * outros apps são sempre refeitos pelo mediaId (uma faixa do MediaStore). Antes um app qualquer
+     * podia mandar o Sonivell abrir URIs arbitrárias, inclusive arquivos do próprio app.
+     */
+    private fun resolve(mediaItems: List<MediaItem>, controller: MediaSession.ControllerInfo): List<MediaItem> = mediaItems.mapNotNull { item ->
         when {
-            item.localConfiguration != null -> item
+            item.localConfiguration != null && controller.packageName == packageName -> item
             else -> item.mediaId.substringAfterLast('|').toLongOrNull()?.let { id ->
                 item.buildUpon()
                     .setMediaId(id.toString())
@@ -270,6 +289,14 @@ class PlaybackService : MediaLibraryService() {
 
     companion object {
         private const val UNTAGGED_GAIN_DB = -6f
+
+        /** Android Auto, Wear OS e Google Assistente: navegam pela biblioteca mesmo sem serem do sistema. */
+        private val BROWSE_ALLOWED = setOf(
+            "com.google.android.projection.gearhead",
+            "com.google.android.wearable.app",
+            "com.google.android.googlequicksearchbox",
+            "com.google.android.carassistant",
+        )
 
         /** Sessão de áudio do player (o visualizador do app se liga nela). 0 = serviço parado. */
         @Volatile
