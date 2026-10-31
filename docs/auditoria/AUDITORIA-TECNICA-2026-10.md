@@ -10,19 +10,19 @@
 
 ## Status das correções
 
-_Atualizado em 31/10/2026. Legenda: ✅ na `main` (#15) · 🟢 corrigido no #16 (aguardando merge) · 🔵 pronto no CI de segurança (aguardando o push no #16) · 🟡 parcial · ⏳ pendente · 👤 depende de você · ⚪ risco aceito._
+_Atualizado em 31/10/2026, com os resultados do CI do #16 (commits até `a69a496`). Legenda: ✅ na `main` (#15) · 🟢 corrigido e validado no #16 · 🟡 parcial · ⏳ pendente · 👤 depende de você · ⚪ risco aceito._
 
 | ID | Sev. | Status | Onde | Observação |
 |---|---|---|---|---|
-| SEC-01 | P1 | 🟢 🔵 | #15 + #16 | Release só assina com a chave dos *secrets* (#15). No #16 a chave de teste saiu do repositório e do build; o CI confere os secrets antes de compilar e registra o SHA-256 do certificado de cada APK, reprovando se for a antiga chave de teste. Falta a primeira execução com a sua chave. Depois: mover os secrets para um *environment* `release` (achado do zizmor). Quem tem APK assinado com a chave de teste precisa reinstalar. |
+| SEC-01 | P1 | 🟢 | #15 + #16 | A chave de teste saiu do repositório e do build; o release só assina com a chave dos *secrets* (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). **Validado no CI:** os dois APKs (lite e SMART) saíram assinados com a chave nova, SHA-256 do certificado `af0a0e7a0b5f13d8e5181916d8d9bb88acd6f61bf1861b90bc893382fd488ac6` (a antiga chave de teste era `882ef7c4…1477b`). Pendente (👤): mover os secrets para um *environment* `release` com proteção (achado do zizmor, hoje registrado como exceção). Quem tem APK com a chave de teste precisa desinstalar e instalar de novo. |
 | SEC-02 | P2 | ✅ | #15 | Navegação da biblioteca só para o próprio app, apps confiáveis, Android Auto, Wear e Assistente. |
 | SEC-03 | P2 | ✅ | #15 | `BackupArchive`: nomes permitidos, limites por arquivo/total/quantidade, troca arquivo a arquivo. 8 testes. |
 | SEC-04 | P3 | 🟢 | #16 | Regras de backup/extração: histórico, gosto e índices do SMART fora do backup do Android. |
 | SEC-05 | P3 | 🟢 | #16 | JNI do `ljdots` confere cada índice de linha. |
 | SEC-06 | P4 | ⚪ | #16 | Risco aceito: só ações fixas, sem dados; restringir quebraria atalhos e bloco rápido. |
-| SUP-01 | P3 | 🟡 🔵 | #16 + CI | Actions fixadas por SHA (#16). `verification-metadata.xml` e `distributionSha256Sum`: gerados pelo novo workflow "Atualizar a verificação das dependências". |
+| SUP-01 | P3 | 🟢 | #16 | Actions fixadas por SHA. `gradle/verification-metadata.xml` gerado no CI (751 componentes, SHA-256) e `distributionSha256Sum` no wrapper; o build e os testes passam com a verificação ligada. Os POMs marcadores dos três plugins JetBrains aceitam também a versão do Gradle Plugin Portal (`also-trust`), que difere da do Maven Central. |
 | SUP-02 | P2 | 🟢 | #15 + #16 | ffmpeg `autobuild-2026-10-31-12-59` e appimagetool 1.9.1 conferidos por SHA-256. |
-| SUP-03 | P3 | 🟢 🔵 | #16 + CI | `build`, `desktop` e `smart-audit` só leitura (#16). `smart-test.yml` ainda tinha escrita no workflow inteiro: corrigido no patch de CI (escrita só no job que publica os logs). |
+| SUP-03 | P3 | 🟢 | #16 | Todos os workflows só leitura; escrita só nos jobs que publicam logs/capturas, sem rodar código do branch. zizmor e actionlint sem achados. |
 | Licenças | P4 | 🟢 | #16 | NOTICE cita os componentes nativos e a BSD-4-Clause. |
 | REL-01 | P1 | 🟢 | #15 + #16 | Temporizador, histórico e "onde parei" no serviço (#15); fila SMART "infinita" com o app fechado (#16). |
 | REL-02 | P2 | ✅ | #15 | `AtomicFiles` no Android e no desktop. 5 testes. |
@@ -37,20 +37,18 @@ _Atualizado em 31/10/2026. Legenda: ✅ na `main` (#15) · 🟢 corrigido no #16
 | PERF-05 | P4 | 🟢 | #16 | Itens de listas longas sem sombra. |
 | ARQ-01..03 | P3 | ⏳ | — | Refatorações grandes; ciclo próprio. |
 | TEST-01 | P2 | ✅ | #15 + #16 | 17 testes no #15 e mais 8 no #16, rodando no `build.yml`. |
-| CI-01 | P3 | 🟡 🔵 | #15 + CI | Testes no `build.yml` (#15). Lint completo (lite e smart) no novo `seguranca.yml`. Falta torná-lo obrigatório na proteção da `main` (👤). |
+| CI-01 | P3 | 🟡 | #15 + #16 | Testes no `build.yml` (#15). Android Lint completo (lite e smart) no `seguranca.yml`: a primeira execução achou **12 erros**, todos corrigidos no #16; ficaram 0 erros e 99 avisos (que não reprovam). Falta tornar o `seguranca.yml` obrigatório na proteção da `main` (👤). |
 | CI-02 | P4 | 👤 | — | Escolher qual CI é o oficial (GitHub ou GitLab). |
 | CI-03 | P3 | 🟢 | #16 | `versionCode` = número da execução do CI. |
-| Varredura de CVEs (0.3) | — | 🔵 | CI | OSV-Scanner no CI: dependências do app (reprova com CVSS ≥ 7) e ferramentas de build (informativo); roda em todo PR e toda segunda. |
+| Varredura de CVEs (0.3) | — | 🟢 | #16 | OSV-Scanner no CI, em todo PR e toda segunda. Ver resultados abaixo. |
+| Busca por voz | P4 | ⏳ | — | Novo, achado pelo lint (`MissingIntentFilterForMediaSearch`): o app não trata "tocar X no Sonivell". Aviso suprimido com o motivo no manifesto até a função existir. |
 
-### CI de segurança (preparado para o #16)
-- **`seguranca.yml`**, só leitura, em todo PR, push na `main` e toda segunda:
-  - **workflows:** zizmor (segurança dos workflows, com as checagens online) e actionlint (sintaxe e shellcheck);
-  - **dependencias:** OSV-Scanner nas bibliotecas que vão nos APKs e no app do PC, reprovando com CVSS ≥ 7; e, só informativo, nas ferramentas de build;
-  - **lint:** Android Lint completo das versões lite e smart;
-  - **resumo:** um comentário único no PR com os três resultados, atualizado a cada push (só em PRs do próprio repositório).
-- **`verificacao-dependencias.yml`** (manual): gera `gradle/verification-metadata.xml` (SHA-256 de cada dependência e plugin) e o `distributionSha256Sum` do wrapper, e grava no branch escolhido. Depois disso, o Gradle recusa qualquer dependência cujo hash não confira. Rodar de novo a cada mudança de versão.
-- **Achados da auditoria local dos workflows** (zizmor 1.31.1 e actionlint 1.7.12 sobre o #16), todos corrigidos no patch: `actions/checkout` guardando a credencial no disco nos 4 workflows (`artipacked`); `smart-test.yml` com escrita no workflow inteiro (`excessive-permissions`); `$SIGNING_ARGS` sem aspas no `build.yml` (SC2086). Restou só `secrets-outside-env` no `build.yml`, registrado como exceção até SEC-01.
-- **Ainda sem resultado:** CVEs e lint dependem da primeira execução no GitHub. Este ambiente não alcança a base OSV nem o Maven, e esta sessão não tem permissão de escrita no repositório (detalhes no PR).
+### Resultados do CI de segurança (#16)
+- **Workflows (zizmor 1.31.1 + actionlint 1.7.12):** sem achados de severidade média ou alta e sem erros. A única exceção registrada é `secrets-outside-env` no `build.yml` (ver SEC-01).
+- **CVEs nas dependências do app (Android e PC, 295 pacotes):** a primeira execução achou **CVE-2026-102554 (CVSS 8.2) na `guava` 33.3.1-android**, trazida pelo media3 e pelo coroutines-guava. Corrigido no #16 com a 33.7.2-android como versão mínima. Depois disso: nenhuma vulnerabilidade conhecida.
+- **CVEs nas ferramentas de build (informativo, 751 componentes):** 91 vulnerabilidades em 21 pacotes, todas no ferramental que o AGP, o Kotlin e o lint trazem e que não vai nos APKs. Os mais graves: `bouncycastle` 1.79 (até 9.3), `netty` 4.1.93/4.1.110 (até 9.1), `guava` -jre 32.0.1/33.3.1 (8.2), `jdom2` 2.0.6 e `jose4j` 0.9.5 (7.5). Correção: atualizar AGP e Kotlin num ciclo próprio (⏳).
+- **Android Lint:** 12 erros na primeira execução, todos corrigidos no #16 — `UnsafeOptInUsageError` (7, anotações do media3), `ContextCastToActivity` (2, `LocalActivity`), `StartActivityAndCollapseDeprecated` (1, já usava a versão nova no Android 14+) e `MissingIntentFilterForMediaSearch` (2, ver "Busca por voz"). Agora 0 erros e 99 avisos.
+- **Assinatura:** `build.yml` confere os secrets antes de compilar, valida cada APK com o `apksigner` e registra o SHA-256 do certificado no resumo da execução, reprovando se for a antiga chave de teste.
 
 ---
 
