@@ -252,8 +252,8 @@ class TasteModel(private val file: File) {
     // ---- persistência: um arquivo binário pequeno
 
     private fun save(m: Model) {
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        DataOutputStream(tmp.outputStream().buffered()).use { out ->
+        val bytes = java.io.ByteArrayOutputStream()
+        DataOutputStream(bytes).use { out ->
             out.writeInt(FORMAT)
             out.writeInt(m.dim)
             m.centroid.forEach(out::writeFloat)
@@ -268,7 +268,7 @@ class TasteModel(private val file: File) {
             out.writeInt(s.examples); out.writeInt(s.positives); out.writeInt(s.negatives)
             out.writeLong(s.trainedAtMs); out.writeFloat(s.accuracy ?: -1f)
         }
-        tmp.renameTo(file)
+        AtomicFiles.write(file, bytes.toByteArray())
     }
 
     private fun load(): Model? {

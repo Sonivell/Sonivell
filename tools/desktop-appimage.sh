@@ -14,6 +14,27 @@ cd "$ROOT"
 
 FFMPEG_URL=${FFMPEG_URL:-https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz}
 APPIMAGETOOL_URL=${APPIMAGETOOL_URL:-https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage}
+# Integridade (auditoria SUP-02): com FFMPEG_SHA256 / APPIMAGETOOL_SHA256, o binário baixado só é
+# usado se o hash bater. Fixe também uma URL versionada (não "latest"/"continuous"), senão o hash
+# muda a cada build. Sem hash, o script avisa e registra no AppImage o hash e a versão usados.
+FFMPEG_SHA256=${FFMPEG_SHA256:-}
+APPIMAGETOOL_SHA256=${APPIMAGETOOL_SHA256:-}
+
+# Confere o SHA-256 de $1 contra $2 (vazio = só avisa). Imprime o hash calculado.
+verify() {
+  local file=$1 expected=$2 name=$3 actual
+  actual=$(sha256sum "$file" | cut -d' ' -f1)
+  if [ -n "$expected" ]; then
+    if [ "$actual" != "$expected" ]; then
+      echo "ERRO: $name com SHA-256 $actual, esperado $expected. Abortando." >&2
+      exit 1
+    fi
+  else
+    echo "AVISO: $name sem SHA-256 fixado (baixado de $([ "$name" = ffmpeg ] && echo "$FFMPEG_URL" || echo "$APPIMAGETOOL_URL")); hash: $actual" >&2
+    if [ -n "${GITHUB_ACTIONS:-}" ]; then echo "::warning::$name sem SHA-256 fixado; hash usado: $actual" >&2; fi
+  fi
+  echo "$actual"
+}
 
 VERSION=$(grep -oP 'packageVersion\s*=\s*"\K[^"]+' desktop/build.gradle.kts)
 OUT="$ROOT/desktop/build/appimage"
@@ -34,12 +55,18 @@ cp -a "$DIST" "$APPDIR/sonivell"
 # 2. ffmpeg + ffprobe estáticos.
 if [ "$FFMPEG_URL" != "none" ]; then
   curl -fsSL --retry 3 -o "$WORK/ffmpeg.tar.xz" "$FFMPEG_URL"
+  FFMPEG_HASH=$(verify "$WORK/ffmpeg.tar.xz" "$FFMPEG_SHA256" ffmpeg)
   mkdir -p "$WORK/ffmpeg" && tar -xJf "$WORK/ffmpeg.tar.xz" -C "$WORK/ffmpeg" --strip-components=1
   install -m 0755 "$WORK/ffmpeg/bin/ffmpeg" "$WORK/ffmpeg/bin/ffprobe" "$APPDIR/usr/bin/"
   mkdir -p "$APPDIR/usr/share/doc/ffmpeg"
   cp "$WORK/ffmpeg/LICENSE.txt" "$APPDIR/usr/share/doc/ffmpeg/" 2>/dev/null || true
-  echo "ffmpeg: $FFMPEG_URL (GPL; binários independentes, executados como processos)" \
-    > "$APPDIR/usr/share/doc/ffmpeg/SOURCE"
+  # Rastreabilidade da GPL: qual binário exato foi embutido (o "-version" traz a revisão do código-fonte).
+  {
+    echo "ffmpeg: $FFMPEG_URL (GPL; binários independentes, executados como processos)"
+    echo "SHA-256 do pacote: $FFMPEG_HASH"
+    "$APPDIR/usr/bin/ffmpeg" -hide_banner -version 2>/dev/null | head -n 1 || true
+    echo "Código-fonte: https://github.com/FFmpeg/FFmpeg (revisão acima) e https://github.com/BtbN/FFmpeg-Builds"
+  } > "$APPDIR/usr/share/doc/ffmpeg/SOURCE"
 fi
 
 # 3. Ponto de entrada: o ffmpeg embutido vem primeiro no PATH (versão conhecida e testada).
@@ -70,7 +97,9 @@ EOF
 
 # 5. Empacota. Sem FUSE (CI, contêineres) o appimagetool roda extraído.
 TOOL="$WORK/appimagetool"
-curl -fsSL --retry 3 -o "$TOOL" "$APPIMAGETOOL_URL" && chmod +x "$TOOL"
+curl -fsSL --retry 3 -o "$TOOL" "$APPIMAGETOOL_URL"
+verify "$TOOL" "$APPIMAGETOOL_SHA256" appimagetool >/dev/null
+chmod +x "$TOOL"
 TARGET="$OUT/Sonivell-$VERSION-x86_64.AppImage"
 ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 "$TOOL" --no-appstream "$APPDIR" "$TARGET"
 

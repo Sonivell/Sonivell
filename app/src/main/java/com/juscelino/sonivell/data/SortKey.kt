@@ -12,6 +12,17 @@ fun sortKey(text: String): String {
     return Normalizer.normalize(trimmed, Normalizer.Form.NFD).replace(DIACRITICS, "").lowercase()
 }
 
+/**
+ * [sortKey] com memória: cada texto é normalizado uma vez. `sortedBy { sortKey(it.title) }`
+ * normaliza (NFD + regex) a cada comparação, O(n log n) vezes; com isto, uma vez por texto
+ * distinto (auditoria PERF-01). Mesmo resultado, por construção.
+ */
+class SortKeys {
+    private val memo = HashMap<String, String>()
+
+    fun of(text: String): String = memo.getOrPut(text) { sortKey(text) }
+}
+
 /** Letra do índice A–Z de um texto; números e o resto vão para "#". */
 fun indexLetter(text: String): Char {
     val c = sortKey(text).firstOrNull()?.uppercaseChar() ?: return '#'

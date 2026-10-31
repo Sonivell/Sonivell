@@ -36,7 +36,19 @@ apk:
     - $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358" >/dev/null
     - echo "sdk.dir=$ANDROID_HOME" > local.properties
   script:
-    - ./gradlew assembleLiteRelease assembleSmartRelease
+    # Chave de release pelas variáveis de CI (SONIVELL_KEYSTORE_BASE64 e as senhas, Masked e Protected).
+    # Sem ela, os APKs saem com a chave de TESTE, pública, marcados "-teste": não distribua.
+    - |
+      if [ -n "${SONIVELL_KEYSTORE_BASE64:-}" ]; then
+        printf '%s' "$SONIVELL_KEYSTORE_BASE64" | base64 -d > /tmp/sonivell-release.jks
+        export SONIVELL_KEYSTORE=/tmp/sonivell-release.jks
+        SIGNING_ARGS=""
+      else
+        echo "AVISO: sem a chave de release; APKs assinados com a chave de TESTE (pública). Não distribua."
+        SIGNING_ARGS="-Psonivell.chaveDeTeste=true"
+      fi
+      ./gradlew $SIGNING_ARGS assembleLiteRelease assembleSmartRelease
+      rm -f /tmp/sonivell-release.jks
   artifacts:
     name: sonivell-apks
     paths:

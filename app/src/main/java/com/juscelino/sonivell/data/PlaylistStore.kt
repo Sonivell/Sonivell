@@ -85,10 +85,9 @@ class PlaylistStore(context: Context) {
         result
     }
 
-    private fun read(): List<Playlist> {
-        if (!file.exists()) return emptyList()
-        return runCatching {
-            val arr = JSONArray(file.readText())
+    private fun read(): List<Playlist> =
+        AtomicFiles.readOrQuarantine(file) { text ->
+            val arr = JSONArray(text)
             List(arr.length()) { i ->
                 val o = arr.getJSONObject(i)
                 val ids = o.getJSONArray("tracks")
@@ -100,8 +99,7 @@ class PlaylistStore(context: Context) {
                     updatedAt = o.optLong("updated"),
                 )
             }
-        }.getOrElse { emptyList() }
-    }
+        }.orEmpty()
 
     private fun write(list: List<Playlist>) {
         val arr = JSONArray()
@@ -116,9 +114,7 @@ class PlaylistStore(context: Context) {
             )
         }
         // Grava num temporário e troca: um corte de energia não corrompe as playlists.
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        tmp.writeText(arr.toString())
-        tmp.renameTo(file)
+        AtomicFiles.writeText(file, arr.toString())
     }
 }
 

@@ -2,8 +2,11 @@ package com.juscelino.sonivell.data
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -55,8 +58,11 @@ data class ListenEvent(
 /**
  * Histórico de escuta, só no aparelho: um arquivo de texto simples, uma escuta por linha.
  * Alimenta o SMART (o que você pula ou termina) e a tela Para você.
+ *
+ * Uma instância por processo ([get]): quem registra é o serviço de reprodução (funciona com a
+ * tela fechada) e quem lê é o app; os dois precisam do mesmo cache e da mesma [revision].
  */
-class ListeningHistory(context: Context) {
+class ListeningHistory private constructor(context: Context) {
 
     private val file = File(context.filesDir, "historico.tsv")
     private val lock = Mutex()
@@ -65,6 +71,15 @@ class ListeningHistory(context: Context) {
     /** Muda a cada escuta registrada, para quem quiser recalcular algo. */
     private val _revision = MutableStateFlow(0L)
     val revision: StateFlow<Long> = _revision.asStateFlow()
+
+    private val _finished = MutableSharedFlow<ListenEvent>(extraBufferCapacity = 16)
+
+    /** Cada escuta encerrada, gravada ou não (com o histórico pausado também): o app reage a ela. */
+    val finished: SharedFlow<ListenEvent> = _finished.asSharedFlow()
+
+    fun publish(event: ListenEvent) {
+        _finished.tryEmit(event)
+    }
 
     private suspend fun events(): MutableList<ListenEvent> {
         cache?.let { return it }
@@ -85,7 +100,8 @@ class ListeningHistory(context: Context) {
                 val keep = list.takeLast(MAX_EVENTS)
                 list.clear()
                 list += keep
-                file.writeText(keep.joinToString("\n", postfix = "\n") { it.toLine() })
+                // De uma vez: um crash no meio não deixa o histórico pela metade.
+                AtomicFiles.writeText(file, keep.joinToString("\n", postfix = "\n") { it.toLine() })
             } else {
                 file.appendText(event.toLine() + "\n")
             }
@@ -108,6 +124,13 @@ class ListeningHistory(context: Context) {
     companion object {
         const val MAX_EVENTS = 10_000
         private const val COMPACT_SLACK = 2_000
+
+        @Volatile private var instance: ListeningHistory? = null
+
+        fun get(context: Context): ListeningHistory =
+            instance ?: synchronized(this) {
+                instance ?: ListeningHistory(context.applicationContext).also { instance = it }
+            }
     }
 }
 

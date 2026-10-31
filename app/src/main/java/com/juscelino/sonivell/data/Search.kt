@@ -47,16 +47,32 @@ object Search {
      * Pontua uma faixa (0 = não combina). Cada palavra precisa aparecer em algum campo:
      * inteira vale mais, início de palavra vale bem, erro pequeno ainda vale.
      */
-    fun score(q: Query, t: Track): Int {
+    fun score(q: Query, t: Track): Int = score(q, index(t))
+
+    /**
+     * Os campos de uma faixa já normalizados, com o peso de cada um. Montado uma vez por faixa
+     * (quando a biblioteca muda) em vez de a cada tecla digitada (auditoria PERF-01).
+     */
+    class Indexed(val year: Int?, val fields: List<Pair<String, Int>>)
+
+    fun index(t: Track): Indexed = indexOf(t.year, t.title, t.artist, t.album, t.genre.orEmpty(), t.fileName.orEmpty())
+
+    fun indexOf(year: Int?, title: String, artist: String, album: String, genre: String, fileName: String): Indexed =
+        Indexed(
+            year,
+            listOf(
+                normalize(title) to 6,
+                normalize(artist) to 4,
+                normalize(album) to 3,
+                normalize(genre) to 2,
+                normalize(fileName) to 1,
+            ),
+        )
+
+    fun score(q: Query, t: Indexed): Int {
         if (q.years != null && (t.year ?: -1) !in q.years) return 0
         if (q.words.isEmpty()) return 1
-        val fields = listOf(
-            normalize(t.title) to 6,
-            normalize(t.artist) to 4,
-            normalize(t.album) to 3,
-            normalize(t.genre.orEmpty()) to 2,
-            normalize(t.fileName.orEmpty()) to 1,
-        )
+        val fields = t.fields
         var total = 0
         for (w in q.words) {
             var best = 0

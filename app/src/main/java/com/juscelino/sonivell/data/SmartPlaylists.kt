@@ -178,10 +178,9 @@ class SmartPlaylistStore(context: Context) {
         withContext(Dispatchers.IO) { write(next) }
     }
 
-    private fun read(): List<SmartPlaylist> {
-        if (!file.exists()) return emptyList()
-        return runCatching {
-            val arr = JSONArray(file.readText())
+    private fun read(): List<SmartPlaylist> =
+        AtomicFiles.readOrQuarantine(file) { text ->
+            val arr = JSONArray(text)
             List(arr.length()) { i ->
                 val o = arr.getJSONObject(i)
                 val rules = o.getJSONArray("rules")
@@ -204,8 +203,7 @@ class SmartPlaylistStore(context: Context) {
                     },
                 )
             }
-        }.getOrElse { emptyList() }
-    }
+        }.orEmpty()
 
     private fun write(list: List<SmartPlaylist>) {
         val arr = JSONArray()
@@ -219,8 +217,6 @@ class SmartPlaylistStore(context: Context) {
                     .put("limit", p.limitCount).put("minutes", p.limitMinutes).put("rules", rules)
             )
         }
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        tmp.writeText(arr.toString())
-        tmp.renameTo(file)
+        AtomicFiles.writeText(file, arr.toString())
     }
 }

@@ -1,7 +1,30 @@
 package com.juscelino.sonivell.desktop
 
 import java.io.File
+import java.io.FileOutputStream
+import java.io.StringWriter
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.Properties
+
+/**
+ * Grava num temporário ao lado, força o disco e troca de uma vez: um crash ou uma queda de
+ * energia no meio deixa o arquivo anterior inteiro (antes era writeText direto no arquivo final).
+ */
+internal fun writeAtomically(file: File, text: String) {
+    file.parentFile?.mkdirs()
+    val tmp = File(file.parentFile, file.name + ".tmp")
+    FileOutputStream(tmp).use { out ->
+        out.write(text.toByteArray(Charsets.UTF_8))
+        out.fd.sync()
+    }
+    try {
+        Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+    } catch (e: AtomicMoveNotSupportedException) {
+        Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+    }
+}
 
 enum class ThemeMode { AUTO, LIGHT, DARK }
 enum class Accent { Lima, Azul, Laranja, Lilas, Rosa, Turquesa, Verde }
@@ -72,7 +95,7 @@ object SettingsStore {
         p.setProperty("compact", s.compact.toString())
         s.compactX?.let { p.setProperty("compactX", it.toString()) }
         s.compactY?.let { p.setProperty("compactY", it.toString()) }
-        runCatching { file.writer(Charsets.UTF_8).use { p.store(it, null) } }
+        runCatching { writeAtomically(file, StringWriter().also { p.store(it, null) }.toString()) }
     }
 }
 
@@ -99,7 +122,7 @@ class UserData {
 
     fun setFavorite(id: Long, on: Boolean) {
         favorites = if (on) favorites + id else favorites - id
-        runCatching { favoritesFile.writeText(favorites.joinToString("\n")) }
+        runCatching { writeAtomically(favoritesFile, favorites.joinToString("\n")) }
     }
 
     fun record(listen: Listen) {
@@ -113,7 +136,7 @@ class UserData {
     fun lastPlayed(id: Long): Long = history.lastOrNull { it.trackId == id }?.atMs ?: 0L
 
     fun saveResume(trackId: Long, positionMs: Long) {
-        runCatching { resumeFile.writeText("$trackId\n$positionMs") }
+        runCatching { writeAtomically(resumeFile, "$trackId\n$positionMs") }
     }
 
     fun loadResume(): Pair<Long, Long>? = runCatching {
