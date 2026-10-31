@@ -117,6 +117,9 @@ dependencies {
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.extractor)
     implementation(libs.kotlinx.coroutines.guava)
+    constraints {
+        implementation(libs.guava) { because("CVE-2026-102554 (CVSS 8.2) na guava 33.3.1, trazida pelo media3") }
+    }
 
     implementation(libs.coil.compose)
 

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Só a edição SMART: serviço que mantém a análise do som rodando em segundo plano. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
-    <application>
+    <!-- Mesmo motivo do manifesto principal: sem busca por voz por enquanto. -->
+    <application tools:ignore="MissingIntentFilterForMediaSearch">
         <service
             android:name=".smart.SmartAnalysisService"
             android:exported="false"

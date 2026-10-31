@@ -19,7 +19,10 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
+    <!-- MissingIntentFilterForMediaSearch: o app ainda não tem busca por voz ("tocar X no Sonivell").
+         Um intent-filter sem quem trate a busca só abriria o app sem tocar nada. -->
     <application
+        tools:ignore="MissingIntentFilterForMediaSearch"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

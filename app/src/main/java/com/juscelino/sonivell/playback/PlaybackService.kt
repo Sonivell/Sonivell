@@ -138,6 +138,7 @@ class PlaybackService : MediaLibraryService() {
      * Garante também que todo item adicionado tenha URI tocável: itens vindos de
      * controladores externos podem chegar só com o mediaId.
      */
+    @OptIn(UnstableApi::class) // SessionError e MediaItemsWithStartPosition
     private inner class LibraryCallback : MediaLibrarySession.Callback {
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
@@ -201,9 +202,11 @@ class PlaybackService : MediaLibraryService() {
      * controles de tocar/pausar seguem abertos a todos, como em qualquer player; a navegação não:
      * antes qualquer app instalado, mesmo sem permissão de mídia, listava a biblioteca (auditoria SEC-02).
      */
+    @OptIn(UnstableApi::class) // ControllerInfo.isTrusted
     private fun canBrowse(controller: MediaSession.ControllerInfo): Boolean =
         controller.packageName == packageName || controller.isTrusted || controller.packageName in BROWSE_ALLOWED
 
+    @OptIn(UnstableApi::class) // SessionError
     private fun <T : Any> denied(): ListenableFuture<LibraryResult<T>> =
         Futures.immediateFuture(LibraryResult.ofError<T>(SessionError.ERROR_PERMISSION_DENIED))
 
