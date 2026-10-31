@@ -32,10 +32,10 @@ jobs:
       - name: Chave de assinatura
         shell: bash
         env:
-          KEYSTORE_BASE64: ${{ secrets.SONIVELL_KEYSTORE_BASE64 }}
-          SONIVELL_STORE_PASSWORD: ${{ secrets.SONIVELL_STORE_PASSWORD }}
-          SONIVELL_KEY_ALIAS: ${{ secrets.SONIVELL_KEY_ALIAS }}
-          SONIVELL_KEY_PASSWORD: ${{ secrets.SONIVELL_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          SONIVELL_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SONIVELL_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          SONIVELL_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           PR_DE_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
         run: |
           set -euo pipefail
@@ -45,19 +45,21 @@ jobs:
               echo "SONIVELL_BUILD=debug" >> "$GITHUB_ENV"
               exit 0
             fi
-            echo "::error::Falta o secret SONIVELL_KEYSTORE_BASE64 (o .jks em base64). Veja a seção Assinatura do README."
+            echo "::error::Falta o secret KEYSTORE_BASE64 (o .jks em base64). Veja a seção Assinatura do README."
             exit 1
           fi
-          for v in SONIVELL_STORE_PASSWORD SONIVELL_KEY_ALIAS SONIVELL_KEY_PASSWORD; do
-            [ -n "${!v:-}" ] || { echo "::error::Falta o secret $v."; exit 1; }
+          # Secret do repositório -> variável que o Gradle lê.
+          for par in KEYSTORE_PASSWORD:SONIVELL_STORE_PASSWORD KEY_ALIAS:SONIVELL_KEY_ALIAS KEY_PASSWORD:SONIVELL_KEY_PASSWORD; do
+            v=${par#*:}
+            [ -n "${!v:-}" ] || { echo "::error::Falta o secret ${par%%:*}."; exit 1; }
           done
           jks="$RUNNER_TEMP/sonivell-release.jks"
           # Tolera quebras de linha e espaços no secret (comum ao colar o base64).
           printf '%s' "$KEYSTORE_BASE64" | tr -d ' \r\n' | base64 -d > "$jks" 2>/dev/null \
-            || { echo "::error::SONIVELL_KEYSTORE_BASE64 não é um base64 válido."; exit 1; }
+            || { echo "::error::KEYSTORE_BASE64 não é um base64 válido."; exit 1; }
           # Confere a senha do arquivo e o alias antes de compilar, com uma mensagem clara.
           if ! keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" -alias "$SONIVELL_KEY_ALIAS" > /dev/null 2>&1; then
-            echo "::error::A chave não abriu: confira SONIVELL_STORE_PASSWORD e SONIVELL_KEY_ALIAS (aliases no arquivo: $(keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" 2>/dev/null | grep -oE '^[^,]+, ' | tr -d ',' | tr '\n' ' ' || true))."
+            echo "::error::A chave não abriu: confira os secrets KEYSTORE_PASSWORD e KEY_ALIAS (aliases no arquivo: $(keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" 2>/dev/null | grep -oE '^[^,]+, ' | tr -d ',' | tr '\n' ' ' || true))."
             exit 1
           fi
           echo "SONIVELL_KEYSTORE=$jks" >> "$GITHUB_ENV"
@@ -68,9 +70,9 @@ jobs:
         env:
           # O número desta execução vira o versionCode: cada APK novo atualiza o anterior.
           SONIVELL_VERSION_CODE: ${{ github.run_number }}
-          SONIVELL_STORE_PASSWORD: ${{ secrets.SONIVELL_STORE_PASSWORD }}
-          SONIVELL_KEY_ALIAS: ${{ secrets.SONIVELL_KEY_ALIAS }}
-          SONIVELL_KEY_PASSWORD: ${{ secrets.SONIVELL_KEY_PASSWORD }}
+          SONIVELL_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SONIVELL_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          SONIVELL_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           set -o pipefail
           if [ "$SONIVELL_BUILD" = release ]; then tarefas="assembleLiteRelease assembleSmartRelease"; else tarefas="assembleLiteDebug assembleSmartDebug"; fi
