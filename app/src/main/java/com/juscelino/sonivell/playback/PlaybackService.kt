@@ -60,6 +60,7 @@ class PlaybackService : MediaLibraryService() {
     private var crossfader: Crossfader? = null
     private var outputs: OutputWatcher? = null
     private var keeper: PlaybackKeeper? = null
+    private var smartFiller: SmartQueueFiller? = null
 
     /** "Pausar ao desconectar o fone" muda na hora, sem reiniciar o player. */
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
@@ -117,6 +118,9 @@ class PlaybackService : MediaLibraryService() {
         )
 
         browser = LibraryBrowser(this, getSharedPreferences(SettingsStore.PREFS, MODE_PRIVATE))
+        // Fila SMART "infinita" com o app fechado (com ele aberto, quem abastece é o app).
+        smartFiller = SmartQueueFiller(this, player, prefs, scope, createSmartEngine(this)) { browser.tracks() }
+            .also { it.start() }
         session = MediaLibrarySession.Builder(this, player, LibraryCallback())
             .setSessionActivity(openApp)
             .build()
@@ -134,6 +138,7 @@ class PlaybackService : MediaLibraryService() {
      * Garante também que todo item adicionado tenha URI tocável: itens vindos de
      * controladores externos podem chegar só com o mediaId.
      */
+    @OptIn(UnstableApi::class) // SessionError e MediaItemsWithStartPosition
     private inner class LibraryCallback : MediaLibrarySession.Callback {
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
@@ -197,9 +202,11 @@ class PlaybackService : MediaLibraryService() {
      * controles de tocar/pausar seguem abertos a todos, como em qualquer player; a navegação não:
      * antes qualquer app instalado, mesmo sem permissão de mídia, listava a biblioteca (auditoria SEC-02).
      */
+    @OptIn(UnstableApi::class) // ControllerInfo.isTrusted
     private fun canBrowse(controller: MediaSession.ControllerInfo): Boolean =
         controller.packageName == packageName || controller.isTrusted || controller.packageName in BROWSE_ALLOWED
 
+    @OptIn(UnstableApi::class) // SessionError
     private fun <T : Any> denied(): ListenableFuture<LibraryResult<T>> =
         Futures.immediateFuture(LibraryResult.ofError<T>(SessionError.ERROR_PERMISSION_DENIED))
 
@@ -272,6 +279,8 @@ class PlaybackService : MediaLibraryService() {
         prefs.unregisterOnSharedPreferenceChangeListener(settingsListener)
         keeper?.release()
         keeper = null
+        smartFiller?.release()
+        smartFiller = null
         outputs?.release()
         outputs = null
         handler.removeCallbacksAndMessages(null)

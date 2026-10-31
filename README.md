@@ -69,9 +69,11 @@ Localmente: `./gradlew assembleLiteRelease` ou `./gradlew assembleSmartRelease` 
 
 ### Assinatura
 
-O release é assinado com a **chave de release**, que nunca fica no repositório. Ela entra pelas variáveis `SONIVELL_KEYSTORE` (caminho do `.jks`), `SONIVELL_STORE_PASSWORD`, `SONIVELL_KEY_ALIAS` e `SONIVELL_KEY_PASSWORD`. No GitHub Actions, cadastre em *Settings → Secrets and variables → Actions* os secrets `SONIVELL_KEYSTORE_BASE64` (o `.jks` em base64), `SONIVELL_STORE_PASSWORD`, `SONIVELL_KEY_ALIAS` e `SONIVELL_KEY_PASSWORD`.
+O release é assinado com a **chave de release**, que nunca fica no repositório. Ela entra pelas variáveis `SONIVELL_KEYSTORE` (caminho do `.jks`), `SONIVELL_STORE_PASSWORD`, `SONIVELL_KEY_ALIAS` e `SONIVELL_KEY_PASSWORD`. No GitHub Actions, cadastre em *Settings → Secrets and variables → Actions* os secrets `KEYSTORE_BASE64` (o `.jks` em base64), `KEYSTORE_PASSWORD`, `KEY_ALIAS` e `KEY_PASSWORD`; o workflow os repassa ao Gradle com os nomes acima.
 
-Existe também uma **chave de teste** versionada (`keystore/sonivell-teste.jks`). Ela é pública, então qualquer pessoa consegue assinar um APK com ela: serve só para testes e só é usada quando pedida de propósito, com `-Psonivell.chaveDeTeste=true` (o APK sai com `-teste` na versão). Sem nenhuma das duas, o build de release para com uma explicação. O CI usa a chave de teste, com um aviso, enquanto os secrets não estiverem cadastrados. **Não distribua APKs assinados com a chave de teste.**
+Não há chave de teste no repositório. Sem a chave de release, o build de release para com uma explicação; para testar no aparelho, use `./gradlew assembleLiteDebug`. No CI, o build confere a chave antes de compilar e, no fim, registra a impressão digital (SHA-256) do certificado de cada APK, para conferir que saíram com a sua chave.
+
+APKs antigos assinados com a chave de teste (que era pública) não atualizam para os novos: o Android exige o mesmo certificado. Desinstale a versão antiga e instale a nova.
 
 ## Créditos
 

@@ -163,7 +163,8 @@ internal fun LyricHitCard(hit: LyricHit, query: String, onPlay: () -> Unit, modi
     Column(
         modifier
             .fillMaxWidth()
-            .cardSurface(RoundedCornerShape(20.dp))
+            // Um cartão por resultado da busca nas letras: sem sombra, para a lista rolar leve.
+            .cardSurface(RoundedCornerShape(20.dp), elevation = 0.dp)
             .clickable(role = Role.Button, onClick = onPlay)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),

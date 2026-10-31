@@ -1,0 +1,258 @@
+name: Segurança e qualidade
+
+# Três verificações, em jobs separados e só leitura:
+#  - workflows:    auditoria dos próprios workflows (zizmor) e sintaxe/shell (actionlint);
+#  - dependencias: CVEs nas bibliotecas que vão no app (OSV-Scanner), reprova com CVSS >= 7;
+#                  e, só informativo, CVEs nas ferramentas de build (gradle/verification-metadata.xml);
+#  - lint:         Android Lint completo das duas versões (lite e smart).
+# Em PRs deste repositório, o job "resumo" junta os três num comentário único, atualizado a cada push.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  schedule:
+    # Toda segunda: CVEs novas aparecem sem mudança nenhuma no código.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seguranca-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Instalar zizmor e actionlint (versões e hashes fixos)
+        run: |
+          python3 -m pip install --user --quiet --require-hashes --only-binary=:all: -r .github/ci/requisitos-ci.txt
+          GOTOOLCHAIN=auto go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: zizmor (segurança dos workflows)
+        id: zizmor
+        continue-on-error: true
+        env:
+          # Token só leitura: habilita as checagens online (actions com falha conhecida, commits impostores).
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p relatorio
+          set +e
+          zizmor --format plain --min-severity medium --config .github/zizmor.yml .github/workflows > zizmor.txt 2>&1
+          rc=$?
+          {
+            echo "### Workflows: zizmor"
+            echo
+            if [ "$rc" -eq 0 ]; then echo ":white_check_mark: Nenhum achado de severidade média ou alta."; else echo ":x: Achados (código de saída $rc):"; fi
+            echo
+            echo '```'
+            grep -vE '^\s*(INFO|WARN) ' zizmor.txt | head -n 120
+            echo '```'
+          } > relatorio/1-zizmor.md
+          exit "$rc"
+
+      - name: actionlint (sintaxe e shell dos workflows)
+        id: actionlint
+        continue-on-error: true
+        run: |
+          set +e
+          actionlint -color=false > actionlint.txt 2>&1
+          rc=$?
+          {
+            echo "### Workflows: actionlint"
+            echo
+            if [ "$rc" -eq 0 ]; then echo ":white_check_mark: Sem erros."; else echo ":x: Erros:"; echo; echo '```'; head -n 80 actionlint.txt; echo '```'; fi
+          } > relatorio/2-actionlint.md
+          exit "$rc"
+
+      - name: Resultado
+        if: always()
+        env:
+          ZIZMOR: ${{ steps.zizmor.outcome }}
+          ACTIONLINT: ${{ steps.actionlint.outcome }}
+        run: |
+          cat relatorio/*.md >> "$GITHUB_STEP_SUMMARY"
+          [ "$ZIZMOR" = success ] && [ "$ACTIONLINT" = success ]
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: relatorio-workflows
+          path: relatorio/
+
+  dependencias:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
+
+      - name: Instalar o OSV-Scanner (go install confere o checksum no sum.golang.org)
+        run: |
+          GOTOOLCHAIN=auto go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.7.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Listar as dependências que vão no app (lockfiles temporários)
+        run: |
+          ./gradlew -Psonivell.desktop=true --no-configuration-cache \
+            --init-script .github/ci/travar-runtime.gradle --write-locks sonivellTravarRuntime
+          mkdir -p osv/runtime
+          find . -name gradle.lockfile -not -path './.gradle/*' | while IFS= read -r f; do
+            d="osv/runtime/$(dirname "$f" | sed 's#^\./##; s#/#_#g')"
+            mkdir -p "$d" && cp "$f" "$d/gradle.lockfile"
+          done
+          echo "Pacotes por módulo:"; wc -l osv/runtime/*/gradle.lockfile
+
+      - name: CVEs nas dependências do app (reprova com CVSS >= 7)
+        id: runtime
+        continue-on-error: true
+        run: |
+          mkdir -p relatorio
+          set +e
+          osv-scanner scan source --recursive --format json --output osv/runtime.json osv/runtime
+          rc=$?
+          # 0 = nada encontrado, 1 = vulnerabilidades encontradas; o resto é erro do scanner.
+          if [ "$rc" -gt 1 ]; then echo "::error::OSV-Scanner falhou (código $rc)"; fi
+          python3 .github/ci/resumo_osv.py osv/runtime.json "Dependências do app (Android e PC): OSV-Scanner" \
+            --falhar-a-partir-de 7.0 > relatorio/3-osv-app.md
+          corte=$?
+          [ "$rc" -le 1 ] && [ "$corte" -eq 0 ]
+
+      - name: CVEs nas ferramentas de build (informativo)
+        if: always() && hashFiles('gradle/verification-metadata.xml') != ''
+        continue-on-error: true
+        run: |
+          set +e
+          osv-scanner scan source --lockfile gradle/verification-metadata.xml --format json --output osv/build.json
+          python3 .github/ci/resumo_osv.py osv/build.json "Ferramentas de build (Gradle, AGP, Kotlin, lint): OSV-Scanner, informativo" \
+            > relatorio/4-osv-build.md
+          true
+
+      - name: Resultado
+        if: always()
+        env:
+          RUNTIME: ${{ steps.runtime.outcome }}
+        run: |
+          cat relatorio/*.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          [ "$RUNTIME" = success ]
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: relatorio-dependencias
+          path: relatorio/
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: osv-completo
+          path: osv/
+          if-no-files-found: ignore
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
+
+      - name: Android Lint (lite e smart)
+        id: lint
+        continue-on-error: true
+        run: ./gradlew --continue :app:lintLiteDebug :app:lintSmartDebug
+
+      - name: Resultado
+        if: always()
+        env:
+          LINT: ${{ steps.lint.outcome }}
+        run: |
+          mkdir -p relatorio
+          python3 .github/ci/resumo_lint.py app/build/reports/lint-results-liteDebug.xml \
+            app/build/reports/lint-results-smartDebug.xml > relatorio/5-lint.md
+          cat relatorio/5-lint.md >> "$GITHUB_STEP_SUMMARY"
+          [ "$LINT" = success ]
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: relatorio-lint
+          path: relatorio/
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: lint-html
+          path: app/build/reports/lint-results-*.html
+          if-no-files-found: ignore
+
+  resumo:
+    # Comentário único no PR com os três resultados. Só em PRs deste repositório (nunca de forks)
+    # e sem checkout: este job não roda código do branch, só lê os relatórios em Markdown.
+    needs: [ workflows, dependencias, lint ]
+    if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write # criar/atualizar o comentário com o resumo
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: relatorio-*
+          path: relatorio
+          merge-multiple: true
+
+      - name: Publicar o resumo no PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          R_WORKFLOWS: ${{ needs.workflows.result }}
+          R_DEPENDENCIAS: ${{ needs.dependencias.result }}
+          R_LINT: ${{ needs.lint.result }}
+        run: |
+          set -euo pipefail
+          icone() { case "$1" in success) echo ":white_check_mark:";; failure) echo ":x:";; *) echo ":grey_question: $1";; esac; }
+          {
+            echo "<!-- sonivell-seguranca -->"
+            echo "## Segurança e qualidade"
+            echo
+            echo "Commit \`${SHA:0:7}\` · [execução]($RUN_URL)"
+            echo
+            echo "| Verificação | Resultado |"
+            echo "|---|---|"
+            echo "| Workflows (zizmor + actionlint) | $(icone "$R_WORKFLOWS") |"
+            echo "| CVEs nas dependências do app (OSV, corte CVSS 7) | $(icone "$R_DEPENDENCIAS") |"
+            echo "| Android Lint | $(icone "$R_LINT") |"
+            echo
+            cat relatorio/*.md 2>/dev/null || echo "_Sem relatórios (os jobs falharam antes de gerar)._"
+          } | head -c 60000 > corpo.md
+          id=$(gh api "repos/$GH_REPO/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- sonivell-seguranca -->"))) | .id' | head -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GH_REPO/issues/comments/$id" -F body=@corpo.md > /dev/null
+          else
+            gh api -X POST "repos/$GH_REPO/issues/$PR/comments" -F body=@corpo.md > /dev/null
+          fi

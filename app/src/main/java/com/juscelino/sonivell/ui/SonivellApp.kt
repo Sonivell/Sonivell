@@ -676,7 +676,7 @@ private fun MainContent(vm: MainViewModel) {
                             LibraryMode.Inicio -> {
                                 // Início é a raiz do tema: voltar daqui sai do app, não cai na biblioteca
                                 // (o destino inicial do grafo), que deixou de ser uma aba.
-                                val activity = LocalContext.current as? android.app.Activity
+                                val activity = androidx.activity.compose.LocalActivity.current
                                 BackHandler { activity?.finish() }
                                 SvHomeScreen(
                                     contentPadding = listPadding,

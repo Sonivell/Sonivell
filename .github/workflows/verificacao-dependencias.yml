@@ -1,0 +1,80 @@
+name: Atualizar a verificação das dependências
+
+# Gera de novo o gradle/verification-metadata.xml (SHA-256 de cada biblioteca e plugin que o build
+# baixa) e o distributionSha256Sum do wrapper, e grava os dois no branch em que rodou.
+# Com o arquivo no repositório, o Gradle recusa qualquer dependência cujo hash não confira.
+#
+# Quando rodar: depois de mudar versões em gradle/libs.versions.toml ou nos build.gradle.kts
+# (o build passa a falhar com "Dependency verification failed" até rodar isto).
+# Como: Actions > "Atualizar a verificação das dependências" > Run workflow > escolher o branch.
+# Revise o diff antes do merge: hashes novos só devem aparecer para as versões que você mudou.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write # grava o verification-metadata.xml no branch escolhido
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Checksum do wrapper do Gradle
+        run: |
+          set -euo pipefail
+          props=gradle/wrapper/gradle-wrapper.properties
+          url=$(sed -n 's/^distributionUrl=//p' "$props" | sed 's/\\:/:/g')
+          sum=$(curl -fsSL "$url.sha256")
+          [[ "$sum" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::checksum inválido para $url"; exit 1; }
+          sed -i '/^distributionSha256Sum=/d' "$props"
+          echo "distributionSha256Sum=$sum" >> "$props"
+          echo "::notice::$url -> $sum"
+
+      - name: Dependências do sistema (iguais às dos outros workflows)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq cmake g++ ffmpeg fakeroot dpkg-dev >/dev/null
+
+      - name: Gerar os hashes rodando as mesmas tarefas do CI
+        run: |
+          cp .github/ci/verification-metadata.base.xml gradle/verification-metadata.xml
+          # Tudo numa execução só, com o app e o PC juntos: assim o arquivo cobre os APKs, os testes,
+          # o lint, o .deb, o motor SMART do PC e a lista usada pelo OSV-Scanner. Sem a chave (este job não
+          # recebe secrets), só o empacotamento do release falha, depois de baixar tudo o que ele usa.
+          ./gradlew --write-verification-metadata sha256 --continue --no-configuration-cache \
+            -Psonivell.desktop=true \
+            --init-script .github/ci/travar-runtime.gradle \
+            assembleLiteRelease assembleSmartRelease :app:testLiteDebugUnitTest \
+            :app:lintLiteDebug :app:lintSmartDebug \
+            :desktop:packageDeb :desktop:createDistributable :desktop:test :desktop-smart:jvmTest \
+            sonivellTravarRuntime || echo "::warning::Alguma tarefa falhou; os hashes das dependências baixadas foram gravados mesmo assim."
+          find . -name gradle.lockfile -not -path './.gradle/*' -delete
+          n=$(grep -c '<component ' gradle/verification-metadata.xml || true)
+          echo "::notice::$n componentes verificados"
+          [ "$n" -gt 50 ] || { echo "::error::poucos componentes ($n): a geração falhou"; exit 1; }
+
+      - name: Conferir com a verificação ligada
+        run: |
+          ./gradlew --no-configuration-cache help
+          ./gradlew --no-configuration-cache -Psonivell.desktop=only help
+
+      - name: Gravar no branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git add gradle/verification-metadata.xml gradle/wrapper/gradle-wrapper.properties
+          if git diff --cached --quiet; then echo "::notice::Nada mudou."; exit 0; fi
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -q -m "Verificação das dependências do Gradle atualizada"
+          git push -q "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"

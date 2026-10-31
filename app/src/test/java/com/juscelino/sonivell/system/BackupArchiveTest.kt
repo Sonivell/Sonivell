@@ -47,10 +47,9 @@ class BackupArchiveTest {
             ),
         )
         assertTrue(valid)
-        val prefs = tmp.newFolder("prefs")
+        assertEquals(mapOf("sonivell" to emptyMap<String, Any>()), BackupArchive.stagedPrefs(staging))
         val files = tmp.newFolder("files")
-        BackupArchive.install(staging, prefs, files)
-        assertEquals("<map/>", File(prefs, "sonivell.xml").readText())
+        BackupArchive.installFiles(staging, files)
         assertEquals("[]", File(files, "playlists.json").readText())
         assertEquals(3, File(files, "covers/123.jpg").length())
     }

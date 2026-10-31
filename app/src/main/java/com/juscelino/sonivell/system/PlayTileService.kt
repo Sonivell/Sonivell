@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.system
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
@@ -55,7 +56,9 @@ class PlayTileService : TileService() {
         tile.updateTile()
     }
 
+    // Android 14+ usa a versão com PendingIntent; a com Intent só roda abaixo disso.
     @Suppress("DEPRECATION")
+    @SuppressLint("StartActivityAndCollapseDeprecated")
     private fun openApp() {
         val intent = Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (Build.VERSION.SDK_INT >= 34) {
