@@ -46,6 +46,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Color
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 /** Cartão da Biblioteca: "N músicas com tags para arrumar", leva ao Organizar. */
 @Composable
@@ -162,8 +163,7 @@ internal fun LyricHitCard(hit: LyricHit, query: String, onPlay: () -> Unit, modi
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(20.dp))
             .clickable(role = Role.Button, onClick = onPlay)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),

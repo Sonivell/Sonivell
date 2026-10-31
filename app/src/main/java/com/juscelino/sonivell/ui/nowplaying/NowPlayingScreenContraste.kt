@@ -252,13 +252,14 @@ fun NowPlayingScreenContraste(
 
 /**
  * Cor de fundo do player: o tom dominante da capa, escurecido para o texto branco ficar legível.
- * Sem capa (ou enquanto carrega), usa o tom da capa gerada da mesma faixa.
+ * Sem capa (ou enquanto carrega), usa o tom da capa gerada da mesma faixa. [adjust] troca o
+ * escurecimento por outro ajuste (o brilho do vidro usa um tom vivo).
  */
 @Composable
-private fun artTint(track: Track): Color {
+internal fun artTint(track: Track, adjust: (Color) -> Color = ::darken): Color {
     val context = LocalContext.current
     val fallback = remember(track.albumId) {
-        darken(ArtTones.rings[(abs(track.albumId) % ArtTones.rings.size).toInt()])
+        adjust(ArtTones.rings[(abs(track.albumId) % ArtTones.rings.size).toInt()])
     }
     var tint by remember(track.albumId) { mutableStateOf(fallback) }
     LaunchedEffect(track.artUri) {
@@ -271,7 +272,7 @@ private fun artTint(track: Track): Color {
         val color = withContext(Dispatchers.Default) {
             runCatching { dominant(result.drawable.toBitmap(48, 48, Bitmap.Config.ARGB_8888)) }.getOrNull()
         }
-        if (color != null) tint = darken(color)
+        if (color != null) tint = adjust(color)
     }
     return tint
 }
@@ -296,6 +297,15 @@ private fun dominant(bitmap: Bitmap): Color {
     }
     if (total == 0.0) return Color(0xFF2A2626)
     return Color((r / total).toInt(), (g / total).toInt(), (b / total).toInt())
+}
+
+/** O tom da capa vivo e médio, para brilhar sobre o fundo escuro sem estourar (brilho do vidro). */
+internal fun glowTone(color: Color): Color {
+    val hsv = FloatArray(3)
+    AColor.RGBToHSV((color.red * 255).toInt(), (color.green * 255).toInt(), (color.blue * 255).toInt(), hsv)
+    hsv[1] = hsv[1].coerceIn(0.35f, 0.8f)
+    hsv[2] = hsv[2].coerceIn(0.6f, 0.85f)
+    return Color(AColor.HSVToColor(hsv))
 }
 
 private fun darken(color: Color): Color {

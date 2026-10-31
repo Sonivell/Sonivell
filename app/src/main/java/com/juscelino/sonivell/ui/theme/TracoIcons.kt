@@ -61,6 +61,12 @@ private const val REPEAT = "M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M
 private const val SPEAKER = "M4 9v6h4l5 4V5L8 9z"
 private const val FOLDER = "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
 
+/**
+ * A onda do "Para você" para os outros estilos de ícone: o mesmo desenho do Traço, só com a
+ * espessura de cada estilo. É o ícone da aba inicial em todos os layouts.
+ */
+internal fun waveIcon(name: String, width: Float): ImageVector = icon(name, s(WAVE, width))
+
 /** Montado só quando usado pela primeira vez. */
 val TracoIcons: SonivellIcons by lazy {
     val search = arrayOf(s(circle(11f, 11f, 7f)), s("M20 20l-3.5-3.5"))

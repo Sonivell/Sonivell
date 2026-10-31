@@ -59,6 +59,7 @@ import com.juscelino.sonivell.playback.RepeatMode
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 
 /** Player do layout Clássica (1.0). */
@@ -140,8 +141,7 @@ fun NowPlayingScreenClassica(
                             style = MaterialTheme.typography.labelMedium,
                             color = c.textTertiary,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(c.surface)
+                                .cardSurface(RoundedCornerShape(6.dp))
                                 .padding(horizontal = 8.dp, vertical = 2.dp),
                         )
                     }
@@ -188,8 +188,7 @@ fun NowPlayingScreenClassica(
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(c.surfaceLow)
+                .cardSurface(RoundedCornerShape(20.dp), c.surfaceLow)
                 .padding(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -325,8 +324,7 @@ private fun SleepChip(timer: SleepTimer, onClick: () -> Unit) {
     Row(
         Modifier
             .padding(top = 4.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(10.dp))
             .clickable(onClickLabel = stringResource(R.string.sleep_timer), onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,

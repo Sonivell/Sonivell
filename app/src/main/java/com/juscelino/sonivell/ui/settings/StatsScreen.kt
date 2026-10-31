@@ -41,6 +41,8 @@ import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.text.DateFormatSymbols
+import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.glassSurface
 
 @Composable
 fun StatsScreen(
@@ -74,12 +76,22 @@ fun StatsScreen(
         }
 
         if (onRetro != null && !stats.isEmpty) {
+            val glass = SonivellTheme.glass
+            val bannerShape = RoundedCornerShape(20.dp)
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(c.accent).clickable(onClick = onRetro).padding(16.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .then(
+                        // Vidro: translúcido, contorno e brilho na cor de destaque.
+                        if (glass) Modifier.glassSurface(bannerShape, c.surface, c.accent.copy(alpha = 0.55f), tone = c.accent)
+                        else Modifier.clip(bannerShape).background(c.accent),
+                    )
+                    .clickable(onClick = onRetro)
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(stringResource(R.string.retro_title), style = MaterialTheme.typography.titleMedium, color = c.onAccent)
-                Text(stringResource(R.string.retro_hint), style = MaterialTheme.typography.bodyMedium, color = c.onAccent)
+                Text(stringResource(R.string.retro_title), style = MaterialTheme.typography.titleMedium, color = if (glass) c.accent else c.onAccent)
+                Text(stringResource(R.string.retro_hint), style = MaterialTheme.typography.bodyMedium, color = if (glass) c.textSecondary else c.onAccent)
             }
         }
 
@@ -136,7 +148,7 @@ private fun formatListening(ms: Long): String {
 private fun BigNumber(value: String, label: String, modifier: Modifier = Modifier, note: String? = null) {
     val c = SonivellTheme.colors
     Column(
-        modifier.clip(RoundedCornerShape(18.dp)).background(c.surface).padding(16.dp),
+        modifier.cardSurface(RoundedCornerShape(18.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(value, style = MaterialTheme.typography.headlineSmall, color = c.textPrimary, maxLines = 1)
@@ -191,7 +203,7 @@ private fun Bars(values: List<Long>, labels: List<String>) {
     val max = (values.maxOrNull() ?: 0L).coerceAtLeast(1L)
     val minutesLabel = stringResource(R.string.stats_minutes_label)
     Row(
-        Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(18.dp)).background(c.surface).padding(12.dp),
+        Modifier.fillMaxWidth().height(120.dp).cardSurface(RoundedCornerShape(18.dp)).padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
         verticalAlignment = Alignment.Bottom,
     ) {

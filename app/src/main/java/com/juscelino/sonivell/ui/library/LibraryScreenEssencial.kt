@@ -82,6 +82,7 @@ import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 /*
  * Layout Essencial: as mesmas três telas (Para você, Buscar, Biblioteca) com o mínimo de
@@ -447,8 +448,7 @@ private fun EssHero(track: Track, tag: String, progress: Float?, meta: String?, 
         Modifier
             .padding(horizontal = SIDE.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(28.dp))
             .clickable(onClick = onPlay),
     ) {
         Box(Modifier.fillMaxWidth().aspectRatio(1.15f)) {
@@ -704,7 +704,7 @@ private fun EssBestResult(title: String, subtitle: String, track: Track?, round:
     Column {
         EssSectionTitle(stringResource(R.string.search_best))
         Column(
-            Modifier.padding(horizontal = SIDE.dp).fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(c.surface).clickable(onClick = onOpen).padding(16.dp),
+            Modifier.padding(horizontal = SIDE.dp).fillMaxWidth().cardSurface(RoundedCornerShape(24.dp)).clickable(onClick = onOpen).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             AlbumArt(track, Modifier.size(112.dp).then(if (round) Modifier.clip(CircleShape) else Modifier), corner = if (round) 56.dp else 18.dp)
@@ -811,7 +811,7 @@ private fun LazyListScope.essLibrary(
             items(state.folders, key = { "f-${it.path}" }) { f ->
                 val res = LocalContext.current.resources
                 EssListRow(f.name, res.getQuantityString(R.plurals.songs_count, f.tracks.size, f.tracks.size), onClick = { actions.onOpenFolder(f.path) }) {
-                    Box(Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)).background(SonivellTheme.colors.surface), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(52.dp).cardSurface(RoundedCornerShape(12.dp), elevation = 0.dp), contentAlignment = Alignment.Center) {
                         Icon(SonivellTheme.icons.folder, null, Modifier.size(22.dp), tint = SonivellTheme.colors.textSecondary)
                     }
                 }
@@ -870,7 +870,7 @@ private fun EssSortLabel(label: String, onClick: () -> Unit) {
 private fun EssPin(title: String, subtitle: String, modifier: Modifier, onClick: () -> Unit, art: @Composable () -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        modifier.height(64.dp).clip(RoundedCornerShape(18.dp)).background(c.surface).clickable(onClick = onClick).padding(8.dp),
+        modifier.height(64.dp).cardSurface(RoundedCornerShape(18.dp)).clickable(onClick = onClick).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -918,7 +918,7 @@ private fun LazyListScope.essPlaylistRows(state: LibraryState, playlists: List<P
     }
     items(smartPlaylists, key = { "sp-${it.id}" }) { sp ->
         EssListRow(sp.name, stringResource(R.string.kind_smart), onClick = { actions.onOpenSmartPlaylist(sp.id) }) {
-            Box(Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)).background(SonivellTheme.colors.surface), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(52.dp).cardSurface(RoundedCornerShape(12.dp), elevation = 0.dp), contentAlignment = Alignment.Center) {
                 Icon(SonivellTheme.icons.smart, null, Modifier.size(22.dp), tint = SonivellTheme.colors.accent)
             }
         }
@@ -932,7 +932,7 @@ private fun LazyListScope.essPlaylistRows(state: LibraryState, playlists: List<P
     )
     items(autos, key = { "auto-${it.first}" }) { (key, label) ->
         EssListRow(stringResource(label), stringResource(R.string.kind_auto), onClick = { actions.onOpenAuto(key) }) {
-            Box(Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)).background(SonivellTheme.colors.surface), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(52.dp).cardSurface(RoundedCornerShape(12.dp), elevation = 0.dp), contentAlignment = Alignment.Center) {
                 Icon(SonivellTheme.icons.musicNote, null, Modifier.size(22.dp), tint = SonivellTheme.colors.textSecondary)
             }
         }

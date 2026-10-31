@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 /**
  * Primeira abertura: conta quantas músicas foram achadas, mostra o SMART analisando e
@@ -82,7 +83,7 @@ internal fun WelcomeScreen(
         } else if (smartAvailable && progress.total > 0) {
             val fraction = (progress.analysed.toFloat() / progress.total).coerceIn(0f, 1f)
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(c.surface).padding(18.dp),
+                Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(24.dp)).padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

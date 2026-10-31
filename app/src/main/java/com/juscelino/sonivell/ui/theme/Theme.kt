@@ -72,6 +72,8 @@ enum class AccentChoice(val dark: Color, val light: Color) {
     Turquesa(Color(0xFF5FE3D0), Color(0xFF00756A)),
     /** Verde #1DB954 (RGB 29, 185, 84); no tema claro, um tom mais escuro para o texto passar 4,5:1. */
     Verde(Color(0xFF1DB954), Color(0xFF117A37)),
+    /** Creme; no claro, um dourado escuro para o texto passar 4,5:1. */
+    Creme(Color(0xFFEFE3CC), Color(0xFF7A5A1E)),
 }
 
 /** Fundo do tema escuro: grafite (padrão do Sonivell) ou preto. */
@@ -199,6 +201,10 @@ object SonivellTheme {
 
     val icons: SonivellIcons
         @Composable get() = LocalSonivellIcons.current
+
+    /** Cartões em vidro (em todos os temas); ver [glassSurface]. */
+    val glass: Boolean
+        @Composable get() = LocalGlass.current
 }
 
 @Composable
@@ -211,6 +217,8 @@ fun SonivellTheme(
     tintedBackground: Boolean = false,
     /** Cor de destaque tirada do papel de parede (Material You, Android 12+). */
     systemColors: Boolean = false,
+    /** Cartões em vidro: translúcidos, com sombra e brilho. Ligado em todos os temas. */
+    glass: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -245,6 +253,7 @@ fun SonivellTheme(
     androidx.compose.runtime.CompositionLocalProvider(
         LocalSonivellColors provides colors,
         LocalSonivellIcons provides iconStyle.icons(),
+        LocalGlass provides glass,
     ) {
         MaterialTheme(colorScheme = scheme, typography = SonivellTypography, content = content)
     }
