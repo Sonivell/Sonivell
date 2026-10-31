@@ -44,6 +44,8 @@ jobs:
       - name: Compilar APKs de release (lite e SMART)
         shell: bash
         env:
+          # O número desta execução vira o versionCode: cada APK novo atualiza o anterior.
+          SONIVELL_VERSION_CODE: ${{ github.run_number }}
           SONIVELL_STORE_PASSWORD: ${{ secrets.SONIVELL_STORE_PASSWORD }}
           SONIVELL_KEY_ALIAS: ${{ secrets.SONIVELL_KEY_ALIAS }}
           SONIVELL_KEY_PASSWORD: ${{ secrets.SONIVELL_KEY_PASSWORD }}

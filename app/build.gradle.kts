@@ -20,7 +20,9 @@ android {
         applicationId = "com.juscelino.sonivell"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
+        // Cresce a cada build do CI (número da execução), para o Android aceitar a atualização por
+        // cima da versão anterior; build local fica em 1 (auditoria CI-03).
+        versionCode = System.getenv("SONIVELL_VERSION_CODE")?.toIntOrNull() ?: 1
         versionName = "0.1.0"
     }
 

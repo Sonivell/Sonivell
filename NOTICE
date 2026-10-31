@@ -16,3 +16,17 @@ Copyright Google LLC, licenciado sob a Apache License 2.0
 (https://github.com/google/material-design-icons). Os caminhos estão em
 app/src/main/java/com/juscelino/sonivell/ui/theme/FinoIconPaths.kt, gerado por
 tools/gen_fino_icons.py.
+
+Componentes nativos (código C/C++ dentro do APK da edição SMART):
+- core/map-native: qdtsne, knncolle, aarand, subpar e sanisizer (MIT; SPTree.hpp e Status.hpp
+  do qdtsne sob BSD-4-Clause). Origem e commit em core/map-native/dependencies.json; os avisos
+  completos, inclusive o exigido pela BSD-4-Clause ("This product includes software developed by
+  the Delft University of Technology."), estão em app/src/smart/assets/ml/MAP-NATIVE-NOTICES.txt,
+  que vai dentro do APK.
+- core/ort-ops: KleidiAI, Copyright Arm Limited (Apache License 2.0, ver
+  core/ort-ops/src/main/cpp/vendor/kleidiai/LICENSES) e cabeçalhos do ONNX Runtime, Copyright
+  Microsoft (MIT, ver core/ort-ops/src/main/cpp/vendor/onnxruntime/LICENSE).
+
+Sonivell para PC: o AppImage embute o ffmpeg/ffprobe do projeto FFmpeg (build do BtbN, GPL),
+executados como programas separados. A versão exata, o SHA-256 e onde obter o código-fonte
+correspondente ficam em usr/share/doc/ffmpeg/SOURCE dentro do AppImage.

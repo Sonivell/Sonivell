@@ -115,7 +115,8 @@ fun OrganizeScreen(
                         Modifier
                             .fillMaxWidth()
                             .heightIn(min = 52.dp)
-                            .cardSurface(RoundedCornerShape(14.dp))
+                            // Item de lista longa: vidro sem sombra (a sombra por item pesa na rolagem).
+                            .cardSurface(RoundedCornerShape(14.dp), elevation = 0.dp)
                             .clickable(enabled = tracks.isNotEmpty()) { openIssue = if (openIssue == i) -1 else i }
                             .padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
