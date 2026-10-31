@@ -61,12 +61,34 @@ object Backup {
         try {
             val valid = context.contentResolver.openInputStream(source)?.use { BackupArchive.extract(it, staging) }
             if (valid != true) return false
-            BackupArchive.install(staging, prefsDir(context), context.filesDir)
+            // Lê todas as preferências antes de mudar qualquer coisa: se alguma não se lê, desiste.
+            val prefs = BackupArchive.stagedPrefs(staging)
+            BackupArchive.installFiles(staging, context.filesDir)
+            // Pelo próprio SharedPreferences (clear + valores + commit): a cópia em memória do app e do
+            // serviço passa a ter os valores do backup. Trocar o .xml por baixo deixava a cópia antiga,
+            // que a próxima gravação (ex.: "onde parei") escrevia de volta por cima (auditoria REL-04).
+            prefs.forEach { (name, values) -> applyPrefs(context, name, values) }
             true
         } finally {
             staging.deleteRecursively()
         }
     }.getOrDefault(false)
+
+    @Suppress("UNCHECKED_CAST")
+    private fun applyPrefs(context: Context, name: String, values: Map<String, Any>) {
+        val editor = context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear()
+        values.forEach { (key, v) ->
+            when (v) {
+                is String -> editor.putString(key, v)
+                is Int -> editor.putInt(key, v)
+                is Long -> editor.putLong(key, v)
+                is Float -> editor.putFloat(key, v)
+                is Boolean -> editor.putBoolean(key, v)
+                is Set<*> -> editor.putStringSet(key, v as Set<String>)
+            }
+        }
+        editor.commit()
+    }
 
     /** Reabre o app do zero para que tudo seja lido do backup restaurado. */
     fun restart(context: Context) {

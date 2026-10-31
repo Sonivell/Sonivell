@@ -81,13 +81,20 @@ object BackupArchive {
     }
 
     /**
-     * Instala o que foi extraído: cada arquivo é trocado de uma vez ([AtomicFiles]), então nenhum
-     * fica pela metade. Só roda depois de [extract] terminar e o marcador ser confirmado.
+     * As preferências extraídas, já lidas ([PrefsXml]): nome (sem .xml) → valores. Lança se alguma
+     * não se lê; o chamador então desiste antes de mudar qualquer coisa.
      */
-    fun install(staging: File, prefsDir: File, filesDir: File) {
-        File(staging, PREFS_DIR).listFiles()?.filter { it.isFile }?.forEach { f ->
-            AtomicFiles.write(File(prefsDir, f.name), f.readBytes())
-        }
+    fun stagedPrefs(staging: File): Map<String, Map<String, Any>> =
+        File(staging, PREFS_DIR).listFiles()?.filter { it.isFile }?.sortedBy { it.name }
+            ?.associate { it.name.removeSuffix(".xml") to PrefsXml.parse(it.readBytes()) }
+            .orEmpty()
+
+    /**
+     * Instala os arquivos extraídos de `files/`: cada um é trocado de uma vez ([AtomicFiles]), então
+     * nenhum fica pela metade. As preferências não passam por aqui: são aplicadas pelo próprio
+     * SharedPreferences ([stagedPrefs]), senão a cópia em memória delas regravaria os valores antigos.
+     */
+    fun installFiles(staging: File, filesDir: File) {
         val stagedFiles = File(staging, FILES_DIR)
         stagedFiles.walkTopDown().filter { it.isFile }.forEach { f ->
             AtomicFiles.write(File(filesDir, f.relativeTo(stagedFiles).path), f.readBytes())
