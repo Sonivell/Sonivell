@@ -39,6 +39,7 @@ import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassAccent
 import com.juscelino.sonivell.ui.theme.glassSurface
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 /** Botão de ícone com área de toque de no mínimo 44 dp. */
 @Composable
@@ -57,7 +58,7 @@ fun IconBtn(
         modifier
             .size(size)
             .then(
-                // Com fundo, no vidro (Desenvolvimento) o botão redondo também fica em vidro (voltar, etc.).
+                // Com fundo, no vidro o botão redondo também fica em vidro (voltar, etc.).
                 if (SonivellTheme.glass && background != Color.Transparent) {
                     Modifier.glassSurface(CircleShape, background, SonivellTheme.colors.outline, elevation = 4.dp)
                 } else {
@@ -91,7 +92,7 @@ fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
             .height(36.dp)
             .then(
                 when {
-                    // Vidro (Desenvolvimento): o escolhido fica translúcido na cor de destaque, como a aba atual.
+                    // Vidro: o escolhido fica translúcido na cor de destaque, como a aba atual.
                     glass && selected -> Modifier.glassAccent(shape, c.accent)
                     glass -> Modifier.glassSurface(shape, c.surface, c.outline, elevation = 0.dp)
                     selected -> Modifier.clip(shape).background(c.accent)
@@ -186,7 +187,7 @@ fun MiniPlayer(
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val openPlayer = stringResource(R.string.cd_open_player)
-    Box(modifier.padding(horizontal = 8.dp).clip(RoundedCornerShape(12.dp)).background(c.miniPlayer)) {
+    Box(modifier.padding(horizontal = 8.dp).cardSurface(RoundedCornerShape(12.dp), c.miniPlayer, elevation = 12.dp)) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -261,8 +262,7 @@ fun MiniPlayerClassica(
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
-                .background(c.miniPlayer)
+                .cardSurface(RoundedCornerShape(18.dp), c.miniPlayer, elevation = 12.dp)
                 .clickable(onClickLabel = openPlayer, onClick = onOpen)
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,

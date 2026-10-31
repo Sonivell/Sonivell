@@ -643,8 +643,6 @@
     <!-- Tema Sonivell -->
     <string name="layout_sonivell">Sonivell</string>
     <string name="layout_sonivell_hint">Ondas look with moods, Flow, music map, moments and profile</string>
-    <string name="layout_dev">Development</string>
-    <string name="layout_dev_hint">Sonivell with glass cards: translucent, with shadow and glow. For testing</string>
     <string name="nav_explore">Explore</string>
     <string name="nav_profile">Profile</string>
     <string name="sv_home_title">What shall we play now?</string>

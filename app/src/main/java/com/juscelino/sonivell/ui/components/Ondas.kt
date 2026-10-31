@@ -177,7 +177,7 @@ fun MiniPlayerOndas(
         modifier
             .padding(horizontal = 12.dp)
             .fillMaxWidth()
-            // Tema Desenvolvimento: o mini player também em vidro (os outros temas seguem como estavam).
+            // Vidro: o mini player também em vidro.
             .then(
                 if (SonivellTheme.glass) Modifier.glassSurface(shape, c.surface, c.outline, elevation = 12.dp)
                 else Modifier.clip(shape).background(c.surface).border(1.dp, c.outline, shape),

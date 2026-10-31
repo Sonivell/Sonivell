@@ -260,7 +260,7 @@ private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: In
 }
 
 /**
- * Capa de mix no tema Desenvolvimento: o cartão dos atalhos (vidro, ponto colorido no canto e a onda
+ * Capa de mix no vidro: o cartão dos atalhos (vidro, ponto colorido no canto e a onda
  * curta embaixo), no mesmo tamanho da capa do Sonivell.
  */
 @Composable

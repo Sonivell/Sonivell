@@ -12,7 +12,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.system.AppShortcuts
 import com.juscelino.sonivell.ui.SonivellApp
 import com.juscelino.sonivell.ui.theme.SonivellTheme
@@ -48,7 +47,6 @@ class MainActivity : ComponentActivity() {
                 darkBackground = settings.darkBackground,
                 tintedBackground = settings.tintedBackground,
                 systemColors = settings.systemColors,
-                glass = settings.uiStyle == UiStyle.DESENVOLVIMENTO,
             ) {
                 SonivellApp(vm)
             }

@@ -15,11 +15,11 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** Liga os cartões em vidro. Só o tema Desenvolvimento fornece `true` (ver SonivellTheme). */
+/** Liga os cartões em vidro (ver SonivellTheme, que hoje liga em todos os temas). */
 val LocalGlass = staticCompositionLocalOf { false }
 
 /**
- * Superfície em vidro do tema Desenvolvimento: fundo translúcido, contorno fino, sombra suave por fora
+ * Superfície em vidro do app: fundo translúcido, contorno fino, sombra suave por fora
  * e, com [tone], um brilho fraco na parte de baixo na cor do cartão.
  *
  * Leve de propósito: não há desfoque do que fica atrás (o fundo do app é liso, então a transparência
@@ -58,8 +58,8 @@ fun Modifier.glassAccent(shape: Shape, accent: Color): Modifier = this
 private const val GLOW_ALPHA = 0.18f
 
 /**
- * Fundo de cartão que segue o tema: em vidro no Desenvolvimento ([glassSurface], com sombra leve) e,
- * nos outros, o fundo liso de sempre. Usado nos cartões das telas comuns (ajustes, equalizador,
+ * Fundo de cartão que segue o tema: em vidro quando ligado ([glassSurface], com sombra leve)
+ * e, desligado, o fundo liso de sempre. Usado nos cartões das telas comuns (ajustes, equalizador,
  * estatísticas, fila…), para o vidro valer no app inteiro sem mudar os outros temas.
  */
 @Composable

@@ -82,7 +82,7 @@ fun StatsScreen(
                 Modifier
                     .fillMaxWidth()
                     .then(
-                        // Vidro (Desenvolvimento): translúcido, contorno e brilho na cor de destaque.
+                        // Vidro: translúcido, contorno e brilho na cor de destaque.
                         if (glass) Modifier.glassSurface(bannerShape, c.surface, c.accent.copy(alpha = 0.55f), tone = c.accent)
                         else Modifier.clip(bannerShape).background(c.accent),
                     )

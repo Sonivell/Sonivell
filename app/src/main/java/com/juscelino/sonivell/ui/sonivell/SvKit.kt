@@ -135,7 +135,7 @@ fun SvPlanet(modifier: Modifier = Modifier) {
 }
 
 /**
- * Cartão do Ondas: superfície, cantos de 20 dp, sem contorno. No tema Desenvolvimento vira vidro
+ * Cartão do Ondas: superfície, cantos de 20 dp, sem contorno. No vidro vira
  * ([glassSurface]), com o brilho em [tone] quando dado; [elevation] 0 tira a sombra (listas longas).
  */
 @Composable
@@ -249,9 +249,9 @@ fun SvRow(
     modifier: Modifier = Modifier,
     art: @Composable () -> Unit,
     trailing: @Composable () -> Unit = {},
-    /** Brilho do cartão no tema Desenvolvimento. */
+    /** Brilho do cartão no vidro. */
     tone: Color? = null,
-    /** Sombra no tema Desenvolvimento; 0 nas listas longas (álbuns, artistas, pastas). */
+    /** Sombra no vidro; 0 nas listas longas (álbuns, artistas, pastas). */
     elevation: Dp = 10.dp,
 ) {
     val nc = SonivellTheme.colors

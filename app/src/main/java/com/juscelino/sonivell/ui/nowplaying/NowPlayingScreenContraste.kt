@@ -253,7 +253,7 @@ fun NowPlayingScreenContraste(
 /**
  * Cor de fundo do player: o tom dominante da capa, escurecido para o texto branco ficar legível.
  * Sem capa (ou enquanto carrega), usa o tom da capa gerada da mesma faixa. [adjust] troca o
- * escurecimento por outro ajuste (o brilho do vidro, no tema Desenvolvimento, usa um tom vivo).
+ * escurecimento por outro ajuste (o brilho do vidro usa um tom vivo).
  */
 @Composable
 internal fun artTint(track: Track, adjust: (Color) -> Color = ::darken): Color {
@@ -299,7 +299,7 @@ private fun dominant(bitmap: Bitmap): Color {
     return Color((r / total).toInt(), (g / total).toInt(), (b / total).toInt())
 }
 
-/** O tom da capa vivo e médio, para brilhar sobre o fundo escuro sem estourar (vidro do Desenvolvimento). */
+/** O tom da capa vivo e médio, para brilhar sobre o fundo escuro sem estourar (brilho do vidro). */
 internal fun glowTone(color: Color): Color {
     val hsv = FloatArray(3)
     AColor.RGBToHSV((color.red * 255).toInt(), (color.green * 255).toInt(), (color.blue * 255).toInt(), hsv)

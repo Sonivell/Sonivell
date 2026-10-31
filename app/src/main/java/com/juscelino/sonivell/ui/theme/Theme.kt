@@ -202,7 +202,7 @@ object SonivellTheme {
     val icons: SonivellIcons
         @Composable get() = LocalSonivellIcons.current
 
-    /** Cartões em vidro (tema Desenvolvimento); ver [glassSurface]. */
+    /** Cartões em vidro (em todos os temas); ver [glassSurface]. */
     val glass: Boolean
         @Composable get() = LocalGlass.current
 }
@@ -217,8 +217,8 @@ fun SonivellTheme(
     tintedBackground: Boolean = false,
     /** Cor de destaque tirada do papel de parede (Material You, Android 12+). */
     systemColors: Boolean = false,
-    /** Cartões em vidro: só o tema Desenvolvimento liga. */
-    glass: Boolean = false,
+    /** Cartões em vidro: translúcidos, com sombra e brilho. Ligado em todos os temas. */
+    glass: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current

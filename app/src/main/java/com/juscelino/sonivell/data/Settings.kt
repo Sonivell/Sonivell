@@ -28,18 +28,11 @@ enum class UiStyle {
      * tema) com as telas de descoberta: sensações, Flow, Mapa, Momentos, Respira e Perfil.
      */
     SONIVELL,
-
-    /**
-     * Tema "Desenvolvimento": as mesmas telas do Sonivell, com os cartões em vidro (fundo translúcido,
-     * contorno, sombra e um brilho suave na cor de cada cartão). Serve para testar o visual novo sem
-     * mexer no Sonivell; se aprovado, o vidro passa para o Sonivell e este tema sai.
-     */
-    DESENVOLVIMENTO,
 }
 
 /** Temas que usam as telas do Sonivell (Para você, Biblioteca pelos cartões, Perfil, Flow, Mapa…). */
 val UiStyle.usesSonivellScreens: Boolean
-    get() = this == UiStyle.SONIVELL || this == UiStyle.DESENVOLVIMENTO
+    get() = this == UiStyle.SONIVELL
 
 data class AppSettings(
     val theme: ThemeMode = ThemeMode.AUTO,
@@ -143,7 +136,10 @@ class SettingsStore(private val prefs: SharedPreferences) {
     private fun read() = AppSettings(
         theme = ThemeMode.entries.getOrElse(prefs.getInt(KEY_THEME, 0)) { ThemeMode.AUTO },
         accent = AccentChoice.entries.getOrElse(prefs.getInt(KEY_ACCENT, AccentChoice.Lima.ordinal)) { AccentChoice.Lima },
-        uiStyle = UiStyle.entries.firstOrNull { it.name == prefs.getString(KEY_UI_STYLE, null) } ?: UiStyle.ONDAS,
+        uiStyle = prefs.getString(KEY_UI_STYLE, null).let { saved ->
+            // O tema Desenvolvimento (o Sonivell com vidro) virou o Sonivell: o vidro agora vale em todos.
+            UiStyle.entries.firstOrNull { it.name == saved } ?: if (saved == "DESENVOLVIMENTO") UiStyle.SONIVELL else UiStyle.ONDAS
+        },
         iconStyle = IconStyle.entries.firstOrNull { it.name == prefs.getString(KEY_ICON_STYLE, null) } ?: IconStyle.TRACO,
         darkBackground = DarkBackground.entries.firstOrNull { it.name == prefs.getString(KEY_DARK_BACKGROUND, null) } ?: DarkBackground.Grafite,
         tintedBackground = prefs.getBoolean(KEY_TINTED_BACKGROUND, false),

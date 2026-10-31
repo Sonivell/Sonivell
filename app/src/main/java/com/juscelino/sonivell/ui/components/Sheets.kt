@@ -58,9 +58,9 @@ import com.juscelino.sonivell.ui.theme.glassSurface
 data class MenuOption(val icon: ImageVector, val label: String, val onClick: () -> Unit)
 
 /**
- * Folha inferior do app. Nos temas comuns é a do Material, na cor de superfície. No vidro (tema
- * Desenvolvimento) vira um cartão de vidro flutuante, com margem e cantos arredondados embaixo também,
- * um pouco mais opaco que os outros cartões para o texto ficar legível sobre a capa.
+ * Folha inferior do app. No vidro (hoje em todos os temas) é um cartão de vidro flutuante, com margem
+ * e cantos arredondados embaixo também, um pouco mais opaco que os outros cartões para o texto ficar
+ * legível sobre a capa. Sem vidro, é a do Material, na cor de superfície.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

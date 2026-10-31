@@ -231,7 +231,7 @@ fun NowPlayingScreenOndas(
 }
 
 /**
- * Player do tema Desenvolvimento: o do Ondas mais limpo e em vidro. A capa ganha um brilho na cor dela
+ * Player em vidro: o do Ondas mais limpo. A capa ganha um brilho na cor dela
  * (e uma luz suave no topo da tela), aleatório e repetir viram ícones ao lado dos controles, o SMART
  * vira um selo translúcido e o painel de baixo flutua em vidro. As ondas do progresso continuam.
  */
@@ -505,7 +505,7 @@ private fun BottomPanel(
     sourceLabel: String,
     sleepTimer: SleepTimer,
     actions: NowPlayingActions,
-    /** Vidro (tema Desenvolvimento): barra flutuante com cantos arredondados e o brilho de [tone]. */
+    /** Vidro: barra flutuante com cantos arredondados e o brilho de [tone]. */
     glass: Boolean = false,
     tone: Color? = null,
 ) {

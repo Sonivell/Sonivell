@@ -640,8 +640,6 @@
     <!-- Tema Sonivell -->
     <string name="layout_sonivell">Sonivell</string>
     <string name="layout_sonivell_hint">Visual do Ondas com sensações, Flow, mapa musical, momentos e perfil</string>
-    <string name="layout_dev">Desenvolvimento</string>
-    <string name="layout_dev_hint">O Sonivell com cartões em vidro: translúcidos, com sombra e brilho. Para testar</string>
     <string name="nav_explore">Explorar</string>
     <string name="nav_profile">Perfil</string>
     <string name="sv_home_title">O que vamos ouvir agora?</string>
