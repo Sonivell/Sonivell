@@ -71,14 +71,15 @@ import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.Chip
-import com.juscelino.sonivell.ui.components.GlassWave
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionTitle
-import com.juscelino.sonivell.ui.components.glassSurface
 import com.juscelino.sonivell.ui.components.glassTone
 import com.juscelino.sonivell.ui.components.TrackRow
+import com.juscelino.sonivell.ui.sonivell.SvMiniWave
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
+import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.glassSurface
 
 /** Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
 private data class ContrasteLabels(val search: String, val library: String, val liked: String, val forYou: String)
@@ -539,7 +540,7 @@ private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouS
                         Modifier
                             .weight(1f)
                             .height(56.dp)
-                            .glassSurface(tone, RoundedCornerShape(10.dp), c)
+                            .glassSurface(RoundedCornerShape(10.dp), c.surface, c.outline, tone = tone, elevation = 6.dp)
                             .clickable(onClick = q.onClick),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -585,8 +586,7 @@ private fun ContinueCard(track: Track, resumeAtMs: Long, onPlay: (Long) -> Unit)
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(16.dp))
             .clickable { onPlay(resumeAtMs) }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -671,8 +671,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(c.surface)
+                .cardSurface(RoundedCornerShape(16.dp))
                 .clickable(onClick = onPlay)
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -701,8 +700,7 @@ private fun SmartAnalysisCard(progress: SmartProgress) {
         Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(16.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -883,7 +881,7 @@ private fun LazyListScope.browseContent(state: LibraryState, decades: List<Int>,
                             Modifier
                                 .weight(1f)
                                 .height(92.dp)
-                                .glassSurface(tone, RoundedCornerShape(16.dp), c)
+                                .glassSurface(RoundedCornerShape(16.dp), c.surface, c.outline, tone = tone, elevation = 6.dp)
                                 .clickable(onClick = onClick)
                                 .padding(14.dp),
                         ) {
@@ -899,7 +897,7 @@ private fun LazyListScope.browseContent(state: LibraryState, decades: List<Int>,
                                 )
                                 Box(Modifier.size(8.dp).clip(CircleShape).background(tone))
                             }
-                            GlassWave(tone, Modifier.align(Alignment.BottomStart).size(width = 44.dp, height = 14.dp))
+                            SvMiniWave(label, tone, Modifier.align(Alignment.BottomStart).size(width = 44.dp, height = 14.dp))
                         }
                     }
                     if (pair.size == 1) Spacer(Modifier.weight(1f))
@@ -913,7 +911,7 @@ private fun LazyListScope.browseContent(state: LibraryState, decades: List<Int>,
 private fun InterpChip(text: String) {
     val c = SonivellTheme.colors
     Box(
-        Modifier.height(30.dp).clip(RoundedCornerShape(15.dp)).background(c.surface).padding(horizontal = 12.dp),
+        Modifier.height(30.dp).cardSurface(RoundedCornerShape(15.dp)).padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textPrimary)
@@ -934,8 +932,7 @@ private fun BestCard(title: String, subtitle: String, track: Track?, round: Bool
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(c.surface)
+            .cardSurface(RoundedCornerShape(12.dp))
             .clickable(onClick = onOpen)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,

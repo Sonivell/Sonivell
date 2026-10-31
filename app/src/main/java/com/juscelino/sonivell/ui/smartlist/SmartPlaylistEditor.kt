@@ -50,6 +50,7 @@ import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.cardSurface
 
 private enum class Kind { Text, Number, Bool }
 
@@ -198,7 +199,7 @@ private fun RuleEditor(rule: SmartRule, onChange: (SmartRule) -> Unit, onRemove:
     val c = SonivellTheme.colors
     var fieldMenu by remember { mutableStateOf(false) }
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(c.surface).padding(12.dp),
+        Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(16.dp)).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

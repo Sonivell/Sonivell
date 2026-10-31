@@ -891,11 +891,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Faixas de um mix por clima (busca por descrição no SMART), já sem as bloqueadas. */
-    suspend fun moodTracks(mood: com.juscelino.sonivell.data.Mood): List<Track> {
+    suspend fun moodTracks(mood: com.juscelino.sonivell.data.Mood): List<Track> = queryTracks(mood.query)
+
+    /** Faixas que combinam com uma descrição em texto (busca pelo sentido do SMART), sem as bloqueadas. */
+    suspend fun queryTracks(query: String): List<Track> {
         if (!smart.isAvailable) return emptyList()
         val byId = allTracks.value.orEmpty().associateBy { it.id }
         val blocked = recommendations.blockedTracks.value
-        return smart.semanticSearch(mood.query, 60).filter { it !in blocked }.mapNotNull(byId::get).take(40)
+        return smart.semanticSearch(query, 60).filter { it !in blocked }.mapNotNull(byId::get).take(40)
     }
 
     /** Busca nas letras (pasta de letras e letras embutidas já abertas). */
