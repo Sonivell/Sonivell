@@ -140,7 +140,7 @@ class PlaybackService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<MediaItem>> =
-            if (!canBrowse(browser)) denied()
+            if (!canBrowse(browser)) denied<MediaItem>()
             else Futures.immediateFuture(LibraryResult.ofItem(this@PlaybackService.browser.root(), params))
 
         override fun onGetChildren(
@@ -150,7 +150,7 @@ class PlaybackService : MediaLibraryService() {
             page: Int,
             pageSize: Int,
             params: LibraryParams?,
-        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = if (!canBrowse(browser)) denied() else scope.future {
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = if (!canBrowse(browser)) denied<ImmutableList<MediaItem>>() else scope.future {
             val all = this@PlaybackService.browser.children(parentId)
             // Em Long: page e pageSize vêm do controlador; em Int, o produto podia estourar e ficar negativo.
             val from = (page.coerceAtLeast(0).toLong() * pageSize.coerceAtLeast(1)).coerceAtMost(all.size.toLong()).toInt()
@@ -162,7 +162,7 @@ class PlaybackService : MediaLibraryService() {
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             mediaId: String,
-        ): ListenableFuture<LibraryResult<MediaItem>> = if (!canBrowse(browser)) denied() else scope.future {
+        ): ListenableFuture<LibraryResult<MediaItem>> = if (!canBrowse(browser)) denied<MediaItem>() else scope.future {
             this@PlaybackService.browser.item(mediaId)?.let { LibraryResult.ofItem(it, null) }
                 ?: LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
         }
@@ -201,7 +201,7 @@ class PlaybackService : MediaLibraryService() {
         controller.packageName == packageName || controller.isTrusted || controller.packageName in BROWSE_ALLOWED
 
     private fun <T> denied(): ListenableFuture<LibraryResult<T>> =
-        Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
+        Futures.immediateFuture(LibraryResult.ofError<T>(SessionError.ERROR_PERMISSION_DENIED))
 
     /**
      * Garante uma URI tocável para cada item. Só o próprio app manda itens com URI pronta; os de
