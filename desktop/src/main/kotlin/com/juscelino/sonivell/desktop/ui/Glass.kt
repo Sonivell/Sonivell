@@ -91,8 +91,8 @@ fun Modifier.glassSurface(
  */
 private fun Modifier.sombraClara(shape: Shape, elevation: Dp): Modifier = drawWithCache {
     val corpo = Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawWithCache)) }
-    val alcance = elevation.toPx() * 1.4f
-    val queda = elevation.toPx() * 0.35f
+    val alcance = elevation.toPx() * 0.9f
+    val queda = elevation.toPx() * 0.25f
     onDrawBehind {
         clipPath(corpo, ClipOp.Difference) {
             translate(top = queda) {
@@ -109,8 +109,8 @@ private fun Modifier.sombraClara(shape: Shape, elevation: Dp): Modifier = drawWi
 }
 
 private const val LIGHT_SURFACE_ALPHA = 0.86f
-private const val LIGHT_SHADOW_ALPHA = 0.16f
-private const val SHADOW_LAYERS = 6
+private const val LIGHT_SHADOW_ALPHA = 0.07f
+private const val SHADOW_LAYERS = 16
 
 /** Item selecionado em vidro (aba atual, filtro ativo): translúcido na cor de destaque, com contorno. */
 fun Modifier.glassAccent(shape: Shape, accent: Color): Modifier = this
