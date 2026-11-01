@@ -101,7 +101,6 @@ fun NowPlayingScreenClassica(
                 Modifier.widthIn(max = 420.dp).fillMaxWidth().aspectRatio(1f),
                 corner = 28.dp,
                 detailed = true,
-                legacyArt = true,
             )
         }
 

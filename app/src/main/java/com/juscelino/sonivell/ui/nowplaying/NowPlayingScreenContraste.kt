@@ -130,7 +130,6 @@ fun NowPlayingScreenContraste(
                 Modifier.widthIn(max = 420.dp).fillMaxWidth().aspectRatio(1f),
                 corner = 16.dp,
                 detailed = true,
-                legacyArt = true,
             )
         }
 

@@ -141,7 +141,7 @@ fun NowPlayingScreenOndas(
             // Capa
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Box(Modifier.widthIn(max = 420.dp).fillMaxWidth().aspectRatio(1f)) {
-                    AlbumArt(track, Modifier.fillMaxSize(), corner = 28.dp, detailed = true, legacyArt = true)
+                    AlbumArt(track, Modifier.fillMaxSize(), corner = 28.dp, detailed = true)
                     if (visualizer) {
                         AudioBars(
                             playing = state.isPlaying,
@@ -317,7 +317,6 @@ private fun NowPlayingGlass(
                         Modifier.fillMaxSize().border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(28.dp)),
                         corner = 28.dp,
                         detailed = true,
-                        legacyArt = true,
                     )
                     if (visualizer) {
                         AudioBars(
@@ -650,7 +649,7 @@ private fun UpNextPeek(upNext: List<Track>, onOpenQueue: () -> Unit) {
         }
         upNext.take(2).forEach { t ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                AlbumArt(t, Modifier.size(32.dp), corner = 9.dp, legacyArt = true)
+                AlbumArt(t, Modifier.size(32.dp), corner = 9.dp)
                 Column(Modifier.weight(1f)) {
                     Text(t.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(t.artist, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
