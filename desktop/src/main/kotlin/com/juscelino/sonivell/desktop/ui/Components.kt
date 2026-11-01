@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +37,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -114,9 +119,12 @@ private val artCores = listOf(Color(0xFFC8F04A), Color(0xFF7CC4FF), Color(0xFFFF
 /** Abaixo desta largura a capa gerada não mostra o painel de vidro com texto. */
 private val GlassTextMinWidth = 110.dp
 
-/** Capa da faixa: arte embutida, imagem da pasta ou uma capa gerada (vidro) quando não há. */
+/**
+ * Capa da faixa: arte embutida, imagem da pasta ou, quando não há, a capa Onda ([OndaArt]).
+ * Com [legacyArt], a reserva é a capa gerada anterior ([GlassArt]): o player continua com ela.
+ */
 @Composable
-fun AlbumArt(track: Track?, size: Dp, corner: Dp = 14.dp, modifier: Modifier = Modifier) {
+fun AlbumArt(track: Track?, size: Dp, corner: Dp = 14.dp, modifier: Modifier = Modifier, legacyArt: Boolean = false) {
     val bmp by produceState<ImageBitmap?>(null, track?.id) {
         value = if (track == null) null else ArtCache.get(track)
     }
@@ -125,6 +133,10 @@ fun AlbumArt(track: Track?, size: Dp, corner: Dp = 14.dp, modifier: Modifier = M
         val image = bmp
         if (image != null) {
             Image(bitmap = image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        } else if (!legacyArt) {
+            val album = track?.album?.ifBlank { track.title }.orEmpty()
+            val artista = track?.albumArtist?.ifBlank { track.artist }.orEmpty()
+            OndaArt(album, artista, title = album.takeIf { track != null }, subtitle = artista, size = size, corner = corner)
         } else {
             // Painel com texto só em capas grandes e não redondas (artistas).
             val showText = track != null && size >= GlassTextMinWidth && corner * 2 < size * 0.9f
@@ -359,3 +371,188 @@ fun EmptyState(text: String, modifier: Modifier = Modifier) {
 }
 
 val CircleBadgeShape = CircleShape
+
+/**
+ * Escolha estável da capa Onda: a cor sai do artista e o formato da onda do álbum. Mesma conta do
+ * app Android (app/.../ui/components/OndaArt.kt): FNV-1a de 32 bits sobre o texto em UTF-8.
+ */
+object OndaSeed {
+    const val CORES = 5
+    const val ONDAS = 4
+
+    fun fnv1a(texto: String): Long {
+        var h = 0x811c9dc5L
+        for (b in texto.toByteArray(Charsets.UTF_8)) {
+            h = h xor (b.toLong() and 0xff)
+            h = (h * 0x01000193L) and 0xffffffffL
+        }
+        return h
+    }
+
+    fun normalizar(texto: String): String = texto.trim().lowercase(java.util.Locale.ROOT)
+
+    fun cor(artista: String): Int = (fnv1a(normalizar(artista)) % CORES).toInt()
+
+    fun onda(album: String): Int = (fnv1a(normalizar(album)) % ONDAS).toInt()
+}
+
+/** Limão, Turquesa, Coral, Lavanda e Âmbar: uma por artista. */
+private val OndaCores = listOf(
+    Color(0xFFD4EF55), Color(0xFF4FE0C8), Color(0xFFFF8A6B), Color(0xFFB79BFF), Color(0xFFFFC24D),
+)
+
+/** Os quatro formatos (A, B, C, D) num quadro de 200×200: início, depois duas cúbicas de 3 pontos. */
+private val OndaFormas = listOf(
+    floatArrayOf(26f, 106f, 46f, 50f, 78f, 50f, 100f, 100f, 122f, 150f, 154f, 150f, 174f, 94f),
+    floatArrayOf(20f, 100f, 44f, 66f, 76f, 66f, 100f, 100f, 124f, 134f, 156f, 134f, 180f, 100f),
+    floatArrayOf(34f, 112f, 50f, 30f, 80f, 30f, 100f, 100f, 120f, 170f, 150f, 170f, 166f, 88f),
+    floatArrayOf(26f, 94f, 46f, 150f, 78f, 150f, 100f, 100f, 122f, 50f, 154f, 50f, 174f, 106f),
+)
+
+/**
+ * Capa "Onda" para faixas sem arte, igual à do app Android: Simples (< 110dp ou redonda), Com nome
+ * (≥ 110dp com [title]) e Completo (≥ 160dp sem título, dois cartões de vidro). No PC não há
+ * desfoque: o vidro é só a translucidez.
+ */
+@Composable
+fun OndaArt(albumKey: String, artistKey: String, title: String?, subtitle: String?, size: Dp, corner: Dp = 0.dp) {
+    val dark = SonivellTheme.colors.isDark
+    val tom = OndaCores[OndaSeed.cor(artistKey)]
+    val forma = OndaFormas[OndaSeed.onda(albumKey)]
+    val onda = if (dark) tom else lerp(tom, Color.Black, 0.35f)
+    val redonda = corner * 2 >= size * 0.9f
+    val simples = size < 110.dp || redonda
+    val comNome = !simples && !title.isNullOrBlank()
+    val completo = !simples && !comNome && size >= 160.dp
+    val vidro = Color.White.copy(alpha = if (dark) 0.10f else 0.45f)
+    // Fora do DrawScope: lá dentro, "size" é o tamanho em pixels da área de desenho.
+    val raioFaixa = size * 0.086f
+    val raioFrente = size * 0.148f
+    Box(Modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize()) { drawOndaFundo(dark, tom, if (completo) 0.18f else 0.30f) }
+        when {
+            comNome -> {
+                Canvas(Modifier.fillMaxSize()) {
+                    drawOnda(forma, Offset(this.size.width / 2f, this.size.height * 0.38f), this.size.minDimension * 0.51f, onda)
+                }
+                val margem = size * 0.055f
+                val faixa = RoundedCornerShape(size * 0.086f)
+                val texto = if (dark) Color.White else Color(0xFF1A1E16)
+                Box(Modifier.fillMaxSize().padding(start = margem, end = margem, bottom = margem)) {
+                    Column(
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .size(width = size - margem * 2, height = size * 0.30f)
+                            .drawBehind { sombraSuave(raioFaixa.toPx()) }
+                            .clip(faixa)
+                            .background(vidro)
+                            .drawBehind { brilhoTopo() }
+                            .border(1.dp, Color.White.copy(alpha = if (dark) 0.28f else 0.80f), faixa)
+                            .padding(horizontal = size * 0.06f),
+                        verticalArrangement = Arrangement.spacedBy(size * 0.008f, Alignment.CenterVertically),
+                    ) {
+                        Text(
+                            title!!,
+                            style = TextStyle(fontFamily = Manrope, fontSize = (size.value * 0.09f).sp, lineHeight = (size.value * 0.11f).sp),
+                            fontWeight = FontWeight.ExtraBold,
+                            color = texto,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (!subtitle.isNullOrBlank()) {
+                            Text(
+                                subtitle,
+                                style = TextStyle(fontFamily = Manrope, fontSize = (size.value * 0.063f).sp, lineHeight = (size.value * 0.08f).sp),
+                                fontWeight = FontWeight.Medium,
+                                color = texto.copy(alpha = if (dark) 0.68f else 0.65f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+            }
+            completo -> {
+                val atrasForma = RoundedCornerShape(size * 0.125f)
+                val frenteForma = RoundedCornerShape(size * 0.148f)
+                Box(
+                    Modifier
+                        .offset(size * 0.27f, size * 0.1875f)
+                        .size(size * 0.46f, size * 0.51f)
+                        .clip(atrasForma)
+                        .background(tom.copy(alpha = 0.70f))
+                        .border(1.dp, Color.White.copy(alpha = 0.40f), atrasForma),
+                )
+                Box(
+                    Modifier
+                        .offset(size * 0.219f, size * 0.25f)
+                        .size(size * 0.5625f)
+                        .drawBehind { sombraSuave(raioFrente.toPx()) }
+                        .clip(frenteForma)
+                        .background(vidro)
+                        .drawBehind { brilhoTopo() }
+                        .border(1.dp, Color.White.copy(alpha = if (dark) 0.32f else 0.80f), frenteForma),
+                ) {
+                    Canvas(Modifier.fillMaxSize()) { drawOnda(forma, center, this.size.minDimension * 0.78f, onda) }
+                }
+            }
+            else -> Canvas(Modifier.fillMaxSize()) { drawOnda(forma, center, this.size.minDimension * 0.78f, onda) }
+        }
+    }
+}
+
+/** Fundo em diagonal (160°) com brilho radial da cor do artista no canto superior esquerdo. */
+private fun DrawScope.drawOndaFundo(dark: Boolean, tom: Color, brilho: Float) {
+    val cores = if (dark) {
+        listOf(Color(0xFF22262A), Color(0xFF15181A), Color(0xFF0B0D0E))
+    } else {
+        listOf(Color(0xFFF4F6EE), Color(0xFFEBEFE4), Color(0xFFE3E8DA))
+    }
+    val dx = size.width * 0.17f
+    val dy = size.height * 0.47f
+    drawRect(Brush.linearGradient(cores, start = Offset(center.x - dx, center.y - dy), end = Offset(center.x + dx, center.y + dy)))
+    drawRect(
+        Brush.radialGradient(
+            listOf(tom.copy(alpha = brilho), Color.Transparent),
+            center = Offset(size.width * 0.12f, size.height * 0.10f),
+            radius = maxOf(size.width, size.height) * 0.80f,
+        ),
+    )
+}
+
+/** Onda de um dos quatro formatos, num quadro de lado [quadro] centrado em [centro]. */
+private fun DrawScope.drawOnda(forma: FloatArray, centro: Offset, quadro: Float, cor: Color) {
+    val s = quadro / 200f
+    val x0 = centro.x - quadro / 2f
+    val y0 = centro.y - quadro / 2f
+    fun x(i: Int) = x0 + forma[i] * s
+    fun y(i: Int) = y0 + forma[i + 1] * s
+    val path = Path().apply {
+        moveTo(x(0), y(0))
+        cubicTo(x(2), y(2), x(4), y(4), x(6), y(6))
+        cubicTo(x(8), y(8), x(10), y(10), x(12), y(12))
+    }
+    drawPath(path, cor, style = Stroke(width = 26f * s, cap = StrokeCap.Round, join = StrokeJoin.Round))
+}
+
+/** Sombra suave por fora do vidro: camadas crescentes de preto bem transparente. */
+private fun DrawScope.sombraSuave(raio: Float) {
+    val passo = size.minDimension * 0.012f
+    for (k in 1..6) {
+        val g = k * passo
+        drawRoundRect(
+            Color.Black.copy(alpha = 0.05f),
+            topLeft = Offset(-g * 0.5f, g * 0.9f),
+            size = Size(size.width + g, size.height),
+            cornerRadius = CornerRadius(raio + g),
+        )
+    }
+}
+
+/** Reflexo de 2dp no topo do vidro. */
+private fun DrawScope.brilhoTopo() {
+    drawRect(
+        Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.35f), Color.Transparent), endY = 2.dp.toPx()),
+        size = Size(size.width, 2.dp.toPx()),
+    )
+}

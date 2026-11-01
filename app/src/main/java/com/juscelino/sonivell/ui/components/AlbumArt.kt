@@ -154,20 +154,30 @@ fun GeneratedArt(
     }
 }
 
-/** Capa real do álbum, com a capa gerada (vidro + nome do álbum) como reserva. */
+/**
+ * Capa real do álbum; sem ela, a capa Onda ([OndaArt]). Com [legacyArt], a reserva é a capa gerada
+ * anterior ([GeneratedArt]): o player continua com ela.
+ */
 @Composable
 fun AlbumArt(
     track: Track?,
     modifier: Modifier = Modifier,
     corner: Dp = 10.dp,
     detailed: Boolean = false,
+    legacyArt: Boolean = false,
 ) {
     val shape = RoundedCornerShape(corner)
     Box(modifier.clip(shape)) {
         if (track == null) {
-            GeneratedArt(seed = 0, modifier = Modifier.fillMaxSize(), detailed = detailed)
+            if (legacyArt) {
+                GeneratedArt(seed = 0, modifier = Modifier.fillMaxSize(), detailed = detailed)
+            } else {
+                OndaArt("", "", title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner)
+            }
         } else {
             val context = LocalContext.current
+            val album = track.rawAlbum?.takeIf { it.isNotBlank() } ?: track.title
+            val artista = track.albumArtist?.takeIf { it.isNotBlank() } ?: track.artist
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(track.artUri)
@@ -176,17 +186,27 @@ fun AlbumArt(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                // Sem texto enquanto carrega, para não piscar o painel antes da capa real.
-                loading = { GeneratedArt(track.albumId, Modifier.fillMaxSize(), detailed) },
+                // Sem texto nem onda enquanto carrega, para não piscar a capa gerada antes da real.
+                loading = {
+                    if (legacyArt) {
+                        GeneratedArt(track.albumId, Modifier.fillMaxSize(), detailed)
+                    } else {
+                        OndaArt(album, artista, title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner, placeholder = true)
+                    }
+                },
                 error = {
-                    GeneratedArt(
-                        track.albumId,
-                        Modifier.fillMaxSize(),
-                        detailed,
-                        title = track.rawAlbum?.takeIf { it.isNotBlank() } ?: track.title,
-                        subtitle = track.albumArtist?.takeIf { it.isNotBlank() } ?: track.artist,
-                        corner = corner,
-                    )
+                    if (legacyArt) {
+                        GeneratedArt(
+                            track.albumId,
+                            Modifier.fillMaxSize(),
+                            detailed,
+                            title = album,
+                            subtitle = artista,
+                            corner = corner,
+                        )
+                    } else {
+                        OndaArt(album, artista, title = album, subtitle = artista, modifier = Modifier.fillMaxSize(), corner = corner)
+                    }
                 },
             )
         }

@@ -111,6 +111,8 @@ jobs:
           set +e
           ./gradlew -Psonivell.desktop=only :desktop:test -i > test-full.log 2>&1
           rc=$?
+          # Capturas da capa Onda geradas pelo OndaArtCapturasTest (renderizadas sem janela).
+          cp desktop/build/capturas-onda/*.png screenshots/ 2>/dev/null || true
           { echo "rc=$rc"; grep -E "SMART|FAILED|PASSED|AssertionError|Exception|error:|e: " test-full.log | head -n 80; echo ----; tail -n 40 test-full.log; } > screenshots/test.log
           exit $rc
 

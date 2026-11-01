@@ -50,7 +50,7 @@ fun NowPlayingScreen(ctl: Controller, nav: Nav, actions: Actions) {
                 }
                 Box(Modifier.size(44.dp))
             }
-            AlbumArt(t, artSize, 34.dp)
+            AlbumArt(t, artSize, 34.dp, legacyArt = true)
             Row(Modifier.width(420.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Txt(t?.title ?: "", 28, FontWeight.ExtraBold, letterSpacing = -0.8f)
