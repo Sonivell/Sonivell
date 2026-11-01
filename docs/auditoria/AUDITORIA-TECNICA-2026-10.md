@@ -4,7 +4,7 @@
 - **Commit auditado:** `1f6d1b9` (`main`, depois do merge do #13)
 - **Tipo:** análise estática do repositório inteiro (357 arquivos, ~42,6 mil linhas de Kotlin, mais C/C++ nativo, scripts e CI).
 - **Etapa:** 1 de 2. Nenhum arquivo de código foi alterado. Este documento é o único arquivo novo.
-- **Correções:** #15, #16 e #17 (na `main`); #18 (ferramental de build) e #19 (versão **1.0.0-stable**) em fase de merge.
+- **Correções:** #15, #16, #17 e #18, todas na `main`. Versão resultante: **1.0.0-stable** (#19).
 - **Encerramento:** 01/11/2026. Vereditos finais na seção logo abaixo; status de cada item em seguida.
 
 ---
@@ -43,7 +43,7 @@ A auditoria está encerrada. Todos os itens P1 e P2 foram corrigidos, validados 
 
 ## Status das correções
 
-_Atualizado em 01/11/2026. O #16 e o #17 também estão na `main`; #18 e #19 em fase de merge. Legenda: ✅ na `main` (#15) · 🟢 corrigido e validado no #16 (na `main`) · 🟡 parcial · ⏳ pendente · 👤 depende de você · ⚪ risco aceito._
+_Atualizado em 01/11/2026. O #16, o #17, o #18 e o #19 também estão na `main`. Legenda: ✅ na `main` (#15) · 🟢 corrigido e validado no #16 (na `main`) · 🟡 parcial · ⏳ pendente · 👤 depende de você · ⚪ risco aceito._
 
 | ID | Sev. | Status | Onde | Observação |
 |---|---|---|---|---|
@@ -74,8 +74,8 @@ _Atualizado em 01/11/2026. O #16 e o #17 também estão na `main`; #18 e #19 em 
 | CI-02 | P4 | 👤 | — | Escolher qual CI é o oficial (GitHub ou GitLab). |
 | CI-03 | P3 | 🟢 | #16 | `versionCode` = número da execução do CI. |
 | Varredura de CVEs (0.3) | — | 🟢 | #16 | OSV-Scanner no CI, em todo PR e toda segunda. Ver resultados abaixo. |
-| Ferramental de build (AGP 9.3.3, Kotlin 2.4.21, Gradle 9.5.1) | — | 🟡 | #18 | Atualização para reduzir as CVEs do classpath de build; hashes regenerados pelo workflow de verificação. |
-| Versão | — | 🟡 | #19 | `versionName` 1.0.0-stable. |
+| Ferramental de build (AGP 9.3.3, Kotlin 2.4.21, Gradle 9.5.1) | — | 🟢 | #18 | Atualização para reduzir as CVEs do classpath de build; hashes regenerados pelo workflow de verificação. |
+| Versão | — | 🟢 | #19 | `versionName` 1.0.0-stable. |
 | Busca por voz | P4 | ⏳ | — | Novo, achado pelo lint (`MissingIntentFilterForMediaSearch`): o app não trata "tocar X no Sonivell". Aviso suprimido com o motivo no manifesto até a função existir. |
 
 ### Resultados do CI de segurança (#16)
@@ -623,6 +623,6 @@ Nenhuma descoberta P0. Não há execução remota, comprometimento grave ou expo
 
 ### Próxima etapa (registro da etapa 1)
 
-_Concluída: as correções vieram no #15, #16 e #17 (e no #18, ferramental de build); ver "Vereditos finais" no início._
+_Concluída: as correções vieram no #15, #16, #17 e #18; ver "Vereditos finais" no início._
 
 Conforme combinado, **nenhuma correção foi aplicada**. Com a sua autorização, a etapa 2 corrige primeiro **SEC-01** e **REL-01**, depois os P2. Cada correção vem com testes, em mudanças pequenas e com o antes e depois documentado. SEC-01 depende de você criar a chave nova e cadastrá-la nos *secrets*; eu deixo o build e os workflows prontos para usá-la.
