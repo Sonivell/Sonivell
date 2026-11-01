@@ -86,7 +86,7 @@ fun SettingsScreen(ctl: Controller) {
             Txt(str("desktop_music_folders_hint"), 13, FontWeight.Medium, c.textSecondary, maxLines = 3)
             settings.musicDirs.forEach { dir ->
                 Row(
-                    Modifier.fillMaxWidth().widthIn(max = 720.dp).height(52.dp).clip(RoundedCornerShape(14.dp)).background(c.surface).padding(start = 14.dp, end = 6.dp),
+                    Modifier.fillMaxWidth().widthIn(max = 720.dp).height(52.dp).glassSurface(RoundedCornerShape(14.dp), c.surfaceHigh, c.outline, elevation = 0.dp).padding(start = 14.dp, end = 6.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Icon(Traco.folder, null, Modifier.size(20.dp), tint = c.textTertiary)
@@ -153,7 +153,11 @@ private fun accentKey(a: Accent) = when (a) {
 
 @Composable
 private fun Group(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    // Cada grupo é um cartão em vidro, como nas páginas de ajustes do app Android.
+    Column(
+        Modifier.widthIn(max = 820.dp).fillMaxWidth().cardSurface(RoundedCornerShape(22.dp)).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         Txt(title, 18, FontWeight.ExtraBold)
         content()
     }

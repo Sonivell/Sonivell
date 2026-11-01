@@ -82,7 +82,7 @@ private fun EssChip(label: String, selected: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(999.dp)
     Box(
         Modifier.height(36.dp)
-            .hoverClick(shape, hover = if (selected) c.accent else c.surface, base = if (selected) c.accent else c.surfaceLow, onClick = onClick)
+            .let { if (selected) it.hoverClick(shape, hover = c.accent, base = c.accent, onClick = onClick) else it.glassClick(shape, base = c.surfaceLow, hover = c.surface, elevation = 0.dp, onClick = onClick) }
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -230,7 +230,7 @@ fun ForYouEssencial(ctl: Controller, nav: Nav, actions: Actions) {
 private fun EssHero(track: Track, tag: String, progress: Float?, meta: String?, onPlay: () -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        Modifier.widthIn(max = MAX_W.dp).fillMaxWidth().hoverClick(RoundedCornerShape(28.dp), hover = c.surfaceHigh, base = c.surface, onClick = onPlay).padding(18.dp),
+        Modifier.widthIn(max = MAX_W.dp).fillMaxWidth().glassClick(RoundedCornerShape(28.dp), elevation = 10.dp, onClick = onPlay).padding(18.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(28.dp),
     ) {
@@ -370,7 +370,7 @@ fun SearchEssencial(ctl: Controller, nav: Nav, actions: Actions) {
 private fun BestCard(title: String, subtitle: String, track: Track, round: Boolean, onOpen: () -> Unit, onPlay: () -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        Modifier.widthIn(max = 640.dp).fillMaxWidth().hoverClick(RoundedCornerShape(24.dp), hover = c.surfaceHigh, base = c.surface, onClick = onOpen).padding(18.dp),
+        Modifier.widthIn(max = 640.dp).fillMaxWidth().glassClick(RoundedCornerShape(24.dp), elevation = 10.dp, onClick = onOpen).padding(18.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
@@ -560,7 +560,7 @@ fun LibraryEssencial(ctl: Controller, nav: Nav, actions: Actions) {
 private fun Pin(title: String, subtitle: String, onClick: () -> Unit, art: @Composable () -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        Modifier.width(260.dp).height(64.dp).hoverClick(RoundedCornerShape(18.dp), hover = c.surfaceHigh, base = c.surface, onClick = onClick).padding(8.dp),
+        Modifier.width(260.dp).height(64.dp).glassClick(RoundedCornerShape(18.dp), onClick = onClick).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {

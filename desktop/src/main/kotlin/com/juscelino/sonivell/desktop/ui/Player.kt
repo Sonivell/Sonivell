@@ -34,7 +34,7 @@ fun NowPlayingScreen(ctl: Controller, nav: Nav, actions: Actions) {
     val favorites by ctl.favorites.collectAsState()
     val t = p.current
     Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(22.dp)).background(c.surfaceLow)) {
+        BoxWithConstraints(Modifier.weight(1f).fillMaxHeight().cardSurface(RoundedCornerShape(22.dp), c.surfaceLow, elevation = 10.dp)) {
         // a capa encolhe quando a janela é baixa, para os controles nunca ficarem cobertos
         val artSize = (maxHeight - 470.dp).coerceIn(150.dp, 340.dp)
         Column(
