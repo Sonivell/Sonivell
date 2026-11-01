@@ -4,6 +4,9 @@ name: Release
 # (assinados com a chave de release), o .deb e o AppImage, mais um SHA256SUMS.txt.
 # Como usar: mude o versionName em version.properties, faça o merge na main e rode este workflow
 # em Actions > Release > Run workflow. Ele cria a tag v<versão> no commit da execução.
+# Não crie o release nem a tag à mão: com a tag já existente, o workflow para sem publicar.
+# As notas do release (em inglês) ficam no passo "Publicar o release"; atualize a lista de
+# novidades a cada versão.
 on:
   workflow_dispatch:
 
@@ -119,20 +122,28 @@ jobs:
         run: |
           set -euo pipefail
           {
-            echo "Sonivell $NOME, a mesma versão em todas as plataformas (versionCode $CODIGO no Android)."
+            echo "## What's new in Sonivell $NOME"
             echo
-            echo "| Arquivo | Para |"
+            echo "- \"Wave\" cover for songs without artwork: color from the artist, wave shape from the album, the same on phone and PC"
+            echo "- Glass cards in every theme, on Android and desktop"
+            echo "- Light themes fixed: no more grey block inside the glass cards"
+            echo "- New app icon"
+            echo "- APKs signed with the official Sonivell key"
+            echo "- One version across all platforms: Android (lite and SMART), .deb and AppImage (versionCode $CODIGO)"
+            echo
+            echo "## Downloads"
+            echo
+            echo "| File | For |"
             echo "|---|---|"
-            echo "| \`Sonivell-$NOME-lite.apk\` | Android: só o player, leve |"
-            echo "| \`Sonivell-$NOME-smart.apk\` | Android (64 bits ARM): com as recomendações SMART |"
-            echo "| \`Sonivell-$NOME-amd64.deb\` | PC Debian/Ubuntu (\`sudo apt install ./Sonivell-$NOME-amd64.deb\`) |"
-            echo "| \`Sonivell-$NOME-x86_64.AppImage\` | PC Linux, qualquer distro (\`chmod +x\` e abrir) |"
+            echo "| \`Sonivell-$NOME-lite.apk\` | Android: player only, lightweight |"
+            echo "| \`Sonivell-$NOME-smart.apk\` | Android (64-bit ARM): with SMART recommendations |"
+            echo "| \`Sonivell-$NOME-amd64.deb\` | Debian/Ubuntu PC (\`sudo apt install ./Sonivell-$NOME-amd64.deb\`) |"
+            echo "| \`Sonivell-$NOME-x86_64.AppImage\` | Any Linux distro (\`chmod +x\`, then open) |"
             echo
-            echo "Confira os arquivos com \`sha256sum -c SHA256SUMS.txt\`."
+            echo "Verify the files with \`sha256sum -c SHA256SUMS.txt\`."
           } > notas.md
           gh release create "v$NOME" dist/* \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "Sonivell $NOME" \
-            --notes-file notas.md \
-            --generate-notes
+            --notes-file notas.md
