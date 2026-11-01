@@ -38,7 +38,8 @@ verify() {
   echo "$actual"
 }
 
-VERSION=$(grep -oP 'packageVersion\s*=\s*"\K[^"]+' desktop/build.gradle.kts)
+# Versão única do Sonivell (a mesma do APK e do .deb).
+VERSION=$(grep -oP '^versionName=\K\S+' version.properties)
 OUT="$ROOT/desktop/build/appimage"
 WORK="$OUT/work"
 APPDIR="$WORK/Sonivell.AppDir"

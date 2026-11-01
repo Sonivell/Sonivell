@@ -5,6 +5,8 @@ on:
     branches: [ main ]
   pull_request:
   workflow_dispatch:
+  # Chamado pelo release.yml, que junta os APKs ao .deb e ao AppImage na página do release.
+  workflow_call:
 
 # Só leitura: este workflow compila e publica artefatos, não escreve no repositório.
 permissions:
@@ -84,8 +86,6 @@ jobs:
       - name: Compilar APKs (lite e SMART)
         shell: bash
         env:
-          # O número desta execução vira o versionCode: cada APK novo atualiza o anterior.
-          SONIVELL_VERSION_CODE: ${{ github.run_number }}
           SONIVELL_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           SONIVELL_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           SONIVELL_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}

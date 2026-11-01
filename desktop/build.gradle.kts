@@ -85,6 +85,11 @@ tasks.named("processResources") { dependsOn(generateStrings) }
 
 tasks.test { useJUnitPlatform() }
 
+// Versão única do Sonivell (version.properties na raiz), a mesma do app Android.
+val sonivellVersionName: String = Properties()
+    .apply { rootProject.file("version.properties").inputStream().use { load(it) } }
+    .getProperty("versionName")
+
 compose.desktop {
     application {
         mainClass = "com.juscelino.sonivell.desktop.MainKt"
@@ -92,7 +97,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb)
             packageName = "sonivell"
-            packageVersion = "0.2.0"
+            packageVersion = sonivellVersionName
             description = "Sonivell: player de música moderno, leve e com identidade própria"
             vendor = "Sonivell"
             includeAllModules = true
