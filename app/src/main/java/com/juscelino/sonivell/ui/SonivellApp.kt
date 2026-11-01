@@ -73,6 +73,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -518,6 +519,7 @@ private fun MainContent(vm: MainViewModel) {
             setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS, Routes.PROFILE, Routes.SV_FLOW, Routes.SV_MAP, Routes.SV_MOMENTS, Routes.SV_ANALYSIS)
     }
     val showChrome = route in chromeRoutes
+    val fullScreenRoutes = remember { setOf(Routes.PLAYER, Routes.QUEUE, Routes.LYRICS, Routes.CAR) }
 
     Scaffold(
         containerColor = SonivellTheme.colors.background,
@@ -1117,6 +1119,18 @@ private fun MainContent(vm: MainViewModel) {
                     ),
                 )
             }
+        }
+
+        // As listas começam abaixo da barra de status (listPadding), mas ao rolar passavam por baixo
+        // dela, com os ícones do sistema por cima de capas e títulos. Uma faixa na cor do fundo do tema
+        // cobre essa área em todas as telas que rolam; o player, a fila, a letra e o modo carro cuidam
+        // da própria área de cima e ficam de fora.
+        if (route != null && route !in fullScreenRoutes) {
+            Box(
+                Modifier.fillMaxWidth()
+                    .windowInsetsTopHeight(WindowInsets.statusBars)
+                    .background(SonivellTheme.colors.background),
+            )
         }
     }
 
