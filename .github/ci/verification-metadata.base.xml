@@ -6,6 +6,9 @@
       <trusted-artifacts>
          <trust file=".*-javadoc[.]jar" regex="true"/>
          <trust file=".*-sources[.]jar" regex="true"/>
+         <!-- POMs "marcadores" de plugin: só apontam para o artefato do plugin, que segue verificado.
+              O Maven Central e o Gradle Plugin Portal servem versões diferentes do mesmo marcador. -->
+         <trust file=".*[.]gradle[.]plugin-.*[.]pom" regex="true"/>
       </trusted-artifacts>
    </configuration>
    <components/>

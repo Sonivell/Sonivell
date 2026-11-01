@@ -41,7 +41,15 @@ jobs:
           echo "::notice::$url -> $sum"
 
       - name: Dependências do sistema (iguais às dos outros workflows)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq cmake g++ ffmpeg fakeroot dpkg-dev >/dev/null
+        # Já travou uma hora inteira aqui, sem saída. Com limite próprio, um travamento falha em minutos
+        # e mostra onde parou; sem prompt do debconf e com tempo máximo por download.
+        timeout-minutes: 10
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -E apt-get update -q -o Acquire::Retries=3 -o Acquire::http::Timeout=60
+          sudo -E apt-get install -y -q -o Acquire::Retries=3 -o Acquire::http::Timeout=60 \
+            cmake g++ ffmpeg fakeroot dpkg-dev
 
       - name: Gerar os hashes rodando as mesmas tarefas do CI
         run: |
