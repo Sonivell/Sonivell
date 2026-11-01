@@ -1,0 +1,80 @@
+name: Ícones do app
+
+# Gera os PNGs dos ícones (Android lite/smart e PC) a partir de tools/gen_app_icons.py.
+#  - gerar:    roda o script (só leitura) e guarda os PNGs como artefato;
+#  - publicar: faz o commit dos PNGs na própria branch. Só em branches icones/** (push) ou execução
+#              manual fora da main, para só este job ter escrita (mesmo padrão do "capturas").
+on:
+  push:
+    branches: [ 'icones/**' ]
+    paths:
+      - 'tools/gen_app_icons.py'
+      - '.github/ci/requisitos-icones.txt'
+      - '.github/workflows/icones.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: icones-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Instalar Pillow e NumPy (versões e hashes fixos)
+        run: |
+          python3 -m pip install --user --quiet --require-hashes --only-binary=:all: -r .github/ci/requisitos-icones.txt
+
+      - name: Gerar os ícones
+        run: python3 tools/gen_app_icons.py
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: icones
+          path: |
+            app/src/smart/res/mipmap-*/ic_launcher*.png
+            app/src/lite/res/mipmap-*/ic_launcher*.png
+            desktop/packaging/sonivell.png
+            desktop/src/main/resources/icon.png
+          if-no-files-found: error
+
+  publicar:
+    needs: gerar
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # commit dos PNGs na branch que disparou
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: icones
+          path: .
+
+      - name: Commit dos ícones na branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git add -A app/src/smart/res app/src/lite/res desktop/packaging/sonivell.png desktop/src/main/resources/icon.png
+          if git diff --cached --quiet; then
+            echo "::notice::Ícones já estavam atualizados."
+            exit 0
+          fi
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -q -m "Ícones gerados por tools/gen_app_icons.py"
+          git push -q "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
+          echo "::notice::Ícones publicados em ${GITHUB_REF_NAME}."

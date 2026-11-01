@@ -22,7 +22,7 @@ android {
         // Cresce a cada build do CI (número da execução), para o Android aceitar a atualização por
         // cima da versão anterior; build local fica em 1 (auditoria CI-03).
         versionCode = System.getenv("SONIVELL_VERSION_CODE")?.toIntOrNull() ?: 1
-        versionName = "1.0.0-stable"
+        versionName = "1.1.0-stable"
     }
 
     // Duas edições do mesmo app:

@@ -1,27 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Splash: ondas lima sobre o fundo grafite (variante Grafite). -->
+<!-- Splash: a onda lima sobre o fundo grafite (ícone "Onda", variante Grafite). Mesma curva do
+     tools/gen_app_icons.py, centralizada na área segura de 72 dp. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="288dp"
     android:height="288dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Núcleo -->
-    <path
-        android:fillColor="#FFC8F04A"
-        android:pathData="M25,54a13,13 0 1,0 26,0a13,13 0 1,0 -26,0z" />
-    <!-- Onda próxima -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFC8F04A"
-        android:strokeWidth="8"
+        android:strokeColor="#FFD4EF55"
+        android:strokeWidth="9"
         android:strokeLineCap="round"
-        android:pathData="M54.1,37.1A22,22 0 0,1 54.1,70.9" />
-    <!-- Onda distante -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFC8F04A"
-        android:strokeAlpha="0.45"
-        android:strokeWidth="8"
-        android:strokeLineCap="round"
-        android:pathData="M61.9,28A34,34 0 0,1 61.9,80" />
+        android:strokeLineJoin="round"
+        android:pathData="M30.32,55.92C36.72,38 46.96,38 54,54C61.04,70 71.28,70 77.68,52.08" />
 </vector>
