@@ -1,0 +1,305 @@
+Initialized native services in: /home/runner/.gradle/native
+Initialized jansi services in: /home/runner/.gradle/native
+The client will now receive all logging from the daemon (pid: 4004). The daemon log file: /home/runner/.gradle/daemon/9.5.1/daemon-4004.out.log
+Starting 6th build in daemon [uptime: 1 mins 30.258 secs, performance: 100%, GC rate: 0.00/s, heap usage: 0% of 4 GiB]
+Using 4 worker leases.
+Operational build model parameters: {cachingModelBuilding=false, configurationCache=false, configurationCacheDisabledReason=null, configurationCacheParallelLoad=false, configurationCacheParallelStore=false, configureOnDemand=false, invalidateCoupledProjects=false, isolatedProjects=false, modelAsProjectDependency=false, modelBuilding=false, parallelModelBuilding=false, parallelProjectConfiguration=false, parallelProjectExecution=false, resilientModelBuilding=false}
+Now considering [/home/runner/work/Sonivell/Sonivell] as hierarchies to watch
+Watching the file system is configured to be enabled if available
+File system watching is active
+Starting Build
+Settings evaluated using settings file '/home/runner/work/Sonivell/Sonivell/settings.gradle.kts'.
+Projects loaded. Root project using build file '/home/runner/work/Sonivell/Sonivell/build.gradle.kts'.
+Included projects: [root project 'Sonivell', project ':desktop', project ':desktop-smart']
+
+> Configure project :
+Evaluating root project 'Sonivell' using build file '/home/runner/work/Sonivell/Sonivell/build.gradle.kts'.
+Resolved plugin [id: 'com.android.application', version: '9.3.3', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.plugin.compose', version: '2.4.21', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.multiplatform', version: '2.4.21', apply: false]
+Resolved plugin [id: 'com.android.kotlin.multiplatform.library', version: '9.3.3', apply: false]
+Resolved plugin [id: 'com.android.library', version: '9.3.3', apply: false]
+
+> Configure project :desktop
+Evaluating project ':desktop' using build file '/home/runner/work/Sonivell/Sonivell/desktop/build.gradle.kts'.
+Resolved plugin [id: 'org.jetbrains.kotlin.jvm']
+Resolved plugin [id: 'org.jetbrains.kotlin.plugin.compose', version: '2.4.21']
+Resolved plugin [id: 'org.jetbrains.compose', version: '1.10.3']
+Using Kotlin Gradle Plugin gradle813 variant
+kotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef
+kotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef
+Configure java-only compose resources
+Configure compose resources generation
+Configure Res object generation for main
+Configure resource accessors generation for main
+Configure resource accessors generation for test
+Configure actual resource collectors generation for main
+Configure main resources for '' target
+Configure test resources for '' target
+Check that new 'org.jetbrains.kotlin.plugin.compose' was applied
+Configure resource accessors generation for dev
+kotlin scripting plugin: created the scripting discovery configuration: devKotlinScriptDef
+Configure dev resources for '' target
+
+> Configure project :desktop-smart
+Evaluating project ':desktop-smart' using build file '/home/runner/work/Sonivell/Sonivell/desktop-smart/build.gradle.kts'.
+Resolved plugin [id: 'org.jetbrains.kotlin.multiplatform', version: '2.4.21']
+Using Kotlin Gradle Plugin gradle813 variant
+kotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef
+kotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef
+All projects evaluated.
+Task path ':desktop:cleanTest' matched project ':desktop'
+Task name matched 'cleanTest'
+Task path ':desktop:test' matched project ':desktop'
+Task name matched 'test'
+Selected primary task 'cleanTest' from project :desktop
+Selected primary task 'test' from project :desktop
+Tasks to be executed: [task ':desktop:cleanTest', task ':desktop:checkKotlinGradlePluginConfigurationErrors', task ':desktop:convertXmlValueResourcesForMain', task ':desktop:copyNonXmlValueResourcesForMain', task ':desktop:prepareComposeResourcesTaskForMain', task ':desktop:generateResourceAccessorsForMain', task ':desktop:generateActualResourceCollectorsForMain', task ':desktop:generateComposeResClass', task ':desktop-smart:kmpPartiallyResolvedDependenciesChecker', task ':desktop-smart:checkKotlinGradlePluginConfigurationErrors', task ':desktop-smart:compileKotlinJvm', task ':desktop-smart:compileJvmMainJava', task ':desktop-smart:buildLjq4', task ':desktop-smart:jvmProcessResources', task ':desktop-smart:processJvmMainResources', task ':desktop-smart:jvmMainClasses', task ':desktop-smart:jvmJar', task ':desktop:compileKotlin', task ':desktop:compileJava', task ':desktop:assembleMainResources', task ':desktop:generateStrings', task ':desktop:processResources', task ':desktop:classes', task ':desktop:jar', task ':desktop:convertXmlValueResourcesForTest', task ':desktop:copyNonXmlValueResourcesForTest', task ':desktop:prepareComposeResourcesTaskForTest', task ':desktop:generateResourceAccessorsForTest', task ':desktop:compileTestKotlin', task ':desktop:compileTestJava', task ':desktop:assembleTestResources', task ':desktop:processTestResources', task ':desktop:testClasses', task ':desktop:test']
+Tasks that were excluded: []
+Resolve mutations for :desktop:cleanTest (Thread[#249,Execution worker,5,main]) started.
+destroyer locations for task group 0 (Thread[#248,included builds,5,main]) started.
+:desktop:cleanTest (Thread[#251,Execution worker Thread 3,5,main]) started.
+
+> Task :desktop:cleanTest
+Caching disabled for task ':desktop:cleanTest' because:
+  Build cache is disabled
+Task ':desktop:cleanTest' is not up-to-date because:
+  Task has not declared any outputs despite executing actions.
+Resolve mutations for :desktop:checkKotlinGradlePluginConfigurationErrors (Thread[#248,included builds,5,main]) started.
+:desktop:checkKotlinGradlePluginConfigurationErrors (Thread[#248,included builds,5,main]) started.
+
+> Task :desktop:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Skipping task ':desktop:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.
+Resolve mutations for :desktop:convertXmlValueResourcesForMain (Thread[#251,Execution worker Thread 3,5,main]) started.
+:desktop:convertXmlValueResourcesForMain (Thread[#251,Execution worker Thread 3,5,main]) started.
+
+> Task :desktop:convertXmlValueResourcesForMain NO-SOURCE
+file or directory '/home/runner/work/Sonivell/Sonivell/desktop/build/generated/compose/resourceGenerator/preparedResources/main/composeResources', not found
+Skipping task ':desktop:convertXmlValueResourcesForMain' as it has no source files and no previous output files.
+Resolve mutations for :desktop:copyNonXmlValueResourcesForMain (Thread[#248,included builds,5,main]) started.
+:desktop:copyNonXmlValueResourcesForMain (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop:copyNonXmlValueResourcesForMain NO-SOURCE
+file or directory '/home/runner/work/Sonivell/Sonivell/desktop/build/generated/compose/resourceGenerator/preparedResources/main/composeResources', not found
+Skipping task ':desktop:copyNonXmlValueResourcesForMain' as it has no source files and no previous output files.
+Resolve mutations for :desktop:prepareComposeResourcesTaskForMain (Thread[#250,Execution worker Thread 2,5,main]) started.
+:desktop:prepareComposeResourcesTaskForMain (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop:prepareComposeResourcesTaskForMain NO-SOURCE
+Skipping task ':desktop:prepareComposeResourcesTaskForMain' as it has no source files and no previous output files.
+Resolve mutations for :desktop:generateResourceAccessorsForMain (Thread[#250,Execution worker Thread 2,5,main]) started.
+:desktop:generateResourceAccessorsForMain (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop:generateResourceAccessorsForMain SKIPPED
+Skipping task ':desktop:generateResourceAccessorsForMain' as task onlyIf 'Task satisfies onlyIf spec' is false.
+Resolve mutations for :desktop:generateActualResourceCollectorsForMain (Thread[#250,Execution worker Thread 2,5,main]) started.
+:desktop:generateActualResourceCollectorsForMain (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop:generateActualResourceCollectorsForMain SKIPPED
+Skipping task ':desktop:generateActualResourceCollectorsForMain' as task onlyIf 'Task satisfies onlyIf spec' is false.
+Resolve mutations for :desktop:generateComposeResClass (Thread[#250,Execution worker Thread 2,5,main]) started.
+:desktop:generateComposeResClass (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop:generateComposeResClass SKIPPED
+Skipping task ':desktop:generateComposeResClass' as task onlyIf 'Task satisfies onlyIf spec' is false.
+Resolve mutations for :desktop-smart:kmpPartiallyResolvedDependenciesChecker (Thread[#250,Execution worker Thread 2,5,main]) started.
+:desktop-smart:kmpPartiallyResolvedDependenciesChecker (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop-smart:kmpPartiallyResolvedDependenciesChecker
+Caching disabled for task ':desktop-smart:kmpPartiallyResolvedDependenciesChecker' because:
+  Build cache is disabled
+Task ':desktop-smart:kmpPartiallyResolvedDependenciesChecker' is not up-to-date because:
+  Task has not declared any outputs despite executing actions.
+Execution stopped by some action with message: null
+Resolve mutations for :desktop-smart:checkKotlinGradlePluginConfigurationErrors (Thread[#250,Execution worker Thread 2,5,main]) started.
+:desktop-smart:checkKotlinGradlePluginConfigurationErrors (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop-smart:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Skipping task ':desktop-smart:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.
+Resolve mutations for :desktop-smart:compileKotlinJvm (Thread[#250,Execution worker Thread 2,5,main]) started.
+:desktop-smart:compileKotlinJvm (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop-smart:compileKotlinJvm UP-TO-DATE
+Caching disabled for task ':desktop-smart:compileKotlinJvm' because:
+  Build cache is disabled
+Skipping task ':desktop-smart:compileKotlinJvm' as it is up-to-date.
+Resolve mutations for :desktop-smart:compileJvmMainJava (Thread[#249,Execution worker,5,main]) started.
+:desktop-smart:compileJvmMainJava (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop-smart:compileJvmMainJava NO-SOURCE
+Skipping task ':desktop-smart:compileJvmMainJava' as it has no source files and no previous output files.
+Resolve mutations for :desktop-smart:buildLjq4 (Thread[#249,Execution worker,5,main]) started.
+:desktop-smart:buildLjq4 (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop-smart:buildLjq4 UP-TO-DATE
+Caching disabled for task ':desktop-smart:buildLjq4' because:
+  Build cache is disabled
+  Gradle would require more information to cache this task
+Skipping task ':desktop-smart:buildLjq4' as it is up-to-date.
+Resolve mutations for :desktop-smart:jvmProcessResources (Thread[#249,Execution worker,5,main]) started.
+:desktop-smart:jvmProcessResources (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop-smart:jvmProcessResources UP-TO-DATE
+Caching disabled for task ':desktop-smart:jvmProcessResources' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':desktop-smart:jvmProcessResources' as it is up-to-date.
+Resolve mutations for :desktop-smart:processJvmMainResources (Thread[#249,Execution worker,5,main]) started.
+:desktop-smart:processJvmMainResources (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop-smart:processJvmMainResources SKIPPED
+Skipping task ':desktop-smart:processJvmMainResources' as task onlyIf 'Task is enabled' is false.
+Resolve mutations for :desktop-smart:jvmMainClasses (Thread[#249,Execution worker,5,main]) started.
+:desktop-smart:jvmMainClasses (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop-smart:jvmMainClasses UP-TO-DATE
+Skipping task ':desktop-smart:jvmMainClasses' as it has no actions.
+Resolve mutations for :desktop-smart:jvmJar (Thread[#249,Execution worker,5,main]) started.
+:desktop-smart:jvmJar (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop-smart:jvmJar UP-TO-DATE
+Caching disabled for task ':desktop-smart:jvmJar' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':desktop-smart:jvmJar' as it is up-to-date.
+work action resolve desktop-smart-jvm.jar (project :desktop-smart) (Thread[#250,Execution worker Thread 2,5,main]) started.
+Resolve mutations for :desktop:compileKotlin (Thread[#250,Execution worker Thread 2,5,main]) started.
+:desktop:compileKotlin (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:compileKotlin UP-TO-DATE
+Caching disabled for task ':desktop:compileKotlin' because:
+  Build cache is disabled
+Skipping task ':desktop:compileKotlin' as it is up-to-date.
+Resolve mutations for :desktop:compileJava (Thread[#249,Execution worker,5,main]) started.
+:desktop:compileJava (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:compileJava NO-SOURCE
+Skipping task ':desktop:compileJava' as it has no source files and no previous output files.
+Resolve mutations for :desktop:assembleMainResources (Thread[#249,Execution worker,5,main]) started.
+:desktop:assembleMainResources (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:assembleMainResources UP-TO-DATE
+Caching disabled for task ':desktop:assembleMainResources' because:
+  Build cache is disabled
+  There is no logic, just copy files
+Skipping task ':desktop:assembleMainResources' as it is up-to-date.
+Resolve mutations for :desktop:generateStrings (Thread[#249,Execution worker,5,main]) started.
+:desktop:generateStrings (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:generateStrings UP-TO-DATE
+Custom actions are attached to task ':desktop:generateStrings'.
+Caching disabled for task ':desktop:generateStrings' because:
+  Build cache is disabled
+  Gradle would require more information to cache this task
+Skipping task ':desktop:generateStrings' as it is up-to-date.
+Resolve mutations for :desktop:processResources (Thread[#250,Execution worker Thread 2,5,main]) started.
+:desktop:processResources (Thread[#250,Execution worker Thread 2,5,main]) started.
+
+> Task :desktop:processResources UP-TO-DATE
+Caching disabled for task ':desktop:processResources' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':desktop:processResources' as it is up-to-date.
+Resolve mutations for :desktop:classes (Thread[#249,Execution worker,5,main]) started.
+:desktop:classes (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:classes UP-TO-DATE
+Skipping task ':desktop:classes' as it has no actions.
+Resolve mutations for :desktop:jar (Thread[#249,Execution worker,5,main]) started.
+:desktop:jar (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:jar UP-TO-DATE
+Caching disabled for task ':desktop:jar' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':desktop:jar' as it is up-to-date.
+Resolve mutations for :desktop:convertXmlValueResourcesForTest (Thread[#249,Execution worker,5,main]) started.
+:desktop:convertXmlValueResourcesForTest (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:convertXmlValueResourcesForTest NO-SOURCE
+file or directory '/home/runner/work/Sonivell/Sonivell/desktop/build/generated/compose/resourceGenerator/preparedResources/test/composeResources', not found
+Skipping task ':desktop:convertXmlValueResourcesForTest' as it has no source files and no previous output files.
+Resolve mutations for :desktop:copyNonXmlValueResourcesForTest (Thread[#249,Execution worker,5,main]) started.
+:desktop:copyNonXmlValueResourcesForTest (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:copyNonXmlValueResourcesForTest NO-SOURCE
+file or directory '/home/runner/work/Sonivell/Sonivell/desktop/build/generated/compose/resourceGenerator/preparedResources/test/composeResources', not found
+Skipping task ':desktop:copyNonXmlValueResourcesForTest' as it has no source files and no previous output files.
+Resolve mutations for :desktop:prepareComposeResourcesTaskForTest (Thread[#249,Execution worker,5,main]) started.
+:desktop:prepareComposeResourcesTaskForTest (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:prepareComposeResourcesTaskForTest NO-SOURCE
+Skipping task ':desktop:prepareComposeResourcesTaskForTest' as it has no source files and no previous output files.
+Resolve mutations for :desktop:generateResourceAccessorsForTest (Thread[#249,Execution worker,5,main]) started.
+:desktop:generateResourceAccessorsForTest (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:generateResourceAccessorsForTest SKIPPED
+Skipping task ':desktop:generateResourceAccessorsForTest' as task onlyIf 'Task satisfies onlyIf spec' is false.
+Resolve mutations for :desktop:compileTestKotlin (Thread[#249,Execution worker,5,main]) started.
+:desktop:compileTestKotlin (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:compileTestKotlin UP-TO-DATE
+Caching disabled for task ':desktop:compileTestKotlin' because:
+  Build cache is disabled
+Skipping task ':desktop:compileTestKotlin' as it is up-to-date.
+Resolve mutations for :desktop:compileTestJava (Thread[#249,Execution worker,5,main]) started.
+:desktop:compileTestJava (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:compileTestJava NO-SOURCE
+Skipping task ':desktop:compileTestJava' as it has no source files and no previous output files.
+Resolve mutations for :desktop:assembleTestResources (Thread[#249,Execution worker,5,main]) started.
+:desktop:assembleTestResources (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:assembleTestResources UP-TO-DATE
+Caching disabled for task ':desktop:assembleTestResources' because:
+  Build cache is disabled
+  There is no logic, just copy files
+Skipping task ':desktop:assembleTestResources' as it is up-to-date.
+Resolve mutations for :desktop:processTestResources (Thread[#249,Execution worker,5,main]) started.
+:desktop:processTestResources (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:processTestResources UP-TO-DATE
+Caching disabled for task ':desktop:processTestResources' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':desktop:processTestResources' as it is up-to-date.
+Resolve mutations for :desktop:testClasses (Thread[#249,Execution worker,5,main]) started.
+:desktop:testClasses (Thread[#249,Execution worker,5,main]) started.
+
+> Task :desktop:testClasses UP-TO-DATE
+Skipping task ':desktop:testClasses' as it has no actions.
+Resolve mutations for :desktop:test (Thread[#249,Execution worker,5,main]) started.
+:desktop:test (Thread[#249,Execution worker,5,main]) started.
+Gradle Test Executor 6 started executing tests.
+
+> Task :desktop:test
+Caching disabled for task ':desktop:test' because:
+  Build cache is disabled
+Task ':desktop:test' is not up-to-date because:
+  Value of input property 'filter.commandLineIncludePatterns' has changed for task ':desktop:test'
+file or directory '/home/runner/work/Sonivell/Sonivell/desktop/build/classes/java/test', not found
+Starting process 'Gradle Test Executor 6'. Working directory: /home/runner/work/Sonivell/Sonivell/desktop Command: /usr/lib/jvm/temurin-21-jdk-amd64/bin/java -Dorg.gradle.internal.worker.tmpdir=/home/runner/work/Sonivell/Sonivell/desktop/build/tmp/test/work @/home/runner/.gradle/.tmp/gradle-worker-classpath12285030163616496646txt -Xmx512m -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -ea worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 6'
+Successfully started process 'Gradle Test Executor 6'
+
+[0;93m2026-11-01 19:45:46.453275818 [W:onnxruntime:ort-java, device_discovery.cc:133 GetPciBusId] Skipping pci_bus_id for PCI path at "/sys/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/5620e0c7-8062-4dce-aeb7-520c7ef76171" because filename "5620e0c7-8062-4dce-aeb7-520c7ef76171" did not match expected pattern of [0-9a-f]+:[0-9a-f]+:[0-9a-f]+[.][0-9a-f]+[m
+
+> Task :desktop:test
+
+SmartEngineTest > analysesAndBuildsQueue() STANDARD_OUT
+    SMART: models audio=lazy, scorer=unavailable, text=ready
+    SMART: audio model loaded on first use
+    SMART progress: SmartProgress(running=false, analysed=8, total=8, metadataReady=true, failed=false)
+    SMART: queue=audio-geometry indexed=8/8, required=8, text=ready
+    SMART queue: [5392637074563833761, 6819570222053262970, 211915140345757893, 1417335495752393128, 4123008661667334007]
+
+Gradle Test Executor 6 finished executing tests.
+
+> Task :desktop:test
+Generating HTML test report...
+Finished generating test html results (0.003 secs) into: /home/runner/work/Sonivell/Sonivell/desktop/build/reports/tests/test
+Finished generating test XML results (0.0 secs) into: /home/runner/work/Sonivell/Sonivell/desktop/build/test-results/test
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1793562343239.json
+
+BUILD SUCCESSFUL in 6s
+15 actionable tasks: 3 executed, 12 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html

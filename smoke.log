@@ -1,0 +1,10 @@
+variant=default rc=0
+    SMOKE: dim=960 norm=0.999999200286446
+variant=arena rc=0
+    SMOKE: dim=960 norm=0.999999200286446
+variant=noopt rc=0
+    SMOKE: dim=960 norm=0.999999200286446
+variant=nopattern rc=0
+    SMOKE: dim=960 norm=0.999999200286446
+variant=threads rc=0
+    SMOKE: dim=960 norm=0.999999200286446

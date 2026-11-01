@@ -1,0 +1,16 @@
+full rc=0
+The client will now receive all logging from the daemon (pid: 4004). The daemon log file: /home/runner/.gradle/daemon/9.5.1/daemon-4004.out.log
+Starting 6th build in daemon [uptime: 1 mins 30.258 secs, performance: 100%, GC rate: 0.00/s, heap usage: 0% of 4 GiB]
+> Task :desktop:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :desktop:generateResourceAccessorsForMain SKIPPED
+> Task :desktop:generateActualResourceCollectorsForMain SKIPPED
+> Task :desktop:generateComposeResClass SKIPPED
+Execution stopped by some action with message: null
+> Task :desktop-smart:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :desktop-smart:processJvmMainResources SKIPPED
+> Task :desktop:generateResourceAccessorsForTest SKIPPED
+    SMART: models audio=lazy, scorer=unavailable, text=ready
+    SMART: audio model loaded on first use
+    SMART progress: SmartProgress(running=false, analysed=8, total=8, metadataReady=true, failed=false)
+    SMART: queue=audio-geometry indexed=8/8, required=8, text=ready
+    SMART queue: [5392637074563833761, 6819570222053262970, 211915140345757893, 1417335495752393128, 4123008661667334007]

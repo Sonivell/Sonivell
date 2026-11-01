@@ -1,0 +1,7 @@
+smoke: start
+createOrtSession: 3331384 bytes, operators=true
+createSession...
+createSession ok
+smoke: tensor
+smoke: run
+smoke: ok
