@@ -48,10 +48,59 @@ jobs:
 
   apk:
     needs: versao
-    uses: ./.github/workflows/build.yml
-    # A chave vem dos secrets do environment "release", que o job do build.yml já declara.
+    runs-on: ubuntu-latest
+    # Job próprio (e não uma chamada ao build.yml): os secrets do environment "release" não chegam a
+    # um workflow chamado por workflow_call. Os passos são os mesmos do build.yml (tools/ci/apk-*.sh).
+    environment: release
     permissions:
       contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
+
+      - name: Chave de assinatura
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          SONIVELL_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SONIVELL_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          SONIVELL_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          PR_DE_FORK: 'false'
+        run: tools/ci/apk-chave.sh
+
+      - name: Compilar APKs (lite e SMART)
+        shell: bash
+        env:
+          SONIVELL_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SONIVELL_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          SONIVELL_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: tools/ci/apk-compilar.sh
+
+      - name: Conferir a assinatura dos APKs
+        shell: bash
+        run: tools/ci/apk-conferir.sh
+
+      - name: Apagar a chave do disco
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sonivell-release.jks"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: sonivell-lite-apk
+          path: app/build/outputs/apk/lite/release/*.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: sonivell-smart-apk
+          path: app/build/outputs/apk/smart/release/*.apk
+          if-no-files-found: error
 
   desktop:
     needs: versao
