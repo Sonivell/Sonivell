@@ -42,6 +42,7 @@ import com.juscelino.sonivell.LibraryState
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.smart.SmartProgress
+import com.juscelino.sonivell.ui.components.OndaArt
 import com.juscelino.sonivell.ui.components.Waveform
 import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
@@ -147,17 +148,7 @@ fun SvHomeScreen(
                                 .clickable(role = Role.Button, onClickLabel = label) { onPlayMix(seed) },
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            val tone = ArtTones.cores[i % ArtTones.cores.size]
-                            if (SonivellTheme.glass) {
-                                GlassMixCover(seed.artist, tone, Modifier.size(width = 136.dp, height = 120.dp))
-                            } else {
-                                SvOrb(
-                                    top = tone,
-                                    bottom = ArtTones.backgrounds[i % ArtTones.backgrounds.size],
-                                    modifier = Modifier.size(width = 136.dp, height = 120.dp),
-                                    seed = 0,
-                                )
-                            }
+                            OndaArt(label, seed.artist, title = null, subtitle = null, modifier = Modifier.size(width = 136.dp, height = 120.dp).clip(RoundedCornerShape(20.dp)))
                             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                                 Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(stringResource(R.string.fy_sounds_like, seed.title), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -256,24 +247,6 @@ private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: In
                 repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
-    }
-}
-
-/**
- * Capa de mix no vidro: o cartão dos atalhos (vidro, ponto colorido no canto e a onda
- * curta embaixo), no mesmo tamanho da capa do Sonivell.
- */
-@Composable
-private fun GlassMixCover(seedText: String, tone: Color, modifier: Modifier = Modifier) {
-    val nc = SonivellTheme.colors
-    Column(
-        modifier
-            .glassSurface(RoundedCornerShape(20.dp), nc.surface, nc.outline, tone, elevation = 10.dp)
-            .padding(horizontal = 14.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Box(Modifier.size(8.dp).clip(CircleShape).background(tone))
-        SvMiniWave(seedText, tone, Modifier.size(width = 64.dp, height = 22.dp))
     }
 }
 

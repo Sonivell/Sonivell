@@ -88,6 +88,7 @@ import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.components.AlbumArt
+import com.juscelino.sonivell.ui.components.OndaArt
 import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.components.Waveform
@@ -618,32 +619,6 @@ private fun SmartTag() {
     }
 }
 
-/** Duas ondas sobre o tom do mix: a capa dos mixes e dos blocos de gênero. */
-@Composable
-private fun WaveTile(index: Int, modifier: Modifier = Modifier) {
-    val bg = ArtTones.backgrounds[index % ArtTones.backgrounds.size]
-    val wave = ArtTones.cores[index % ArtTones.cores.size]
-    Canvas(modifier.background(bg)) {
-        val stroke = 2.5.dp.toPx()
-        fun line(yFrac: Float, amp: Float, alpha: Float, width: Float) {
-            val path = Path()
-            val y0 = size.height * yFrac
-            val left = size.width * 0.1f
-            val right = size.width * 0.9f
-            var x = left
-            path.moveTo(x, y0)
-            while (x <= right) {
-                val t = (x - left) / (right - left)
-                path.lineTo(x, y0 + sin(t * 4 * PI).toFloat() * amp)
-                x += 2f
-            }
-            drawPath(path, wave.copy(alpha = alpha), style = Stroke(width, cap = StrokeCap.Round))
-        }
-        line(0.74f, size.height * 0.08f, 1f, stroke)
-        line(0.82f, size.height * 0.05f, 0.45f, stroke * 0.8f)
-    }
-}
-
 // ---------------------------------------------------------------- Para você
 
 private fun LazyListScope.home(
@@ -674,13 +649,14 @@ private fun LazyListScope.home(
                 Title(stringResource(R.string.fy_mixes)) { SmartTag() }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     itemsIndexed(forYou.mixSeeds, key = { _, s -> "mix-" + s.id }) { i, seed ->
+                        val mix = stringResource(R.string.fy_mix_of, seed.artist)
                         Column(
                             Modifier.width(136.dp).clip(RoundedCornerShape(20.dp)).clickable { actions.onPlayMix(seed) },
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            WaveTile(i, Modifier.size(width = 136.dp, height = 120.dp).clip(RoundedCornerShape(20.dp)))
+                            OndaArt(mix, seed.artist, title = null, subtitle = null, modifier = Modifier.size(width = 136.dp, height = 120.dp).clip(RoundedCornerShape(20.dp)))
                             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                                Text(stringResource(R.string.fy_mix_of, seed.artist), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = SonivellTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(mix, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = SonivellTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(stringResource(R.string.fy_sounds_like, seed.title), style = MaterialTheme.typography.labelMedium, color = SonivellTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
