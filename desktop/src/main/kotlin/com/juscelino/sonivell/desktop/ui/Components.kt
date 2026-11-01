@@ -131,6 +131,142 @@ fun AlbumArt(track: Track?, size: Dp, corner: Dp = 14.dp, modifier: Modifier = M
     }
 }
 
+@Composable
+fun Waveform(
+    seed: Long,
+    progress: Float,
+    modifier: Modifier = Modifier,
+    bars: Int = 44,
+    barWidth: Dp = 3.dp,
+    played: Color = SonivellTheme.colors.accent,
+    rest: Color = SonivellTheme.colors.textSecondary.copy(alpha = 0.35f),
+) {
+    val shape = remember(seed, bars) { waveShape(seed, bars) }
+    Canvas(modifier) {
+        val w = barWidth.toPx()
+        val step = if (bars > 1) (size.width - w) / (bars - 1) else 0f
+        val p = progress.coerceIn(0f, 1f)
+        for (i in 0 until bars) {
+            val h = size.height * shape[i]
+            drawRoundRect(
+                color = if ((i + 0.5f) / bars <= p) played else rest,
+                topLeft = Offset(i * step, (size.height - h) / 2f),
+                size = Size(w, h),
+                cornerRadius = CornerRadius(w / 2f, w / 2f),
+            )
+        }
+    }
+}
+
+/** Barra de progresso em forma de onda: toque e arraste para buscar. */
+@Composable
+fun WaveSeekBar(seed: Long, positionMs: Long, durationMs: Long, onSeek: (Long) -> Unit, modifier: Modifier = Modifier, bars: Int = 96, height: Dp = 30.dp) {
+    val label = str("cd_seek")
+    var drag by remember { mutableStateOf<Float?>(null) }
+    val fraction = drag ?: if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
+    Box(
+        modifier
+            .height(height + 10.dp)
+            .semantics { contentDescription = label }
+            .pointerHoverIcon(PointerIcon.Hand)
+            .pointerInput(durationMs) {
+                detectTapGestures { o -> if (durationMs > 0) onSeek((o.x / size.width * durationMs).toLong()) }
+            }
+            .pointerInput(durationMs) {
+                detectHorizontalDragGestures(
+                    onDragStart = { o -> drag = (o.x / size.width).coerceIn(0f, 1f) },
+                    onHorizontalDrag = { change, _ -> drag = (change.position.x / size.width).coerceIn(0f, 1f) },
+                    onDragEnd = { drag?.let { if (durationMs > 0) onSeek((it * durationMs).toLong()) }; drag = null },
+                    onDragCancel = { drag = null },
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Waveform(seed, fraction, Modifier.fillMaxWidth().height(height), bars = bars)
+    }
+}
+
+@Composable
+fun IconBtn(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+    iconSize: Dp = 20.dp,
+    tint: Color = SonivellTheme.colors.textPrimary,
+    outlined: Boolean = false,
+    active: Boolean = false,
+) {
+    val c = SonivellTheme.colors
+    val shape = RoundedCornerShape(13.dp)
+    Box(
+        modifier
+            .size(size)
+            .let { if (outlined && !active) it.border(1.dp, c.outline, shape) else it }
+            .hoverClick(shape, hover = if (active) c.accent else c.surfaceHigh, base = if (active) c.accent else Color.Transparent, label = label, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, null, Modifier.size(iconSize), tint = if (active) c.onAccent else tint)
+    }
+}
+
+/** Botão de tocar do Ondas: quadrado arredondado na cor de destaque. */
+@Composable
+fun PlaySquircle(playing: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, size: Dp = 48.dp, corner: Dp = 16.dp, iconSize: Dp = 22.dp) {
+    val c = SonivellTheme.colors
+    val label = str(if (playing) "cd_pause" else "cd_play")
+    Box(
+        modifier.size(size).hoverClick(RoundedCornerShape(corner), hover = c.accent.copy(alpha = 0.85f), base = c.accent, label = label, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(if (playing) Traco.pause else Traco.play, null, Modifier.size(iconSize), tint = c.onAccent)
+    }
+}
+
+@Composable
+fun Badge(text: String, on: Boolean = true) {
+    val c = SonivellTheme.colors
+    val color = if (on) c.accent else c.textSecondary
+    Box(Modifier.height(22.dp).border(1.dp, color, RoundedCornerShape(7.dp)).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+        Txt(text, 10, FontWeight.ExtraBold, color, letterSpacing = 0.8f)
+    }
+}
+
+@Composable
+fun Pill(text: String, selected: Boolean, onClick: () -> Unit, icon: ImageVector? = null) {
+    val c = SonivellTheme.colors
+    val shape = RoundedCornerShape(13.dp)
+    Row(
+        Modifier.height(38.dp)
+            .border(1.dp, if (selected) c.accent else c.outline, shape)
+            .hoverClick(shape, hover = if (selected) c.accent else c.surface, base = if (selected) c.accent else Color.Transparent, onClick = onClick)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (icon != null) Icon(icon, null, Modifier.size(16.dp), tint = if (selected) c.onAccent else c.textTertiary)
+        Txt(text, 13, FontWeight.ExtraBold, if (selected) c.onAccent else c.textTertiary)
+    }
+}
+
+@Composable
+fun SectionTitle(text: String, modifier: Modifier = Modifier, trailing: @Composable () -> Unit = {}) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Txt(text, 21, FontWeight.ExtraBold)
+        trailing()
+    }
+}
+
+@Composable
+fun EmptyState(text: String, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxSize().padding(40.dp), contentAlignment = Alignment.Center) {
+        Txt(text, 15, FontWeight.Medium, SonivellTheme.colors.textSecondary, maxLines = 4, lineHeight = 22)
+    }
+}
+
+val CircleBadgeShape = CircleShape
+
 /**
  * Escolha estável da capa Onda: a cor sai do artista e o formato da onda do álbum. Mesma conta do
  * app Android (app/.../ui/components/OndaArt.kt): FNV-1a de 32 bits sobre o texto em UTF-8.
