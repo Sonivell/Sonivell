@@ -14,10 +14,14 @@ on:
       - 'gradle/libs.versions.toml'
       - 'app/src/main/res/values*/strings.xml'
       - '.github/workflows/desktop.yml'
+      - 'version.properties'
   pull_request:
     paths:
       - 'desktop/**'
+      - 'version.properties'
   workflow_dispatch:
+  # Chamado pelo release.yml, que publica o .deb e o AppImage junto com os APKs.
+  workflow_call:
 
 # Só leitura por padrão: o build roda código do branch (inclusive em PRs). Quem escreve no
 # repositório é só o job "capturas", e só fora de PRs (auditoria SUP-03).
@@ -137,7 +141,8 @@ jobs:
     # Publica as capturas na branch desktop-screenshots. Separado do build para só este job ter
     # permissão de escrita, e só em push para a main ou execução manual (nunca em PRs).
     needs: deb
-    if: always() && github.event_name != 'pull_request'
+    # No release (release.yml) as capturas não são publicadas.
+    if: always() && github.event_name != 'pull_request' && github.workflow != 'Release'
     runs-on: ubuntu-latest
     continue-on-error: true
     permissions:

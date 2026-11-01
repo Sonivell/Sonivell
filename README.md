@@ -75,6 +75,12 @@ Não há chave de teste no repositório. Sem a chave de release, o build de rele
 
 APKs antigos assinados com a chave de teste (que era pública) não atualizam para os novos: o Android exige o mesmo certificado. Desinstale a versão antiga e instale a nova.
 
+### Release
+
+A versão é uma só para tudo: o `versionName` em [`version.properties`](version.properties) vale para o APK lite, o APK SMART, o `.deb` e o AppImage. O `versionCode` do Android sai dele (`X*10000 + Y*100 + Z`, então 1.2.0 = 10200), e todo build da mesma versão tem o mesmo código.
+
+Para lançar: aumente o `versionName`, faça o merge na `main` e rode **Actions → Release → Run workflow**. O workflow compila os APKs assinados, o `.deb` e o AppImage, confere que todos saíram com a mesma versão e publica o release `v<versão>` com os quatro arquivos e um `SHA256SUMS.txt`. Uma versão que já foi lançada não é publicada de novo.
+
 ## Créditos
 
 - Motor SMART e modelos: [LatentJam](https://github.com/Nikita-sud/latentjam), Apache License 2.0 — veja `NOTICE`. Os próprios autores avisam que parte dos pesos dos modelos ainda não passou pela revisão de direitos dos dados de treino; por isso a edição SMART é, por enquanto, só para uso pessoal.

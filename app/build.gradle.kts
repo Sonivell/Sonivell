@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     // AGP 9 já compila Kotlin sozinho (built-in Kotlin): o plugin kotlin-android não é mais usado.
     alias(libs.plugins.android.application)
@@ -11,6 +13,15 @@ fun requiredEnv(name: String): String =
     System.getenv(name)?.takeIf { it.isNotEmpty() }
         ?: throw GradleException("SONIVELL_KEYSTORE foi definido, mas falta $name.")
 
+// Versão única (version.properties na raiz): a mesma no APK lite, no SMART, no .deb e no AppImage.
+val sonivellVersionName: String = Properties()
+    .apply { rootProject.file("version.properties").inputStream().use { load(it) } }
+    .getProperty("versionName")
+    ?.takeIf { Regex("""\d+\.\d+\.\d+""").matches(it) }
+    ?: throw GradleException("version.properties: versionName precisa ser X.Y.Z")
+val sonivellVersionCode: Int = sonivellVersionName.split('.').map(String::toInt)
+    .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
+
 android {
     namespace = "com.juscelino.sonivell"
     compileSdk = 36
@@ -19,10 +30,10 @@ android {
         applicationId = "com.juscelino.sonivell"
         minSdk = 26
         targetSdk = 35
-        // Cresce a cada build do CI (número da execução), para o Android aceitar a atualização por
-        // cima da versão anterior; build local fica em 1 (auditoria CI-03).
-        versionCode = System.getenv("SONIVELL_VERSION_CODE")?.toIntOrNull() ?: 1
-        versionName = "1.1.0-stable"
+        // Os dois vêm de version.properties: todo build da mesma versão (CI, local, release) tem o
+        // mesmo versionCode, e cada versão nova tem um maior, para o Android aceitar a atualização.
+        versionCode = sonivellVersionCode
+        versionName = sonivellVersionName
     }
 
     // Duas edições do mesmo app:

@@ -1,0 +1,149 @@
+name: Release
+
+# Publica um release com tudo na mesma versão (version.properties): os APKs lite e SMART
+# (assinados com a chave de release), o .deb e o AppImage, mais um SHA256SUMS.txt.
+# Como usar: mude o versionName em version.properties, faça o merge na main e rode este workflow
+# em Actions > Release > Run workflow. Ele cria a tag v<versão> no commit da execução.
+# Não crie o release nem a tag à mão: com a tag já existente, o workflow para sem publicar.
+# As notas do release (em inglês) ficam no passo "Publicar o release"; atualize a lista de
+# novidades a cada versão.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Um release por vez.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  versao:
+    runs-on: ubuntu-latest
+    outputs:
+      nome: ${{ steps.v.outputs.nome }}
+      codigo: ${{ steps.v.outputs.codigo }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Ler a versão e conferir que a tag ainda não existe
+        id: v
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          nome=$(grep -oP '^versionName=\K\S+' version.properties)
+          [[ "$nome" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || { echo "::error::versionName '$nome' não é X.Y.Z"; exit 1; }
+          codigo=$(( BASH_REMATCH[1] * 10000 + BASH_REMATCH[2] * 100 + BASH_REMATCH[3] ))
+          if gh release view "v$nome" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 || git ls-remote --exit-code --tags origin "refs/tags/v$nome" > /dev/null 2>&1; then
+            echo "::error::A versão v$nome já foi lançada. Aumente o versionName em version.properties."
+            exit 1
+          fi
+          echo "nome=$nome" >> "$GITHUB_OUTPUT"
+          echo "codigo=$codigo" >> "$GITHUB_OUTPUT"
+          echo "::notice::Release v$nome (versionCode $codigo)"
+
+  apk:
+    needs: versao
+    uses: ./.github/workflows/build.yml
+    # A chave vem dos secrets do environment "release", que o job do build.yml já declara.
+    permissions:
+      contents: read
+
+  desktop:
+    needs: versao
+    uses: ./.github/workflows/desktop.yml
+    permissions:
+      # O job "capturas" do desktop.yml pede escrita, mas não roda no release (ver o if dele).
+      contents: write
+
+  publicar:
+    needs: [versao, apk, desktop]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # cria a tag e o release
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: sonivell-*-apk
+          path: baixados
+          merge-multiple: true
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: sonivell-desktop-deb
+          path: baixados
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: sonivell-desktop-appimage
+          path: baixados
+
+      - name: Conferir que tudo saiu na mesma versão
+        shell: bash
+        env:
+          NOME: ${{ needs.versao.outputs.nome }}
+          CODIGO: ${{ needs.versao.outputs.codigo }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          aapt2=$(find "$ANDROID_HOME/build-tools" -name aapt2 -type f | sort -V | tail -n 1)
+          echo "### Sonivell v$NOME (versionCode $CODIGO)" >> "$GITHUB_STEP_SUMMARY"
+          for edicao in lite smart; do
+            apk=$(find baixados -name "*-$edicao-release.apk" | head -n 1)
+            [ -n "$apk" ] || { ls -R baixados; echo "::error::APK $edicao de release não encontrado (sem a chave, só saem APKs de debug)"; exit 1; }
+            badging=$("$aapt2" dump badging "$apk" | head -n 1)
+            codigo=$(grep -oP "versionCode='\K[0-9]+" <<< "$badging")
+            nome=$(grep -oP "versionName='\K[^']+" <<< "$badging")
+            [ "$codigo" = "$CODIGO" ] || { echo "::error::$apk com versionCode $codigo, esperado $CODIGO"; exit 1; }
+            [[ "$nome" == "$NOME"* ]] || { echo "::error::$apk com versionName $nome, esperado $NOME"; exit 1; }
+            cp "$apk" "dist/Sonivell-$NOME-$edicao.apk"
+            echo "- APK $edicao: versionName \`$nome\`, versionCode \`$codigo\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+          deb=$(find baixados -name "*.deb" | head -n 1)
+          [ -n "$deb" ] || { echo "::error::.deb não encontrado"; exit 1; }
+          versao_deb=$(dpkg-deb -f "$deb" Version)
+          [ "$versao_deb" = "$NOME" ] || [[ "$versao_deb" == "$NOME-"* ]] || { echo "::error::.deb com versão $versao_deb, esperado $NOME"; exit 1; }
+          cp "$deb" "dist/Sonivell-$NOME-amd64.deb"
+          echo "- .deb: versão \`$versao_deb\`" >> "$GITHUB_STEP_SUMMARY"
+          appimage=$(find baixados -name "Sonivell-$NOME-x86_64.AppImage" | head -n 1)
+          [ -n "$appimage" ] || { ls -R baixados; echo "::error::AppImage Sonivell-$NOME-x86_64.AppImage não encontrado"; exit 1; }
+          cp "$appimage" dist/
+          echo "- AppImage: \`$(basename "$appimage")\`" >> "$GITHUB_STEP_SUMMARY"
+          (cd dist && sha256sum -- * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+
+      - name: Publicar o release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOME: ${{ needs.versao.outputs.nome }}
+          CODIGO: ${{ needs.versao.outputs.codigo }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## What's new in Sonivell $NOME"
+            echo
+            echo "- \"Wave\" cover for songs without artwork: color from the artist, wave shape from the album, the same on phone and PC"
+            echo "- Glass cards in every theme, on Android and desktop"
+            echo "- Light themes fixed: no more grey block inside the glass cards"
+            echo "- New app icon"
+            echo "- APKs signed with the official Sonivell key"
+            echo "- One version across all platforms: Android (lite and SMART), .deb and AppImage (versionCode $CODIGO)"
+            echo
+            echo "## Downloads"
+            echo
+            echo "| File | For |"
+            echo "|---|---|"
+            echo "| \`Sonivell-$NOME-lite.apk\` | Android: player only, lightweight |"
+            echo "| \`Sonivell-$NOME-smart.apk\` | Android (64-bit ARM): with SMART recommendations |"
+            echo "| \`Sonivell-$NOME-amd64.deb\` | Debian/Ubuntu PC (\`sudo apt install ./Sonivell-$NOME-amd64.deb\`) |"
+            echo "| \`Sonivell-$NOME-x86_64.AppImage\` | Any Linux distro (\`chmod +x\`, then open) |"
+            echo
+            echo "Verify the files with \`sha256sum -c SHA256SUMS.txt\`."
+          } > notas.md
+          gh release create "v$NOME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Sonivell $NOME" \
+            --notes-file notas.md
