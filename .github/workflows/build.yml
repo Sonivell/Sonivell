@@ -5,8 +5,6 @@ on:
     branches: [ main ]
   pull_request:
   workflow_dispatch:
-  # Chamado pelo release.yml, que junta os APKs ao .deb e ao AppImage na página do release.
-  workflow_call:
 
 # Só leitura: este workflow compila e publica artefatos, não escreve no repositório.
 permissions:
@@ -42,46 +40,7 @@ jobs:
           SONIVELL_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           SONIVELL_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           PR_DE_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
-        run: |
-          set -euo pipefail
-          if [ -z "${KEYSTORE_BASE64:-}" ]; then
-            if [ "$PR_DE_FORK" = true ]; then
-              echo "::warning::PR de fork: sem acesso aos secrets, só os APKs de debug foram compilados."
-              echo "SONIVELL_BUILD=debug" >> "$GITHUB_ENV"
-              exit 0
-            fi
-            echo "::error::Falta o secret KEYSTORE_BASE64 (o .jks em base64). Veja a seção Assinatura do README."
-            exit 1
-          fi
-          # Secret do repositório -> variável que o Gradle lê.
-          for par in KEYSTORE_PASSWORD:SONIVELL_STORE_PASSWORD KEY_ALIAS:SONIVELL_KEY_ALIAS KEY_PASSWORD:SONIVELL_KEY_PASSWORD; do
-            v=${par#*:}
-            [ -n "${!v:-}" ] || { echo "::error::Falta o secret ${par%%:*}."; exit 1; }
-          done
-          jks="$RUNNER_TEMP/sonivell-release.jks"
-          # Tolera o que costuma vir junto ao colar: quebras de linha, tabs, aspas, as linhas
-          # "-----BEGIN/END" do certutil -encode (Windows) e o alfabeto url-safe (- e _).
-          b64=$(printf '%s' "$KEYSTORE_BASE64" | grep -v -- '-----' | tr -d '[:space:]"=' | tr -- '-_' '+/')
-          # Completa o "=" do fim, que alguns geradores (e algumas colagens) deixam de fora.
-          while [ $(( ${#b64} % 4 )) -ne 0 ]; do b64="$b64="; done
-          if ! printf '%s' "$b64" | base64 -d > "$jks" 2>/dev/null; then
-            # Diagnóstico sem expor o conteúdo: tamanho, resto por 4 e caracteres fora do base64.
-            invalidos=$(printf '%s' "$b64" | tr -d 'A-Za-z0-9+/=' | wc -c)
-            echo "::error::KEYSTORE_BASE64 não é um base64 válido (${#b64} caracteres, resto por 4 = $(( ${#b64} % 4 )), $invalidos fora do alfabeto). Gere com: base64 -w0 sua-chave.jks"
-            exit 1
-          fi
-          # Confere a senha do arquivo e o alias antes de compilar, com uma mensagem clara.
-          if ! keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" -alias "$SONIVELL_KEY_ALIAS" > /dev/null 2>&1; then
-            # Diagnóstico sem expor segredos: tamanho e tipo do arquivo, o erro do keytool e os aliases.
-            tipo=$(od -An -tx1 -N4 "$jks" | tr -d ' ')
-            case "$tipo" in feedfeed) tipo="JKS";; 3082*) tipo="PKCS12";; *) tipo="desconhecido ($tipo)";; esac
-            erro=$(keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" 2>&1 | grep -iE 'error|exception|incorrect|invalid' | head -n 1 || true)
-            aliases=$(keytool -list -keystore "$jks" -storepass "$SONIVELL_STORE_PASSWORD" 2>/dev/null | grep -oE '^[^,]+, ' | tr -d ',' | tr '\n' ' ' || true)
-            echo "::error::A chave não abriu: arquivo $tipo de $(stat -c %s "$jks") bytes; keytool: ${erro:-sem mensagem}; aliases: ${aliases:-nenhum}. Confira os secrets KEYSTORE_PASSWORD e KEY_ALIAS."
-            exit 1
-          fi
-          echo "SONIVELL_KEYSTORE=$jks" >> "$GITHUB_ENV"
-          echo "SONIVELL_BUILD=release" >> "$GITHUB_ENV"
+        run: tools/ci/apk-chave.sh
 
       - name: Compilar APKs (lite e SMART)
         shell: bash
@@ -89,41 +48,14 @@ jobs:
           SONIVELL_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           SONIVELL_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           SONIVELL_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          set -o pipefail
-          if [ "$SONIVELL_BUILD" = release ]; then tarefas="assembleLiteRelease assembleSmartRelease"; else tarefas="assembleLiteDebug assembleSmartDebug"; fi
-          # shellcheck disable=SC2086 # $tarefas são duas palavras de propósito
-          ./gradlew $tarefas 2>&1 | tee build.log || {
-            # Em caso de erro, destaca as mensagens como anotações (visíveis no resumo da execução).
-            grep -E "^e: |What went wrong|Execution failed|error:|Error:|Lint found" -A3 build.log | head -n 60 | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
-            exit 1
-          }
+        run: tools/ci/apk-compilar.sh
 
       # Prova de que os APKs saíram com a SUA chave: imprime o SHA-256 do certificado e reprova se for
       # a antiga chave de teste (pública) ou se a assinatura não validar.
       - name: Conferir a assinatura dos APKs
         if: env.SONIVELL_BUILD == 'release'
         shell: bash
-        run: |
-          set -euo pipefail
-          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
-          chave_teste=882ef7c4a4ff1dcce21802ac5eef4779473c90c304ac83770ef4f0535fa1477b
-          echo "### Assinatura dos APKs" >> "$GITHUB_STEP_SUMMARY"
-          for apk in app/build/outputs/apk/*/release/*.apk; do
-            if ! "$apksigner" verify --print-certs "$apk" > certs.txt 2>&1; then
-              cat certs.txt; echo "::error::$apk sem assinatura válida"; exit 1
-            fi
-            # O começo da linha muda entre versões do apksigner ("Signer #1", "Signer (minSdkVersion=…)"),
-            # então pega o primeiro certificado pelo fim da linha.
-            sha=$(grep -m1 -oE 'certificate SHA-256 digest: [0-9a-f]{64}' certs.txt | awk '{print $NF}' || true)
-            dn=$(grep -m1 'certificate DN: ' certs.txt | sed 's/^.*certificate DN: //' || true)
-            [ -n "$sha" ] || { cat certs.txt; echo "::error::$apk: SHA-256 do certificado não encontrado na saída do apksigner"; exit 1; }
-            [ "$sha" != "$chave_teste" ] || { echo "::error::$apk foi assinado com a antiga chave de TESTE"; exit 1; }
-            echo "::notice::$(basename "$apk"): $dn, SHA-256 $sha"
-            echo "- \`$(basename "$apk")\`: $dn · SHA-256 \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
-          done
+        run: tools/ci/apk-conferir.sh
 
       - name: Apagar a chave do disco
         if: always()
