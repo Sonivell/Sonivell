@@ -4,17 +4,50 @@
 - **Commit auditado:** `1f6d1b9` (`main`, depois do merge do #13)
 - **Tipo:** análise estática do repositório inteiro (357 arquivos, ~42,6 mil linhas de Kotlin, mais C/C++ nativo, scripts e CI).
 - **Etapa:** 1 de 2. Nenhum arquivo de código foi alterado. Este documento é o único arquivo novo.
-- **Correções:** #15 (na `main`) e #16 (ciclo 2). Status de cada item na seção logo abaixo.
+- **Correções:** #15, #16 e #17 (na `main`); #18 (ferramental de build) e #19 (versão **1.0.0-stable**) em fase de merge.
+- **Encerramento:** 01/11/2026. Vereditos finais na seção logo abaixo; status de cada item em seguida.
+
+---
+
+## Vereditos finais (encerramento, 01/11/2026)
+
+A auditoria está encerrada. Todos os itens P1 e P2 foram corrigidos, validados no CI e **testados no aparelho real**. O que sobra são melhorias P3/P4 de baixo risco e duas configurações do GitHub que dependem de você.
+
+| Pergunta | Na auditoria (31/10) | Veredito final |
+|---|---|---|
+| O projeto está seguro? | Parcialmente | **Sim.** Assinatura só com a chave própria, guardada no environment `release` (#17); serviço de mídia com lista de apps permitidos; restaurar backup com limites e só no formato do Sonivell; nenhuma CVE conhecida nas 295 dependências do app; dependências e wrapper conferidos por SHA-256. As CVEs do ferramental de build (não vão nos APKs) são tratadas pela atualização do AGP/Kotlin/Gradle (#18). |
+| O projeto está estável? | Em primeiro plano, sim; em segundo plano, não totalmente | **Sim.** Temporizador, histórico, sessão e fila SMART rodam no serviço, com a tela fechada; gravações atômicas, arquivos corrompidos separados; CI verde em todos os workflows da `main`; testado no aparelho. |
+| Há gargalos importantes? | Sim (PERF-01) | **Não.** Busca e ordenação fora da thread principal (ordenação 1.447 → 186 ms, busca 105 → 36 ms, 20 mil faixas). Restam PERF-03 (índice de letras sem teto) e PERF-04, ambos P3/P4. |
+| Está pronto para produção? | Não para distribuição pública | **Sim**, como **1.0.0-stable**, com duas condições de configuração (👤): CI obrigatório na proteção da `main` e o environment `release` restrito à `main`. |
+
+### Notas revisadas
+
+| Categoria | Antes | Depois | Motivo |
+|---|---|---|---|
+| Segurança | 5 | **8** | SEC-01..05 corrigidos; varredura de CVEs no CI; SEC-06 aceito. |
+| Estabilidade | 5 | **8** | REL-01..06 corrigidos e testados no aparelho. |
+| Performance | 6 | **7** | PERF-01/02/05 corrigidos; PERF-03 parcial e PERF-04 pendentes. |
+| Escalabilidade | 6 | **7** | Busca e ordenação com chaves pré-calculadas; o teto de ~17 mil faixas do índice SMART continua. |
+| Arquitetura | 5 | **6** | Lógica de reprodução no serviço; ARQ-01..03 (arquivos de UI grandes, telas duplicadas) seguem pendentes. |
+| Qualidade do código | 6 | **7** | Leituras limitadas, gravações centralizadas, lint com 0 erros. |
+| Testabilidade | 3 | **5** | 25 testes no app, 20 no motor e 12 no desktop, todos no CI; ainda sem testes em emulador. |
+| DevOps | 4 | **8** | Actions por SHA, permissões mínimas, verificação de dependências, OSV, lint, zizmor/actionlint, `versionCode` automático, secrets em environment. |
+| Observabilidade | 3 | **3** | Sem mudança: não há registro local de falhas nem relatório de erro exportável. |
+
+### O que fica para depois (não bloqueia a 1.0.0-stable)
+- **👤 Você:** proteção da `main` com `build` e `seguranca` obrigatórios (CI-01); environment `release` restrito à `main`; escolher GitHub ou GitLab como CI oficial (CI-02).
+- **Código (P3/P4):** PERF-03 (teto no índice de letras), PERF-04, ARQ-01..03, busca por voz, `smart-test.yml` ainda com escrita e `push -f` na `smart-logs`.
+- **Testes:** testes em emulador do serviço de reprodução; registro local de falhas (observabilidade).
 
 ---
 
 ## Status das correções
 
-_Atualizado em 31/10/2026, com os resultados do CI do #16 (commits até `a69a496`). Legenda: ✅ na `main` (#15) · 🟢 corrigido e validado no #16 · 🟡 parcial · ⏳ pendente · 👤 depende de você · ⚪ risco aceito._
+_Atualizado em 01/11/2026. O #16 e o #17 também estão na `main`; #18 e #19 em fase de merge. Legenda: ✅ na `main` (#15) · 🟢 corrigido e validado no #16 (na `main`) · 🟡 parcial · ⏳ pendente · 👤 depende de você · ⚪ risco aceito._
 
 | ID | Sev. | Status | Onde | Observação |
 |---|---|---|---|---|
-| SEC-01 | P1 | 🟢 | #15 + #16 | A chave de teste saiu do repositório e do build; o release só assina com a chave dos *secrets* (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). **Validado no CI:** os dois APKs (lite e SMART) saíram assinados com a chave nova, SHA-256 do certificado `af0a0e7a0b5f13d8e5181916d8d9bb88acd6f61bf1861b90bc893382fd488ac6` (a antiga chave de teste era `882ef7c4…1477b`). Pendente (👤): mover os secrets para um *environment* `release` com proteção (achado do zizmor, hoje registrado como exceção). Quem tem APK com a chave de teste precisa desinstalar e instalar de novo. |
+| SEC-01 | P1 | 🟢 | #15 + #16 | A chave de teste saiu do repositório e do build; o release só assina com a chave dos *secrets* (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). **Validado no CI:** os dois APKs (lite e SMART) saíram assinados com a chave nova, SHA-256 do certificado `af0a0e7a0b5f13d8e5181916d8d9bb88acd6f61bf1861b90bc893382fd488ac6` (a antiga chave de teste era `882ef7c4…1477b`). Os secrets foram movidos para o *environment* `release` (#17); falta (👤) restringir o environment à `main`. Quem tem APK com a chave de teste precisa desinstalar e instalar de novo. |
 | SEC-02 | P2 | ✅ | #15 | Navegação da biblioteca só para o próprio app, apps confiáveis, Android Auto, Wear e Assistente. |
 | SEC-03 | P2 | ✅ | #15 | `BackupArchive`: nomes permitidos, limites por arquivo/total/quantidade, troca arquivo a arquivo. 8 testes. |
 | SEC-04 | P3 | 🟢 | #16 | Regras de backup/extração: histórico, gosto e índices do SMART fora do backup do Android. |
@@ -41,6 +74,8 @@ _Atualizado em 31/10/2026, com os resultados do CI do #16 (commits até `a69a496
 | CI-02 | P4 | 👤 | — | Escolher qual CI é o oficial (GitHub ou GitLab). |
 | CI-03 | P3 | 🟢 | #16 | `versionCode` = número da execução do CI. |
 | Varredura de CVEs (0.3) | — | 🟢 | #16 | OSV-Scanner no CI, em todo PR e toda segunda. Ver resultados abaixo. |
+| Ferramental de build (AGP 9.3.3, Kotlin 2.4.21, Gradle 9.5.1) | — | 🟡 | #18 | Atualização para reduzir as CVEs do classpath de build; hashes regenerados pelo workflow de verificação. |
+| Versão | — | 🟡 | #19 | `versionName` 1.0.0-stable. |
 | Busca por voz | P4 | ⏳ | — | Novo, achado pelo lint (`MissingIntentFilterForMediaSearch`): o app não trata "tocar X no Sonivell". Aviso suprimido com o motivo no manifesto até a função existir. |
 
 ### Resultados do CI de segurança (#16)
@@ -586,6 +621,8 @@ Nenhuma descoberta P0. Não há execução remota, comprometimento grave ou expo
 
 ---
 
-### Próxima etapa
+### Próxima etapa (registro da etapa 1)
+
+_Concluída: as correções vieram no #15, #16 e #17 (e no #18, ferramental de build); ver "Vereditos finais" no início._
 
 Conforme combinado, **nenhuma correção foi aplicada**. Com a sua autorização, a etapa 2 corrige primeiro **SEC-01** e **REL-01**, depois os P2. Cada correção vem com testes, em mudanças pequenas e com o antes e depois documentado. SEC-01 depende de você criar a chave nova e cadastrá-la nos *secrets*; eu deixo o build e os workflows prontos para usá-la.
