@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     // AGP 9 já compila Kotlin sozinho (built-in Kotlin): o plugin kotlin-android não é mais usado.
     alias(libs.plugins.android.application)
@@ -12,7 +14,7 @@ fun requiredEnv(name: String): String =
         ?: throw GradleException("SONIVELL_KEYSTORE foi definido, mas falta $name.")
 
 // Versão única (version.properties na raiz): a mesma no APK lite, no SMART, no .deb e no AppImage.
-val sonivellVersionName: String = java.util.Properties()
+val sonivellVersionName: String = Properties()
     .apply { rootProject.file("version.properties").inputStream().use { load(it) } }
     .getProperty("versionName")
     ?.takeIf { Regex("""\d+\.\d+\.\d+""").matches(it) }
