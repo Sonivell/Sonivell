@@ -149,7 +149,7 @@ private fun ComNome(lado: Dp, forma: FloatArray, onda: Color, dark: Boolean, tit
             Modifier
                 .align(Alignment.BottomCenter)
                 .size(width = lado - margem * 2, height = lado * 0.30f)
-                .drawBehind { sombraSuave(lado.toPx() * 0.086f) }
+                .drawBehind { sombraSuave(lado.toPx() * 0.086f, dark) }
                 .clip(forma1)
                 .background(Color.White.copy(alpha = if (dark) 0.10f else 0.45f))
                 .drawBehind { brilhoTopo() }
@@ -203,7 +203,7 @@ private fun Completo(lado: Dp, forma: FloatArray, tom: Color, onda: Color, dark:
         Modifier
             .offset(frenteX, frenteY)
             .size(frenteL)
-            .drawBehind { sombraSuave(lado.toPx() * 0.148f) }
+            .drawBehind { sombraSuave(lado.toPx() * 0.148f, dark) }
             .clip(frenteForma),
     ) {
         // Vidro de verdade (Android 12+): o que está atrás do cartão (fundo e cartão de trás) desfocado.
@@ -267,13 +267,16 @@ private fun DrawScope.drawOnda(forma: FloatArray, centro: Offset, quadro: Float,
     drawPath(path, cor, style = Stroke(width = 26f * s, cap = StrokeCap.Round, join = StrokeJoin.Round))
 }
 
-/** Sombra suave por fora do vidro: camadas crescentes de preto bem transparente. */
-private fun DrawScope.sombraSuave(raio: Float) {
+/**
+ * Sombra suave por fora do vidro: camadas crescentes de preto bem transparente. No claro bem mais
+ * fraca: o vidro claro é translúcido e deixaria a sombra de baixo acinzentar a faixa.
+ */
+private fun DrawScope.sombraSuave(raio: Float, dark: Boolean) {
     val passo = size.minDimension * 0.012f
     for (k in 1..6) {
         val g = k * passo
         drawRoundRect(
-            Color.Black.copy(alpha = 0.05f),
+            Color.Black.copy(alpha = if (dark) 0.05f else 0.015f),
             topLeft = Offset(-g * 0.5f, g * 0.9f),
             size = Size(size.width + g, size.height),
             cornerRadius = CornerRadius(raio + g),

@@ -443,7 +443,7 @@ fun OndaArt(albumKey: String, artistKey: String, title: String?, subtitle: Strin
                         Modifier
                             .align(Alignment.BottomCenter)
                             .size(width = size - margem * 2, height = size * 0.30f)
-                            .drawBehind { sombraSuave(raioFaixa.toPx()) }
+                            .drawBehind { sombraSuave(raioFaixa.toPx(), dark) }
                             .clip(faixa)
                             .background(vidro)
                             .drawBehind { brilhoTopo() }
@@ -487,7 +487,7 @@ fun OndaArt(albumKey: String, artistKey: String, title: String?, subtitle: Strin
                     Modifier
                         .offset(size * 0.219f, size * 0.25f)
                         .size(size * 0.5625f)
-                        .drawBehind { sombraSuave(raioFrente.toPx()) }
+                        .drawBehind { sombraSuave(raioFrente.toPx(), dark) }
                         .clip(frenteForma)
                         .background(vidro)
                         .drawBehind { brilhoTopo() }
@@ -535,13 +535,16 @@ private fun DrawScope.drawOnda(forma: FloatArray, centro: Offset, quadro: Float,
     drawPath(path, cor, style = Stroke(width = 26f * s, cap = StrokeCap.Round, join = StrokeJoin.Round))
 }
 
-/** Sombra suave por fora do vidro: camadas crescentes de preto bem transparente. */
-private fun DrawScope.sombraSuave(raio: Float) {
+/**
+ * Sombra suave por fora do vidro: camadas crescentes de preto bem transparente. No claro bem mais
+ * fraca: o vidro claro é translúcido e deixaria a sombra de baixo acinzentar a faixa.
+ */
+private fun DrawScope.sombraSuave(raio: Float, dark: Boolean) {
     val passo = size.minDimension * 0.012f
     for (k in 1..6) {
         val g = k * passo
         drawRoundRect(
-            Color.Black.copy(alpha = 0.05f),
+            Color.Black.copy(alpha = if (dark) 0.05f else 0.015f),
             topLeft = Offset(-g * 0.5f, g * 0.9f),
             size = Size(size.width + g, size.height),
             cornerRadius = CornerRadius(raio + g),
