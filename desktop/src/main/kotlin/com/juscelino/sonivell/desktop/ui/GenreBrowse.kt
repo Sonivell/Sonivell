@@ -127,7 +127,7 @@ fun GenreBrowse(ctl: Controller, library: Library, scanning: Boolean, playIndex:
 private fun ScanningCard() {
     val c = SonivellTheme.colors
     Row(
-        Modifier.widthIn(max = 640.dp).fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.surface).padding(20.dp),
+        Modifier.widthIn(max = 640.dp).fillMaxWidth().cardSurface(RoundedCornerShape(22.dp), elevation = 10.dp).padding(20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -249,8 +249,7 @@ private fun Tile(genre: Pair<String, List<Track>>, index: Int, big: Boolean, ope
     val shape = RoundedCornerShape(22.dp)
     Column(
         modifier
-            .border(1.dp, c.outline, shape)
-            .hoverClick(shape, hover = c.surfaceHigh, base = c.surface) { open(genre.first, genre.second) }
+            .glassClick(shape, elevation = 8.dp) { open(genre.first, genre.second) }
             .padding(18.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {

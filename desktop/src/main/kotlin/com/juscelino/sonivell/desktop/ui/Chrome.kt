@@ -62,13 +62,11 @@ fun Sidebar(nav: Nav, ctl: Controller, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
     val lib by ctl.library.collectAsState()
     Column(
-        modifier.width(236.dp).fillMaxHeight().clip(RoundedCornerShape(20.dp)).background(c.surfaceLow).padding(horizontal = 10.dp, vertical = 16.dp),
+        modifier.width(236.dp).fillMaxHeight().cardSurface(RoundedCornerShape(20.dp), c.surfaceLow, elevation = 10.dp).padding(horizontal = 10.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(Modifier.padding(start = 12.dp, top = 2.dp, bottom = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.size(30.dp).clip(RoundedCornerShape(10.dp)).background(c.accent), contentAlignment = Alignment.Center) {
-                Icon(Traco.forYouActive, null, Modifier.size(18.dp), tint = c.onAccent)
-            }
+            AppLogo(30.dp)
             Txt(str("app_name"), 19, FontWeight.ExtraBold)
         }
         NavItem(Traco.forYou, Traco.forYouActive, str("nav_home"), nav.route == Route.ForYou) { nav.go(Route.ForYou) }
@@ -90,7 +88,9 @@ fun Sidebar(nav: Nav, ctl: Controller, modifier: Modifier = Modifier) {
 private fun NavItem(icon: ImageVector, active: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        Modifier.fillMaxWidth().height(42.dp).hoverClick(RoundedCornerShape(13.dp), hover = c.surfaceHigh, base = if (selected) c.surfaceHigh else androidx.compose.ui.graphics.Color.Transparent, onClick = onClick).padding(horizontal = 12.dp),
+        Modifier.fillMaxWidth().height(42.dp)
+            .let { if (selected) it.glassAccent(RoundedCornerShape(13.dp), c.accent) else it }
+            .hoverClick(RoundedCornerShape(13.dp), hover = if (selected) c.accent.copy(alpha = 0.08f) else c.surfaceHigh, onClick = onClick).padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -120,7 +120,7 @@ fun PlayerBar(ctl: Controller, nav: Nav, modifier: Modifier = Modifier) {
     val favorites by ctl.favorites.collectAsState()
     val t = p.current
     Row(
-        modifier.fillMaxWidth().height(92.dp).clip(RoundedCornerShape(20.dp)).background(c.surface).padding(horizontal = 20.dp),
+        modifier.fillMaxWidth().height(92.dp).cardSurface(RoundedCornerShape(20.dp), c.surface, elevation = 10.dp).padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
@@ -172,7 +172,7 @@ fun QueuePanel(ctl: Controller, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
     val p by ctl.player.collectAsState()
     val favorites by ctl.favorites.collectAsState()
-    Column(modifier.fillMaxHeight().clip(RoundedCornerShape(20.dp)).background(c.surfaceLow).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(modifier.fillMaxHeight().cardSurface(RoundedCornerShape(20.dp), c.surfaceLow, elevation = 10.dp).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Txt(str("tab_up_next"), 15, FontWeight.ExtraBold, modifier = Modifier.padding(start = 4.dp, top = 4.dp))
         if (p.current == null) {
             Txt(str("queue_empty"), 13, FontWeight.Medium, c.textSecondary, maxLines = 4, lineHeight = 19, modifier = Modifier.padding(4.dp))
@@ -191,7 +191,8 @@ fun QueuePanel(ctl: Controller, modifier: Modifier = Modifier) {
 private fun QueueRow(track: Track, current: Boolean, liked: Boolean, onClick: () -> Unit, onRemove: (() -> Unit)?) {
     val c = SonivellTheme.colors
     Row(
-        Modifier.fillMaxWidth().height(56.dp).hoverClick(RoundedCornerShape(14.dp), hover = c.surfaceHigh, base = if (current) c.surface else androidx.compose.ui.graphics.Color.Transparent, onClick = onClick).padding(horizontal = 8.dp),
+        Modifier.fillMaxWidth().height(56.dp).let { if (current) it.glassSurface(RoundedCornerShape(14.dp), c.surface, c.outline, elevation = 0.dp) else it }
+            .hoverClick(RoundedCornerShape(14.dp), hover = c.surfaceHigh, onClick = onClick).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {

@@ -53,7 +53,7 @@ fun SonivellApp(ctl: Controller) {
                             val hint = if (server == AudioRoute.Server.PipeWire) "desktop_audio_route_pipewire" else "desktop_audio_route_pulse"
                             Row(
                                 Modifier.align(Alignment.TopCenter).padding(12.dp)
-                                    .background(c.surfaceHigh, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                                    .cardSurface(androidx.compose.foundation.shape.RoundedCornerShape(12.dp), c.surfaceHigh, elevation = 12.dp)
                                     .padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -63,7 +63,7 @@ fun SonivellApp(ctl: Controller) {
                             }
                         }
                         player.error?.let { msg ->
-                            Box(Modifier.align(Alignment.BottomCenter).padding(12.dp).background(c.surfaceHigh, androidx.compose.foundation.shape.RoundedCornerShape(12.dp)).padding(horizontal = 16.dp, vertical = 10.dp)) {
+                            Box(Modifier.align(Alignment.BottomCenter).padding(12.dp).cardSurface(androidx.compose.foundation.shape.RoundedCornerShape(12.dp), c.surfaceHigh, elevation = 12.dp).padding(horizontal = 16.dp, vertical = 10.dp)) {
                                 Txt(str("desktop_audio_error", msg), 13, FontWeight.SemiBold, maxLines = 2)
                             }
                         }

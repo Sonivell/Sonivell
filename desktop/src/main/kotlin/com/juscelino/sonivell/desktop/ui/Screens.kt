@@ -66,7 +66,7 @@ fun SearchBox(value: String, onChange: (String) -> Unit, modifier: Modifier = Mo
     val c = SonivellTheme.colors
     val shape = RoundedCornerShape(14.dp)
     Row(
-        modifier.height(44.dp).border(1.dp, c.outline, shape).padding(horizontal = 14.dp),
+        modifier.height(44.dp).cardSurface(shape, elevation = 4.dp).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -228,7 +228,7 @@ fun ForYouScreen(ctl: Controller, nav: Nav, actions: Actions) {
                     SectionTitle(str("fy_continue"))
                     val (t, pos) = r
                     Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(c.surface).padding(16.dp),
+                        Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(22.dp), elevation = 10.dp).padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         AlbumArt(t, 72.dp, 18.dp)
@@ -271,7 +271,7 @@ fun ForYouScreen(ctl: Controller, nav: Nav, actions: Actions) {
 private fun QuickCard(title: String, subtitle: String, modifier: Modifier, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        modifier.height(64.dp).hoverClick(RoundedCornerShape(16.dp), hover = c.surfaceHigh, base = c.surface, onClick = onClick).padding(horizontal = 14.dp),
+        modifier.height(64.dp).glassClick(RoundedCornerShape(16.dp), onClick = onClick).padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
