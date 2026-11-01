@@ -38,6 +38,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.juscelino.sonivell.data.formatDuration
+import com.juscelino.sonivell.ui.components.OndaArt
 import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Playlist
@@ -238,5 +239,5 @@ fun SvLibraryScreen(
 
 @Composable
 private fun collection(title: String, subtitle: String, top: Color, bottom: Color, onClick: () -> Unit) {
-    SvRow(title, subtitle, onClick, art = { SvOrb(top, bottom, Modifier.size(48.dp), seed = title.length) }, tone = top)
+    SvRow(title, subtitle, onClick, art = { OndaArt(title, title, title = null, subtitle = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(30))) }, tone = top)
 }

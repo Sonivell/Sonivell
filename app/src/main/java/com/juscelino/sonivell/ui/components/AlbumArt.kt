@@ -154,20 +154,25 @@ fun GeneratedArt(
     }
 }
 
-/** Capa real do álbum, com a capa gerada (vidro + nome do álbum) como reserva. */
+/**
+ * Capa real do álbum; sem ela, a capa Onda ([OndaArt]). [detailed] ficou da capa gerada anterior
+ * e não muda mais nada: a capa Onda escolhe a versão pelo tamanho.
+ */
 @Composable
 fun AlbumArt(
     track: Track?,
     modifier: Modifier = Modifier,
     corner: Dp = 10.dp,
-    detailed: Boolean = false,
+    @Suppress("UNUSED_PARAMETER") detailed: Boolean = false,
 ) {
     val shape = RoundedCornerShape(corner)
     Box(modifier.clip(shape)) {
         if (track == null) {
-            GeneratedArt(seed = 0, modifier = Modifier.fillMaxSize(), detailed = detailed)
+            OndaArt("", "", title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner)
         } else {
             val context = LocalContext.current
+            val album = track.rawAlbum?.takeIf { it.isNotBlank() } ?: track.title
+            val artista = track.albumArtist?.takeIf { it.isNotBlank() } ?: track.artist
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(track.artUri)
@@ -176,17 +181,12 @@ fun AlbumArt(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                // Sem texto enquanto carrega, para não piscar o painel antes da capa real.
-                loading = { GeneratedArt(track.albumId, Modifier.fillMaxSize(), detailed) },
+                // Só o fundo enquanto carrega, para não piscar a onda antes da capa real.
+                loading = {
+                    OndaArt(album, artista, title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner, placeholder = true)
+                },
                 error = {
-                    GeneratedArt(
-                        track.albumId,
-                        Modifier.fillMaxSize(),
-                        detailed,
-                        title = track.rawAlbum?.takeIf { it.isNotBlank() } ?: track.title,
-                        subtitle = track.albumArtist?.takeIf { it.isNotBlank() } ?: track.artist,
-                        corner = corner,
-                    )
+                    OndaArt(album, artista, title = album, subtitle = artista, modifier = Modifier.fillMaxSize(), corner = corner)
                 },
             )
         }

@@ -1,31 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ícone pequeno da notificação do player: silhueta das ondas. -->
+<!-- Ícone pequeno da notificação do player: silhueta da onda (ícone "Onda"). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="64"
-    android:viewportHeight="64">
-    <group
-        android:translateX="-18"
-        android:translateY="-22">
-        <!-- Núcleo -->
-        <path
-            android:fillColor="#FFFFFFFF"
-            android:pathData="M25,54a13,13 0 1,0 26,0a13,13 0 1,0 -26,0z" />
-        <!-- Onda próxima -->
-        <path
-            android:fillColor="#00000000"
-            android:strokeColor="#FFFFFFFF"
-            android:strokeWidth="8"
-            android:strokeLineCap="round"
-            android:pathData="M54.1,37.1A22,22 0 0,1 54.1,70.9" />
-        <!-- Onda distante -->
-        <path
-            android:fillColor="#00000000"
-            android:strokeColor="#FFFFFFFF"
-            android:strokeAlpha="0.55"
-            android:strokeWidth="8"
-            android:strokeLineCap="round"
-            android:pathData="M61.9,28A34,34 0 0,1 61.9,80" />
-    </group>
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M3.49,12.69C5.79,6.25 9.47,6.25 12,12C14.53,17.75 18.21,17.75 20.51,11.31" />
 </vector>

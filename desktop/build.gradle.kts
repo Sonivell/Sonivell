@@ -92,7 +92,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb)
             packageName = "sonivell"
-            packageVersion = "0.1.0"
+            packageVersion = "0.2.0"
             description = "Sonivell: player de música moderno, leve e com identidade própria"
             vendor = "Sonivell"
             includeAllModules = true
