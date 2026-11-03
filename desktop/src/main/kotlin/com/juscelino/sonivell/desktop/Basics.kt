@@ -66,33 +66,15 @@ object Str {
 
     operator fun get(key: String): String = current.getProperty(key) ?: en.getProperty(key) ?: key
 
+    /** O texto da chave, ou null se ela não existe em nenhum idioma. */
+    fun raw(key: String): String? = current.getProperty(key) ?: en.getProperty(key)
+
     fun format(key: String, vararg args: Any?): String =
         runCatching { String.format(Locale.getDefault(), get(key), *args) }.getOrDefault(get(key))
 }
 
 fun str(key: String): String = Str[key]
 fun str(key: String, vararg args: Any?): String = Str.format(key, *args)
-
-data class Track(
-    val id: Long,
-    val path: String,
-    val title: String,
-    val artist: String,
-    val albumArtist: String,
-    val album: String,
-    val genre: String,
-    val year: Int,
-    val trackNo: Int,
-    val durationMs: Long,
-    val format: String,
-    val bitrateKbps: Int,
-    val addedMs: Long,
-) {
-    val folder: String get() = File(path).parent ?: ""
-    val albumKey: String get() = (albumArtist.ifBlank { artist } + "\u0001" + album).lowercase()
-}
-
-data class Album(val key: String, val title: String, val artist: String, val year: Int, val tracks: List<Track>)
 
 /** Identificador estável de uma faixa a partir do caminho do arquivo (FNV-1a de 64 bits). */
 fun trackIdOf(path: String): Long {
@@ -173,4 +155,22 @@ private val diacritics = Regex("\\p{Mn}+")
 fun sortKey(text: String): String {
     val trimmed = text.trimStart { !it.isLetterOrDigit() }.ifEmpty { text }
     return java.text.Normalizer.normalize(trimmed, java.text.Normalizer.Form.NFD).replace(diacritics, "").lowercase()
+}
+
+/**
+ * Grava num temporário ao lado, força o disco e troca de uma vez: um crash ou uma queda de
+ * energia no meio deixa o arquivo anterior inteiro.
+ */
+internal fun writeAtomically(file: File, text: String) {
+    file.parentFile?.mkdirs()
+    val tmp = File(file.parentFile, file.name + ".tmp")
+    java.io.FileOutputStream(tmp).use { out ->
+        out.write(text.toByteArray(Charsets.UTF_8))
+        out.fd.sync()
+    }
+    try {
+        java.nio.file.Files.move(tmp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    } catch (e: java.nio.file.AtomicMoveNotSupportedException) {
+        java.nio.file.Files.move(tmp.toPath(), file.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    }
 }
