@@ -1,4 +1,4 @@
-package com.juscelino.sonivell.desktop.ui
+package com.juscelino.sonivell.ui.components
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

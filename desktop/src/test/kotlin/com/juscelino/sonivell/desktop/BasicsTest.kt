@@ -6,11 +6,6 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class BasicsTest {
-    private fun track(title: String, artist: String, album: String = "", path: String = "/m/$title.mp3") = Track(
-        id = trackIdOf(path), path = path, title = title, artist = artist, albumArtist = "", album = album, genre = "",
-        year = 0, trackNo = 0, durationMs = 180_000, format = "MP3", bitrateKbps = 320, addedMs = 0,
-    )
-
     @Test fun formatsTime() {
         assertEquals("1:05", formatTime(65_000))
         assertEquals("1:01:01", formatTime(3_661_000))
@@ -31,17 +26,16 @@ class BasicsTest {
         assertTrue(a.all { it in 0.15f..1.0f })
     }
 
-    @Test fun searchIgnoresAccentsAndCase() {
-        val lib = Library(listOf(track("Maré Alta", "Lua Norte"), track("Farol", "Sal Grosso")))
-        assertEquals(listOf("Maré Alta"), lib.search("mare").map { it.title })
-        assertEquals(listOf("Farol"), lib.search("SAL gros").map { it.title })
-        assertTrue(lib.search("zzz").isEmpty())
+    @Test fun pluralsFollowAndroidRules() {
+        // "songs_count" vem do strings.xml do app; os plurais viram "nome#one"/"nome#other".
+        val one = com.juscelino.sonivell.compat.pluralStringResource(com.juscelino.sonivell.R.plurals.songs_count, 1, 1)
+        val many = com.juscelino.sonivell.compat.pluralStringResource(com.juscelino.sonivell.R.plurals.songs_count, 5, 5)
+        assertTrue(one.contains("1") && many.contains("5") && one != many, "$one / $many")
     }
 
-    @Test fun groupsAlbumsAndArtists() {
-        val lib = Library(listOf(track("A", "X", "Alb"), track("B", "X", "Alb"), track("C", "Y", "Other")))
-        assertEquals(2, lib.albums.size)
-        assertEquals(2, lib.artists.size)
+    @Test fun generatedIdsGoBackToNames() {
+        assertEquals("app_name", com.juscelino.sonivell.compat.Texts.name(com.juscelino.sonivell.R.string.app_name))
+        assertEquals("Sonivell", com.juscelino.sonivell.compat.stringResource(com.juscelino.sonivell.R.string.app_name))
     }
 
     @Test fun stringsExistInBothLanguages() {

@@ -303,6 +303,9 @@ internal class LatentJamSmartEngine private constructor(private val dataDir: Fil
 
         @Volatile private var instance: LatentJamSmartEngine? = null
 
+        /** Um motor com os dados numa pasta própria (testes). */
+        fun forTests(dir: File): LatentJamSmartEngine = LatentJamSmartEngine(dir)
+
         fun get(): LatentJamSmartEngine =
             instance ?: synchronized(this) {
                 instance ?: LatentJamSmartEngine(File(com.juscelino.sonivell.desktop.Dirs.data, "smart")).also { instance = it }
