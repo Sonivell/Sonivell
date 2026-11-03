@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.desktop
 
+import com.juscelino.sonivell.ui.components.livePositionMs
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -292,18 +293,18 @@ fun DesktopPlayerBar(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 val duration = track?.durationMs ?: 0L
-                Text(formatDuration(state.positionMs), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = secondary)
+                Text(formatDuration(state.livePositionMs), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = secondary)
                 Box(Modifier.weight(1f)) {
                     if (track != null) {
                         when (style) {
-                            UiStyle.SONIVELL, UiStyle.ONDAS -> BarWave(track.id, state.positionMs, duration, actions.onSeek)
-                            UiStyle.ESSENCIAL -> LineSeekBar(state.positionMs, duration, actions.onSeek, thickness = 3.dp, fill = accent, knob = false)
-                            UiStyle.CLASSICA -> LineSeekBar(state.positionMs, duration, actions.onSeek, thickness = 4.dp, fill = accent, knob = true)
-                            UiStyle.CONTRASTE -> LineSeekBar(state.positionMs, duration, actions.onSeek, thickness = 4.dp, fill = Color.White, track = Color.White.copy(alpha = 0.25f), knob = true)
+                            UiStyle.SONIVELL, UiStyle.ONDAS -> BarWave(track.id, state.livePositionMs, duration, actions.onSeek)
+                            UiStyle.ESSENCIAL -> LineSeekBar(state.livePositionMs, duration, actions.onSeek, thickness = 3.dp, fill = accent, knob = false)
+                            UiStyle.CLASSICA -> LineSeekBar(state.livePositionMs, duration, actions.onSeek, thickness = 4.dp, fill = accent, knob = true)
+                            UiStyle.CONTRASTE -> LineSeekBar(state.livePositionMs, duration, actions.onSeek, thickness = 4.dp, fill = Color.White, track = Color.White.copy(alpha = 0.25f), knob = true)
                         }
                     }
                 }
-                Text(if (track != null) remainingLabel(state.positionMs, duration) else "", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = secondary)
+                Text(if (track != null) remainingLabel(state.livePositionMs, duration) else "", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = secondary)
             }
         }
 

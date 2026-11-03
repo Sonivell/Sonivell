@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.nowplaying
 
+import com.juscelino.sonivell.ui.components.livePositionMs
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -195,14 +196,14 @@ fun NowPlayingScreenOndas(
         // Progresso: onda (Sonivell e Ondas) ou linha fina (Essencial); tempo restante com "−".
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (essencial) {
-                LineSeekBar(state.positionMs, durationMs, actions.onSeek, thickness = 3.dp, fill = c.accent, knob = false)
+                LineSeekBar(state.livePositionMs, durationMs, actions.onSeek, thickness = 3.dp, fill = c.accent, knob = false)
             } else {
-                WaveSeekBar(track.id, state.positionMs, durationMs, actions.onSeek)
+                WaveSeekBar(track.id, state.livePositionMs, durationMs, actions.onSeek)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TimeLabel(formatDuration(state.positionMs))
+                TimeLabel(formatDuration(state.livePositionMs))
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { FormatText(track) }
-                TimeLabel(remainingLabel(state.positionMs, durationMs))
+                TimeLabel(remainingLabel(state.livePositionMs, durationMs))
             }
         }
 

@@ -77,7 +77,18 @@ class PlayerConnection(context: Context, private val scope: CoroutineScope) {
     private val sessionStore = SessionStore(prefs)
 
     private val _state = MutableStateFlow(PlayerState())
+    /**
+     * Estado do player. A posição aqui só muda junto com o resto (play, pausa, troca de faixa, busca):
+     * a posição ao vivo fica em [position], para a tela inteira não se redesenhar a cada quarto de segundo.
+     */
     val state: StateFlow<PlayerState> = _state.asStateFlow()
+
+    private val _position = MutableStateFlow(0L)
+    /** Posição ao vivo da faixa atual, atualizada a cada [TICK_MS]. */
+    val position: StateFlow<Long> = _position.asStateFlow()
+
+    // A mesma lista enquanto a fila não muda: as telas que recebem a fila não se redesenham à toa.
+    private var publishedQueue: List<MediaItem> = emptyList()
 
     private val _connected = MutableStateFlow(false)
     val connected: StateFlow<Boolean> = _connected.asStateFlow()
@@ -163,15 +174,21 @@ class PlayerConnection(context: Context, private val scope: CoroutineScope) {
 
     private fun publish() {
         val cur = current
-        _state.value = PlayerState(
-            queue = queue.toList(),
+        val pos = positionNow()
+        _position.value = pos
+        if (publishedQueue != queue) publishedQueue = queue.toList()
+        val prev = _state.value
+        val next = PlayerState(
+            queue = publishedQueue,
             currentIndex = index,
             isPlaying = playing,
-            positionMs = positionNow(),
+            positionMs = prev.positionMs,
             durationMs = cur?.track?.durationMs ?: 0L,
             shuffle = shuffle,
             repeat = repeat,
         )
+        // Só a posição andou: nada a publicar no estado (a posição ao vivo já foi para [position]).
+        _state.value = if (next == prev) prev else next.copy(positionMs = pos)
     }
 
     private fun positionNow(): Long = if (loaded) engine.positionMs() else pendingMs

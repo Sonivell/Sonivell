@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.nowplaying
 
+import com.juscelino.sonivell.ui.components.livePositionMs
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -133,11 +134,11 @@ fun NowPlayingScreenContraste(
 
         // Progresso branco; "MP3" como texto; tempo restante com sinal de menos.
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            LineSeekBar(state.positionMs, durationMs, actions.onSeek, fill = OnTint, track = OnTint.copy(alpha = 0.25f))
+            LineSeekBar(state.livePositionMs, durationMs, actions.onSeek, fill = OnTint, track = OnTint.copy(alpha = 0.25f))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TimeText(formatDuration(state.positionMs))
+                TimeText(formatDuration(state.livePositionMs))
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { FormatText(track, OnTintSoft) }
-                TimeText(remainingLabel(state.positionMs, durationMs))
+                TimeText(remainingLabel(state.livePositionMs, durationMs))
             }
         }
 

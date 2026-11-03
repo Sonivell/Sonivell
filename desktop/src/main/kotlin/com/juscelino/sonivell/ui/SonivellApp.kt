@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui
 
+import com.juscelino.sonivell.ui.components.livePositionMs
 import androidx.compose.material.icons.Icons
 import com.juscelino.sonivell.compat.StringRes
 import com.juscelino.sonivell.compat.stringResource
@@ -1078,7 +1079,7 @@ private fun MainContent(vm: MainViewModel) {
                     LyricsScreen(
                         track = t,
                         state = lyricsState,
-                        positionMs = player.positionMs,
+                        positionMs = player.livePositionMs,
                         offsetMs = lyricsOffset,
                         hasFolder = vm.hasLyricsFolder,
                         actions = LyricsActions(

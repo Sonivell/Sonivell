@@ -1,6 +1,7 @@
 package com.juscelino.sonivell.desktop
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import com.juscelino.sonivell.data.iconStyle
 import com.juscelino.sonivell.playback.PlayerVolume
 import com.juscelino.sonivell.system.DesktopSystem
 import com.juscelino.sonivell.ui.SonivellApp
+import com.juscelino.sonivell.ui.components.LocalPlayerPosition
 import com.juscelino.sonivell.ui.desktop.CompactPlayer
 import com.juscelino.sonivell.ui.desktop.DesktopWindow
 import com.juscelino.sonivell.ui.theme.SonivellTheme
@@ -163,7 +165,11 @@ fun main(args: Array<String>) {
                 systemColors = false,
                 style = settings.uiStyle,
             ) {
-                if (compact) CompactPlayer(vm) else SonivellApp(vm)
+                // A posição ao vivo vai só para quem mostra o progresso (ver LocalPlayerPosition).
+                val position = vm.player.position.collectAsState()
+                CompositionLocalProvider(LocalPlayerPosition provides position) {
+                    if (compact) CompactPlayer(vm) else SonivellApp(vm)
+                }
             }
         }
     }

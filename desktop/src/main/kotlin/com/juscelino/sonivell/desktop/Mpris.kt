@@ -101,7 +101,7 @@ class Mpris(private val vm: com.juscelino.sonivell.MainViewModel) : MprisRoot, M
     override fun PlayPause() = onUi { player.togglePlay() }
     override fun Stop() = Pause()
     override fun Play() = onUi { player.resume() }
-    override fun Seek(offset: Long) = onUi { player.seekTo(state().positionMs + offset / 1000) }
+    override fun Seek(offset: Long) = onUi { player.seekTo(player.position.value + offset / 1000) }
     override fun SetPosition(trackId: DBusPath, position: Long) = onUi {
         val current = currentTrack() ?: return@onUi
         if (trackId.path == trackPath(current)) player.seekTo(position / 1000)
@@ -146,7 +146,7 @@ class Mpris(private val vm: com.juscelino.sonivell.MainViewModel) : MprisRoot, M
             "Shuffle" to Variant(s.shuffle),
             "Metadata" to Variant(metadata(t), "a{sv}"),
             "Volume" to Variant(PlayerVolume.value.toDouble()),
-            "Position" to Variant(s.positionMs * 1000),
+            "Position" to Variant(player.position.value * 1000),
             "MinimumRate" to Variant(1.0),
             "MaximumRate" to Variant(1.0),
             "CanGoNext" to Variant(hasTrack),

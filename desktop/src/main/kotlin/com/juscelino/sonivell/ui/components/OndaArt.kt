@@ -209,7 +209,9 @@ private fun Completo(lado: Dp, forma: FloatArray, tom: Color, onda: Color, dark:
         // Vidro de verdade: o que está atrás do cartão (fundo e cartão de trás) desfocado (o Skia do PC
         // desfoca como o Android 12+).
         run {
-            Box(Modifier.fillMaxSize().blur(lado * 0.05f, BlurredEdgeTreatment.Rectangle)) {
+            // O desfoque custa caro no PC; nas capas pequenas (listas, fila) quase não aparece.
+            val desfoque = if (lado >= 120.dp) Modifier.blur(lado * 0.05f, BlurredEdgeTreatment.Rectangle) else Modifier
+            Box(Modifier.fillMaxSize().then(desfoque)) {
                 Canvas(Modifier.fillMaxSize()) {
                     val lp = lado.toPx()
                     translate(-frenteX.toPx(), -frenteY.toPx()) {

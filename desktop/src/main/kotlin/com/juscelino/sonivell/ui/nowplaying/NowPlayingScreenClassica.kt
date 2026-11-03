@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.nowplaying
 
+import com.juscelino.sonivell.ui.components.livePositionMs
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.compat.stringResource
 import com.juscelino.sonivell.R
@@ -122,11 +123,11 @@ fun NowPlayingScreenClassica(
 
         // Progresso: linha de 4 dp com botão, preenchida no lima; "MP3" como texto; tempo restante.
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            LineSeekBar(state.positionMs, durationMs, actions.onSeek, fill = c.accent)
+            LineSeekBar(state.livePositionMs, durationMs, actions.onSeek, fill = c.accent)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TimeText(formatDuration(state.positionMs))
+                TimeText(formatDuration(state.livePositionMs))
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { FormatText(track) }
-                TimeText(remainingLabel(state.positionMs, durationMs))
+                TimeText(remainingLabel(state.livePositionMs, durationMs))
             }
         }
 

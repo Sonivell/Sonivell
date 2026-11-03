@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.desktop
 
+import com.juscelino.sonivell.ui.components.livePositionMs
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -82,14 +83,14 @@ fun CompactPlayer(vm: MainViewModel) {
         Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 8.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
             if (track != null) {
                 when (style) {
-                    UiStyle.SONIVELL, UiStyle.ONDAS -> WaveSeekBar(track.id, p.positionMs, track.durationMs, vm.player::seekTo)
-                    UiStyle.ESSENCIAL -> LineSeekBar(p.positionMs, track.durationMs, vm.player::seekTo, thickness = 3.dp, fill = c.accent, knob = false)
-                    else -> LineSeekBar(p.positionMs, track.durationMs, vm.player::seekTo, fill = if (style == UiStyle.CONTRASTE) c.textPrimary else c.accent)
+                    UiStyle.SONIVELL, UiStyle.ONDAS -> WaveSeekBar(track.id, p.livePositionMs, track.durationMs, vm.player::seekTo)
+                    UiStyle.ESSENCIAL -> LineSeekBar(p.livePositionMs, track.durationMs, vm.player::seekTo, thickness = 3.dp, fill = c.accent, knob = false)
+                    else -> LineSeekBar(p.livePositionMs, track.durationMs, vm.player::seekTo, fill = if (style == UiStyle.CONTRASTE) c.textPrimary else c.accent)
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(formatDuration(p.positionMs), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
-                Text(if (track != null) remainingLabel(p.positionMs, track.durationMs) else "", style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
+                Text(formatDuration(p.livePositionMs), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
+                Text(if (track != null) remainingLabel(p.livePositionMs, track.durationMs) else "", style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
             }
         }
 

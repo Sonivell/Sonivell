@@ -35,6 +35,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.State
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
 import com.juscelino.sonivell.data.ArtProvider
 import kotlinx.coroutines.Dispatchers
@@ -211,14 +216,16 @@ fun AlbumArt(
 ) {
     val shape = RoundedCornerShape(corner)
     val ondas = SonivellTheme.style == UiStyle.ONDAS
-    Box(modifier.clip(shape)) {
+    // Capas grandes (player, cabeçalhos) pedem a imagem em alta; nas listas basta a pequena.
+    var large by remember { mutableStateOf(false) }
+    Box(modifier.clip(shape).onSizeChanged { if (it.width > LARGE_ART_PX) large = true }) {
         if (track == null) {
             if (ondas) OndaArt("", "", title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner)
             else InitialsArt("", "", Modifier.fillMaxSize())
         } else {
             val album = track.rawAlbum?.takeIf { it.isNotBlank() } ?: track.title
             val artista = track.albumArtist?.takeIf { it.isNotBlank() } ?: track.artist
-            when (val art = rememberArtImage(track).value) {
+            when (val art = rememberArtImage(track, large).value) {
                 // Só o fundo enquanto carrega, para não piscar a capa vazia antes da capa real.
                 ArtLoading ->
                     if (ondas) OndaArt(album, artista, title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner, placeholder = true)
@@ -240,12 +247,21 @@ object ArtLoading
  * quando a faixa não tem capa. Volta a carregar quando a capa própria do álbum muda.
  */
 @Composable
-fun rememberArtImage(track: Track): State<Any?> {
-    val key = ArtProvider.keyFor(track)
-    return produceState<Any?>(if (ArtProvider.isCached(track)) ArtProvider.cached(track) else ArtLoading, key) {
-        if (value === ArtLoading || !ArtProvider.isCached(track)) value = withContext(Dispatchers.IO) { ArtProvider.load(track) }
+fun rememberArtImage(track: Track, large: Boolean = false): State<Any?> {
+    val key = ArtProvider.keyFor(track, large)
+    // Enquanto a grande carrega, mostra a pequena (se já houver): a capa não pisca ao abrir o player.
+    val initial = when {
+        ArtProvider.isCached(track, large) -> ArtProvider.cached(track, large)
+        large && ArtProvider.isCached(track, false) -> ArtProvider.cached(track, false) ?: ArtLoading
+        else -> ArtLoading
+    }
+    return produceState(initial, key) {
+        if (!ArtProvider.isCached(track, large)) value = withContext(Dispatchers.IO) { ArtProvider.load(track, large) }
     }
 }
+
+/** Acima desta largura em pixels a capa usa a versão grande. */
+private const val LARGE_ART_PX = 260
 
 /**
  * Colagem 2×2 das capas de [tracks] (álbuns diferentes), usada nos mixes do Sonivell. Com menos de
