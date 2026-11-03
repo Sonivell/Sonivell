@@ -58,6 +58,13 @@ export DISPLAY=:99
 export SKIKO_RENDER_API=SOFTWARE_FAST
 Xvfb :99 -screen 0 1600x1000x24 &
 XVFB=$!
+# Saída de som virtual: sem ela o app avisa (com razão) que não há onde tocar e o aviso cobre as telas.
+if command -v pulseaudio >/dev/null; then
+  pulseaudio -D --exit-idle-time=-1 --system=false 2>/dev/null || true
+  sleep 1
+  pactl load-module module-null-sink sink_name=virtual >/dev/null 2>&1 || true
+  printf 'pcm.!default { type pulse }\nctl.!default { type pulse }\n' > "$HOME/.asoundrc"
+fi
 sleep 2
 OX=48; OY=48
 shot() { import -window root -crop 1400x880+48+48 +repage "$OUT/$1.png"; }

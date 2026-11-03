@@ -170,6 +170,13 @@ class TelasCapturasTest {
 
     @Test
     fun capturasDasTelas() {
+        // As capturas saem em português, como o app na máquina do usuário.
+        val antes = java.util.Locale.getDefault()
+        java.util.Locale.setDefault(java.util.Locale.forLanguageTag("pt-BR"))
+        try { capturas() } finally { java.util.Locale.setDefault(antes) }
+    }
+
+    private fun capturas() {
         UiStyle.entries.forEach { style ->
             val n = style.name.lowercase()
             runCatching { shot("tela-$n-1-para-voce") { Window(style, "inicio") { Home(style) } } }.onFailure { println("FALHOU $n para você: $it") }
