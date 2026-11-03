@@ -86,6 +86,9 @@ fun LibraryScreenClassica(
     playlists: List<Playlist> = emptyList(),
     smartPlaylists: List<SmartPlaylist> = emptyList(),
     semanticResults: List<Track> = emptyList(),
+    tagBannerCount: Int = 0,
+    recentSearches: List<String> = emptyList(),
+    genreOfMonth: com.juscelino.sonivell.data.Ranked<String>? = null,
 ) {
     val c = SonivellTheme.colors
     val trackById = remember(state.allTracks) { state.allTracks.associateBy { it.id } }
@@ -102,8 +105,8 @@ fun LibraryScreenClassica(
     LazyColumn(
         Modifier.fillMaxSize().background(c.background),
         contentPadding = PaddingValues(
-            start = 24.dp,
-            end = 24.dp,
+            start = 20.dp,
+            end = 20.dp,
             top = contentPadding.calculateTopPadding() + 12.dp,
             bottom = contentPadding.calculateBottomPadding() + 16.dp,
         ),
@@ -159,6 +162,17 @@ fun LibraryScreenClassica(
             LibraryMode.Buscar -> {
                 val parsed = Search.parse(state.query)
                 val searching = !parsed.isEmpty
+                // Sem busca: a mesma estrutura do Explorar dos outros estilos (buscas recentes, maior
+                // gênero, gêneros e décadas), com os tokens do Clássico.
+                if (!searching) {
+                    if (recentSearches.isNotEmpty()) {
+                        item(key = "recent") {
+                            RecentSearches(recentSearches, actions.onQuery, actions.onRemoveRecentSearch, Modifier.padding(bottom = 18.dp))
+                        }
+                    }
+                    genreBrowse(state, decades, genreOfMonth, actions)
+                    return@LazyColumn
+                }
                 // Resultados agrupados: artistas, álbuns e playlists que combinam pelo nome.
                 val artists = if (parsed.words.isEmpty()) emptyList() else state.artists.filter { Search.matchesText(parsed, it.name) }.take(5)
                 val albums = if (parsed.words.isEmpty()) emptyList() else state.albums.filter { Search.matchesText(parsed, it.title) }.take(6)
@@ -203,6 +217,12 @@ fun LibraryScreenClassica(
                 }
             }
             LibraryMode.Biblioteca -> {
+                // Aviso compacto de faixas com tags para arrumar (sem artista, gênero genérico…), com Revisar.
+                if (tagBannerCount > 0) {
+                    item(key = "tags-banner") {
+                        TagsBanner(tagBannerCount, actions.onOpenOrganize, actions.onDismissTagBanner, Modifier.padding(bottom = 12.dp))
+                    }
+                }
                 val classicTab = if (state.tab == LibraryTab.Tudo) LibraryTab.Musicas else state.tab
                 item(key = "chips") {
                     Row(

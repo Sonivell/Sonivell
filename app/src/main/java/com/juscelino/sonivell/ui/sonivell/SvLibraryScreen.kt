@@ -63,6 +63,7 @@ fun SvLibraryScreen(
     tab: Int,
     onTab: (Int) -> Unit,
     onBack: (() -> Unit)? = null,
+    tagBannerCount: Int = 0,
 ) {
     val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -75,7 +76,7 @@ fun SvLibraryScreen(
         contentPadding = PaddingValues(
             top = contentPadding.calculateTopPadding() + 16.dp,
             bottom = contentPadding.calculateBottomPadding() + 24.dp,
-            start = 24.dp, end = 24.dp,
+            start = 20.dp, end = 20.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -84,7 +85,13 @@ fun SvLibraryScreen(
                 if (onBack != null) SvSquare(icons.back, stringResource(R.string.cd_back), onBack)
                 SvTitle(stringResource(R.string.sv_library_title), modifier = Modifier.weight(1f))
                 SvSquare(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
-                SvSquare(icons.add, stringResource(R.string.cd_new_playlist), actions.onNewPlaylist, filled = true)
+                // Botão com rótulo: "+ Playlist".
+                com.juscelino.sonivell.ui.components.LabeledPill(icons.add, stringResource(R.string.action_playlist), actions.onNewPlaylist, primary = true)
+            }
+        }
+        if (tagBannerCount > 0) {
+            item(key = "tags-banner") {
+                com.juscelino.sonivell.ui.library.TagsBanner(tagBannerCount, actions.onOpenOrganize, actions.onDismissTagBanner)
             }
         }
         item {

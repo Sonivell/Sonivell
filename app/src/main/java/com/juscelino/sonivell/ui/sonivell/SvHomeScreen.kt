@@ -83,6 +83,10 @@ fun SvHomeScreen(
     onOpenFlow: () -> Unit,
     onOpenMap: () -> Unit,
     onOpenAnalysis: () -> Unit,
+    /** Faixa que ficou pela metade e onde ela parou: o "Continuar ouvindo". */
+    continueTrack: Track? = null,
+    continueAtMs: Long = 0L,
+    onResume: (Track, Long) -> Unit = { _, _ -> },
 ) {
     val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -145,6 +149,33 @@ fun SvHomeScreen(
                     }
                 }
                 LabeledPill(icons.play, stringResource(R.string.sv_flow_play), onOpenFlow, Modifier.height(52.dp).fillMaxWidth(), primary = true)
+            }
+        }
+
+        // Continuar ouvindo: capa, progresso fino, tempo restante e play.
+        continueTrack?.let { t ->
+            SvSection(stringResource(R.string.fy_continue), Modifier.padding(top = 4.dp))
+            val fraction = if (t.durationMs > 0) (continueAtMs.toFloat() / t.durationMs).coerceIn(0f, 1f) else 0f
+            SvCard(Modifier.fillMaxWidth(), onClick = { onResume(t, continueAtMs) }) {
+                Row(
+                    Modifier.fillMaxWidth().padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    com.juscelino.sonivell.ui.components.AlbumArt(t, Modifier.size(56.dp), corner = 14.dp)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(t.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(nc.track)) {
+                            Box(Modifier.fillMaxWidth(fraction).height(3.dp).background(nc.accent))
+                        }
+                        Text(
+                            stringResource(R.string.ess_remaining, com.juscelino.sonivell.data.formatDuration((t.durationMs - continueAtMs).coerceAtLeast(0L))),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = nc.textSecondary,
+                        )
+                    }
+                    PlaySquircle(false, { onResume(t, continueAtMs) }, size = 44.dp, iconSize = 18.dp)
+                }
             }
         }
 

@@ -682,7 +682,7 @@ private fun LazyListScope.home(
         }
     }
     cardRow("fy-hour", R.string.fy_this_hour, forYou.thisHour, labels.forYou, actions)
-    cardRow("fy-unfinished", R.string.fy_unfinished, forYou.unfinished.drop(1), labels.forYou, actions)
+    // Um só "Continuar ouvindo" (no topo): "Ficou pela metade" não se repete na mesma tela.
     cardRow("fy-forgotten", R.string.fy_forgotten, forYou.forgottenFavorites, labels.forYou, actions)
     if (state.recentAlbums.isNotEmpty()) {
         item(key = "home-recent") {

@@ -121,6 +121,7 @@ fun LibraryScreenContraste(
     playlists: List<Playlist> = emptyList(),
     smartPlaylists: List<SmartPlaylist> = emptyList(),
     semanticResults: List<Track> = emptyList(),
+    tagBannerCount: Int = 0,
 ) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -178,6 +179,12 @@ fun LibraryScreenContraste(
                         if (state.allTracks.isNotEmpty()) LabeledPill(icons.shuffle, stringResource(R.string.mode_shuffle), actions.onShuffleAll)
                     }
                     LibraryMode.Biblioteca -> {
+                // Aviso compacto de faixas com tags para arrumar (sem artista, gênero genérico…), com Revisar.
+                if (tagBannerCount > 0) {
+                    item(key = "tags-banner") {
+                        TagsBanner(tagBannerCount, actions.onOpenOrganize, actions.onDismissTagBanner, Modifier.padding(bottom = 12.dp))
+                    }
+                }
                         IconBtn(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
                         LabeledPill(icons.add, stringResource(R.string.action_playlist), actions.onNewPlaylist)
                     }
@@ -477,7 +484,7 @@ private fun LazyListScope.homeContent(
         }
     }
     trackRow("fy-hour", R.string.fy_this_hour, forYou.thisHour, labels.forYou, actions)
-    trackRow("fy-unfinished", R.string.fy_unfinished, forYou.unfinished.drop(1), labels.forYou, actions)
+    // Um só "Continuar ouvindo" (no topo): "Ficou pela metade" não se repete na mesma tela.
     trackRow("fy-forgotten", R.string.fy_forgotten, forYou.forgottenFavorites, labels.forYou, actions)
     if (state.recentAlbums.isNotEmpty()) {
         item(key = "home-recent") {

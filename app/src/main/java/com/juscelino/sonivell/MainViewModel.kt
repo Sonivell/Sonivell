@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.juscelino.sonivell.data.Album
+import com.juscelino.sonivell.data.albumArtistOf
 import com.juscelino.sonivell.data.Artist
 import com.juscelino.sonivell.data.Folder
 import com.juscelino.sonivell.data.AppSettings
@@ -136,6 +137,9 @@ data class LibraryState(
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
+    /** "Vários artistas", para as coletâneas sem a tag de artista do álbum. */
+    private val variousArtists: String = app.getString(R.string.various_artists)
+
 
     private val repository = MusicRepository(app)
     val player = PlayerConnection(app, viewModelScope)
@@ -298,8 +302,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             SortOrder.Ano -> filtered.sortedWith(compareByDescending<Track> { it.year ?: 0 }.thenBy { it.album.lowercase() })
             SortOrder.Recentes -> filtered.sortedByDescending { it.dateAdded }
         }
+        // Artista de cada álbum pela biblioteca inteira (não só pelas faixas que a busca achou).
+        val allByAlbum = all.groupBy { it.albumId }
         val albums = filtered.groupBy { it.albumId }.map { (id, ts) ->
-            Album(id, ts.first().album, ts.first().artist, ts)
+            Album(id, ts.first().album, albumArtistOf(allByAlbum[id] ?: ts, variousArtists), ts)
         }.sortedBy { keys.of(it.title) }
         LibraryState(
             loading = false,
@@ -317,7 +323,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             recentAlbums = all.sortedByDescending { it.dateAdded }
                 .distinctBy { it.albumId }
                 .take(6)
-                .map { t -> Album(t.albumId, t.album, t.artist, all.filter { it.albumId == t.albumId }) },
+                .map { t ->
+                    val ts = allByAlbum[t.albumId].orEmpty()
+                    Album(t.albumId, t.album, albumArtistOf(ts, variousArtists), ts)
+                },
             query = q,
             tab = t,
             sort = s,

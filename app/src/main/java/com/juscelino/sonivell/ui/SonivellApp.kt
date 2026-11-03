@@ -683,6 +683,7 @@ private fun MainContent(vm: MainViewModel) {
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
                             contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                            tagBannerCount = tagBannerCount,
                         )
                         UiStyle.ESSENCIAL -> LibraryScreenEssencial(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
@@ -715,6 +716,9 @@ private fun MainContent(vm: MainViewModel) {
                                     onOpenFlow = { nav.navigate(Routes.SV_FLOW) },
                                     onOpenMap = { nav.navigate(Routes.SV_MAP) },
                                     onOpenAnalysis = { nav.navigate(Routes.SV_ANALYSIS) },
+                                    continueTrack = forYou.unfinished.firstOrNull(),
+                                    continueAtMs = forYou.unfinished.firstOrNull()?.let { forYou.resumeAtMs[it.id] } ?: 0L,
+                                    onResume = libraryActions.onResume,
                                 )
                             }
                             LibraryMode.Buscar -> LibraryScreenOndas(
@@ -728,12 +732,14 @@ private fun MainContent(vm: MainViewModel) {
                                 state = library, favorites = favorites, playlists = playlists, smartPlaylists = smartPlaylists,
                                 contentPadding = listPadding, actions = libraryActions,
                                 tab = svLibraryTab, onTab = { svLibraryTab = it },
+                                tagBannerCount = tagBannerCount,
                             )
                         }
                         UiStyle.CLASSICA -> LibraryScreenClassica(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
                             contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                            recentSearches = recentSearches, genreOfMonth = genreOfMonth, tagBannerCount = tagBannerCount,
                         )
                     }
                 }

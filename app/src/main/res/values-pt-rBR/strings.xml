@@ -614,7 +614,7 @@
     <!-- Ajustes em páginas -->
     <string name="settings_transitions">Transições</string>
     <string name="settings_smart_page">Smart e recomendações</string>
-    <string name="settings_history_page">Histórico e estatísticas</string>
+    <string name="settings_history_page">Histórico</string>
     <string name="settings_search">Buscar ajuste</string>
     <string name="settings_search_none">Nenhum ajuste com esse nome</string>
     <string name="sum_playback">Velocidade %1$s · fone e Bluetooth</string>
@@ -626,7 +626,7 @@
     <string name="sum_taste_off">sem aprender seu gosto</string>
     <string name="sum_library_auto">Atualiza sozinha · pastas · letras</string>
     <string name="sum_library">Pastas · letras · organizar</string>
-    <string name="sum_history">Estatísticas · seu mês em música · exportar</string>
+    <string name="sum_history">Pausar · exportar · limpar</string>
     <string name="sum_off">Desligado</string>
     <string name="sum_car">Botões grandes, para usar de relance</string>
     <string name="sum_data">Backup e restauração</string>
@@ -719,4 +719,9 @@
     <string name="why_details">Ver detalhes</string>
     <string name="action_playlist">Playlist</string>
     <string name="sv_flow_play">Tocar Flow</string>
+    <string name="various_artists">Vários artistas</string>
+    <string name="settings_group_general">Geral</string>
+    <string name="settings_group_sound">Som</string>
+    <string name="settings_group_smart_library">Smart e biblioteca</string>
+    <string name="settings_group_data">Dados</string>
 </resources>

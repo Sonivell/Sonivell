@@ -54,6 +54,25 @@ data class Track(
 @Immutable
 data class Album(val id: Long, val title: String, val artist: String, val tracks: List<Track>)
 
+/**
+ * Artista de um álbum: a tag de artista do álbum, quando existe; senão o artista comum a todas as
+ * faixas; e, numa coletânea (artistas diferentes, sem a tag), [various] ("Vários artistas"), em vez
+ * de creditar o álbum inteiro ao artista da primeira faixa.
+ */
+fun albumArtistOf(tracks: List<Track>, various: String): String =
+    albumArtistFrom(tracks.map { it.albumArtist }, tracks.map { it.artist }, various)
+
+/** A regra de [albumArtistOf] sobre as tags de artista do álbum e os artistas das faixas. */
+internal fun albumArtistFrom(albumArtistTags: List<String?>, artists: List<String>, various: String): String {
+    albumArtistTags.firstNotNullOfOrNull { it?.trim()?.takeIf { a -> a.isNotEmpty() } }?.let { return it }
+    val distinct = artists.map { it.trim() }.filter { it.isNotEmpty() }.distinctBy { it.lowercase() }
+    return when {
+        distinct.isEmpty() -> artists.firstOrNull().orEmpty()
+        distinct.size == 1 -> distinct.first()
+        else -> various
+    }
+}
+
 @Immutable
 data class Artist(val name: String, val tracks: List<Track>) {
     val albumCount: Int get() = tracks.map { it.albumId }.distinct().size

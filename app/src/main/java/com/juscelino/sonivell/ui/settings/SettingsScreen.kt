@@ -257,42 +257,53 @@ private fun IndexPage(
     val color = if (settings.systemColors && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) stringResource(R.string.settings_system_colors)
     else stringResource(accentNames[settings.accent.ordinal])
 
-    Card {
-        NavRow(Icons.Rounded.Palette, stringResource(R.string.settings_appearance), "$layout · $theme · $color", accent = true) { open(SettingsPage.Aparencia) }
-        NavRow(Icons.Rounded.PlayCircle, stringResource(R.string.settings_playback), stringResource(R.string.sum_playback, speedLabel(settings.playbackSpeed))) { open(SettingsPage.Reproducao) }
-        NavRow(
-            Icons.Rounded.SwapHoriz,
-            stringResource(R.string.settings_transitions),
-            when {
-                !settings.crossfade -> stringResource(R.string.sum_crossfade_off)
-                smartAvailable && settings.crossfadeSmart -> stringResource(R.string.sum_crossfade_smart, settings.crossfadeSeconds)
-                else -> stringResource(R.string.sum_crossfade, settings.crossfadeSeconds)
-            },
-        ) { open(SettingsPage.Transicoes) }
-        NavRow(Icons.Rounded.GraphicEq, stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), onClick = actions.onOpenEqualizer)
+    // Quatro grupos com rótulo em caixa-alta; linhas com título, valor atual e seta, sem tiles coloridos.
+    Group(stringResource(R.string.settings_group_general)) {
+        Card {
+            NavRow(Icons.Rounded.Palette, stringResource(R.string.settings_appearance), "$layout · $theme · $color") { open(SettingsPage.Aparencia) }
+            NavRow(Icons.Rounded.DirectionsCar, stringResource(R.string.car_mode), stringResource(R.string.sum_car), onClick = actions.onOpenCarMode)
+        }
     }
-    Card {
-        NavRow(
-            Icons.Rounded.AutoAwesome,
-            stringResource(R.string.settings_smart_page),
-            if (smartAvailable) stringResource(
-                R.string.sum_smart,
-                stringResource(varietyNames[settings.artistVariety.coerceIn(0, varietyNames.lastIndex)]),
-                stringResource(if (settings.learnTaste) R.string.sum_taste_on else R.string.sum_taste_off),
-            ) else stringResource(R.string.not_recommended),
-            accent = true,
-        ) { open(SettingsPage.Smart) }
-        NavRow(
-            Icons.Rounded.LibraryMusic,
-            stringResource(R.string.nav_library),
-            stringResource(if (settings.autoRefresh) R.string.sum_library_auto else R.string.sum_library),
-        ) { open(SettingsPage.Biblioteca) }
-        NavRow(Icons.Rounded.Insights, stringResource(R.string.settings_history_page), stringResource(R.string.sum_history)) { open(SettingsPage.Historico) }
+    Group(stringResource(R.string.settings_group_sound)) {
+        Card {
+            NavRow(Icons.Rounded.PlayCircle, stringResource(R.string.settings_playback), stringResource(R.string.sum_playback, speedLabel(settings.playbackSpeed))) { open(SettingsPage.Reproducao) }
+            NavRow(
+                Icons.Rounded.SwapHoriz,
+                stringResource(R.string.settings_transitions),
+                when {
+                    !settings.crossfade -> stringResource(R.string.sum_crossfade_off)
+                    smartAvailable && settings.crossfadeSmart -> stringResource(R.string.sum_crossfade_smart, settings.crossfadeSeconds)
+                    else -> stringResource(R.string.sum_crossfade, settings.crossfadeSeconds)
+                },
+            ) { open(SettingsPage.Transicoes) }
+            NavRow(Icons.Rounded.GraphicEq, stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), onClick = actions.onOpenEqualizer)
+        }
     }
-    Card {
-        NavRow(Icons.Rounded.DirectionsCar, stringResource(R.string.car_mode), stringResource(R.string.sum_car), onClick = actions.onOpenCarMode)
-        NavRow(Icons.Rounded.Backup, stringResource(R.string.backup_section), stringResource(R.string.sum_data)) { open(SettingsPage.Dados) }
-        NavRow(Icons.Rounded.Info, stringResource(R.string.settings_about), stringResource(R.string.sum_about, versionName)) { open(SettingsPage.Sobre) }
+    Group(stringResource(R.string.settings_group_smart_library)) {
+        Card {
+            NavRow(
+                Icons.Rounded.AutoAwesome,
+                stringResource(R.string.settings_smart_page),
+                if (smartAvailable) stringResource(
+                    R.string.sum_smart,
+                    stringResource(varietyNames[settings.artistVariety.coerceIn(0, varietyNames.lastIndex)]),
+                    stringResource(if (settings.learnTaste) R.string.sum_taste_on else R.string.sum_taste_off),
+                ) else stringResource(R.string.not_recommended),
+            ) { open(SettingsPage.Smart) }
+            NavRow(
+                Icons.Rounded.LibraryMusic,
+                stringResource(R.string.nav_library),
+                stringResource(if (settings.autoRefresh) R.string.sum_library_auto else R.string.sum_library),
+            ) { open(SettingsPage.Biblioteca) }
+        }
+    }
+    Group(stringResource(R.string.settings_group_data)) {
+        Card {
+            // Histórico fica só com limpar e exportar; as estatísticas moram em Seu perfil sonoro (Perfil).
+            NavRow(Icons.Rounded.Insights, stringResource(R.string.settings_history_page), stringResource(R.string.sum_history)) { open(SettingsPage.Historico) }
+            NavRow(Icons.Rounded.Backup, stringResource(R.string.backup_section), stringResource(R.string.sum_data)) { open(SettingsPage.Dados) }
+            NavRow(Icons.Rounded.Info, stringResource(R.string.settings_about), stringResource(R.string.sum_about, versionName)) { open(SettingsPage.Sobre) }
+        }
     }
 }
 
@@ -330,8 +341,6 @@ private fun searchEntries(smartAvailable: Boolean): List<SearchEntry> {
         add(e(R.string.settings_publish_playlists, R.string.settings_publish_playlists_hint, SettingsPage.Biblioteca))
         add(e(R.string.lyrics_pick_folder, R.string.lyrics_folder_hint, SettingsPage.Biblioteca))
         add(e(R.string.organize, R.string.organize_hint, SettingsPage.Biblioteca))
-        add(e(R.string.stats, R.string.stats_hint, SettingsPage.Historico))
-        add(e(R.string.retro_title, R.string.retro_hint, SettingsPage.Historico))
         add(e(R.string.settings_history_pause, R.string.settings_history_pause_hint, SettingsPage.Historico))
         add(e(R.string.settings_history_export, null, SettingsPage.Historico))
         add(e(R.string.settings_history_clear, null, SettingsPage.Historico))
@@ -604,10 +613,7 @@ private fun LibraryPage(settings: AppSettings, folders: List<String>, actions: S
 
 @Composable
 private fun HistoryPage(settings: AppSettings, actions: SettingsActions) {
-    Card {
-        NavRow(null, stringResource(R.string.stats), stringResource(R.string.stats_hint), onClick = actions.onOpenStats)
-        NavRow(null, stringResource(R.string.retro_title), stringResource(R.string.retro_hint), onClick = actions.onOpenRetro)
-    }
+    // Só pausar, exportar e limpar: estatísticas e "seu mês em música" moram em Seu perfil sonoro, no Perfil.
     Card {
         SwitchRow(stringResource(R.string.settings_history_pause), stringResource(R.string.settings_history_pause_hint), settings.historyPaused) { on ->
             actions.onUpdate { it.copy(historyPaused = on) }
@@ -826,7 +832,7 @@ private fun NavRow(icon: ImageVector?, title: String, summary: String?, accent: 
     Row(
         Modifier
             .fillMaxWidth()
-            .heightIn(min = 60.dp)
+            .heightIn(min = 64.dp)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -834,10 +840,11 @@ private fun NavRow(icon: ImageVector?, title: String, summary: String?, accent: 
     ) {
         if (icon != null) {
             Box(
-                Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(if (accent) c.accent.copy(alpha = 0.18f) else c.surfaceHigh),
+                Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(c.surfaceHigh),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, null, Modifier.size(20.dp), tint = if (accent) c.accent else c.textTertiary)
+                // Todos os tiles iguais e neutros: a cor de destaque é sinal, não decoração.
+                Icon(icon, null, Modifier.size(20.dp), tint = c.textTertiary)
             }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
