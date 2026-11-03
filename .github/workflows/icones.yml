@@ -42,6 +42,7 @@ jobs:
           path: |
             app/src/smart/res/mipmap-*/ic_launcher*.png
             app/src/lite/res/mipmap-*/ic_launcher*.png
+            app/src/main/ic_launcher-playstore.png
             desktop/packaging/sonivell.png
             desktop/src/main/resources/icon.png
           if-no-files-found: error
@@ -68,7 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          git add -A app/src/smart/res app/src/lite/res desktop/packaging/sonivell.png desktop/src/main/resources/icon.png
+          git add -A app/src/smart/res app/src/lite/res app/src/main/ic_launcher-playstore.png desktop/packaging/sonivell.png desktop/src/main/resources/icon.png
           if git diff --cached --quiet; then
             echo "::notice::Ícones já estavam atualizados."
             exit 0

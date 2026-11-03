@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Android 12+: abertura com as ondas lima sobre grafite (variante Grafite). -->
+    <!-- Android 12+: abertura com a onda lima sobre grafite (ícone "Onda plana"). -->
     <style name="Theme.Sonivell" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/fundo</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
