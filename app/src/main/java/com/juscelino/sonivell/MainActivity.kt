@@ -1,5 +1,6 @@
 package com.juscelino.sonivell
 
+import com.juscelino.sonivell.data.iconStyle
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -43,7 +44,7 @@ class MainActivity : ComponentActivity() {
             SonivellTheme(
                 accent = settings.accent,
                 darkTheme = dark,
-                iconStyle = settings.iconStyle,
+                iconStyle = settings.uiStyle.iconStyle,
                 darkBackground = settings.darkBackground,
                 tintedBackground = settings.tintedBackground,
                 systemColors = settings.systemColors,

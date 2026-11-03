@@ -78,6 +78,7 @@ import com.juscelino.sonivell.data.SmartPlaylists
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.components.AlbumArt
+import com.juscelino.sonivell.ui.components.LabeledPill
 import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.theme.SonivellTheme
@@ -158,7 +159,7 @@ fun LibraryScreenEssencial(
             end = if (withIndex) 14.dp else 0.dp,
         ),
     ) {
-        item(key = "header") { EssHeader(mode, actions) }
+        item(key = "header") { Column { EssHeader(mode, actions) } }
         if (mode == LibraryMode.Buscar) {
             item(key = "field") { EssSearchPill(state.query, actions.onQuery, Modifier.padding(horizontal = SIDE.dp).padding(bottom = 22.dp).focusRequester(focus)) }
         }
@@ -221,15 +222,25 @@ private fun EssHeader(mode: LibraryMode, actions: LibraryActions) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val title = when (mode) {
-        LibraryMode.Inicio -> stringResource(
-            when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-                in 5..11 -> R.string.greeting_morning
-                in 12..17 -> R.string.greeting_afternoon
-                else -> R.string.greeting_evening
-            }
-        )
-        LibraryMode.Buscar -> stringResource(R.string.nav_search)
+        // O título é o nome da aba; a saudação fica pequena, acima dele.
+        LibraryMode.Inicio -> stringResource(R.string.nav_home)
+        LibraryMode.Buscar -> stringResource(R.string.nav_explore)
         LibraryMode.Biblioteca -> stringResource(R.string.nav_library)
+    }
+    if (mode == LibraryMode.Inicio) {
+        Text(
+            stringResource(
+                when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+                    in 5..11 -> R.string.greeting_morning
+                    in 12..17 -> R.string.greeting_afternoon
+                    else -> R.string.greeting_evening
+                }
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = c.textSecondary,
+            modifier = Modifier.padding(start = SIDE.dp),
+        )
     }
     Row(
         Modifier.fillMaxWidth().padding(start = SIDE.dp, end = 8.dp, bottom = 18.dp),
@@ -242,10 +253,11 @@ private fun EssHeader(mode: LibraryMode, actions: LibraryActions) {
             modifier = Modifier.weight(1f),
         )
         when (mode) {
-            LibraryMode.Inicio -> EssGhostIcon(icons.settings, stringResource(R.string.cd_settings), actions.onOpenSettings)
+            // Ajustes moram no Perfil: o ícone do topo saiu.
+            LibraryMode.Inicio -> Unit
             LibraryMode.Biblioteca -> {
                 EssGhostIcon(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
-                EssGhostIcon(icons.add, stringResource(R.string.cd_new_playlist), actions.onNewPlaylist)
+                LabeledPill(icons.add, stringResource(R.string.action_playlist), actions.onNewPlaylist, Modifier.padding(start = 4.dp, end = 12.dp))
             }
             LibraryMode.Buscar -> Unit
         }
@@ -325,7 +337,7 @@ private fun EssCoverCard(
 ) {
     val c = SonivellTheme.colors
     Column(
-        modifier.clip(RoundedCornerShape(corner)).clickable(onClick = onClick),
+        modifier.clickable(onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = if (round) Alignment.CenterHorizontally else Alignment.Start,
     ) {
@@ -570,7 +582,7 @@ private fun EssDecadeChips(decades: List<Int>, res: android.content.res.Resource
 private fun EssGenreCard(name: String, tracks: List<Track>, modifier: Modifier, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     val covers = remember(tracks) { tracks.distinctBy { it.albumId }.take(3) }
-    Column(modifier.clip(RoundedCornerShape(18.dp)).clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth().height(96.dp).clip(RoundedCornerShape(18.dp)), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             if (covers.size < 3) AlbumArt(covers.firstOrNull(), Modifier.fillMaxSize(), corner = 0.dp)
             else covers.forEach { AlbumArt(it, Modifier.weight(1f).fillMaxSize(), corner = 0.dp) }
@@ -775,8 +787,8 @@ private fun LazyListScope.essLibrary(
         val recent = remember(state.allTracks) { state.allTracks.sortedByDescending { it.dateAdded }.take(8) }
         Row(Modifier.padding(horizontal = SIDE.dp).padding(bottom = 22.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             EssPin(labels.liked, pluralStringResource(R.plurals.songs_count, favs.size, favs.size), Modifier.weight(1f), onClick = { actions.onOpenAuto("curtidas") }) {
-                Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(SonivellTheme.colors.accent), contentAlignment = Alignment.Center) {
-                    Icon(SonivellTheme.icons.liked, null, Modifier.size(20.dp), tint = SonivellTheme.colors.onAccent)
+                Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(SonivellTheme.colors.surfaceHigh), contentAlignment = Alignment.Center) {
+                    Icon(SonivellTheme.icons.liked, null, Modifier.size(20.dp), tint = SonivellTheme.colors.textPrimary)
                 }
             }
             EssPin(stringResource(R.string.ess_recent), stringResource(R.string.ess_recent_sub), Modifier.weight(1f), onClick = { actions.onOpenAuto("recentes") }) {

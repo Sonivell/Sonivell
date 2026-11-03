@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.sonivell
 
+import com.juscelino.sonivell.data.realGenreCount
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -59,6 +60,8 @@ fun SvHomeScreen(
     contentPadding: PaddingValues,
     state: LibraryState,
     favoritesCount: Int,
+    /** Quantas playlists o usuário criou; com zero, o atalho diz "Criar". */
+    playlistCount: Int,
     mixSeeds: List<Track>,
     smartAvailable: Boolean,
     smartProgress: SmartProgress,
@@ -79,18 +82,21 @@ fun SvHomeScreen(
         state.allTracks.count { it.dateAdded * 1000 >= since }
     }
     val forYou = listOf(
-        SvShortcut(stringResource(R.string.source_liked), favoritesCount.toString()) { onOpenAuto("curtidas") },
+        SvShortcut(stringResource(R.string.source_liked), count(favoritesCount)) { onOpenAuto("curtidas") },
         SvShortcut(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub)) { onOpenAuto("mais-ouvidas") },
         SvShortcut(stringResource(R.string.sv_new), stringResource(R.string.sv_new_sub, newCount)) { onOpenAuto("recentes") },
     )
     val library = listOf(
-        SvShortcut(stringResource(R.string.tab_songs), state.allTracks.size.toString()) { onOpenLibrary(1) },
-        SvShortcut(stringResource(R.string.sv_albums), state.albums.size.toString()) { onOpenLibrary(2) },
-        SvShortcut(stringResource(R.string.sv_artists), state.artists.size.toString()) { onOpenLibrary(3) },
-        SvShortcut(stringResource(R.string.sv_genres), state.genres.size.toString()) { onOpenLibrary(4) },
-        SvShortcut(stringResource(R.string.tab_folders), state.folders.size.toString()) { onOpenLibrary(5) },
-        // As playlists moravam na aba Biblioteca; sem ela, entram por aqui ("Todas": coleções e playlists).
-        SvShortcut(stringResource(R.string.tab_playlists), "") { onOpenLibrary(0) },
+        SvShortcut(stringResource(R.string.tab_songs), count(state.allTracks.size)) { onOpenLibrary(1) },
+        SvShortcut(stringResource(R.string.sv_albums), count(state.albums.size)) { onOpenLibrary(2) },
+        SvShortcut(stringResource(R.string.sv_artists), count(state.artists.size)) { onOpenLibrary(3) },
+        // Mesma contagem do Explorar: sem os gêneros genéricos.
+        SvShortcut(stringResource(R.string.sv_genres), count(realGenreCount(state.genres))) { onOpenLibrary(4) },
+        SvShortcut(stringResource(R.string.tab_folders), count(state.folders.size)) { onOpenLibrary(5) },
+        SvShortcut(
+            stringResource(R.string.tab_playlists),
+            if (playlistCount == 0) stringResource(R.string.create) else count(playlistCount),
+        ) { onOpenLibrary(0) },
     )
     Column(
         Modifier
@@ -143,8 +149,6 @@ fun SvHomeScreen(
                         val label = stringResource(R.string.fy_mix_of, seed.artist)
                         Column(
                             Modifier.width(136.dp)
-                                // No vidro não corta: o recorte comeria a sombra da capa.
-                                .then(if (SonivellTheme.glass) Modifier else Modifier.clip(RoundedCornerShape(20.dp)))
                                 .clickable(role = Role.Button, onClickLabel = label) { onPlayMix(seed) },
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
@@ -164,7 +168,7 @@ fun SvHomeScreen(
             subtitle = stringResource(R.string.sv_map_sub),
             onClick = onOpenMap,
             art = { SvIconTile(icons.genre) },
-            tone = ArtTones.cores[1 % ArtTones.cores.size],
+            tone = nc.textSecondary,
             trailing = { Icon(icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
         )
         if (smartAvailable && (smartProgress.running || smartProgress.analysed < smartProgress.total)) {
@@ -201,7 +205,7 @@ private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: In
         items.chunked(3).forEachIndexed { r, row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.forEachIndexed { col, item ->
-                    val tone = ArtTones.cores[(toneOffset + r * 3 + col) % ArtTones.cores.size]
+                    val tone = nc.textSecondary
                     val shape = RoundedCornerShape(16.dp)
                     Column(
                         Modifier
@@ -250,14 +254,11 @@ private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: In
     }
 }
 
-/** Selo "SMART" com contorno na cor de destaque, como no Para você do Ondas. */
+/** "SMART" como rótulo cinza em caixa-alta, igual aos outros rótulos: nada de selo com borda que pareça botão. */
 @Composable
 private fun SvSmartTag() {
     val nc = SonivellTheme.colors
-    val shape = RoundedCornerShape(7.dp)
-    Box(Modifier.height(22.dp).clip(shape).border(1.dp, nc.accent, shape).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
-        Text(stringResource(R.string.source_smart), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.8.sp), fontWeight = FontWeight.ExtraBold, color = nc.accent)
-    }
+    Text(stringResource(R.string.source_smart), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.8.sp), fontWeight = FontWeight.ExtraBold, color = nc.textSecondary)
 }
 
 private fun greeting(): Int = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
@@ -265,3 +266,6 @@ private fun greeting(): Int = when (Calendar.getInstance().get(Calendar.HOUR_OF_
     in 12..17 -> R.string.greeting_afternoon
     else -> R.string.greeting_evening
 }
+
+/** Contagem com separador de milhar no idioma do aparelho ("1.990"). */
+private fun count(n: Int): String = String.format(java.util.Locale.getDefault(), "%,d", n)

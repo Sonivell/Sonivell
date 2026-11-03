@@ -118,7 +118,7 @@ internal fun LazyListScope.genreBrowse(
                     color = SonivellTheme.colors.textSecondary,
                 )
             }
-            if (rest.isNotEmpty()) GenreMosaic(rest, actions)
+            if (rest.isNotEmpty()) GenreMosaic(rest, total = good.size, actions)
             if (decades.isNotEmpty()) DecadeTimeline(state, decades, actions)
             if (generic.isNotEmpty()) GenericTagsCard(generic, actions)
         }
@@ -241,7 +241,8 @@ private fun SignatureBars(seedText: String, color: Color, modifier: Modifier = M
 // ---------------------------------------------------------------- Mosaico
 
 @Composable
-private fun GenreMosaic(genres: List<Genre>, actions: LibraryActions) {
+/** [total]: a contagem única de gêneros ([com.juscelino.sonivell.data.realGenreCount]), igual em todas as telas. */
+private fun GenreMosaic(genres: List<Genre>, total: Int, actions: LibraryActions) {
     var showAll by rememberSaveable { mutableStateOf(false) }
     val shown = if (showAll) genres else genres.take(GRID_LIMIT)
     val gap = 10.dp
@@ -270,7 +271,7 @@ private fun GenreMosaic(genres: List<Genre>, actions: LibraryActions) {
         if (genres.size > GRID_LIMIT) {
             val c = SonivellTheme.colors
             Text(
-                if (showAll) stringResource(R.string.browse_show_less) else stringResource(R.string.browse_show_all, genres.size),
+                if (showAll) stringResource(R.string.browse_show_less) else stringResource(R.string.browse_show_all, total),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = c.accent,
@@ -287,7 +288,7 @@ private fun GenreMosaic(genres: List<Genre>, actions: LibraryActions) {
 @Composable
 private fun GenreTile(genre: Genre, index: Int, tall: Boolean, actions: LibraryActions, modifier: Modifier) {
     val c = SonivellTheme.colors
-    val tone = ArtTones.cores[index % ArtTones.cores.size]
+    val tone = c.textSecondary
     val shape = RoundedCornerShape(22.dp)
     Column(
         modifier
@@ -393,7 +394,6 @@ private fun DecadeStop(short: String, count: Int, highlighted: Boolean, descript
     Column(
         Modifier
             .width(72.dp)
-            .clip(RoundedCornerShape(14.dp))
             .clickable(role = Role.Button, onClick = onClick)
             .semantics(mergeDescendants = true) { contentDescription = description }
             .padding(vertical = 2.dp),

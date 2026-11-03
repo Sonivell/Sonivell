@@ -1,12 +1,12 @@
 package com.juscelino.sonivell.ui.components
 
 import androidx.compose.ui.graphics.Color
-import com.juscelino.sonivell.ui.theme.AccentChoice
 import com.juscelino.sonivell.ui.theme.SonivellColors
 
-/** As quatro cores das capas geradas, na versão legível para o tema atual (lima, azul, laranja, lilás). */
-fun glassTone(index: Int, colors: SonivellColors): Color {
-    val tones = listOf(AccentChoice.Lima, AccentChoice.Azul, AccentChoice.Laranja, AccentChoice.Lilas)
-    val t = tones[Math.floorMod(index, tones.size)]
-    return if (colors.isDark) t.dark else t.light
-}
+/**
+ * Tom dos cartões de atalho e de navegação. Era uma de quatro cores por posição, sem significado;
+ * a proposta visual deixa a cor só para ação e estado, então o tom é neutro em todos os cartões.
+ * [index] fica para os chamadores não mudarem.
+ */
+@Suppress("UNUSED_PARAMETER")
+fun glassTone(index: Int, colors: SonivellColors): Color = colors.textSecondary

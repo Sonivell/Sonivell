@@ -70,6 +70,7 @@ import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.components.AlbumArt
+import com.juscelino.sonivell.ui.components.LabeledPill
 import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionTitle
@@ -105,7 +106,6 @@ private data class ContrasteItem(
 )
 
 /** Roxo das Curtidas, como no mockup 2.0. */
-private val LikedTone = Color(0xFF3A2F7A)
 
 /** Layout Contraste (2.0). */
 @Composable
@@ -164,7 +164,7 @@ fun LibraryScreenContraste(
                         stringResource(
                             when (mode) {
                                 LibraryMode.Inicio -> R.string.nav_home
-                                LibraryMode.Buscar -> R.string.nav_search
+                                LibraryMode.Buscar -> R.string.nav_explore
                                 LibraryMode.Biblioteca -> R.string.nav_library
                             }
                         ),
@@ -173,15 +173,13 @@ fun LibraryScreenContraste(
                     )
                 }
                 when (mode) {
+                    // "Aleatório" com rótulo; Ajustes moram no Perfil.
                     LibraryMode.Inicio -> {
-                        if (state.allTracks.isNotEmpty()) {
-                            IconBtn(icons.shuffle, stringResource(R.string.cd_shuffle_all), actions.onShuffleAll)
-                        }
-                        IconBtn(icons.settings, stringResource(R.string.cd_settings), actions.onOpenSettings)
+                        if (state.allTracks.isNotEmpty()) LabeledPill(icons.shuffle, stringResource(R.string.mode_shuffle), actions.onShuffleAll)
                     }
                     LibraryMode.Biblioteca -> {
                         IconBtn(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
-                        IconBtn(icons.add, stringResource(R.string.cd_new_playlist), actions.onNewPlaylist, iconSize = 24.dp)
+                        LabeledPill(icons.add, stringResource(R.string.action_playlist), actions.onNewPlaylist)
                     }
                     LibraryMode.Buscar -> Unit
                 }
@@ -375,8 +373,8 @@ private fun ContrasteArtBox(art: ContrasteArt, size: Dp?, round: Boolean, modifi
     val sized = (if (size != null) modifier.size(size) else modifier.fillMaxWidth().aspectRatio(1f)).clip(shape)
     when (art) {
         is ContrasteArt.Of -> AlbumArt(art.track, sized, corner = if (round) 999.dp else 8.dp)
-        ContrasteArt.Liked -> Box(sized.background(LikedTone), contentAlignment = Alignment.Center) {
-            Icon(SonivellTheme.icons.liked, null, Modifier.size(if (size != null) size * 0.4f else 36.dp), tint = Color.White)
+        ContrasteArt.Liked -> Box(sized.background(c.surfaceHigh), contentAlignment = Alignment.Center) {
+            Icon(SonivellTheme.icons.liked, null, Modifier.size(if (size != null) size * 0.4f else 36.dp), tint = c.textPrimary)
         }
         is ContrasteArt.Symbol -> Box(sized.background(c.surfaceHigh), contentAlignment = Alignment.Center) {
             Icon(symbolIcon(art.kind), null, Modifier.size(if (size != null) size * 0.38f else 32.dp), tint = c.textSecondary)
@@ -635,7 +633,7 @@ private fun LazyListScope.trackRow(
 private fun Card(track: Track?, title: String, subtitle: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     Column(
-        Modifier.width(140.dp).clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick),
+        Modifier.width(140.dp).clickable(onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AlbumArt(track, Modifier.size(140.dp), corner = 12.dp, detailed = true)
@@ -684,7 +682,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
                 Text(
                     stringResource(if (neverPlayed) R.string.fy_pick_never else R.string.fy_pick_long),
                     style = MaterialTheme.typography.labelMedium,
-                    color = c.accent,
+                    color = c.textSecondary,
                 )
             }
             IconBtn(SonivellTheme.icons.play, stringResource(R.string.cd_play), onPlay, background = c.accent, tint = c.onAccent, iconSize = 20.dp)

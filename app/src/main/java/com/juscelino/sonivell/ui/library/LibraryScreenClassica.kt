@@ -115,7 +115,7 @@ fun LibraryScreenClassica(
                     stringResource(
                         when (mode) {
                             LibraryMode.Inicio -> R.string.nav_home
-                            LibraryMode.Buscar -> R.string.nav_search
+                            LibraryMode.Buscar -> R.string.nav_explore
                             LibraryMode.Biblioteca -> R.string.nav_library
                         }
                     ),
@@ -123,7 +123,6 @@ fun LibraryScreenClassica(
                     color = c.textPrimary,
                     modifier = Modifier.weight(1f),
                 )
-                IconBtn(SonivellTheme.icons.settings, stringResource(R.string.cd_settings), actions.onOpenSettings, background = c.surface, iconSize = 20.dp)
             }
         }
 
@@ -429,7 +428,6 @@ private fun TrackCard(track: Track, subtitle: String, onClick: () -> Unit) {
     Column(
         Modifier
             .width(128.dp)
-            .clip(RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -504,7 +502,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
             Text(
                 stringResource(if (neverPlayed) R.string.fy_pick_never else R.string.fy_pick_long),
                 style = MaterialTheme.typography.labelMedium,
-                color = c.accent,
+                color = c.textSecondary,
             )
         }
         IconBtn(SonivellTheme.icons.play, stringResource(R.string.cd_play), onPlay, background = c.accent, tint = c.onAccent)

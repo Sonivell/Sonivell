@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -30,13 +33,21 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassSurface
 
-/** Perfil do tema: "Sua jornada", com números da biblioteca, atalhos e os ajustes do app. */
+/**
+ * Aba Perfil, a mesma em todos os estilos: três números neutros, "Descobrir" (mapa musical, Momentos,
+ * Respira, Seu perfil sonoro e a Análise do som com progresso) e Ajustes por último, mostrando o estilo atual.
+ */
 @Composable
 fun SvProfileScreen(
     trackCount: Int,
     artistCount: Int,
     monthListenedMs: Long,
     smartAvailable: Boolean,
+    /** Músicas já analisadas pelo motor e o total da biblioteca. */
+    analysed: Int,
+    analysisTotal: Int,
+    /** Nome do estilo atual ("Clássico"), mostrado no item Ajustes. */
+    styleName: String,
     contentPadding: PaddingValues,
     onStats: () -> Unit,
     onSettings: () -> Unit,
@@ -56,26 +67,30 @@ fun SvProfileScreen(
             .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        SvTitle(stringResource(R.string.sv_profile_title), stringResource(R.string.sv_profile_sub))
+        SvTitle(stringResource(R.string.nav_profile), stringResource(R.string.sv_profile_sub))
         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Stat(trackCount.toString(), stringResource(R.string.sv_stat_songs), Modifier.weight(1f))
-            Stat(artistCount.toString(), stringResource(R.string.sv_stat_artists), Modifier.weight(1f))
-            Stat("$hours h", stringResource(R.string.sv_stat_hours), Modifier.weight(1f), highlight = true)
+            Stat(count(trackCount), stringResource(R.string.sv_stat_songs), Modifier.weight(1f))
+            Stat(count(artistCount), stringResource(R.string.sv_stat_artists), Modifier.weight(1f))
+            Stat(count(hours) + " h", stringResource(R.string.sv_stat_hours), Modifier.weight(1f))
         }
         SvSection(stringResource(R.string.sv_discover), Modifier.padding(top = 4.dp))
-        Item(icons.artist, stringResource(R.string.sv_map_title), stringResource(R.string.sv_map_sub), onMap)
+        // O mesmo ícone de mapa usado no Para você.
+        Item(icons.genre, stringResource(R.string.sv_map_title), stringResource(R.string.sv_map_sub), onMap)
         Item(icons.album, stringResource(R.string.sv_moments_title), stringResource(R.string.sv_moments_sub), onMoments)
         Item(icons.sleep, stringResource(R.string.sv_breathe_title), stringResource(R.string.sv_breathe_sub), onBreathe)
-        if (smartAvailable) Item(icons.smart, stringResource(R.string.sv_analysis_title), stringResource(R.string.sv_analysis_sub), onAnalysis)
+        // Seu perfil sonoro reúne estatísticas, histórico e "seu mês em música".
+        Item(icons.musicNote, stringResource(R.string.sv_row_profile), stringResource(R.string.sv_row_profile_hint), onStats)
+        if (smartAvailable) AnalysisItem(analysed, analysisTotal, onAnalysis)
 
-        Item(icons.musicNote, stringResource(R.string.sv_row_profile), stringResource(R.string.sv_row_profile_hint), onStats, Modifier.padding(top = 6.dp))
-        Item(icons.settings, stringResource(R.string.sv_row_settings), stringResource(R.string.sv_row_settings_hint), onSettings)
+        // Ajustes por último, com o mesmo nome da tela que abre e o estilo atual.
+        Item(icons.settings, stringResource(R.string.sv_row_settings), styleName, onSettings, Modifier.padding(top = 10.dp))
 
     }
 }
 
 @Composable
-private fun Stat(value: String, label: String, modifier: Modifier = Modifier, highlight: Boolean = false) {
+private fun Stat(value: String, label: String, modifier: Modifier = Modifier) {
+    val highlight = false
     val nc = SonivellTheme.colors
     val shape = RoundedCornerShape(18.dp)
     Column(
@@ -103,3 +118,30 @@ private fun Item(icon: ImageVector, title: String, subtitle: String, onClick: ()
         trailing = { Icon(SonivellTheme.icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
     )
 }
+
+/** Análise do som com barra de progresso e contagem ("[N] de 1.990 músicas analisadas"). */
+@Composable
+private fun AnalysisItem(analysed: Int, total: Int, onClick: () -> Unit) {
+    val nc = SonivellTheme.colors
+    val fraction = if (total > 0) (analysed.toFloat() / total).coerceIn(0f, 1f) else 0f
+    SvCard(Modifier.fillMaxWidth(), onClick = onClick) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SvIconTile(SonivellTheme.icons.smart)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(R.string.sv_analysis_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1)
+                Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(nc.track)) {
+                    Box(Modifier.fillMaxWidth(fraction).height(4.dp).background(nc.accent))
+                }
+                Text(stringResource(R.string.sv_analysis_count, analysed, total), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Icon(SonivellTheme.icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary)
+        }
+    }
+}
+
+/** Contagem com separador de milhar ("1.990"). */
+private fun count(n: Int): String = String.format(java.util.Locale.getDefault(), "%,d", n)

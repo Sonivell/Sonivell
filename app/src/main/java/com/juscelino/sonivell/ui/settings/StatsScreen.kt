@@ -64,7 +64,7 @@ fun StatsScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconBtn(SonivellTheme.icons.back, stringResource(R.string.cd_back), onBack, background = c.surface)
-            Text(stringResource(R.string.stats), style = MaterialTheme.typography.displaySmall, color = c.textPrimary)
+            Text(stringResource(R.string.sv_row_profile), style = MaterialTheme.typography.displaySmall, color = c.textPrimary)
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(

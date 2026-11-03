@@ -54,8 +54,8 @@ import androidx.compose.material3.SheetState
 import androidx.compose.ui.graphics.Color
 import com.juscelino.sonivell.ui.theme.glassSurface
 
-/** Uma opção de menu: ícone, texto e ação. */
-data class MenuOption(val icon: ImageVector, val label: String, val onClick: () -> Unit)
+/** Uma opção de menu: ícone, texto e ação. [value] mostra o estado atual à direita (ex.: Temporizador "Desligado"). */
+data class MenuOption(val icon: ImageVector, val label: String, val value: String? = null, val onClick: () -> Unit)
 
 /**
  * Folha inferior do app. No vidro (hoje em todos os temas) é um cartão de vidro flutuante, com margem
@@ -86,7 +86,8 @@ fun SonivellSheet(
         containerColor = Color.Transparent,
         contentColor = c.textPrimary,
         tonalElevation = 0.dp,
-        scrimColor = Color.Black.copy(alpha = 0.5f),
+        // A folha fica acima de tudo; o que está atrás (o player) só escurece.
+        scrimColor = Color.Black.copy(alpha = 0.6f),
         dragHandle = null,
     ) {
         Column(
@@ -95,7 +96,7 @@ fun SonivellSheet(
                 // Consome as barras do sistema aqui: o conteúdo de dentro não soma o espaço de novo.
                 .navigationBarsPadding()
                 .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
-                .glassSurface(RoundedCornerShape(28.dp), c.surface, c.outline, elevation = 16.dp, surfaceAlpha = 0.9f),
+                .glassSurface(RoundedCornerShape(28.dp), c.surface, c.outline, elevation = 16.dp, surfaceAlpha = 1f),
         ) {
             Box(
                 Modifier
@@ -143,7 +144,10 @@ fun OptionsSheet(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Icon(option.icon, null, Modifier.size(22.dp), tint = c.textTertiary)
-                    Text(option.label, style = MaterialTheme.typography.bodyLarge, color = c.textPrimary)
+                    Text(option.label, style = MaterialTheme.typography.bodyLarge, color = c.textPrimary, modifier = Modifier.weight(1f))
+                    if (option.value != null) {
+                        Text(option.value, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1)
+                    }
                 }
             }
         }

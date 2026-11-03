@@ -25,24 +25,24 @@
     <string name="cd_refresh">Atualizar biblioteca</string>
     <string name="library_empty">Nenhuma música encontrada no aparelho. Copie arquivos de áudio para o celular e toque em atualizar.</string>
     <string name="recent">Recentes</string>
-    <string name="all_songs">Todas as músicas · %1$d</string>
+    <string name="all_songs">Todas as músicas · %1$,d</string>
     <string name="shuffle_all">Tocar tudo no aleatório</string>
     <string name="recently_added">Adicionadas recentemente</string>
-    <string name="liked_count">Curtidas · %1$d</string>
+    <string name="liked_count">Curtidas · %1$,d</string>
     <string name="search_hint">Músicas, artistas, álbuns</string>
     <string name="cd_search">Buscar na biblioteca</string>
     <string name="cd_clear_search">Limpar busca</string>
     <plurals name="songs_count">
-        <item quantity="one">%d música</item>
-        <item quantity="other">%d músicas</item>
+        <item quantity="one">%,d música</item>
+        <item quantity="other">%,d músicas</item>
     </plurals>
     <plurals name="albums_count">
-        <item quantity="one">%d álbum</item>
-        <item quantity="other">%d álbuns</item>
+        <item quantity="one">%,d álbum</item>
+        <item quantity="other">%,d álbuns</item>
     </plurals>
     <plurals name="results_count">
-        <item quantity="one">%d resultado</item>
-        <item quantity="other">%d resultados</item>
+        <item quantity="one">%,d resultado</item>
+        <item quantity="other">%,d resultados</item>
     </plurals>
 
     <!-- De onde a reprodução começou ("Tocando de …") -->
@@ -77,10 +77,10 @@
     <string name="now_playing">Tocando agora</string>
     <string name="up_next">A seguir</string>
     <plurals name="queue_tracks">
-        <item quantity="one">%d faixa</item>
-        <item quantity="other">%d faixas</item>
+        <item quantity="one">%,d faixa</item>
+        <item quantity="other">%,d faixas</item>
     </plurals>
-    <string name="queue_summary">%1$s · %2$d min</string>
+    <string name="queue_summary">%1$s · %2$,d min</string>
     <string name="queue_empty">Nada na fila. Toque numa música da biblioteca para começar.</string>
     <string name="cd_back_to_player">Voltar ao player</string>
     <string name="cd_drag_reorder">Arrastar para reordenar %1$s</string>
@@ -91,12 +91,12 @@
     <string name="coming_soon">Chega numa próxima versão do Sonivell</string>
     <string name="permission_message">Para tocar suas músicas, o Sonivell precisa de acesso aos arquivos de áudio do aparelho. Nada sai do seu celular.</string>
     <string name="permission_allow">Permitir acesso</string>
-    <!-- SMART (edição smart) -->
-    <string name="cd_shuffle_smart">Ativar aleatório SMART</string>
-    <string name="cd_smart_off">Desativar aleatório SMART</string>
+    <!-- Smart (edição smart) -->
+    <string name="cd_shuffle_smart">Ativar aleatório Smart</string>
+    <string name="cd_smart_off">Desativar aleatório Smart</string>
     <string name="smart_analysing">Analisando o som das suas músicas</string>
-    <string name="smart_progress">%1$d de %2$d</string>
-    <string name="smart_on_hint">SMART ligado: escolha uma música e a fila segue o som dela.</string>
+    <string name="smart_progress">%1$,d de %2$,d</string>
+    <string name="smart_on_hint">Smart ligado: escolha uma música e a fila segue o som dela.</string>
     <string name="smart_channel">Análise das músicas</string>
     <!-- Para você -->
     <string name="fy_pick">Redescubra</string>
@@ -107,7 +107,7 @@
     <string name="fy_forgotten">Favoritas esquecidas</string>
     <string name="fy_mixes">Mixes pelo som</string>
     <string name="fy_mix_of">Mix de %1$s</string>
-    <string name="fy_mix_from">A partir de “%1$s”</string>
+    <string name="fy_mix_from">Soa como “%1$s”</string>
     <string name="fy_empty_hint">Ouça um pouco e esta página se enche com as suas músicas.</string>
     <!-- Fase 1: playlists, menus, temporizador -->
     <string name="tab_playlists">Playlists</string>
@@ -150,13 +150,13 @@
     <string name="import_failed">Não foi possível abrir esse arquivo</string>
     <string name="import_none">Nenhuma música desse arquivo está no celular</string>
     <plurals name="imported_count">
-        <item quantity="one">%d música importada</item>
-        <item quantity="other">%d músicas importadas</item>
+        <item quantity="one">%,d música importada</item>
+        <item quantity="other">%,d músicas importadas</item>
     </plurals>
     <string name="sleep_timer">Temporizador</string>
     <plurals name="timer_minutes">
-        <item quantity="one">%d minuto</item>
-        <item quantity="other">%d minutos</item>
+        <item quantity="one">%,d minuto</item>
+        <item quantity="other">%,d minutos</item>
     </plurals>
     <string name="timer_end_of_track">Ao fim desta música</string>
     <string name="timer_end_of_track_short">Fim da música</string>
@@ -166,8 +166,8 @@
     <string name="settings">Ajustes</string>
     <string name="cd_settings">Ajustes</string>
     <string name="settings_appearance">Aparência</string>
-    <string name="settings_theme">Tema</string>
-    <string name="theme_auto">Automático</string>
+    <string name="settings_theme">Modo</string>
+    <string name="theme_auto">Sistema</string>
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Escuro</string>
     <string name="settings_accent">Cor de destaque</string>
@@ -195,7 +195,7 @@
     <string name="eq_headphones">Fone de ouvido</string>
     <string name="eq_speaker">Alto-falante</string>
     <string name="settings_artist_variety">Variedade de artistas</string>
-    <string name="settings_artist_variety_hint">O quanto o SMART evita várias músicas seguidas do mesmo artista.</string>
+    <string name="settings_artist_variety_hint">O quanto o Smart evita várias músicas seguidas do mesmo artista.</string>
     <string name="variety_0">Desligada</string>
     <string name="variety_1">Baixa</string>
     <string name="variety_2">Média</string>
@@ -203,11 +203,11 @@
     <string name="variety_4">Máxima</string>
     <string name="settings_history">Histórico de escuta</string>
     <string name="settings_history_pause">Pausar histórico</string>
-    <string name="settings_history_pause_hint">Novas escutas não são registradas; o SMART e o Para você param de aprender.</string>
+    <string name="settings_history_pause_hint">Novas escutas não são registradas; o Smart e o Para você param de aprender.</string>
     <string name="settings_history_export">Exportar histórico (CSV)</string>
     <string name="settings_history_clear">Limpar histórico</string>
     <string name="clear_history_title">Limpar o histórico de escuta?</string>
-    <string name="clear_history_message">Estatísticas, Para você e o aprendizado do SMART recomeçam do zero. Suas músicas e playlists continuam.</string>
+    <string name="clear_history_message">Estatísticas, Para você e o aprendizado do Smart recomeçam do zero. Suas músicas e playlists continuam.</string>
     <string name="clear">Limpar</string>
     <string name="history_cleared">Histórico limpo</string>
     <string name="history_exported">Histórico exportado</string>
@@ -215,7 +215,7 @@
     <string name="settings_about">Sobre</string>
     <string name="settings_version">Sonivell %1$s</string>
     <string name="settings_privacy">Tudo acontece neste celular: sem conta, sem internet, nada é enviado para lugar nenhum.</string>
-    <string name="settings_credits_smart">O SMART usa o motor do LatentJam (Apache License 2.0).</string>
+    <string name="settings_credits_smart">O Smart usa o motor do LatentJam (Apache License 2.0).</string>
     <string name="settings_reset">Restaurar ajustes padrão</string>
     <string name="reset_title">Restaurar os ajustes padrão?</string>
     <string name="reset_message">Tema, cor e comportamento voltam ao que eram. Histórico, playlists e curtidas continuam.</string>
@@ -231,8 +231,8 @@
     <string name="stats_plays">Reproduções</string>
     <string name="stats_distinct">Músicas diferentes</string>
     <string name="stats_first">Primeiras escutas</string>
-    <string name="stats_more">%1$d%% a mais que no período anterior</string>
-    <string name="stats_less">%1$d%% a menos que no período anterior</string>
+    <string name="stats_more">%1$,d%% a mais que no período anterior</string>
+    <string name="stats_less">%1$,d%% a menos que no período anterior</string>
     <string name="stats_top_tracks">Músicas mais ouvidas</string>
     <string name="stats_top_artists">Artistas mais ouvidos</string>
     <string name="stats_top_albums">Álbuns mais ouvidos</string>
@@ -241,16 +241,16 @@
     <string name="stats_by_weekday">Por dia da semana</string>
     <string name="stats_minutes_label">minutos</string>
     <plurals name="plays_count">
-        <item quantity="one">%d vez</item>
-        <item quantity="other">%d vezes</item>
+        <item quantity="one">%,d vez</item>
+        <item quantity="other">%,d vezes</item>
     </plurals>
     <plurals name="hours_short">
-        <item quantity="one">%d h</item>
-        <item quantity="other">%d h</item>
+        <item quantity="one">%,d h</item>
+        <item quantity="other">%,d h</item>
     </plurals>
     <plurals name="minutes_short">
-        <item quantity="one">%d min</item>
-        <item quantity="other">%d min</item>
+        <item quantity="one">%,d min</item>
+        <item quantity="other">%,d min</item>
     </plurals>
     <!-- Letras e normalização -->
     <string name="cd_close_lyrics">Fechar letra</string>
@@ -269,10 +269,10 @@
     <string name="settings_crossfade">Crossfade</string>
     <string name="settings_crossfade_hint">O fim de uma música some enquanto a próxima entra, as duas juntas por um instante. Só quando a faixa acaba sozinha; pular corta na hora.</string>
     <string name="settings_crossfade_length">Duração da transição</string>
-    <string name="settings_crossfade_length_smart">Duração da transição (nas filas SMART, o meio da faixa de ajuste)</string>
-    <string name="seconds_short">%d s</string>
-    <string name="settings_crossfade_smart">Deixar o SMART adaptar a duração</string>
-    <string name="settings_crossfade_smart_hint">Nas filas SMART, músicas que soam parecidas ganham uma mistura mais longa, e mudanças grandes, uma mais curta.</string>
+    <string name="settings_crossfade_length_smart">Duração da transição (nas filas Smart, o meio da faixa de ajuste)</string>
+    <string name="seconds_short">%,d s</string>
+    <string name="settings_crossfade_smart">Deixar o Smart adaptar a duração</string>
+    <string name="settings_crossfade_smart_hint">Nas filas Smart, músicas que soam parecidas ganham uma mistura mais longa, e mudanças grandes, uma mais curta.</string>
     <string name="settings_crossfade_albums">Manter álbuns inteiros</string>
     <string name="settings_crossfade_albums_hint">Sem crossfade entre faixas do mesmo álbum, para discos ao vivo e sem pausa tocarem como foram gravados.</string>
     <!-- Fase 3: inteligência -->
@@ -290,8 +290,8 @@
     <string name="edit_smart_playlist">Editar playlist inteligente</string>
     <string name="your_playlists">Suas playlists</string>
     <plurals name="rules_count">
-        <item quantity="one">%d regra</item>
-        <item quantity="other">%d regras</item>
+        <item quantity="one">%,d regra</item>
+        <item quantity="other">%,d regras</item>
     </plurals>
     <string name="rules">Regras</string>
     <string name="match_all">Todas as regras</string>
@@ -329,7 +329,7 @@
     <string name="recommend_again">Voltar a recomendar esta música</string>
     <string name="dont_recommend_artist">Não recomendar %1$s</string>
     <string name="not_recommended">Não recomendar</string>
-    <string name="not_recommended_hint">O SMART e o Para você deixam estes de fora. Você ainda pode tocá-los.</string>
+    <string name="not_recommended_hint">O Smart e o Para você deixam estes de fora. Você ainda pode tocá-los.</string>
     <string name="not_recommended_none">Nada aqui. Use “Não recomendar” no menu de uma música.</string>
     <string name="allow_again">Voltar a recomendar %1$s</string>
     <string name="organize">Organizar biblioteca</string>
@@ -379,7 +379,7 @@
     <string name="search_period">Período: %1$d–%2$d</string>
     <string name="search_genre">Gênero: %1$s</string>
     <string name="search_browse">Navegar por gênero</string>
-    <string name="search_show_all">Mostrar as %1$d músicas</string>
+    <string name="search_show_all">Mostrar as %1$,d músicas</string>
     <string name="search_match_style">Combinam com o estilo</string>
     <string name="cd_play_item">Tocar %1$s</string>
     <string name="lyrics_label">Letra</string>
@@ -393,8 +393,8 @@
     <string name="cd_remove_filter">Remover %1$s</string>
     <string name="tab_up_next">A seguir</string>
     <string name="tab_why">Por que tocou</string>
-    <string name="why_smart">O SMART escolheu porque soa parecido com “%1$s”, de %2$s.</string>
-    <string name="why_smart_hint">Escolhida pelo som, da sua própria biblioteca. Pule para ensinar o SMART.</string>
+    <string name="why_smart">O Smart escolheu porque soa parecido com “%1$s”, de %2$s.</string>
+    <string name="why_smart_hint">Escolhida pelo som, da sua própria biblioteca. Pule para ensinar o Smart.</string>
     <string name="why_shuffle">Em ordem aleatória, de %1$s.</string>
     <string name="why_source">Você começou a tocar %1$s.</string>
     <string name="why_seed">O mix começou aqui: as próximas soam parecido com esta.</string>
@@ -404,22 +404,22 @@
     <string name="mode_shuffle">Aleatório</string>
     <string name="mode_repeat">Repetir</string>
     <string name="mode_repeat_one">Repetir 1</string>
-    <string name="settings_layout">Layout</string>
+    <string name="settings_layout">Estilo</string>
     <string name="layout_ondas">Ondas</string>
-    <string name="layout_ondas_hint">Progresso em onda, botões com nome e o porquê de cada escolha do SMART</string>
+    <string name="layout_ondas_hint">Explicativo: a onda em todo progresso e o porquê de cada escolha do Smart</string>
     <string name="layout_contrast">Contraste</string>
-    <string name="layout_contrast_hint">Player tingido pela capa, com texto branco</string>
-    <string name="layout_classic">Clássica</string>
-    <string name="layout_classic_hint">O visual da primeira versão</string>
+    <string name="layout_contrast_hint">Intenso: o player toma a cor da capa e o branco marca as ações</string>
+    <string name="layout_classic">Clássico</string>
+    <string name="layout_classic_hint">Sóbrio: capas reais, linha de progresso e rótulos em caixa-alta</string>
     <string name="icon_style_line">Traço</string>
     <string name="cd_expand_panel">Abrir painel</string>
     <string name="cd_collapse_panel">Minimizar painel</string>
-    <string name="taste_section">O que o SMART aprendeu</string>
+    <string name="taste_section">O que o Smart aprendeu</string>
     <string name="taste_learn">Aprender o meu gosto</string>
-    <string name="taste_learn_hint">Treina um modelo pequeno neste celular com o que você ouve até o fim e o que você pula. As filas do SMART puxam para o seu gosto. Nada sai do aparelho.</string>
+    <string name="taste_learn_hint">Treina um modelo pequeno neste celular com o que você ouve até o fim e o que você pula. As filas do Smart puxam para o seu gosto. Nada sai do aparelho.</string>
     <string name="taste_not_yet">Ainda aprendendo: ouça algumas músicas (umas até o fim, pule outras) e o primeiro treino acontece sozinho.</string>
-    <string name="taste_trained">Treinado com %1$d escutas %2$s</string>
-    <string name="taste_accuracy">acerta %1$d%% dos pulos recentes</string>
+    <string name="taste_trained">Treinado com %1$,d escutas %2$s</string>
+    <string name="taste_accuracy">acerta %1$,d%% dos pulos recentes</string>
     <string name="taste_profile_only">só o perfil de gosto (precisa de mais pulos para prevê-los)</string>
     <string name="taste_train_now">Treinar agora</string>
     <string name="taste_train_now_hint">Ele também retreina sozinho a cada 15 escutas novas.</string>
@@ -436,23 +436,23 @@
     <string name="browse_month_genre">Seu gênero do mês</string>
     <string name="browse_top_genre">O maior da sua biblioteca</string>
     <string name="browse_listened">%1$s ouvidas</string>
-    <string name="browse_hours">%1$d h</string>
-    <string name="browse_minutes">%1$d min</string>
+    <string name="browse_hours">%1$,d h</string>
+    <string name="browse_minutes">%1$,d min</string>
     <string name="browse_play_genre">Tocar %1$s em ordem aleatória</string>
-    <string name="browse_show_all">Ver todos os gêneros (%1$d)</string>
+    <string name="browse_show_all">Ver todos os gêneros (%1$,d)</string>
     <string name="browse_show_less">Mostrar menos</string>
     <string name="browse_tags_title">Tags para arrumar</string>
     <plurals name="browse_tags_sub">
-        <item quantity="one">%d música com gênero genérico</item>
-        <item quantity="many">%d músicas com gênero genérico</item>
-        <item quantity="other">%d músicas com gênero genérico</item>
+        <item quantity="one">%,d música com gênero genérico</item>
+        <item quantity="many">%,d músicas com gênero genérico</item>
+        <item quantity="other">%,d músicas com gênero genérico</item>
     </plurals>
     <string name="browse_review">Revisar</string>
     <string name="browse_loading_title">Lendo suas músicas…</string>
     <string name="browse_loading_sub">Os gêneros e as décadas aparecem quando a leitura terminar.</string>
     <string name="browse_no_genres">Nenhum gênero encontrado nas tags das suas músicas.</string>
     <string name="layout_essencial">Essencial</string>
-    <string name="layout_essencial_hint">Capas em destaque e só o essencial em cada tela</string>
+    <string name="layout_essencial_hint">Limpo: capas grandes e nenhum enfeite</string>
     <string name="ess_continue">Continuar</string>
     <string name="ess_remaining">faltam %1$s</string>
     <string name="ess_mixes">Seus mixes</string>
@@ -465,16 +465,16 @@
     <string name="ess_sort_az">De A a Z</string>
     <string name="ess_sort_added">Adicionados recentemente</string>
     <string name="thanks_title">Agradecimentos</string>
-    <string name="thanks_message">O motor SMART só foi possível neste projeto graças ao esforço de Nikita-sud e do seu projeto LatentJam.\nMeus sinceros agradecimentos.</string>
+    <string name="thanks_message">O motor Smart só foi possível neste projeto graças ao esforço de Nikita-sud e do seu projeto LatentJam.\nMeus sinceros agradecimentos.</string>
     <string name="thanks_link">Ver o LatentJam no GitHub</string>
     <string name="settings_tinted_background">Fundo colorido</string>
     <string name="settings_tinted_background_hint">Fundo e cartões no tom da cor de destaque, em todos os layouts</string>
     <string name="settings_system_colors">Cores do Android</string>
     <string name="settings_system_colors_hint">Usa a cor do papel de parede (Material You) no lugar da cor de destaque</string>
     <plurals name="lib_tags_banner">
-        <item quantity="one">%d música com tags para arrumar</item>
-        <item quantity="many">%d músicas com tags para arrumar</item>
-        <item quantity="other">%d músicas com tags para arrumar</item>
+        <item quantity="one">%,d música com tags para arrumar</item>
+        <item quantity="many">%,d músicas com tags para arrumar</item>
+        <item quantity="other">%,d músicas com tags para arrumar</item>
     </plurals>
     <string name="lib_tags_banner_sub">Gênero genérico ou faltando artista, álbum ou ano</string>
     <string name="lib_tags_banner_hide">Ocultar aviso</string>
@@ -484,17 +484,17 @@
     <string name="welcome_title_loading">Lendo suas músicas…</string>
     <string name="welcome_sub_loading">Na primeira vez leva só um instante.</string>
     <plurals name="welcome_sub">
-        <item quantity="one">Encontramos %d música. Você já pode começar a ouvir.</item>
-        <item quantity="many">Encontramos %d músicas. Você já pode começar a ouvir.</item>
-        <item quantity="other">Encontramos %d músicas. Você já pode começar a ouvir.</item>
+        <item quantity="one">Encontramos %,d música. Você já pode começar a ouvir.</item>
+        <item quantity="many">Encontramos %,d músicas. Você já pode começar a ouvir.</item>
+        <item quantity="other">Encontramos %,d músicas. Você já pode começar a ouvir.</item>
     </plurals>
     <plurals name="welcome_sub_smart">
-        <item quantity="one">Encontramos %d música. Você já pode ouvir enquanto o SMART conhece o som dela.</item>
-        <item quantity="many">Encontramos %d músicas. Você já pode ouvir enquanto o SMART conhece o som de cada uma.</item>
-        <item quantity="other">Encontramos %d músicas. Você já pode ouvir enquanto o SMART conhece o som de cada uma.</item>
+        <item quantity="one">Encontramos %,d música. Você já pode ouvir enquanto o Smart conhece o som dela.</item>
+        <item quantity="many">Encontramos %,d músicas. Você já pode ouvir enquanto o Smart conhece o som de cada uma.</item>
+        <item quantity="other">Encontramos %,d músicas. Você já pode ouvir enquanto o Smart conhece o som de cada uma.</item>
     </plurals>
-    <string name="welcome_smart_listening">SMART ouvindo sua biblioteca</string>
-    <string name="welcome_smart_count">%1$d de %2$d · continua em segundo plano, mais rápido com o celular carregando</string>
+    <string name="welcome_smart_listening">Smart ouvindo sua biblioteca</string>
+    <string name="welcome_smart_count">%1$,d de %2$,d · continua em segundo plano, mais rápido com o celular carregando</string>
     <string name="welcome_point_now">Já funciona</string>
     <string name="welcome_point_now_text">Tocar, buscar, playlists e a tela Para você, desde agora.</string>
     <string name="welcome_point_now_text_smart">Tocar, buscar e mixes por artista e gênero, desde agora.</string>
@@ -531,9 +531,9 @@
     <string name="settings_ignored_folders">Pastas na biblioteca</string>
     <string name="settings_ignored_folders_none">Todas as pastas entram</string>
     <plurals name="settings_ignored_folders_count">
-        <item quantity="one">%d pasta ignorada</item>
-        <item quantity="many">%d pastas ignoradas</item>
-        <item quantity="other">%d pastas ignoradas</item>
+        <item quantity="one">%,d pasta ignorada</item>
+        <item quantity="many">%,d pastas ignoradas</item>
+        <item quantity="other">%,d pastas ignoradas</item>
     </plurals>
     <string name="settings_ignored_folders_empty">Nenhuma pasta encontrada ainda.</string>
     <string name="shortcut_mix_now">Mix de agora</string>
@@ -558,14 +558,14 @@
     <string name="tags_field_year">Ano</string>
     <string name="tags_missing">faltando</string>
     <string name="tags_generic">genérico demais</string>
-    <string name="tags_note">As correções ficam salvas no Sonivell e valem no app todo e no SMART. O arquivo da música não é alterado.</string>
+    <string name="tags_note">As correções ficam salvas no Sonivell e valem no app todo e no Smart. O arquivo da música não é alterado.</string>
     <string name="tags_restore">Restaurar tags originais</string>
     <string name="tags_saved">Tags salvas</string>
     <string name="tags_restored">Tags originais restauradas</string>
     <!-- Notas -->
     <plurals name="rating_stars">
-        <item quantity="one">%d estrela</item>
-        <item quantity="other">%d estrelas</item>
+        <item quantity="one">%,d estrela</item>
+        <item quantity="other">%,d estrelas</item>
     </plurals>
     <string name="auto_top_rated">Bem avaliadas</string>
     <!-- Capa personalizada -->
@@ -577,11 +577,11 @@
     <string name="retro_title">Seu mês em música</string>
     <string name="retro_hint">Os últimos 30 dias: horas, música, artista e gênero do mês</string>
     <string name="retro_hours">%1$s horas</string>
-    <string name="retro_tracks">%1$d músicas diferentes · %2$d ouvidas pela primeira vez</string>
+    <string name="retro_tracks">%1$,d músicas diferentes · %2$,d ouvidas pela primeira vez</string>
     <string name="retro_top_track">Música do mês</string>
     <string name="retro_top_artist">Artista do mês</string>
     <string name="retro_top_genre">Gênero do mês</string>
-    <string name="retro_plays">%1$d vezes</string>
+    <string name="retro_plays">%1$,d vezes</string>
     <string name="retro_share">Compartilhar como imagem</string>
     <!-- Backup -->
     <string name="backup_section">Seus dados</string>
@@ -605,7 +605,7 @@
     <string name="mood_workout">Treino</string>
     <string name="mood_night">Noite</string>
     <string name="mood_nostalgia">Nostalgia</string>
-    <string name="mood_empty">O SMART ainda não achou nada para esse clima</string>
+    <string name="mood_empty">O Smart ainda não achou nada para esse clima</string>
     <!-- Busca na letra -->
     <string name="search_in_lyrics">Na letra</string>
     <string name="search_lyrics_hint">Procura nas letras salvas no aparelho (pasta de letras e letras embutidas que você já abriu).</string>
@@ -613,14 +613,14 @@
 
     <!-- Ajustes em páginas -->
     <string name="settings_transitions">Transições</string>
-    <string name="settings_smart_page">SMART e recomendações</string>
+    <string name="settings_smart_page">Smart e recomendações</string>
     <string name="settings_history_page">Histórico e estatísticas</string>
     <string name="settings_search">Buscar ajuste</string>
     <string name="settings_search_none">Nenhum ajuste com esse nome</string>
     <string name="sum_playback">Velocidade %1$s · fone e Bluetooth</string>
     <string name="sum_crossfade_off">Crossfade desligado</string>
-    <string name="sum_crossfade">Crossfade %1$d s</string>
-    <string name="sum_crossfade_smart">Crossfade %1$d s · adaptado pelo SMART</string>
+    <string name="sum_crossfade">Crossfade %1$,d s</string>
+    <string name="sum_crossfade_smart">Crossfade %1$,d s · adaptado pelo Smart</string>
     <string name="sum_smart">Variedade %1$s · %2$s</string>
     <string name="sum_taste_on">aprendendo seu gosto</string>
     <string name="sum_taste_off">sem aprender seu gosto</string>
@@ -639,7 +639,7 @@
 
     <!-- Tema Sonivell -->
     <string name="layout_sonivell">Sonivell</string>
-    <string name="layout_sonivell_hint">Visual do Ondas com sensações, Flow, mapa musical, momentos e perfil</string>
+    <string name="layout_sonivell_hint">Expressivo: colagens de capas, Flow em destaque e raios generosos</string>
     <string name="nav_explore">Explorar</string>
     <string name="nav_profile">Perfil</string>
     <string name="sv_home_title">O que vamos ouvir agora?</string>
@@ -655,7 +655,7 @@
     <string name="sv_mood_other">Outro</string>
     <string name="sv_most_sub">Top 100</string>
     <string name="sv_new">Novas</string>
-    <string name="sv_new_sub">30 dias · %1$d</string>
+    <string name="sv_new_sub">%1$,d em 30 dias</string>
     <string name="sv_flow_title">Seu Flow de hoje</string>
     <string name="sv_flow_sub">Uma sequência feita para o seu momento.</string>
     <string name="sv_flow_desc">Com base no que você ouve neste horário, nos pulos recentes e nas favoritas.</string>
@@ -668,7 +668,7 @@
     <string name="sv_genres">Gêneros</string>
     <string name="sv_all">Todas</string>
     <string name="sv_see_all">Ver todos</string>
-    <string name="sv_songs_count">%1$d músicas</string>
+    <string name="sv_songs_count">%1$,d músicas</string>
     <string name="sv_map_title">Seu mapa musical</string>
     <string name="sv_map_sub">Aqui está o universo da sua música.</string>
     <string name="sv_map_explore">Explorar conexões</string>
@@ -677,10 +677,10 @@
     <string name="sv_analysis_sub">O Sonivell está ouvindo sua biblioteca.</string>
     <string name="sv_analysis_done">analisado</string>
     <string name="sv_analysis_tracks">Faixas ouvidas pelo modelo</string>
-    <string name="sv_analysis_count">%1$d de %2$d</string>
-    <string name="sv_analysis_note">O SMART já funciona e melhora conforme a análise avança.</string>
+    <string name="sv_analysis_count">%1$,d de %2$,d músicas analisadas</string>
+    <string name="sv_analysis_note">O Smart já funciona e melhora conforme a análise avança.</string>
     <string name="sv_analysis_private">Nada sai do seu aparelho.</string>
-    <string name="sv_analysis_lite">Disponível na edição SMART.</string>
+    <string name="sv_analysis_lite">Disponível na edição Smart.</string>
     <string name="sv_moments_title">Momentos</string>
     <string name="sv_moments_sub">Músicas que marcaram suas fases.</string>
     <string name="sv_moments_now">Agora</string>
@@ -696,17 +696,26 @@
     <string name="sv_stat_songs">músicas</string>
     <string name="sv_stat_artists">artistas</string>
     <string name="sv_stat_hours">este mês</string>
-    <string name="sv_row_profile">Meu perfil sonoro</string>
-    <string name="sv_row_profile_hint">Estatísticas e histórico de escuta</string>
+    <string name="sv_row_profile">Seu perfil sonoro</string>
+    <string name="sv_row_profile_hint">Estatísticas, histórico e seu mês em música</string>
     <string name="sv_row_prefs">Preferências</string>
-    <string name="sv_row_prefs_hint">O que o SMART aprende e evita</string>
+    <string name="sv_row_prefs_hint">O que o Smart aprende e evita</string>
     <string name="sv_row_visual">Visual</string>
-    <string name="sv_row_visual_hint">Layouts, cores e ícones</string>
-    <string name="sv_row_settings">Configurações</string>
-    <string name="sv_row_settings_hint">Aparência, reprodução, SMART e mais</string>
+    <string name="sv_row_visual_hint">Estilo, modo e cores</string>
+    <string name="sv_row_settings">Ajustes</string>
+    <string name="sv_row_settings_hint">Aparência, som, Smart e biblioteca</string>
     <string name="sv_tagline">Sua história, em som.</string>
     <string name="sv_tagline_sub">O que te move, o que te acalma, o que te faz voltar.</string>
     <string name="sv_why_title">Por que tocou</string>
     <string name="sv_discover">Descobrir</string>
-    <string name="np_smart_on">SMART · fila pelo som</string>
+    <string name="np_smart_on">Smart · fila pelo som</string>
+    <string name="label_collection">Coleção</string>
+    <string name="np_queue_by_sound">Fila pelo som</string>
+    <string name="np_smart">Smart</string>
+    <string name="np_queue">Fila</string>
+    <string name="np_output">Saída de áudio</string>
+    <string name="timer_state_off">Desligado</string>
+    <string name="why_line_smart">Tocou porque soa como “%1$s”</string>
+    <string name="why_details">Ver detalhes</string>
+    <string name="action_playlist">Playlist</string>
 </resources>

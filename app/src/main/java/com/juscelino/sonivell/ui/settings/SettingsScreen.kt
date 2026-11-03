@@ -379,38 +379,19 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
     val c = SonivellTheme.colors
     // Prévia ao vivo: já usa o tema aplicado, então mostra o resultado de cada escolha.
     AppearancePreview()
+    // Os cinco estilos lado a lado, descritos pela assinatura visual (nunca por recursos: Flow, mapa
+    // musical, Momentos, Respira e Perfil existem em qualquer estilo).
     Group(stringResource(R.string.settings_layout)) {
-        val legacy = settings.uiStyle == UiStyle.CONTRASTE || settings.uiStyle == UiStyle.CLASSICA
-        var showLegacy by rememberSaveable { mutableStateOf(legacy) }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(
+                Triple(UiStyle.SONIVELL, R.string.layout_sonivell, R.string.layout_sonivell_hint),
                 Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
                 Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
-                Triple(UiStyle.SONIVELL, R.string.layout_sonivell, R.string.layout_sonivell_hint),
+                Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
+                Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
             ).forEach { (style, name, hint) ->
                 LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
                     actions.onUpdate { it.copy(uiStyle = style) }
-                }
-            }
-            Text(
-                stringResource(if (showLegacy) R.string.settings_legacy_hide else R.string.settings_legacy_show),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = c.textSecondary,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable(role = Role.Button) { showLegacy = !showLegacy }
-                    .heightIn(min = 44.dp)
-                    .padding(vertical = 12.dp, horizontal = 8.dp),
-            )
-            if (showLegacy) {
-                listOf(
-                    Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
-                    Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
-                ).forEach { (style, name, hint) ->
-                    LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
-                        actions.onUpdate { it.copy(uiStyle = style) }
-                    }
                 }
             }
         }
@@ -458,7 +439,8 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
         }
     }
     Card {
-        val themes = listOf(ThemeMode.AUTO to R.string.theme_auto, ThemeMode.LIGHT to R.string.theme_light, ThemeMode.DARK to R.string.theme_dark)
+        // Modo, separado do estilo: Escuro · Claro · Sistema.
+        val themes = listOf(ThemeMode.DARK to R.string.theme_dark, ThemeMode.LIGHT to R.string.theme_light, ThemeMode.AUTO to R.string.theme_auto)
         ChoiceRow(
             stringResource(R.string.settings_theme),
             null,
@@ -476,18 +458,7 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
             ) { on -> actions.onUpdate { it.copy(darkBackground = if (on) DarkBackground.Preto else DarkBackground.Grafite) } }
         }
     }
-    Group(stringResource(R.string.settings_icon_style)) {
-        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            IconStyle.entries.forEach { style ->
-                IconStyleOption(
-                    style = style,
-                    label = stringResource(iconStyleNames[style.ordinal]),
-                    selected = settings.iconStyle == style,
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                ) { actions.onUpdate { it.copy(iconStyle = style) } }
-            }
-        }
-    }
+    // O peso dos ícones é definido por cada estilo; a escolha manual saiu.
 }
 
 @Composable

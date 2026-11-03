@@ -279,7 +279,11 @@ fun SvCircleArt(track: Track?, size: androidx.compose.ui.unit.Dp, modifier: Modi
     AlbumArt(track, modifier.size(size), corner = size * 0.28f, detailed = false)
 }
 
-/** Barra de navegação do Ondas com as abas do tema: a aba atual fica preenchida na cor de destaque. */
+/**
+ * Barra inferior (Sonivell, Ondas e Essencial): quatro abas em posição fixa, ícone e rótulo sempre
+ * visíveis. A aba ativa ganha um fundo suave na cor de destaque dentro da própria célula, sem empurrar
+ * as vizinhas.
+ */
 @Composable
 fun BottomNavSonivell(route: String?, tabs: List<SvTab>, onSelect: (String) -> Unit) {
     val nc = SonivellTheme.colors
@@ -290,49 +294,41 @@ fun BottomNavSonivell(route: String?, tabs: List<SvTab>, onSelect: (String) -> U
         Modifier
             .fillMaxWidth()
             .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)
-            .height(60.dp)
+            .height(64.dp)
             .then(
                 if (glass) Modifier.glassSurface(barShape, nc.surface, nc.outline, elevation = 12.dp)
                 else Modifier.clip(barShape).background(nc.surface),
             )
             .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         tabs.forEach { tab ->
             val selected = tab.route == route
-            // No vidro a aba atual é translúcida, com ícone e nome na cor de destaque.
-            val color = when {
-                !selected -> nc.textSecondary
-                glass -> nc.accent
-                else -> nc.onAccent
-            }
-            // Só a aba atual mostra o nome.
-            Row(
+            val color = if (selected) nc.accent else nc.textSecondary
+            Column(
                 Modifier
-                    .weight(if (selected) 1.6f else 1f)
+                    .weight(1f)
                     .fillMaxHeight()
-                    .then(
-                        when {
-                            !selected -> Modifier.clip(tabShape)
-                            glass -> Modifier.glassAccent(tabShape, nc.accent)
-                            else -> Modifier.clip(tabShape).background(nc.accent)
-                        },
-                    )
+                    .clip(tabShape)
+                    .background(if (selected) nc.accent.copy(alpha = 0.14f) else Color.Transparent)
                     .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(tab.route) }),
-                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically),
             ) {
-                val label = stringResource(tab.label)
-                Icon(if (selected) tab.activeIcon else tab.icon, if (selected) null else label, Modifier.size(20.dp), tint = color)
-                if (selected) {
-                    Text(label, style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp), fontWeight = FontWeight.ExtraBold, color = color, maxLines = 1)
-                }
+                Icon(if (selected) tab.activeIcon else tab.icon, null, Modifier.size(20.dp), tint = color)
+                Text(
+                    stringResource(tab.label),
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.sp),
+                    fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+                    color = color,
+                    maxLines = 1,
+                )
             }
         }
     }
 }
 
-/** Mini player do tema: o mesmo do Ondas. */
+/** Mini player do tema: capa, título, artista e play; linha de 3 dp na base no lugar da onda. */
 @Composable
 fun MiniPlayerSonivell(
     track: Track,
@@ -342,5 +338,5 @@ fun MiniPlayerSonivell(
     onTogglePlay: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    MiniPlayerOndas(track, isPlaying, progress, onOpen, onTogglePlay, modifier)
+    MiniPlayerOndas(track, isPlaying, progress, onOpen, onTogglePlay, modifier, wave = false)
 }

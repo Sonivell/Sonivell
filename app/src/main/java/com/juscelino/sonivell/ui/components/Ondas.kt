@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -139,7 +140,7 @@ fun PlaySquircle(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = 44.dp,
-    corner: Dp = 14.dp,
+    @Suppress("UNUSED_PARAMETER") corner: Dp = 14.dp,
     iconSize: Dp = 18.dp,
     contentDescription: String? = null,
     background: Color = SonivellTheme.colors.accent,
@@ -150,7 +151,8 @@ fun PlaySquircle(
     Box(
         modifier
             .size(size)
-            .clip(RoundedCornerShape(corner))
+            // Play sempre circular, em todo o app (proposta visual); [corner] ficou para os chamadores.
+            .clip(CircleShape)
             .background(background)
             .clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
             .semantics { this.contentDescription = label },
@@ -160,7 +162,10 @@ fun PlaySquircle(
     }
 }
 
-/** Mini player Ondas: cartão flutuante com a onda da faixa como progresso. */
+/**
+ * Mini player: capa, título, artista e play circular. Com [wave] (estilo Ondas) a onda de 16 dp é o
+ * progresso; sem ela (Sonivell, Essencial), uma linha de 3 dp na base do cartão. Tocar abre o player.
+ */
 @Composable
 fun MiniPlayerOndas(
     track: Track,
@@ -169,11 +174,12 @@ fun MiniPlayerOndas(
     onOpen: () -> Unit,
     onTogglePlay: () -> Unit,
     modifier: Modifier = Modifier,
+    wave: Boolean = true,
 ) {
     val c = SonivellTheme.colors
     val openPlayer = stringResource(R.string.cd_open_player)
     val shape = RoundedCornerShape(20.dp)
-    Row(
+    Column(
         modifier
             .padding(horizontal = 12.dp)
             .fillMaxWidth()
@@ -182,24 +188,29 @@ fun MiniPlayerOndas(
                 if (SonivellTheme.glass) Modifier.glassSurface(shape, c.surface, c.outline, elevation = 12.dp)
                 else Modifier.clip(shape).background(c.surface).border(1.dp, c.outline, shape),
             )
-            .clickable(onClickLabel = openPlayer, onClick = onOpen)
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+            .clickable(onClickLabel = openPlayer, onClick = onOpen),
     ) {
-        AlbumArt(track, Modifier.size(44.dp), corner = 12.dp)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text(
-                buildAnnotatedString {
-                    withStyle(SpanStyle(fontWeight = FontWeight.ExtraBold, color = c.textPrimary)) { append(track.title) }
-                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = c.textSecondary)) { append(" · " + track.artist) }
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Waveform(track.id, progress, Modifier.fillMaxWidth().height(12.dp), bars = 36, barWidth = 2.dp)
+        Row(
+            Modifier.fillMaxWidth().padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            AlbumArt(track, Modifier.size(44.dp), corner = 12.dp)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(track.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (wave) {
+                    Waveform(track.id, progress, Modifier.fillMaxWidth().height(16.dp), bars = 36, barWidth = 2.dp)
+                } else {
+                    Text(track.artist, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            PlaySquircle(isPlaying, onTogglePlay)
         }
-        PlaySquircle(isPlaying, onTogglePlay)
+        if (!wave) {
+            Box(Modifier.padding(horizontal = 14.dp).fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+                Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(3.dp).background(c.accent))
+            }
+            Box(Modifier.height(6.dp))
+        }
     }
 }

@@ -180,17 +180,18 @@ val Manrope = FontFamily(
     manrope(400), manrope(500), manrope(600), manrope(700), manrope(800),
 )
 
+/** Números tabulares (tnum) em todo o app: contagens, durações e tempos alinham em coluna. */
 private val SonivellTypography = Typography(
-    displaySmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, letterSpacing = (-0.6).sp),
-    headlineSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, letterSpacing = (-0.5).sp),
-    titleLarge = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp),
-    titleMedium = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 15.sp),
-    titleSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 14.sp),
-    bodyLarge = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Medium, fontSize = 15.sp),
-    bodyMedium = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Medium, fontSize = 13.sp),
-    labelLarge = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 14.sp),
-    labelMedium = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.SemiBold, fontSize = 12.sp),
-    labelSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.4.sp),
+    displaySmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, letterSpacing = (-0.6).sp),
+    headlineSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, letterSpacing = (-0.5).sp),
+    titleLarge = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp),
+    titleMedium = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 15.sp),
+    titleSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 14.sp),
+    bodyLarge = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Medium, fontSize = 15.sp),
+    bodyMedium = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Medium, fontSize = 13.sp),
+    labelLarge = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 14.sp),
+    labelMedium = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.SemiBold, fontSize = 12.sp),
+    labelSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.4.sp),
 )
 
 val LocalSonivellColors = staticCompositionLocalOf { SonivellColors() }
