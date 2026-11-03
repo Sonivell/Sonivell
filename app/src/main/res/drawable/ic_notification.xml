@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ícone pequeno da notificação do player: silhueta da onda (ícone "Onda"). -->
+<!-- Ícone pequeno da notificação do player: a onda do ícone "Onda plana", mais aberta e com traço
+     mais grosso que no ícone do app, para continuar legível em 24 dp. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -8,8 +9,8 @@
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="3.2"
+        android:strokeWidth="3.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M3.49,12.69C5.79,6.25 9.47,6.25 12,12C14.53,17.75 18.21,17.75 20.51,11.31" />
+        android:pathData="M3.5,12C7,3.5 10.5,3.5 12,12C13.5,20.5 17,20.5 20.5,12" />
 </vector>
