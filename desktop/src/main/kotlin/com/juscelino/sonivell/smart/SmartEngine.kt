@@ -1,0 +1,91 @@
+package com.juscelino.sonivell.smart
+
+import com.juscelino.sonivell.data.ListenEvent
+import com.juscelino.sonivell.data.Track
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
+/**
+ * Progresso da análise da biblioteca.
+ * [analysed] faixas já "ouvidas" pelo modelo de áudio, de [total].
+ */
+data class SmartProgress(
+    val running: Boolean = false,
+    val analysed: Int = 0,
+    val total: Int = 0,
+    /** Vetores de metadados prontos: o SMART já funciona, mesmo antes de ouvir todo o áudio. */
+    val metadataReady: Boolean = false,
+    val failed: Boolean = false,
+)
+
+/**
+ * Aleatório inteligente: monta uma fila de músicas que soam parecidas com a escolhida.
+ *
+ * O app só conhece esta interface. Na edição "lite" ela é [NoSmartEngine]; na edição
+ * "smart" é o motor do LatentJam (veja src/smart). Assim o player continua leve para
+ * quem não quer a análise de som.
+ */
+interface SmartEngine {
+    val isAvailable: Boolean
+    val progress: StateFlow<SmartProgress>
+
+    /** Analisa (ou continua analisando) a biblioteca em segundo plano. Chamadas repetidas são baratas. */
+    fun analyse(library: List<Track>)
+
+    /**
+     * Nova fila a partir de [seed]: ids em ordem de reprodução, sem o próprio seed. Vazia se o SMART não puder rodar.
+     * [history]: escutas recentes, da mais antiga para a mais nova — o motor usa os pulos e as escutas completas
+     * da sessão para ajustar a fila.
+     */
+    suspend fun startQueue(seed: Track, library: List<Track>, length: Int, history: List<ListenEvent>): List<Long>
+
+    /**
+     * Continua uma fila SMART a partir da última faixa planejada [seed].
+     * [library] só traz o que pode entrar (sem o que já está na fila); [preceding] são as
+     * faixas da fila antes de [seed], da mais antiga para a mais recente.
+     */
+    suspend fun continueQueue(
+        seed: Track,
+        library: List<Track>,
+        length: Int,
+        preceding: List<Long>,
+        history: List<ListenEvent>,
+    ): List<Long>
+
+    /** Quanto o SMART evita várias músicas seguidas do mesmo artista: 0 (nada) a 4 (muito). */
+    fun setArtistVariety(level: Int) = Unit
+
+    /**
+     * Busca pelo sentido, não pelas letras exatas ("músicas animadas", "rock dos anos 90"),
+     * usando o codificador de texto do SMART. Ids do mais ao menos parecido.
+     */
+    suspend fun semanticSearch(query: String, limit: Int): List<Long> = emptyList()
+
+    /**
+     * A "impressão digital" de som de cada faixa já ouvida pelo modelo (vetor do LatentJam).
+     * Faixas ainda não analisadas ficam de fora. É a base do aprendizado do gosto.
+     */
+    suspend fun embeddings(ids: List<Long>): Map<Long, FloatArray> = emptyMap()
+
+    /**
+     * O quanto duas faixas soam parecidas, para o crossfade adaptativo: cosseno no espaço
+     * centrado do SMART (a média da biblioteca subtraída). Por volta de 0 é um par qualquer;
+     * de ~0,2 para cima, vizinhos bem próximos. Null se alguma das duas ainda não foi ouvida.
+     */
+    suspend fun transitionSimilarity(fromId: Long, toId: Long): Float? = null
+}
+
+object NoSmartEngine : SmartEngine {
+    override val isAvailable = false
+    override val progress: StateFlow<SmartProgress> = MutableStateFlow(SmartProgress())
+    override fun analyse(library: List<Track>) = Unit
+    override suspend fun startQueue(seed: Track, library: List<Track>, length: Int, history: List<ListenEvent>) =
+        emptyList<Long>()
+    override suspend fun continueQueue(
+        seed: Track,
+        library: List<Track>,
+        length: Int,
+        preceding: List<Long>,
+        history: List<ListenEvent>,
+    ) = emptyList<Long>()
+}

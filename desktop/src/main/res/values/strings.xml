@@ -12,7 +12,7 @@
     <string name="desktop_no_tools">Sonivell needs ffmpeg to read and play your songs. Install it with: sudo apt install ffmpeg</string>
     <string name="desktop_empty">No music found in your folders. Add a folder in Settings.</string>
     <string name="desktop_audio_error">Audio problem: %1$s</string>
-    <string name="desktop_shortcuts">Space plays or pauses. Ctrl+Right and Ctrl+Left skip songs.</string>
+    <string name="desktop_shortcuts">Space plays or pauses. Ctrl+Arrows change song and volume. Ctrl+F search, Ctrl+L lyrics, Ctrl+Q queue, Ctrl+M compact mode, Esc goes back.</string>
     <string name="desktop_open_player">Open full player</string>
     <string name="desktop_show_queue">Show queue panel</string>
     <string name="desktop_back">Back</string>
@@ -38,4 +38,33 @@
     <string name="desktop_unmute">Unmute</string>
     <string name="desktop_on">On</string>
     <string name="desktop_off">Off</string>
+
+    <!-- Android texts with different wording on the PC (same key: the PC one wins). -->
+    <string name="library_empty">No music found in your folders. Add a folder in Settings › Library.</string>
+    <string name="this_phone">This computer</string>
+    <string name="delete_playlist_message">“%1$s” will be deleted. Your songs stay on the computer.</string>
+    <string name="import_none">None of the songs in that file are in your folders</string>
+    <string name="settings_privacy">Everything happens on this computer: no account, no internet, nothing is sent anywhere.</string>
+    <string name="taste_learn_hint">Trains a small model on this computer with what you finish and what you skip. Smart queues lean towards your taste. Nothing leaves here.</string>
+    <string name="welcome_smart_count">%1$,d of %2$,d · keeps going in the background while Sonivell is open</string>
+    <string name="settings_auto_refresh_hint">New songs show up by themselves when they arrive in your folders</string>
+    <string name="search_lyrics_hint">Searches the lyrics saved on this computer (next to the songs, in the lyrics folder and embedded lyrics you have opened).</string>
+    <string name="settings_publish_playlists_hint">Saves your playlists in Music/Playlists/Sonivell so other Linux players can see them</string>
+    <string name="settings_visualizer_hint">Animated bars over the cover in the player, from the sound Sonivell itself is playing. Nothing is recorded.</string>
+    <string name="lyrics_folder_hint">Choose the folder with your .lrc files, named like the songs (.lrc files next to the songs are always read)</string>
+    <string name="sv_analysis_private">Nothing leaves your computer.</string>
+    <string name="welcome_point_private">Everything stays on your computer</string>
+    <string name="equalizer_unavailable">The equalizer is ready: move the bands to hear the difference.</string>
+    <string name="permission_message">Sonivell reads the songs in the folders you choose. Nothing leaves your computer.</string>
+
+    <!-- PC only -->
+    <string name="desktop_analysis_count">%1$,d of %2$,d songs</string>
+    <string name="desktop_show_in_folder">Show in folder</string>
+    <string name="desktop_path_copied">File path copied</string>
+    <string name="desktop_trash_title">Move to trash?</string>
+    <plurals name="desktop_trash_message">
+        <item quantity="one">%,d file goes to the system trash. You can restore it from there.</item>
+        <item quantity="other">%,d files go to the system trash. You can restore them from there.</item>
+    </plurals>
+    <string name="desktop_trash_failed">Couldn't move the files to the trash</string>
 </resources>

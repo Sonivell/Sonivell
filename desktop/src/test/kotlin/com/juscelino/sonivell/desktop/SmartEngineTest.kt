@@ -4,9 +4,6 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 
@@ -26,14 +23,15 @@ class SmartEngineTest {
                 "-metadata", "title=Faixa $i", "-metadata", "artist=Artista ${i % 3}", "-metadata", "genre=Teste", file.path,
             ).redirectErrorStream(true).start()
             p.inputStream.readBytes(); p.waitFor()
-            Track(
-                id = trackIdOf(file.path), path = file.path, title = "Faixa $i", artist = "Artista ${i % 3}", albumArtist = "",
-                album = "Álbum", genre = "Teste", year = 2024, trackNo = i + 1, durationMs = 40_000, format = "FLAC",
-                bitrateKbps = 0, addedMs = System.currentTimeMillis(),
+            com.juscelino.sonivell.data.Track(
+                id = trackIdOf(file.path), uri = com.juscelino.sonivell.compat.Uri.fromFile(file), title = "Faixa $i", artist = "Artista ${i % 3}",
+                album = "Álbum", albumId = 1L, durationMs = 40_000, mimeType = "audio/flac", folder = music.path,
+                dateAdded = System.currentTimeMillis() / 1000, rawTitle = "Faixa $i", rawArtist = "Artista ${i % 3}", rawAlbum = "Álbum",
+                genre = "Teste", year = 2024, trackNumber = i + 1, fileName = file.name, sizeBytes = file.length(),
+                dateModified = file.lastModified() / 1000,
             )
         }
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        val bridge = SmartBridge(scope, File(dir, "smart"))
+        val bridge = com.juscelino.sonivell.smart.LatentJamSmartEngine.forTests(File(dir, "smart"))
         bridge.analyse(tracks)
         val done = runBlocking {
             withTimeout(240_000) {
@@ -48,7 +46,7 @@ class SmartEngineTest {
         assertTrue(!done.failed, "a análise falhou: $done")
         assertTrue(done.analysed == tracks.size, "faixas analisadas: ${done.analysed} de ${tracks.size}")
         val byId = tracks.associateBy { it.id }
-        val queue = runBlocking { bridge.startQueue(tracks[0], tracks.drop(1), 5, emptyList(), byId::get) }
+        val queue = runBlocking { bridge.startQueue(tracks[0], tracks.drop(1), 5, emptyList()) }
         println("SMART queue: $queue")
         assertTrue(queue.isNotEmpty(), "o SMART devolveu uma fila vazia")
         assertTrue(queue.all { it in byId && it != tracks[0].id })

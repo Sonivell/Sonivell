@@ -12,6 +12,11 @@ plugins {
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
+    // Ícones das telas trazidas do app Android (Icons.Rounded.*), navegação e lifecycle multiplataforma.
+    implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+    implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.1")
+    implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.6")
+    implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6")
     implementation(project(":desktop-smart"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.swing)
@@ -29,6 +34,29 @@ dependencies {
 // ---------------------------------------------------------------------------------------------
 val generatedStrings = layout.buildDirectory.dir("generated/strings")
 
+/** Converte o texto de um <string>/<item> do Android (aspas, \n, \t, \', \uXXXX) no texto final. */
+fun unescapeAndroid(raw: String): String {
+    val quoted = raw.trim().length >= 2 && raw.trim().startsWith("\"") && raw.trim().endsWith("\"")
+    val text = if (quoted) raw.trim().substring(1, raw.trim().length - 1) else raw.trim().replace(Regex("\\s+"), " ")
+    val sb = StringBuilder()
+    var k = 0
+    while (k < text.length) {
+        val c = text[k]
+        if (c == '\\' && k + 1 < text.length) {
+            when (val n = text[k + 1]) {
+                'n' -> { sb.append('\n'); k += 2 }
+                't' -> { sb.append('\t'); k += 2 }
+                'u' -> if (k + 5 < text.length) {
+                    sb.append(text.substring(k + 2, k + 6).toInt(16).toChar()); k += 6
+                } else { sb.append(n); k += 2 }
+                else -> { sb.append(n); k += 2 }
+            }
+        } else { sb.append(c); k++ }
+    }
+    return sb.toString()
+}
+
+/** Textos de um strings.xml: os <string> pelo nome e os <plurals> como "nome#quantidade". */
 fun readAndroidStrings(file: File): Map<String, String> {
     if (!file.exists()) return emptyMap()
     val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
@@ -37,51 +65,79 @@ fun readAndroidStrings(file: File): Map<String, String> {
     for (i in 0 until nodes.length) {
         val node = nodes.item(i)
         val attrs = node.attributes
-        if (attrs.getNamedItem("translatable")?.nodeValue == "false") continue
-        val name = attrs.getNamedItem("name").nodeValue
-        var text = node.textContent
-        val quoted = text.trim().length >= 2 && text.trim().startsWith("\"") && text.trim().endsWith("\"")
-        text = if (quoted) text.trim().substring(1, text.trim().length - 1) else text.trim().replace(Regex("\\s+"), " ")
-        val sb = StringBuilder()
-        var k = 0
-        while (k < text.length) {
-            val c = text[k]
-            if (c == '\\' && k + 1 < text.length) {
-                when (val n = text[k + 1]) {
-                    'n' -> { sb.append('\n'); k += 2 }
-                    't' -> { sb.append('\t'); k += 2 }
-                    'u' -> if (k + 5 < text.length) {
-                        sb.append(text.substring(k + 2, k + 6).toInt(16).toChar()); k += 6
-                    } else { sb.append(n); k += 2 }
-                    else -> { sb.append(n); k += 2 }
-                }
-            } else { sb.append(c); k++ }
+        if (attrs.getNamedItem("translatable")?.nodeValue == "false" && file.parentFile.name != "values") continue
+        out[attrs.getNamedItem("name").nodeValue] = unescapeAndroid(node.textContent)
+    }
+    val plurals = doc.getElementsByTagName("plurals")
+    for (i in 0 until plurals.length) {
+        val node = plurals.item(i)
+        val name = node.attributes.getNamedItem("name").nodeValue
+        val items = node.childNodes
+        for (j in 0 until items.length) {
+            val item = items.item(j)
+            if (item.nodeName != "item") continue
+            val quantity = item.attributes.getNamedItem("quantity").nodeValue
+            out["$name#$quantity"] = unescapeAndroid(item.textContent)
         }
-        out[name] = sb.toString()
     }
     return out
 }
+
+val generatedR = layout.buildDirectory.dir("generated/r")
 
 val generateStrings = tasks.register("generateStrings") {
     val appRes = rootProject.file("app/src/main/res")
     val deskRes = file("src/main/res")
     inputs.dir(appRes)
     inputs.dir(deskRes)
+    inputs.file(rootProject.file("version.properties"))
     outputs.dir(generatedStrings)
+    outputs.dir(generatedR)
     doLast {
         val outDir = generatedStrings.get().asFile.also { it.mkdirs() }
+        val names = sortedSetOf<String>()
         for ((suffix, folder) in listOf("en" to "values", "pt" to "values-pt-rBR")) {
             val merged = LinkedHashMap<String, String>()
             merged.putAll(readAndroidStrings(File(appRes, "$folder/strings.xml")))
             merged.putAll(readAndroidStrings(File(deskRes, "$folder/strings.xml")))
+            names.addAll(merged.keys)
             val props = Properties()
             merged.forEach { (k, v) -> props.setProperty(k, v) }
             File(outDir, "strings_$suffix.properties").writer(Charsets.UTF_8).use { props.store(it, null) }
         }
+        // R.string e R.plurals como no Android: cada nome vira um Int, e o Int volta ao nome em tempo
+        // de execução (R.names). Assim as telas trazidas do app usam stringResource(R.string.x) sem mudança.
+        val strings = names.filter { '#' !in it }
+        val plurals = names.filter { '#' in it }.map { it.substringBefore('#') }.distinct()
+        val sb = StringBuilder()
+        sb.append("// Gerado pelo desktop/build.gradle.kts (generateStrings). Não editar.\n")
+        sb.append("package com.juscelino.sonivell\n\n")
+        sb.append("@Suppress(\"ObjectPropertyName\", \"ConstPropertyName\", \"ClassName\")\n")
+        sb.append("object R {\n")
+        sb.append("    object string {\n")
+        strings.forEachIndexed { i, n -> sb.append("        const val `").append(n).append("`: Int = ").append(i + 1).append('\n') }
+        sb.append("    }\n    object plurals {\n")
+        plurals.forEachIndexed { i, n -> sb.append("        const val `").append(n).append("`: Int = ").append(100_000 + i + 1).append('\n') }
+        sb.append("    }\n    object font {\n        const val manrope: Int = 900_001\n    }\n")
+        sb.append("    /** Nome de cada id (strings a partir de 1, plurais a partir de 100.001). */\n")
+        sb.append("    val names: Map<Int, String> = buildMap {\n")
+        sb.append("        STRINGS.split('\\n').forEachIndexed { i, n -> put(i + 1, n) }\n")
+        sb.append("        PLURALS.split('\\n').forEachIndexed { i, n -> put(100_000 + i + 1, n) }\n")
+        sb.append("    }\n")
+        sb.append("    private const val STRINGS = \"").append(strings.joinToString("\\n")).append("\"\n")
+        sb.append("    private const val PLURALS = \"").append(plurals.joinToString("\\n")).append("\"\n")
+        sb.append("}\n")
+        // Versão única (version.properties) para a tela Sobre.
+        val version = Properties().apply { rootProject.file("version.properties").inputStream().use { load(it) } }.getProperty("versionName")
+        File(outDir, "version.txt").writeText(version)
+        val rDir = generatedR.get().asFile.resolve("com/juscelino/sonivell").also { it.mkdirs() }
+        File(rDir, "R.kt").writeText(sb.toString())
     }
 }
 sourceSets["main"].resources.srcDir(generatedStrings)
+kotlin.sourceSets["main"].kotlin.srcDir(generatedR)
 tasks.named("processResources") { dependsOn(generateStrings) }
+tasks.named("compileKotlin") { dependsOn(generateStrings) }
 
 tasks.test { useJUnitPlatform() }
 

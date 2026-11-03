@@ -12,7 +12,7 @@
     <string name="desktop_no_tools">O Sonivell precisa do ffmpeg para ler e tocar suas músicas. Instale com: sudo apt install ffmpeg</string>
     <string name="desktop_empty">Nenhuma música encontrada nas suas pastas. Adicione uma pasta em Ajustes.</string>
     <string name="desktop_audio_error">Problema de áudio: %1$s</string>
-    <string name="desktop_shortcuts">Espaço toca ou pausa. Ctrl+Seta direita e Ctrl+Seta esquerda trocam de música.</string>
+    <string name="desktop_shortcuts">Espaço toca ou pausa. Ctrl+Setas trocam de música e mudam o volume. Ctrl+F busca, Ctrl+L letra, Ctrl+Q fila, Ctrl+M modo compacto, Esc volta.</string>
     <string name="desktop_open_player">Abrir player completo</string>
     <string name="desktop_show_queue">Mostrar painel da fila</string>
     <string name="desktop_back">Voltar</string>
@@ -38,4 +38,33 @@
     <string name="desktop_unmute">Tirar do mudo</string>
     <string name="desktop_on">Ligado</string>
     <string name="desktop_off">Desligado</string>
+
+    <!-- Textos do app Android com outra redação no PC (mesma chave: o do PC vale). -->
+    <string name="library_empty">Nenhuma música encontrada nas suas pastas. Adicione uma pasta em Ajustes › Biblioteca.</string>
+    <string name="this_phone">Este computador</string>
+    <string name="delete_playlist_message">“%1$s” será excluída. Suas músicas continuam no computador.</string>
+    <string name="import_none">Nenhuma música desse arquivo está nas suas pastas</string>
+    <string name="settings_privacy">Tudo acontece neste computador: sem conta, sem internet, nada é enviado para lugar nenhum.</string>
+    <string name="taste_learn_hint">Treina um modelo pequeno neste computador com o que você ouve até o fim e o que você pula. As filas do Smart puxam para o seu gosto. Nada sai daqui.</string>
+    <string name="welcome_smart_count">%1$,d de %2$,d · continua em segundo plano enquanto o Sonivell está aberto</string>
+    <string name="settings_auto_refresh_hint">Músicas novas aparecem sozinhas quando chegam às suas pastas</string>
+    <string name="search_lyrics_hint">Procura nas letras salvas no computador (ao lado das músicas, na pasta de letras e nas embutidas que você já abriu).</string>
+    <string name="settings_publish_playlists_hint">Salva suas playlists em Música/Playlists/Sonivell para outros players do Linux verem</string>
+    <string name="settings_visualizer_hint">Barras animadas sobre a capa no player, a partir do som que o próprio Sonivell está tocando. Nada é gravado.</string>
+    <string name="lyrics_folder_hint">Escolha a pasta com seus arquivos .lrc, com o mesmo nome das músicas (os .lrc ao lado das músicas são lidos sempre)</string>
+    <string name="sv_analysis_private">Nada sai do seu computador.</string>
+    <string name="welcome_point_private">Tudo fica no seu computador</string>
+    <string name="equalizer_unavailable">O equalizador está pronto: mexa nas bandas para ouvir a diferença.</string>
+    <string name="permission_message">O Sonivell lê as músicas das pastas que você escolher. Nada sai do seu computador.</string>
+
+    <!-- Exclusivos do PC -->
+    <string name="desktop_analysis_count">%1$,d de %2$,d músicas</string>
+    <string name="desktop_show_in_folder">Mostrar na pasta</string>
+    <string name="desktop_path_copied">Caminho do arquivo copiado</string>
+    <string name="desktop_trash_title">Mandar para a lixeira?</string>
+    <plurals name="desktop_trash_message">
+        <item quantity="one">%,d arquivo vai para a lixeira do sistema. Dá para recuperar de lá.</item>
+        <item quantity="other">%,d arquivos vão para a lixeira do sistema. Dá para recuperar de lá.</item>
+    </plurals>
+    <string name="desktop_trash_failed">Não deu para mover os arquivos para a lixeira</string>
 </resources>

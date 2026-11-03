@@ -2,6 +2,10 @@
 
 package com.juscelino.sonivell.desktop
 
+import com.juscelino.sonivell.data.Track
+import com.juscelino.sonivell.playback.PlayerVolume
+import com.juscelino.sonivell.playback.RepeatMode
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,7 +50,10 @@ interface MprisPlayer : DBusInterface {
  * controlar o Sonivell, mesmo com a janela minimizada. Sem D-Bus (ou sem sessão gráfica),
  * simplesmente não liga — o resto do app segue igual.
  */
-class Mpris(private val ctl: Controller) : MprisRoot, MprisPlayer, Properties {
+class Mpris(private val vm: com.juscelino.sonivell.MainViewModel) : MprisRoot, MprisPlayer, Properties {
+    private val player get() = vm.player
+    private fun state() = vm.playerState.value
+    private fun currentTrack(): Track? = vm.currentTrack.value
 
     /** Traz a janela para a frente (Raise); ligado pelo Main.kt. */
     @Volatile var onRaise: (() -> Unit)? = null
@@ -66,8 +73,7 @@ class Mpris(private val ctl: Controller) : MprisRoot, MprisPlayer, Properties {
         connection = conn
         // Avisa o sistema quando a faixa, o tocar/pausar ou o volume mudam.
         scope.launch {
-            ctl.player
-                .map { Triple(it.current?.id, it.playing, it.volume) }
+            kotlinx.coroutines.flow.combine(vm.playerState, vm.currentTrack, PlayerVolume.flow) { s, t, v -> Triple(t?.id, s.isPlaying, v) to (s.shuffle to s.repeat) }
                 .distinctUntilChanged()
                 .collect { emitPlayerChanged() }
         }
@@ -89,16 +95,16 @@ class Mpris(private val ctl: Controller) : MprisRoot, MprisPlayer, Properties {
 
     // ---- org.mpris.MediaPlayer2.Player ----
 
-    override fun Next() = onUi { ctl.next() }
-    override fun Previous() = onUi { ctl.previous() }
-    override fun Pause() = onUi { if (ctl.player.value.playing) ctl.togglePlay() }
-    override fun PlayPause() = onUi { ctl.togglePlay() }
+    override fun Next() = onUi { player.next() }
+    override fun Previous() = onUi { player.previous() }
+    override fun Pause() = onUi { player.pause() }
+    override fun PlayPause() = onUi { player.togglePlay() }
     override fun Stop() = Pause()
-    override fun Play() = onUi { if (!ctl.player.value.playing) ctl.togglePlay() }
-    override fun Seek(offset: Long) = onUi { ctl.seek(ctl.player.value.positionMs + offset / 1000) }
+    override fun Play() = onUi { player.resume() }
+    override fun Seek(offset: Long) = onUi { player.seekTo(player.position.value + offset / 1000) }
     override fun SetPosition(trackId: DBusPath, position: Long) = onUi {
-        val current = ctl.player.value.current ?: return@onUi
-        if (trackId.path == trackPath(current)) ctl.seek(position / 1000)
+        val current = currentTrack() ?: return@onUi
+        if (trackId.path == trackPath(current)) player.seekTo(position / 1000)
     }
     override fun OpenUri(uri: String) = Unit
 
@@ -111,7 +117,7 @@ class Mpris(private val ctl: Controller) : MprisRoot, MprisPlayer, Properties {
     override fun <A : Any?> Set(interfaceName: String, propertyName: String, value: A) {
         if (interfaceName == PLAYER_IFACE && propertyName == "Volume") {
             val v = (value as? Variant<*>)?.value ?: value
-            (v as? Number)?.toFloat()?.let { vol -> onUi { ctl.setVolume(vol.coerceIn(0f, 1f)) } }
+            (v as? Number)?.toFloat()?.let { vol -> onUi { PlayerVolume.set(vol.coerceIn(0f, 1f)) } }
         }
     }
 
@@ -130,16 +136,17 @@ class Mpris(private val ctl: Controller) : MprisRoot, MprisPlayer, Properties {
     }
 
     private fun playerProperties(): MutableMap<String, Variant<*>> {
-        val s = ctl.player.value
-        val hasTrack = s.current != null
+        val s = state()
+        val t = currentTrack()
+        val hasTrack = t != null
         return linkedMapOf<String, Variant<*>>(
-            "PlaybackStatus" to Variant(if (!hasTrack) "Stopped" else if (s.playing) "Playing" else "Paused"),
-            "LoopStatus" to Variant(when (s.repeat) { Repeat.Off -> "None"; Repeat.All -> "Playlist"; Repeat.One -> "Track" }),
+            "PlaybackStatus" to Variant(if (!hasTrack) "Stopped" else if (s.isPlaying) "Playing" else "Paused"),
+            "LoopStatus" to Variant(when (s.repeat) { RepeatMode.OFF -> "None"; RepeatMode.ALL -> "Playlist"; RepeatMode.ONE -> "Track" }),
             "Rate" to Variant(1.0),
             "Shuffle" to Variant(s.shuffle),
-            "Metadata" to Variant(metadata(s.current), "a{sv}"),
-            "Volume" to Variant(s.volume.toDouble()),
-            "Position" to Variant(s.positionMs * 1000),
+            "Metadata" to Variant(metadata(t), "a{sv}"),
+            "Volume" to Variant(PlayerVolume.value.toDouble()),
+            "Position" to Variant(player.position.value * 1000),
             "MinimumRate" to Variant(1.0),
             "MaximumRate" to Variant(1.0),
             "CanGoNext" to Variant(hasTrack),
@@ -160,9 +167,9 @@ class Mpris(private val ctl: Controller) : MprisRoot, MprisPlayer, Properties {
         )
         if (t.artist.isNotBlank()) m["xesam:artist"] = Variant(listOf(t.artist), "as")
         if (t.album.isNotBlank()) m["xesam:album"] = Variant(t.album)
-        if (t.albumArtist.isNotBlank()) m["xesam:albumArtist"] = Variant(listOf(t.albumArtist), "as")
-        if (t.genre.isNotBlank()) m["xesam:genre"] = Variant(listOf(t.genre), "as")
-        if (t.trackNo > 0) m["xesam:trackNumber"] = Variant(t.trackNo)
+        t.albumArtist?.takeIf { it.isNotBlank() }?.let { m["xesam:albumArtist"] = Variant(listOf(it), "as") }
+        t.genre?.takeIf { it.isNotBlank() }?.let { m["xesam:genre"] = Variant(listOf(it), "as") }
+        t.trackNumber?.takeIf { it > 0 }?.let { m["xesam:trackNumber"] = Variant(it) }
         m["xesam:url"] = Variant(File(t.path).toURI().toString())
         coverFile(t)?.let { m["mpris:artUrl"] = Variant(it.toURI().toString()) }
         return m
@@ -170,8 +177,9 @@ class Mpris(private val ctl: Controller) : MprisRoot, MprisPlayer, Properties {
 
     /** A capa já fica em cache como .jpg; o painel do sistema lê o arquivo direto. */
     private fun coverFile(t: Track): File? = runCatching {
-        ArtLoader.bytesFor(t) ?: return null
-        File(File(Dirs.cache, "art-v2"), ArtLoader.key(t) + ".jpg").takeIf { it.exists() }
+        com.juscelino.sonivell.data.CustomCovers.file(t.albumId)?.let { return it }
+        ArtLoader.bytesFor(t.path) ?: return null
+        File(File(Dirs.cache, "art-v2"), ArtLoader.key(t.path) + ".jpg").takeIf { it.exists() }
     }.getOrNull()
 
     private fun emitPlayerChanged() {
