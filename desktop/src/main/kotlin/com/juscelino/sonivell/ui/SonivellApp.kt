@@ -76,7 +76,10 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.savedstate.SavedState
+import androidx.savedstate.read
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -1588,3 +1591,8 @@ private fun DesktopNotice(text: String, onDismiss: (() -> Unit)?) {
         if (onDismiss != null) com.juscelino.sonivell.ui.components.IconBtn(SonivellTheme.icons.close, stringResource(R.string.desktop_dismiss), onDismiss, size = 36.dp, iconSize = 16.dp, tint = c.textSecondary)
     }
 }
+
+
+// Argumentos das rotas: na navegação multiplataforma são SavedState, não Bundle.
+private fun SavedState.getLong(key: String): Long = read { if (contains(key)) getLong(key) else 0L }
+private fun SavedState.getString(key: String): String? = read { getStringOrNull(key) }
