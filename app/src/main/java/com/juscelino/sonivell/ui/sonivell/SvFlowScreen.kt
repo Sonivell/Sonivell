@@ -51,7 +51,7 @@ fun SvFlowScreen(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(top = contentPadding.calculateTopPadding() + 12.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SvSquare(icons.back, stringResource(R.string.cd_back), onBack)

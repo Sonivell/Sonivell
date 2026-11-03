@@ -30,6 +30,13 @@ enum class UiStyle {
     SONIVELL,
 }
 
+/**
+ * Peso dos ícones de cada estilo (a escolha manual saiu da Aparência): traço em todos, e o traço fino
+ * no Essencial, o estilo limpo.
+ */
+val UiStyle.iconStyle: IconStyle
+    get() = if (this == UiStyle.ESSENCIAL) IconStyle.FINO else IconStyle.TRACO
+
 /** Temas que usam as telas do Sonivell (Para você, Biblioteca pelos cartões, Perfil, Flow, Mapa…). */
 val UiStyle.usesSonivellScreens: Boolean
     get() = this == UiStyle.SONIVELL

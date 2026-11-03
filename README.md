@@ -34,8 +34,8 @@ As duas edições podem ficar instaladas ao mesmo tempo.
 - Sessão salva: a fila e a posição voltam como estavam.
 - Temporizador, controle de volume, equalizador com predefinições e reforço de graves.
 - Tema claro, escuro ou automático; fundo escuro grafite ou preto (#121212); sete cores de destaque, incluindo verde #1DB954.
-- Três layouts: Ondas (padrão — progresso em onda, botões de modo com nome e "Por que tocou" do SMART), Contraste (player tingido pela capa) e Clássica (o visual da primeira versão).
-- Três estilos de ícone: Traço (padrão), Fino e Arredondado.
+- Cinco estilos com a mesma estrutura (abas Para você · Explorar · Biblioteca · Perfil, mesmo player e mesmos nomes) e assinatura visual própria: Sonivell (expressivo), Ondas (a onda em todo progresso e o porquê de cada escolha do Smart), Essencial (limpo, capas grandes), Contraste (player tingido pela capa) e Clássico (sóbrio). O peso dos ícones vem de cada estilo.
+- Player igual em todos os estilos: embaralhar · anterior · play · próxima · repetir, Smart como interruptor ("Fila pelo som"), tempo restante e rodapé Este telefone · Letra · Fila; "Por que tocou" e o temporizador ficam no menu de opções.
 - Estatísticas de audição por período, com exportação do histórico em CSV.
 - Letras: embutidas no arquivo ou em .lrc (pasta escolhida por você), sincronizadas, com toque para pular e ajuste de sincronia.
 - Normalização de volume pelo ReplayGain das tags.

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
+import com.juscelino.sonivell.data.UiStyle
 
 /** Paleta do mockup: grafite + um único acento. */
 @Immutable
@@ -78,6 +79,48 @@ enum class AccentChoice(val dark: Color, val light: Color) {
 
 /** Fundo do tema escuro: grafite (padrão do Sonivell) ou preto. */
 enum class DarkBackground { Grafite, Preto }
+
+/**
+ * Paletas escuras de cada estilo (tokens da proposta visual). A estrutura é a mesma; mudam o fundo,
+ * as superfícies, as linhas e os textos de apoio. Vale no modo escuro com o fundo grafite padrão;
+ * fundo preto, fundo colorido e o modo claro seguem as paletas próprias.
+ */
+fun styleDarkColors(style: UiStyle, accent: Color): SonivellColors = when (style) {
+    UiStyle.SONIVELL -> SonivellColors(
+        background = Color(0xFF0E0F12), surface = Color(0xFF16181D), surfaceLow = Color(0xFF131519),
+        surfaceHigh = Color(0xFF1D2026), outline = Color(0xFF272A31), track = Color(0xFF343843),
+        textPrimary = Color(0xFFF3F4F6), textSecondary = Color(0xFF9EA3AE), textTertiary = Color(0xFFC9CDD3),
+        accent = accent, onAccent = Color(0xFF12150A), miniPlayer = Color(0xFF1D2026),
+    )
+    UiStyle.CLASSICA -> SonivellColors(
+        background = Color(0xFF0F1013), surface = Color(0xFF17181C), surfaceLow = Color(0xFF141518),
+        surfaceHigh = Color(0xFF24262C), outline = Color(0xFF2A2C32), track = Color(0xFF383B43),
+        textPrimary = Color(0xFFF2F3F5), textSecondary = Color(0xFFA0A4AD), textTertiary = Color(0xFFC9CDD3),
+        accent = accent, onAccent = Color(0xFF12150A), miniPlayer = Color(0xFF1E2025),
+    )
+    UiStyle.CONTRASTE -> SonivellColors(
+        background = Color(0xFF0C0C0E), surface = Color(0xFF18191C), surfaceLow = Color(0xFF131416),
+        surfaceHigh = Color(0xFF222327), outline = Color(0xFF2A2B30), track = Color(0xFF34353B),
+        // Texto de apoio mais claro que nos outros estilos.
+        textPrimary = Color(0xFFFFFFFF), textSecondary = Color(0xFFB9BDC6), textTertiary = Color(0xFFDADDE3),
+        accent = accent, onAccent = Color(0xFF0C0C0E), miniPlayer = Color(0xFF222327),
+    )
+    UiStyle.ESSENCIAL -> SonivellColors(
+        background = Color(0xFF101113), surface = Color(0xFF191A1E), surfaceLow = Color(0xFF151619),
+        surfaceHigh = Color(0xFF212328), outline = Color(0xFF26282D), track = Color(0xFF30333A),
+        textPrimary = Color(0xFFF4F5F7), textSecondary = Color(0xFF9FA4AE), textTertiary = Color(0xFFC9CDD3),
+        accent = accent, onAccent = Color(0xFF101113), miniPlayer = Color(0xFF191A1E),
+    )
+    UiStyle.ONDAS -> SonivellColors(
+        background = Color(0xFF0D0F12), surface = Color(0xFF15181D), surfaceLow = Color(0xFF121418),
+        surfaceHigh = Color(0xFF1D2026), outline = Color(0xFF252830), track = Color(0xFF3A3E47),
+        textPrimary = Color(0xFFF2F3F5), textSecondary = Color(0xFF9BA1A9), textTertiary = Color(0xFFC9CCD3),
+        accent = accent, onAccent = Color(0xFF0D0F12), miniPlayer = Color(0xFF1A1D22),
+    )
+}
+
+/** Estilo visual atual, para os componentes comuns ajustarem a assinatura (capa vazia, progresso…). */
+val LocalUiStyle = staticCompositionLocalOf { UiStyle.ONDAS }
 
 /** Paleta escura em preto: fundo #121212, superfícies a partir de #191414 e texto secundário #B3B3B3. */
 fun blackColors(accent: Color) = SonivellColors(
@@ -180,17 +223,18 @@ val Manrope = FontFamily(
     manrope(400), manrope(500), manrope(600), manrope(700), manrope(800),
 )
 
+/** Números tabulares (tnum) em todo o app: contagens, durações e tempos alinham em coluna. */
 private val SonivellTypography = Typography(
-    displaySmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, letterSpacing = (-0.6).sp),
-    headlineSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, letterSpacing = (-0.5).sp),
-    titleLarge = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp),
-    titleMedium = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 15.sp),
-    titleSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 14.sp),
-    bodyLarge = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Medium, fontSize = 15.sp),
-    bodyMedium = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Medium, fontSize = 13.sp),
-    labelLarge = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 14.sp),
-    labelMedium = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.SemiBold, fontSize = 12.sp),
-    labelSmall = TextStyle(fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.4.sp),
+    displaySmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, letterSpacing = (-0.6).sp),
+    headlineSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, letterSpacing = (-0.5).sp),
+    titleLarge = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp),
+    titleMedium = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 15.sp),
+    titleSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 14.sp),
+    bodyLarge = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Medium, fontSize = 15.sp),
+    bodyMedium = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Medium, fontSize = 13.sp),
+    labelLarge = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 14.sp),
+    labelMedium = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.SemiBold, fontSize = 12.sp),
+    labelSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.4.sp),
 )
 
 val LocalSonivellColors = staticCompositionLocalOf { SonivellColors() }
@@ -205,6 +249,10 @@ object SonivellTheme {
     /** Cartões em vidro (em todos os temas); ver [glassSurface]. */
     val glass: Boolean
         @Composable get() = LocalGlass.current
+
+    /** Estilo visual atual (Sonivell, Ondas, Essencial, Contraste, Clássico). */
+    val style: UiStyle
+        @Composable get() = LocalUiStyle.current
 }
 
 @Composable
@@ -219,6 +267,8 @@ fun SonivellTheme(
     systemColors: Boolean = false,
     /** Cartões em vidro: translúcidos, com sombra e brilho. Ligado em todos os temas. */
     glass: Boolean = true,
+    /** Estilo visual: escolhe a paleta escura e a assinatura dos componentes comuns. */
+    style: UiStyle = UiStyle.ONDAS,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -233,7 +283,7 @@ fun SonivellTheme(
         tintedBackground -> tintedColors(accentColor, darkTheme)
         !darkTheme -> lightColors(accentColor)
         darkBackground == DarkBackground.Preto -> blackColors(accentColor)
-        else -> SonivellColors(accent = accentColor)
+        else -> styleDarkColors(style, accentColor)
     }
     // A cor do sistema pode ser clara ou escura: o texto sobre ela segue a escolha do sistema.
     val colors = if (dynamic) {
@@ -254,6 +304,7 @@ fun SonivellTheme(
         LocalSonivellColors provides colors,
         LocalSonivellIcons provides iconStyle.icons(),
         LocalGlass provides glass,
+        LocalUiStyle provides style,
     ) {
         MaterialTheme(colorScheme = scheme, typography = SonivellTypography, content = content)
     }

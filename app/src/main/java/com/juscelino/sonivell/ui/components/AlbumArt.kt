@@ -37,6 +37,8 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.theme.ArtTones
+import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.data.UiStyle
 import kotlin.math.abs
 
 /** Abaixo desta largura a capa gerada não mostra o painel de vidro com texto. */
@@ -154,9 +156,47 @@ fun GeneratedArt(
     }
 }
 
+/** Tons foscos das capas vazias do Sonivell, um por artista. */
+private val FrostedTones = listOf(
+    Color(0xFF2F4B45), Color(0xFF4A3F2A), Color(0xFF3A3350), Color(0xFF4A2A2E), Color(0xFF2A3A4E),
+)
+
+/** Até duas iniciais do nome ("Lariss Neo-Soul" → "LN"), ignorando símbolos e números soltos. */
+internal fun initialsOf(name: String): String =
+    name.split(Regex("""[\s\-_/·]+"""))
+        .mapNotNull { w -> w.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar() }
+        .take(2)
+        .joinToString("")
+
 /**
- * Capa real do álbum; sem ela, a capa Onda ([OndaArt]). [detailed] ficou da capa gerada anterior
- * e não muda mais nada: a capa Onda escolhe a versão pelo tamanho.
+ * Capa de quem não tem arte: um bloco com as iniciais, sem repetir o título (que já aparece embaixo
+ * do cartão). No Sonivell, tons foscos escolhidos pelo artista; nos outros estilos e no modo claro,
+ * cinza neutro. Pequena demais, fica só o bloco.
+ */
+@Composable
+fun InitialsArt(name: String, toneKey: String, modifier: Modifier = Modifier) {
+    val c = SonivellTheme.colors
+    val frosted = SonivellTheme.style == UiStyle.SONIVELL && c.isDark
+    val bg = if (frosted) FrostedTones[OndaSeed.cor(toneKey)] else c.surfaceHigh
+    val fg = if (frosted) Color(0xFFF3F4F6).copy(alpha = 0.92f) else c.textSecondary
+    BoxWithConstraints(modifier.background(bg), contentAlignment = Alignment.Center) {
+        val side = minOf(maxWidth, maxHeight)
+        val text = initialsOf(name)
+        if (side >= 28.dp && text.isNotEmpty()) {
+            Text(
+                text,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = (side.value * 0.32f).sp, letterSpacing = 0.sp),
+                fontWeight = FontWeight.ExtraBold,
+                color = fg,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/**
+ * Capa real do álbum; sem ela, a capa vazia do estilo: a onda no Ondas (sem texto por cima, que
+ * repetiria o título) e as iniciais nos outros ([InitialsArt]).
  */
 @Composable
 fun AlbumArt(
@@ -166,9 +206,11 @@ fun AlbumArt(
     @Suppress("UNUSED_PARAMETER") detailed: Boolean = false,
 ) {
     val shape = RoundedCornerShape(corner)
+    val ondas = SonivellTheme.style == UiStyle.ONDAS
     Box(modifier.clip(shape)) {
         if (track == null) {
-            OndaArt("", "", title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner)
+            if (ondas) OndaArt("", "", title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner)
+            else InitialsArt("", "", Modifier.fillMaxSize())
         } else {
             val context = LocalContext.current
             val album = track.rawAlbum?.takeIf { it.isNotBlank() } ?: track.title
@@ -181,14 +223,38 @@ fun AlbumArt(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                // Só o fundo enquanto carrega, para não piscar a onda antes da capa real.
+                // Só o fundo enquanto carrega, para não piscar a capa vazia antes da capa real.
                 loading = {
-                    OndaArt(album, artista, title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner, placeholder = true)
+                    if (ondas) OndaArt(album, artista, title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner, placeholder = true)
+                    else Box(Modifier.fillMaxSize().background(SonivellTheme.colors.surfaceHigh))
                 },
                 error = {
-                    OndaArt(album, artista, title = album, subtitle = artista, modifier = Modifier.fillMaxSize(), corner = corner)
+                    if (ondas) OndaArt(album, artista, title = null, subtitle = null, modifier = Modifier.fillMaxSize(), corner = corner)
+                    else InitialsArt(album, artista, Modifier.fillMaxSize())
                 },
             )
+        }
+    }
+}
+
+/**
+ * Colagem 2×2 das capas de [tracks] (álbuns diferentes), usada nos mixes do Sonivell. Com menos de
+ * quatro álbuns, a capa da primeira faixa ocupa tudo.
+ */
+@Composable
+fun CoverCollage(tracks: List<Track>, modifier: Modifier = Modifier, corner: Dp = 20.dp) {
+    val covers = tracks.distinctBy { it.albumId }.take(4)
+    Box(modifier.clip(RoundedCornerShape(corner))) {
+        if (covers.size < 4) {
+            AlbumArt(covers.firstOrNull(), Modifier.fillMaxSize(), corner = 0.dp)
+        } else {
+            Column(Modifier.fillMaxSize()) {
+                listOf(covers.take(2), covers.drop(2)).forEach { row ->
+                    androidx.compose.foundation.layout.Row(Modifier.weight(1f).fillMaxWidth()) {
+                        row.forEach { AlbumArt(it, Modifier.weight(1f).fillMaxSize(), corner = 0.dp) }
+                    }
+                }
+            }
         }
     }
 }

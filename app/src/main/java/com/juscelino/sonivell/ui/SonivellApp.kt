@@ -157,6 +157,10 @@ import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenClassica
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenContraste
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.PlayReason
+import com.juscelino.sonivell.ui.nowplaying.WhyContent
+import com.juscelino.sonivell.ui.nowplaying.artTint
+import com.juscelino.sonivell.data.formatDuration
+import com.juscelino.sonivell.ui.nowplaying.WhyLine
 import com.juscelino.sonivell.ui.queue.QueueActions
 import com.juscelino.sonivell.ui.queue.QueueScreen
 import com.juscelino.sonivell.ui.theme.SonivellIcons
@@ -218,11 +222,12 @@ private data class Tab(
     val ondasActiveIcon: (SonivellIcons) -> ImageVector = activeIcon,
 )
 
+/** As mesmas quatro abas, na mesma ordem, em todos os estilos: Para você · Explorar · Biblioteca · Perfil. */
 private val tabs = listOf(
-    // A aba inicial usa a onda do Sonivell em todos os layouts (antes só no Ondas; os outros, a casa).
     Tab(Routes.HOME, R.string.nav_home, { it.forYou }, { it.forYouActive }),
-    Tab(Routes.SEARCH, R.string.nav_search, { it.search }, { it.searchActive }),
+    Tab(Routes.SEARCH, R.string.nav_explore, { it.search }, { it.searchActive }),
     Tab(Routes.LIBRARY, R.string.nav_library, { it.library }, { it.libraryActive }),
+    Tab(Routes.PROFILE, R.string.nav_profile, { Icons.Outlined.Person }, { Icons.Filled.Person }),
 )
 
 private fun audioPermission() =
@@ -311,7 +316,6 @@ private fun MainContent(vm: MainViewModel) {
     val tagBannerCount by vm.tagBannerCount.collectAsStateWithLifecycle()
     val playlists by vm.playlists.collectAsStateWithLifecycle()
     val sleepTimer by vm.sleepTimer.collectAsStateWithLifecycle()
-    val smartSource = stringResource(R.string.source_smart)
 
     val defaultSource = stringResource(R.string.nav_library)
     var source by rememberSaveable { mutableStateOf(defaultSource) }
@@ -343,13 +347,23 @@ private fun MainContent(vm: MainViewModel) {
     val smartSeeds by vm.smartSeeds.collectAsStateWithLifecycle()
     val tasteStatus by vm.tasteStatus.collectAsStateWithLifecycle()
     val tasteBoosts by vm.tasteBoosts.collectAsStateWithLifecycle()
+    // Por que a faixa atual está tocando: linha "por que" do Ondas e "Por que tocou" no menu do player.
+    val playReason = remember(current, smartSeeds, tasteBoosts, shuffleMode, library.allTracks) {
+        val t = current
+        val seed = t?.let { smartSeeds[it.id] }?.let { id -> library.allTracks.firstOrNull { it.id == id } }
+        when {
+            t == null -> PlayReason.Chosen
+            seed != null && seed.id != t.id -> PlayReason.Smart(seed, tasteBoosts[t.id])
+            smartSeeds.values.contains(t.id) -> PlayReason.MixStart
+            shuffleMode == ShuffleMode.ON -> PlayReason.Shuffle
+            else -> PlayReason.Chosen
+        }
+    }
+    var whySheet by remember { mutableStateOf(false) }
     val uiStyle = settings.uiStyle
-    // Tema Sonivell: três abas e o app abre em Início. A biblioteca entra pelos cartões do Início.
-    val svTabs = listOf(
-        SvTab(Routes.HOME, R.string.nav_home, SonivellTheme.icons.forYou, SonivellTheme.icons.forYouActive),
-        SvTab(Routes.SEARCH, R.string.nav_explore, SonivellTheme.icons.search, SonivellTheme.icons.searchActive),
-        SvTab(Routes.PROFILE, R.string.nav_profile, Icons.Outlined.Person, Icons.Filled.Person),
-    )
+    // As quatro abas no formato da barra do Sonivell (usada também pelo Ondas e pelo Essencial).
+    val icons = SonivellTheme.icons
+    val svTabs = tabs.map { SvTab(it.route, it.label, it.icon(icons), it.activeIcon(icons)) }
     // Aba da biblioteca aberta por um cartão do Início (0 Todas, 1 Músicas, 2 Álbuns, 3 Artistas, 4 Gêneros, 5 Pastas).
     var svLibraryTab by rememberSaveable { mutableIntStateOf(0) }
     val initialStyle = remember { settings.uiStyle }
@@ -402,7 +416,8 @@ private fun MainContent(vm: MainViewModel) {
         if (uri != null) vm.setLyricsFolder(uri)
     }
     val versionName = remember {
-        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()
+        // "1.2.0", sem o "-smart" da edição: a versão é uma só para tudo.
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty().removeSuffix("-smart")
     }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("audio/x-mpegurl")) { uri ->
@@ -439,11 +454,12 @@ private fun MainContent(vm: MainViewModel) {
         onRefresh = vm::refresh,
         onPlay = { tracks, index, src ->
             commitSearch()
-            source = if (shuffleMode == ShuffleMode.SMART) smartSource else src
+            // "Tocando de" mostra a origem real (coleção, álbum, Seu Flow de hoje), nunca o motor.
+            source = src
             vm.playFrom(tracks, index)
         },
         onPlayMix = { seed ->
-            source = smartSource
+            source = res.getString(R.string.fy_mix_of, seed.artist)
             vm.playMix(seed)
         },
         onPlayMood = if (!vm.smart.isAvailable) null else { mood ->
@@ -457,7 +473,7 @@ private fun MainContent(vm: MainViewModel) {
             }
         },
         onShuffleAll = {
-            source = if (shuffleMode == ShuffleMode.SMART) smartSource else shuffleSource
+            source = shuffleSource
             vm.playAllShuffled()
         },
         onTrackMenu = { menuFor = it to MenuContext.None },
@@ -519,6 +535,16 @@ private fun MainContent(vm: MainViewModel) {
             setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS, Routes.PROFILE, Routes.SV_FLOW, Routes.SV_MAP, Routes.SV_MOMENTS, Routes.SV_ANALYSIS)
     }
     val showChrome = route in chromeRoutes
+    val tabRoutes = remember { tabs.map { it.route }.toSet() }
+    var lastTab by rememberSaveable { mutableStateOf(Routes.HOME) }
+    LaunchedEffect(route) { if (route != null && route in tabRoutes) lastTab = route }
+    val goToTab: (String) -> Unit = { r ->
+        nav.navigate(r) {
+            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
     val fullScreenRoutes = remember { setOf(Routes.PLAYER, Routes.QUEUE, Routes.LYRICS, Routes.CAR) }
 
     Scaffold(
@@ -539,6 +565,8 @@ private fun MainContent(vm: MainViewModel) {
                                 onOpen = { nav.navigate(Routes.PLAYER) },
                                 onTogglePlay = vm.player::togglePlay,
                                 modifier = Modifier.padding(top = 8.dp),
+                                // A onda em todo progresso é do Ondas; o Essencial usa a linha fina.
+                                wave = uiStyle == UiStyle.ONDAS,
                             )
                             UiStyle.CONTRASTE -> MiniPlayer(
                                 track = t,
@@ -548,6 +576,8 @@ private fun MainContent(vm: MainViewModel) {
                                 onTogglePlay = vm.player::togglePlay,
                                 liked = t.id in favorites,
                                 onLike = { vm.toggleFavorite(t.id) },
+                                // Assinatura do Contraste: o mini player toma a cor da capa.
+                                tone = artTint(t),
                             )
                             UiStyle.CLASSICA -> MiniPlayerClassica(
                                 track = t,
@@ -567,25 +597,12 @@ private fun MainContent(vm: MainViewModel) {
                         }
                         }
                     }
-                    val onTab: (String) -> Unit = { r ->
-                        // Sonivell: a biblioteca abre por cima do Início e não é aba. Sai dela antes de trocar de
-                        // aba; senão ela entra no estado salvo do Início e volta no lugar dele.
-                        if (uiStyle.usesSonivellScreens && route == Routes.LIBRARY && nav.previousBackStackEntry != null) {
-                            nav.popBackStack()
-                        }
-                        nav.navigate(r) {
-                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
+                    // Em telas internas (coleção, Ajustes…) a aba de origem continua acesa.
+                    val activeTab = if (route in tabRoutes) route else lastTab
                     when (uiStyle) {
-                        UiStyle.ONDAS, UiStyle.ESSENCIAL -> BottomNavOndas(route, onTab)
-                        UiStyle.CONTRASTE -> BottomNav(route, onTab)
-                        UiStyle.CLASSICA -> BottomNavClassica(route, onTab)
-                        // A biblioteca é parte do Início: a aba Para você fica marcada nela.
-                        UiStyle.SONIVELL ->
-                            BottomNavSonivell(if (route == Routes.LIBRARY) Routes.HOME else route, svTabs, onTab)
+                        UiStyle.CONTRASTE -> BottomNav(activeTab, goToTab)
+                        UiStyle.CLASSICA -> BottomNavClassica(activeTab, goToTab)
+                        UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL -> BottomNavSonivell(activeTab, svTabs, goToTab)
                     }
                 }
             }
@@ -610,7 +627,7 @@ private fun MainContent(vm: MainViewModel) {
                 actions = CollectionActions(
                     onBack = { nav.popBackStack() },
                     onPlay = { index ->
-                        source = if (shuffleMode == ShuffleMode.SMART) smartSource else data.title
+                        source = data.title
                         vm.playFrom(data.tracks, index)
                     },
                     onShuffle = {
@@ -666,6 +683,7 @@ private fun MainContent(vm: MainViewModel) {
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
                             contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                            tagBannerCount = tagBannerCount,
                         )
                         UiStyle.ESSENCIAL -> LibraryScreenEssencial(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
@@ -684,18 +702,23 @@ private fun MainContent(vm: MainViewModel) {
                                     contentPadding = listPadding,
                                     state = library,
                                     favoritesCount = favorites.size,
+                                    playlistCount = playlists.size,
                                     mixSeeds = forYou.mixSeeds,
                                     smartAvailable = vm.smart.isAvailable,
                                     smartProgress = smartProgress,
                                     onOpenAuto = libraryActions.onOpenAuto,
+                                    // A Biblioteca é uma aba: o cartão escolhe o filtro e troca de aba.
                                     onOpenLibrary = { t ->
                                         svLibraryTab = t
-                                        nav.navigate(Routes.LIBRARY)
+                                        goToTab(Routes.LIBRARY)
                                     },
                                     onPlayMix = libraryActions.onPlayMix,
                                     onOpenFlow = { nav.navigate(Routes.SV_FLOW) },
                                     onOpenMap = { nav.navigate(Routes.SV_MAP) },
                                     onOpenAnalysis = { nav.navigate(Routes.SV_ANALYSIS) },
+                                    continueTrack = forYou.unfinished.firstOrNull(),
+                                    continueAtMs = forYou.unfinished.firstOrNull()?.let { forYou.resumeAtMs[it.id] } ?: 0L,
+                                    onResume = libraryActions.onResume,
                                 )
                             }
                             LibraryMode.Buscar -> LibraryScreenOndas(
@@ -709,25 +732,37 @@ private fun MainContent(vm: MainViewModel) {
                                 state = library, favorites = favorites, playlists = playlists, smartPlaylists = smartPlaylists,
                                 contentPadding = listPadding, actions = libraryActions,
                                 tab = svLibraryTab, onTab = { svLibraryTab = it },
-                                onBack = { if (!nav.popBackStack()) nav.navigate(Routes.HOME) },
+                                tagBannerCount = tagBannerCount,
                             )
                         }
                         UiStyle.CLASSICA -> LibraryScreenClassica(
                             mode = mode, state = library, favorites = favorites, currentId = current?.id,
                             contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
                             forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                            recentSearches = recentSearches, genreOfMonth = genreOfMonth, tagBannerCount = tagBannerCount,
                         )
                     }
                 }
             }
 
-            // Telas exclusivas do tema Sonivell.
+            // Perfil: a mesma aba em todos os estilos, com Ajustes como último item.
             composable(Routes.PROFILE) {
                 SvProfileScreen(
                     trackCount = library.allTracks.size,
                     artistCount = library.artists.size,
                     monthListenedMs = monthStats.listenedMs,
                     smartAvailable = vm.smart.isAvailable,
+                    analysed = smartProgress.analysed,
+                    analysisTotal = smartProgress.total,
+                    styleName = stringResource(
+                        when (uiStyle) {
+                            UiStyle.ONDAS -> R.string.layout_ondas
+                            UiStyle.ESSENCIAL -> R.string.layout_essencial
+                            UiStyle.CONTRASTE -> R.string.layout_contrast
+                            UiStyle.CLASSICA -> R.string.layout_classic
+                            UiStyle.SONIVELL -> R.string.layout_sonivell
+                        },
+                    ),
                     contentPadding = listPadding,
                     onStats = { nav.navigate(Routes.STATS) },
                     onSettings = { nav.navigate(Routes.SETTINGS) },
@@ -858,7 +893,9 @@ private fun MainContent(vm: MainViewModel) {
                         stringResource(kind.second) to SmartPlaylists.builtin(kind.first, all, playStats, favorites)
                     }
                 }
-                Collection(CollectionData(title, stringResource(R.string.auto_playlists), tracks, automatic = true))
+                // Curtidas é feita pelo usuário: rótulo "Coleção", não "Automáticas".
+                val kindLabel = stringResource(if (key == "curtidas") R.string.label_collection else R.string.auto_playlists)
+                Collection(CollectionData(title, kindLabel, tracks, automatic = true))
             }
             composable(Routes.SMARTLIST, arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->
                 val id = entry.arguments?.getLong("id")
@@ -1039,32 +1076,18 @@ private fun MainContent(vm: MainViewModel) {
                         onSetShuffle = vm::setShuffleMode,
                     )
                     when (uiStyle) {
-                        UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL -> {
-                            val byId = remember(library.allTracks) { library.allTracks.associateBy { it.id } }
-                            val upNext = player.upNext.take(3).mapNotNull { iv -> byId[iv.value.mediaId.toLongOrNull()] }
-                            val seed = smartSeeds[t.id]?.let(byId::get)
-                            val reason = when {
-                                seed != null && seed.id != t.id -> PlayReason.Smart(seed, tasteBoosts[t.id])
-                                smartSeeds.values.contains(t.id) -> PlayReason.MixStart
-                                shuffleMode == ShuffleMode.ON -> PlayReason.Shuffle
-                                else -> PlayReason.Chosen
-                            }
-                            // O tema Sonivell usa o player do Ondas.
-                            NowPlayingScreenOndas(
-                                track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                                isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, sleepTimer = sleepTimer,
-                                lyrics = lyricsState, lyricsOffsetMs = lyricsOffset, upNext = upNext, reason = reason,
-                                visualizer = settings.visualizer,
-                            )
-                        }
+                        UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL -> NowPlayingScreenOndas(
+                            track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
+                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
+                            reason = playReason, visualizer = settings.visualizer, style = uiStyle,
+                        )
                         UiStyle.CONTRASTE -> NowPlayingScreenContraste(
                             track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, sleepTimer = sleepTimer,
-                            lyrics = lyricsState, lyricsOffsetMs = lyricsOffset,
+                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
                         )
                         UiStyle.CLASSICA -> NowPlayingScreenClassica(
                             track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, sleepTimer = sleepTimer,
+                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
                         )
                     }
                 }
@@ -1236,15 +1259,40 @@ private fun MainContent(vm: MainViewModel) {
         val playing = current
         if (playing == null) LaunchedEffect(Unit) { playerMenu = false }
         playing?.let { track ->
+            // Temporizador com o estado à direita; "Por que tocou" saiu do rodapé do player para cá.
+            val timerState = when {
+                sleepTimer.endOfTrack -> stringResource(R.string.timer_end_of_track_short)
+                sleepTimer.endsAtMs != null -> formatDuration((sleepTimer.endsAtMs!! - System.currentTimeMillis()).coerceAtLeast(0L))
+                else -> stringResource(R.string.timer_state_off)
+            }
             val options = listOf(
-                MenuOption(SonivellTheme.icons.sleep, stringResource(R.string.sleep_timer)) { timerSheet = true },
+                MenuOption(SonivellTheme.icons.smart, stringResource(R.string.tab_why), value = stringResource(R.string.why_details)) { whySheet = true },
+                MenuOption(SonivellTheme.icons.sleep, stringResource(R.string.sleep_timer), value = timerState) { timerSheet = true },
                 MenuOption(SonivellTheme.icons.addToPlaylist, stringResource(R.string.add_to_playlist)) { addToPlaylist = listOf(track) },
                 MenuOption(SonivellTheme.icons.album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) },
                 MenuOption(SonivellTheme.icons.artist, stringResource(R.string.go_to_artist)) { openArtist(track.artist) },
                 MenuOption(SonivellTheme.icons.share, stringResource(R.string.share)) { share(track) },
             )
-            OptionsSheet(options, onDismiss = { playerMenu = false }, header = { TrackHeader(track) })
+            // Contraste: o menu no mesmo tom da capa, mais escuro (a assinatura continua na folha).
+            val menuTone = if (uiStyle == UiStyle.CONTRASTE) androidx.compose.ui.graphics.lerp(artTint(track), androidx.compose.ui.graphics.Color.Black, 0.3f) else null
+            OptionsSheet(options, onDismiss = { playerMenu = false }, tone = menuTone, header = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TrackHeader(track)
+                    // Ondas: a linha "por que" também no cabeçalho do menu.
+                    val r = playReason
+                    if (uiStyle == UiStyle.ONDAS && r is PlayReason.Smart) WhyLine(stringResource(R.string.why_line_smart, r.seed.title))
+                }
+            })
         }
+    }
+
+    if (whySheet) {
+        OptionsSheet(emptyList(), onDismiss = { whySheet = false }, header = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(stringResource(R.string.tab_why), style = MaterialTheme.typography.titleLarge, color = SonivellTheme.colors.textPrimary)
+                WhyContent(playReason, source)
+            }
+        })
     }
 
     if (timerSheet) {
@@ -1465,52 +1513,6 @@ private fun BottomNavClassica(route: String?, onSelect: (String) -> Unit) {
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
                     color = color,
                     modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-        }
-    }
-}
-
-/** Navegação do layout Ondas: barra flutuante, a aba ativa preenchida na cor de destaque. */
-@Composable
-private fun BottomNavOndas(route: String?, onSelect: (String) -> Unit) {
-    val c = SonivellTheme.colors
-    val glass = SonivellTheme.glass
-    val icons = SonivellTheme.icons
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)
-            .height(60.dp)
-            .cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp)
-            .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        tabs.forEach { tab ->
-            val selected = tab.route == route
-            Row(
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .then(
-                        // Vidro: a aba atual fica translúcida na cor de destaque, como no Sonivell.
-                        when {
-                            glass && selected -> Modifier.glassAccent(RoundedCornerShape(16.dp), c.accent)
-                            else -> Modifier.clip(RoundedCornerShape(16.dp)).background(if (selected) c.accent else Color.Transparent)
-                        },
-                    )
-                    .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(tab.route) }),
-                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val color = if (selected) (if (glass) c.accent else c.onAccent) else c.textSecondary
-                Icon(if (selected) tab.ondasActiveIcon(icons) else tab.ondasIcon(icons), null, Modifier.size(20.dp), tint = color)
-                Text(
-                    stringResource(tab.label),
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                    fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
-                    color = color,
-                    maxLines = 1,
                 )
             }
         }

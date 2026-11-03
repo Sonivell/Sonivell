@@ -63,6 +63,7 @@ fun SvLibraryScreen(
     tab: Int,
     onTab: (Int) -> Unit,
     onBack: (() -> Unit)? = null,
+    tagBannerCount: Int = 0,
 ) {
     val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -75,7 +76,7 @@ fun SvLibraryScreen(
         contentPadding = PaddingValues(
             top = contentPadding.calculateTopPadding() + 16.dp,
             bottom = contentPadding.calculateBottomPadding() + 24.dp,
-            start = 24.dp, end = 24.dp,
+            start = 20.dp, end = 20.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -84,7 +85,13 @@ fun SvLibraryScreen(
                 if (onBack != null) SvSquare(icons.back, stringResource(R.string.cd_back), onBack)
                 SvTitle(stringResource(R.string.sv_library_title), modifier = Modifier.weight(1f))
                 SvSquare(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
-                SvSquare(icons.add, stringResource(R.string.cd_new_playlist), actions.onNewPlaylist, filled = true)
+                // Botão com rótulo: "+ Playlist".
+                com.juscelino.sonivell.ui.components.LabeledPill(icons.add, stringResource(R.string.action_playlist), actions.onNewPlaylist, primary = true)
+            }
+        }
+        if (tagBannerCount > 0) {
+            item(key = "tags-banner") {
+                com.juscelino.sonivell.ui.library.TagsBanner(tagBannerCount, actions.onOpenOrganize, actions.onDismissTagBanner)
             }
         }
         item {
@@ -195,14 +202,13 @@ fun SvLibraryScreen(
                 SvRow(artist.name, songs(artist.tracks.size), { actions.onOpenArtist(artist.name) }, art = { SvCircleArt(artist.tracks.firstOrNull(), 48.dp) }, elevation = 0.dp)
             }
             4 -> {
-                // Cartões de dois por linha, cada gênero no seu tom, com a onda curta.
+                // Cartões de dois por linha, em superfície neutra, com a onda curta (a cor fica para ação e estado).
                 val rows = state.genres.chunked(2)
                 itemsIndexed(rows, key = { _, r -> "g-" + r.first().name }) { r, pair ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         pair.forEachIndexed { col, genre ->
-                            val n = r * 2 + col
-                            val bg = ArtTones.backgrounds[n % ArtTones.backgrounds.size]
-                            val wave = ArtTones.cores[n % ArtTones.cores.size]
+                            val bg = SonivellTheme.colors.surface
+                            val wave = SonivellTheme.colors.textSecondary
                             val glass = SonivellTheme.glass
                             val genreShape = RoundedCornerShape(18.dp)
                             Box(
@@ -215,9 +221,9 @@ fun SvLibraryScreen(
                                     .padding(horizontal = 14.dp, vertical = 12.dp),
                             ) {
                                 Column(Modifier.align(Alignment.TopStart), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    Text(genre.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = if (glass) nc.textPrimary else Color(0xFFF2F2EE), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(genre.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
-                                Text(songs(genre.tracks.size), style = MaterialTheme.typography.labelMedium, color = if (glass) nc.textSecondary else Color(0xFFF2F2EE).copy(alpha = 0.72f), modifier = Modifier.align(Alignment.BottomStart))
+                                Text(songs(genre.tracks.size), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, modifier = Modifier.align(Alignment.BottomStart))
                                 SvMiniWave(genre.name, wave, Modifier.align(Alignment.BottomEnd).size(width = 64.dp, height = 22.dp))
                             }
                         }

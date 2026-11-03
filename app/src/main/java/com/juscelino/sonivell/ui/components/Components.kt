@@ -58,8 +58,9 @@ fun IconBtn(
         modifier
             .size(size)
             .then(
-                // Com fundo, no vidro o botão redondo também fica em vidro (voltar, etc.).
-                if (SonivellTheme.glass && background != Color.Transparent) {
+                // Com fundo, no vidro o botão redondo também fica em vidro (voltar, etc.). Na cor de destaque
+                // (play, ação principal) fica cheio e sem anel: o vidro deixava a cor apagada, verde-oliva.
+                if (SonivellTheme.glass && background != Color.Transparent && background != SonivellTheme.colors.accent) {
                     Modifier.glassSurface(CircleShape, background, SonivellTheme.colors.outline, elevation = 4.dp)
                 } else {
                     Modifier.clip(CircleShape).background(background)
@@ -183,11 +184,13 @@ fun MiniPlayer(
     modifier: Modifier = Modifier,
     liked: Boolean = false,
     onLike: (() -> Unit)? = null,
+    /** Contraste: o cartão no tom da capa, com texto, coração e pausa brancos. */
+    tone: Color? = null,
 ) {
-    val c = SonivellTheme.colors
+    val c = if (tone == null) SonivellTheme.colors else tonedColors(SonivellTheme.colors, tone)
     val icons = SonivellTheme.icons
     val openPlayer = stringResource(R.string.cd_open_player)
-    Box(modifier.padding(horizontal = 8.dp).cardSurface(RoundedCornerShape(12.dp), c.miniPlayer, elevation = 12.dp)) {
+    Box(modifier.padding(horizontal = 8.dp).cardSurface(RoundedCornerShape(12.dp), tone ?: c.miniPlayer, elevation = 12.dp)) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -206,7 +209,7 @@ fun MiniPlayer(
                     icon = if (liked) icons.liked else icons.like,
                     contentDescription = stringResource(if (liked) R.string.cd_unlike else R.string.cd_like),
                     onClick = onLike,
-                    tint = if (liked) c.accent else c.textPrimary,
+                    tint = if (liked && tone == null) c.accent else c.textPrimary,
                     iconSize = 22.dp,
                 )
             }
@@ -246,7 +249,7 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier, trailing: (@Compos
     }
 }
 
-/** Mini player do layout Clássica (1.0): capa, título, play na cor de destaque e a barrinha de progresso. */
+/** Mini player do Clássico: capa, título, artista, play no lima e a barra de progresso dentro do cartão. */
 @Composable
 fun MiniPlayerClassica(
     track: Track,
@@ -258,13 +261,15 @@ fun MiniPlayerClassica(
 ) {
     val c = SonivellTheme.colors
     val openPlayer = stringResource(R.string.cd_open_player)
-    Column(modifier.padding(horizontal = 12.dp)) {
+    Column(
+        modifier
+            .padding(horizontal = 12.dp)
+            .fillMaxWidth()
+            .cardSurface(RoundedCornerShape(16.dp), c.miniPlayer, elevation = 12.dp)
+            .clickable(onClickLabel = openPlayer, onClick = onOpen),
+    ) {
         Row(
-            Modifier
-                .fillMaxWidth()
-                .cardSurface(RoundedCornerShape(18.dp), c.miniPlayer, elevation = 12.dp)
-                .clickable(onClickLabel = openPlayer, onClick = onOpen)
-                .padding(8.dp),
+            Modifier.fillMaxWidth().padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -284,7 +289,7 @@ fun MiniPlayerClassica(
         }
         Box(
             Modifier
-                .padding(horizontal = 16.dp)
+                .padding(start = 14.dp, end = 14.dp, bottom = 6.dp)
                 .fillMaxWidth()
                 .height(3.dp)
                 .clip(RoundedCornerShape(2.dp))
@@ -294,3 +299,44 @@ fun MiniPlayerClassica(
         }
     }
 }
+
+/**
+ * Botão em pílula com ícone e rótulo (Aleatório, + Playlist): a proposta visual pede nome nos botões
+ * principais. [primary] = cheio na cor de destaque; senão, contorno discreto.
+ */
+@Composable
+fun LabeledPill(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier, primary: Boolean = false) {
+    val c = SonivellTheme.colors
+    val shape = RoundedCornerShape(999.dp)
+    Row(
+        modifier
+            .height(40.dp)
+            .clip(shape)
+            .then(if (primary) Modifier.background(c.accent) else Modifier.border(1.dp, c.outline, shape))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = 12.dp, end = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(icon, null, Modifier.size(18.dp), tint = if (primary) c.onAccent else c.textPrimary)
+        Text(label, style = MaterialTheme.typography.labelLarge, color = if (primary) c.onAccent else c.textPrimary, maxLines = 1)
+    }
+}
+
+/**
+ * Cores sobre o tom da capa (Contraste): superfície no tom, texto e ícones brancos, linhas translúcidas.
+ * O tom vem escurecido da capa, então o branco fica sempre legível.
+ */
+fun tonedColors(base: com.juscelino.sonivell.ui.theme.SonivellColors, tone: Color) = base.copy(
+    background = tone,
+    surface = tone,
+    surfaceLow = tone,
+    surfaceHigh = Color.White.copy(alpha = 0.12f),
+    miniPlayer = tone,
+    outline = Color.White.copy(alpha = 0.16f),
+    track = Color.White.copy(alpha = 0.25f),
+    textPrimary = Color.White,
+    textSecondary = Color.White.copy(alpha = 0.72f),
+    textTertiary = Color.White.copy(alpha = 0.86f),
+    isDark = true,
+)

@@ -81,7 +81,12 @@ import android.graphics.Color as AColor
 private val OnTint = Color.White
 private val OnTintSoft = Color.White.copy(alpha = 0.78f)
 
-/** Player do layout Contraste (2.0). */
+/**
+ * Player do estilo Contraste: o tom da capa tinge a tela em dois tons (claro no topo, escuro na base).
+ * Branco é ação (play, progresso, controles); a cor de destaque marca só estado (embaralhar, repetir
+ * e Smart ligados). Estrutura comum: Tocando de · origem, controles padrão, Smart como interruptor e
+ * rodapé Este telefone · Letra · Fila em superfície translúcida.
+ */
 @Composable
 fun NowPlayingScreenContraste(
     track: Track,
@@ -91,9 +96,6 @@ fun NowPlayingScreenContraste(
     isFavorite: Boolean,
     sourceLabel: String,
     actions: NowPlayingActions,
-    sleepTimer: SleepTimer = SleepTimer(),
-    lyrics: LyricsState = LyricsState.None,
-    lyricsOffsetMs: Long = 0L,
 ) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -106,8 +108,8 @@ fun NowPlayingScreenContraste(
             .fillMaxSize()
             .background(Brush.verticalGradient(listOf(tint, lerp(tint, Color(0xFF121212), 0.7f))))
             .safeDrawingPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Topo
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -123,22 +125,15 @@ fun NowPlayingScreenContraste(
             IconBtn(icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore, tint = OnTint)
         }
 
-        // Capa
-        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            AlbumArt(
-                track,
-                Modifier.widthIn(max = 420.dp).fillMaxWidth().aspectRatio(1f),
-                corner = 16.dp,
-                detailed = true,
-            )
+        // Capa maior, com o espaço equilibrado acima e abaixo.
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            val side = minOf(maxWidth, maxHeight, 440.dp)
+            AlbumArt(track, Modifier.size(side), corner = 12.dp, detailed = true)
         }
 
-        // Título + curtir
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(track.title, style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp), color = OnTint, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(track.artist, style = MaterialTheme.typography.bodyLarge, color = OnTintSoft, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
+        // Título (até duas linhas) + artista, tipografia pesada
+        Row(verticalAlignment = Alignment.Bottom) {
+            PlayerTitle(track, Modifier.weight(1f), titleSize = 24.sp, color = OnTint, secondary = OnTintSoft)
             IconBtn(
                 if (isFavorite) icons.liked else icons.like,
                 stringResource(if (isFavorite) R.string.cd_unlike else R.string.cd_like),
@@ -148,105 +143,59 @@ fun NowPlayingScreenContraste(
             )
         }
 
-        // Progresso: decorrido, formato e tempo restante.
+        // Progresso branco; "MP3" como texto; tempo restante com sinal de menos.
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            SeekBar(positionMs = state.positionMs, durationMs = durationMs, onSeek = actions.onSeek)
+            LineSeekBar(state.positionMs, durationMs, actions.onSeek, fill = OnTint, track = OnTint.copy(alpha = 0.25f))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TimeText(formatDuration(state.positionMs))
-                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    track.formatLabel?.let { TimeText(it) }
-                }
-                TimeText("-" + formatDuration((durationMs - state.positionMs).coerceAtLeast(0L)))
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { FormatText(track, OnTintSoft) }
+                TimeText(remainingLabel(state.positionMs, durationMs))
             }
         }
 
-        // Controles
+        // Controles padrão; pausa branca de 74, sem anel.
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ShuffleButton(shuffleMode, smartAvailable, actions.onShuffle)
+            PlayerModeToggle(icons.shuffle, stringResource(R.string.mode_shuffle), shuffleMode == ShuffleMode.ON, offColor = OnTintSoft, onClick = {
+                actions.onSetShuffle(if (shuffleMode == ShuffleMode.ON) ShuffleMode.OFF else ShuffleMode.ON)
+            })
             IconBtn(icons.skipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 56.dp, iconSize = 34.dp, tint = OnTint)
-            IconBtn(
-                if (state.isPlaying) icons.pause else icons.play,
-                stringResource(if (state.isPlaying) R.string.cd_pause else R.string.cd_play),
-                actions.onTogglePlay,
-                size = 72.dp,
-                iconSize = 32.dp,
-                background = OnTint,
-                tint = Color(0xFF121212),
-            )
+            PlayCircle(state.isPlaying, actions.onTogglePlay, size = 74.dp, background = OnTint, tint = Color(0xFF121212), iconSize = 32.dp)
             IconBtn(icons.skipNext, stringResource(R.string.cd_next), actions.onNext, size = 56.dp, iconSize = 34.dp, tint = OnTint)
-            ActiveDot(active = state.repeat != RepeatMode.OFF) {
-                IconBtn(
-                    if (state.repeat == RepeatMode.ONE) icons.repeatOne else icons.repeat,
-                    stringResource(
-                        when (state.repeat) {
-                            RepeatMode.OFF -> R.string.cd_repeat_off
-                            RepeatMode.ALL -> R.string.cd_repeat_all
-                            RepeatMode.ONE -> R.string.cd_repeat_one
-                        }
-                    ),
-                    actions.onRepeat,
-                    tint = if (state.repeat == RepeatMode.OFF) OnTintSoft else c.accent,
-                )
-            }
+            PlayerModeToggle(
+                if (state.repeat == RepeatMode.ONE) icons.repeatOne else icons.repeat,
+                stringResource(
+                    when (state.repeat) {
+                        RepeatMode.OFF -> R.string.cd_repeat_off
+                        RepeatMode.ALL -> R.string.cd_repeat_all
+                        RepeatMode.ONE -> R.string.cd_repeat_one
+                    }
+                ),
+                state.repeat != RepeatMode.OFF,
+                offColor = OnTintSoft,
+                onClick = actions.onRepeat,
+            )
         }
 
-        // Saída à esquerda; temporizador, letra (quando não há prévia) e fila à direita.
-        val loaded = (lyrics as? LyricsState.Loaded)?.lyrics?.takeIf { it.lines.isNotEmpty() }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Row(
-                Modifier.weight(1f).height(44.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon(icons.device, null, Modifier.size(18.dp), tint = OnTintSoft)
-                Text(stringResource(R.string.this_phone), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = OnTintSoft)
-            }
-            SleepButton(sleepTimer, actions.onSleepTimer)
-            if (loaded == null) {
-                IconBtn(icons.lyrics, stringResource(R.string.cd_lyrics), actions.onLyrics, tint = OnTintSoft, iconSize = 20.dp)
-            }
-            IconBtn(icons.queue, stringResource(R.string.cd_open_queue), actions.onQueue, tint = OnTintSoft, iconSize = 20.dp)
+        if (smartAvailable) {
+            SmartQueueSwitch(
+                on = shuffleMode == ShuffleMode.SMART,
+                onToggle = { on -> actions.onSetShuffle(if (on) ShuffleMode.SMART else ShuffleMode.OFF) },
+                textColor = OnTint,
+                secondary = OnTintSoft,
+            )
         }
 
-        if (loaded != null) {
-            val index = loaded.lineAt(state.positionMs - lyricsOffsetMs)
-            val first = if (loaded.synced) index.coerceAtLeast(0) else 0
-            val current = loaded.lines.getOrNull(first)?.text.orEmpty()
-            val next = loaded.lines.getOrNull(first + 1)?.text.orEmpty()
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.Black.copy(alpha = 0.28f))
-                    .clickable(onClickLabel = stringResource(R.string.cd_lyrics), onClick = actions.onLyrics)
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(stringResource(R.string.lyrics_label), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = OnTintSoft)
-                Text(
-                    current.ifBlank { "♪" },
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp, lineHeight = 22.sp),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnTint,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (next.isNotBlank()) {
-                    Text(
-                        next,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = OnTint.copy(alpha = 0.55f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
+        // Rodapé em superfície translúcida sobre o tom da capa.
+        PlayerFooter(
+            onLyrics = actions.onLyrics,
+            onQueue = actions.onQueue,
+            color = OnTint,
+            modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(Color.Black.copy(alpha = 0.22f)).padding(horizontal = 4.dp),
+        )
     }
 }
 
@@ -345,124 +294,4 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 @Composable
 private fun TimeText(text: String) {
     Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = OnTintSoft)
-}
-
-/** Ponto verde sob um botão ligado (aleatório, SMART, repetir), como no Spotify. */
-@Composable
-private fun ActiveDot(active: Boolean, content: @Composable () -> Unit) {
-    Box(contentAlignment = Alignment.Center) {
-        content()
-        if (active) {
-            Box(
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .offset(y = (-2).dp)
-                    .size(4.dp)
-                    .clip(CircleShape)
-                    .background(SonivellTheme.colors.accent)
-            )
-        }
-    }
-}
-
-/** Barra fina (4 dp) com bolinha; aceita toque e arrasto. */
-@Composable
-private fun SeekBar(positionMs: Long, durationMs: Long, onSeek: (Long) -> Unit) {
-    val seekLabel = stringResource(R.string.cd_seek)
-    var dragFraction by remember { mutableStateOf<Float?>(null) }
-    val fraction = dragFraction
-        ?: if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
-
-    BoxWithConstraints(
-        Modifier
-            .fillMaxWidth()
-            .height(24.dp)
-            .semantics { contentDescription = seekLabel }
-            .pointerInput(durationMs) {
-                detectTapGestures { o ->
-                    if (durationMs > 0) onSeek((o.x / size.width * durationMs).toLong())
-                }
-            }
-            .pointerInput(durationMs) {
-                detectHorizontalDragGestures(
-                    onDragStart = { o -> dragFraction = (o.x / size.width).coerceIn(0f, 1f) },
-                    onHorizontalDrag = { change, _ ->
-                        dragFraction = (change.position.x / size.width).coerceIn(0f, 1f)
-                    },
-                    onDragEnd = {
-                        dragFraction?.let { if (durationMs > 0) onSeek((it * durationMs).toLong()) }
-                        dragFraction = null
-                    },
-                    onDragCancel = { dragFraction = null },
-                )
-            },
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        val width = maxWidth
-        Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(OnTint.copy(alpha = 0.25f)))
-        Box(Modifier.fillMaxWidth(fraction).height(4.dp).clip(RoundedCornerShape(2.dp)).background(OnTint))
-        val knob = if (dragFraction != null) 16.dp else 12.dp
-        Box(
-            Modifier
-                .offset(x = (width * fraction) - knob / 2)
-                .size(knob)
-                .clip(CircleShape)
-                .background(OnTint)
-        )
-    }
-}
-
-/** Aleatório em três estados: desligado, comum e SMART (ícone de brilho); ligado ganha o ponto verde. */
-@Composable
-private fun ShuffleButton(mode: ShuffleMode, smartAvailable: Boolean, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    val label = stringResource(
-        when (mode) {
-            ShuffleMode.OFF -> R.string.cd_shuffle_on
-            ShuffleMode.ON -> if (smartAvailable) R.string.cd_shuffle_smart else R.string.cd_shuffle_off
-            ShuffleMode.SMART -> R.string.cd_smart_off
-        }
-    )
-    ActiveDot(active = mode != ShuffleMode.OFF) {
-        IconBtn(
-            if (mode == ShuffleMode.SMART) SonivellTheme.icons.smart else SonivellTheme.icons.shuffle,
-            label,
-            onClick,
-            tint = if (mode == ShuffleMode.OFF) OnTintSoft else c.accent,
-        )
-    }
-}
-
-/** Temporizador: ícone de lua; quando ligado, mostra a contagem regressiva em verde. */
-@Composable
-private fun SleepButton(timer: SleepTimer, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    if (!timer.active) {
-        IconBtn(SonivellTheme.icons.sleep, stringResource(R.string.cd_sleep_timer), onClick, tint = OnTintSoft, iconSize = 20.dp)
-        return
-    }
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(timer) {
-        while (true) {
-            now = System.currentTimeMillis()
-            delay(1_000)
-        }
-    }
-    val label = when {
-        timer.endOfTrack -> stringResource(R.string.timer_end_of_track_short)
-        timer.endsAtMs != null -> formatDuration((timer.endsAtMs - now).coerceAtLeast(0))
-        else -> ""
-    }
-    Row(
-        Modifier
-            .height(44.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .clickable(onClickLabel = stringResource(R.string.sleep_timer), onClick = onClick)
-            .padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Icon(SonivellTheme.icons.sleep, null, Modifier.size(18.dp), tint = c.accent)
-        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.accent)
-    }
 }

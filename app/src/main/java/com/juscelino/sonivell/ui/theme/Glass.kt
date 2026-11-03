@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.juscelino.sonivell.data.UiStyle
 
 /** Liga os cartões em vidro (ver SonivellTheme, que hoje liga em todos os temas). */
 val LocalGlass = staticCompositionLocalOf { false }
@@ -116,6 +117,10 @@ fun Modifier.cardSurface(
     shape: Shape,
     color: Color = SonivellTheme.colors.surface,
     elevation: Dp = 6.dp,
-): Modifier =
-    if (SonivellTheme.glass) glassSurface(shape, color, SonivellTheme.colors.outline, elevation = elevation)
+): Modifier {
+    // Essencial e Contraste: cards sem borda, o contraste vem da superfície. O Ondas tem contorno em tudo.
+    val style = SonivellTheme.style
+    val outline = if (style == UiStyle.ESSENCIAL || style == UiStyle.CONTRASTE) Color.Transparent else SonivellTheme.colors.outline
+    return if (SonivellTheme.glass) glassSurface(shape, color, outline, elevation = elevation)
     else clip(shape).background(color)
+}

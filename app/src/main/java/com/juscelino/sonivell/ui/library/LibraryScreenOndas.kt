@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.library
 
+import com.juscelino.sonivell.ui.nowplaying.WhyLine
 import android.content.res.Resources
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
@@ -88,6 +89,7 @@ import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.components.AlbumArt
+import com.juscelino.sonivell.ui.components.LabeledPill
 import com.juscelino.sonivell.ui.components.OndaArt
 import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.components.TrackRow
@@ -204,7 +206,7 @@ fun LibraryScreenOndas(
                         stringResource(
                             when (mode) {
                                 LibraryMode.Inicio -> R.string.nav_home
-                                LibraryMode.Buscar -> R.string.nav_search
+                                LibraryMode.Buscar -> R.string.nav_explore
                                 LibraryMode.Biblioteca -> R.string.nav_library
                             }
                         ),
@@ -213,13 +215,13 @@ fun LibraryScreenOndas(
                     )
                 }
                 when (mode) {
+                    // Botões com nome (traço do Ondas); Ajustes moram no Perfil.
                     LibraryMode.Inicio -> {
-                        if (state.allTracks.isNotEmpty()) OutlinedSquare(icons.shuffle, stringResource(R.string.cd_shuffle_all), actions.onShuffleAll)
-                        OutlinedSquare(icons.settings, stringResource(R.string.cd_settings), actions.onOpenSettings)
+                        if (state.allTracks.isNotEmpty()) LabeledPill(icons.shuffle, stringResource(R.string.mode_shuffle), actions.onShuffleAll)
                     }
                     LibraryMode.Biblioteca -> {
                         OutlinedSquare(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
-                        FilledSquare(icons.add, stringResource(R.string.cd_new_playlist), actions.onNewPlaylist)
+                        LabeledPill(icons.add, stringResource(R.string.action_playlist), actions.onNewPlaylist, primary = true)
                     }
                     LibraryMode.Buscar -> Unit
                 }
@@ -470,7 +472,7 @@ private fun Segmented(tabs: List<LibraryTab>, selected: LibraryTab, onSelect: (L
     }
 }
 
-/** Curtidas em destaque, na cor de destaque, com o próprio botão de tocar. */
+/** Curtidas em destaque: superfície neutra com o coração, igual em todos os estilos; o destaque fica no play. */
 @Composable
 private fun LikedHero(favs: List<Track>, modifier: Modifier = Modifier, onOpen: () -> Unit, onPlay: () -> Unit) {
     val c = SonivellTheme.colors
@@ -478,20 +480,20 @@ private fun LikedHero(favs: List<Track>, modifier: Modifier = Modifier, onOpen: 
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.dp))
-            .background(c.accent)
+            .background(c.surface)
             .clickable(onClick = onOpen)
             .padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Icon(SonivellTheme.icons.liked, null, Modifier.size(28.dp), tint = c.onAccent)
+        Icon(SonivellTheme.icons.liked, null, Modifier.size(28.dp), tint = c.textPrimary)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(stringResource(R.string.source_liked), style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp), fontWeight = FontWeight.ExtraBold, color = c.onAccent)
+            Text(stringResource(R.string.source_liked), style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp), fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
             Text(
                 pluralStringResource(R.plurals.songs_count, favs.size, favs.size) + " · " + formatDuration(favs.sumOf { it.durationMs }),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = c.onAccent.copy(alpha = 0.72f),
+                color = c.textSecondary,
             )
         }
         if (favs.isNotEmpty()) {
@@ -502,8 +504,8 @@ private fun LikedHero(favs: List<Track>, modifier: Modifier = Modifier, onOpen: 
                 corner = 16.dp,
                 iconSize = 20.dp,
                 contentDescription = stringResource(R.string.cd_play_item, stringResource(R.string.source_liked)),
-                background = c.onAccent,
-                tint = c.accent,
+                background = c.accent,
+                tint = c.onAccent,
             )
         }
     }
@@ -609,14 +611,11 @@ private fun Title(text: String, modifier: Modifier = Modifier, trailing: (@Compo
     }
 }
 
-/** Selo "SMART" com contorno na cor de destaque. */
+/** "SMART" como rótulo cinza em caixa-alta, igual aos outros rótulos: nada de selo com borda que pareça botão. */
 @Composable
 private fun SmartTag() {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(7.dp)
-    Box(Modifier.height(22.dp).clip(shape).border(1.dp, c.accent, shape).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
-        Text(stringResource(R.string.source_smart), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.8.sp), fontWeight = FontWeight.ExtraBold, color = c.accent)
-    }
+    Text(stringResource(R.string.source_smart), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.8.sp), fontWeight = FontWeight.ExtraBold, color = c.textSecondary)
 }
 
 // ---------------------------------------------------------------- Para você
@@ -651,13 +650,14 @@ private fun LazyListScope.home(
                     itemsIndexed(forYou.mixSeeds, key = { _, s -> "mix-" + s.id }) { i, seed ->
                         val mix = stringResource(R.string.fy_mix_of, seed.artist)
                         Column(
-                            Modifier.width(136.dp).clip(RoundedCornerShape(20.dp)).clickable { actions.onPlayMix(seed) },
+                            Modifier.width(136.dp).clickable { actions.onPlayMix(seed) },
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            OndaArt(mix, seed.artist, title = null, subtitle = null, modifier = Modifier.size(width = 136.dp, height = 120.dp).clip(RoundedCornerShape(20.dp)))
-                            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                            // Capa real e a linha "por que" com o ícone do Smart (no lugar dos selos).
+                            AlbumArt(seed, Modifier.size(136.dp), corner = 14.dp)
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(mix, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = SonivellTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(stringResource(R.string.fy_sounds_like, seed.title), style = MaterialTheme.typography.labelMedium, color = SonivellTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                WhyLine(stringResource(R.string.fy_sounds_like, seed.title))
                             }
                         }
                     }
@@ -682,7 +682,7 @@ private fun LazyListScope.home(
         }
     }
     cardRow("fy-hour", R.string.fy_this_hour, forYou.thisHour, labels.forYou, actions)
-    cardRow("fy-unfinished", R.string.fy_unfinished, forYou.unfinished.drop(1), labels.forYou, actions)
+    // Um só "Continuar ouvindo" (no topo): "Ficou pela metade" não se repete na mesma tela.
     cardRow("fy-forgotten", R.string.fy_forgotten, forYou.forgottenFavorites, labels.forYou, actions)
     if (state.recentAlbums.isNotEmpty()) {
         item(key = "home-recent") {
@@ -738,9 +738,10 @@ private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouS
         tiles.chunked(2).forEach { pair ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 pair.forEach { q ->
-                    val bg = if (q.liked) c.accent else c.surface
-                    val fg = if (q.liked) c.onAccent else c.textPrimary
-                    val meta = if (q.liked) c.onAccent.copy(alpha = 0.72f) else c.textSecondary
+                    // Curtidas no mesmo tom dos outros atalhos: superfície neutra, coração no tile.
+                    val bg = c.surface
+                    val fg = c.textPrimary
+                    val meta = c.textSecondary
                     Row(
                         Modifier
                             .weight(1f)
@@ -757,8 +758,8 @@ private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouS
                             Text(q.meta, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp), fontWeight = FontWeight.SemiBold, color = meta, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         if (q.liked) {
-                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(c.onAccent), contentAlignment = Alignment.Center) {
-                                Icon(SonivellTheme.icons.liked, null, Modifier.size(18.dp), tint = c.accent)
+                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
+                                Icon(SonivellTheme.icons.liked, null, Modifier.size(18.dp), tint = c.textPrimary)
                             }
                         } else {
                             ArtBox(q.art, 40.dp, round = false, corner = 12.dp)
@@ -818,7 +819,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(track.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(track.artist, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(stringResource(if (neverPlayed) R.string.fy_pick_never else R.string.fy_pick_long), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.accent)
+            Text(stringResource(if (neverPlayed) R.string.fy_pick_never else R.string.fy_pick_long), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textSecondary)
         }
         PlaySquircle(false, onPlay, size = 48.dp, corner = 16.dp, iconSize = 20.dp)
     }
@@ -842,7 +843,7 @@ private fun LazyListScope.cardRow(key: String, @StringRes title: Int, tracks: Li
 private fun Card(track: Track?, title: String, subtitle: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     Column(
-        Modifier.width(136.dp).clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick),
+        Modifier.width(136.dp).clickable(onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AlbumArt(track, Modifier.size(136.dp), corner = 20.dp, detailed = true)

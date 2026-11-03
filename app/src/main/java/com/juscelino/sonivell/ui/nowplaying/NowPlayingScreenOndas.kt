@@ -1,47 +1,32 @@
 package com.juscelino.sonivell.ui.nowplaying
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,7 +39,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,37 +46,40 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.ShuffleMode
-import com.juscelino.sonivell.SleepTimer
 import com.juscelino.sonivell.data.Track
+import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.playback.PlayerState
 import com.juscelino.sonivell.playback.RepeatMode
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.IconBtn
-import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.components.WaveSeekBar
-import com.juscelino.sonivell.ui.lyrics.LyricsState
 import com.juscelino.sonivell.ui.theme.SonivellTheme
-import com.juscelino.sonivell.ui.theme.glassAccent
 import com.juscelino.sonivell.ui.theme.glassSurface
-import kotlinx.coroutines.delay
 
-/** Por que a faixa atual está tocando (aba "Por que tocou"). */
+/** Por que a faixa atual está tocando ("Por que tocou", no menu de opções). */
 sealed interface PlayReason {
-    /** Escolhida pelo SMART por soar parecido com [seed]. */
+    /** Escolhida pelo Smart por soar parecido com [seed]. */
     data class Smart(
         val seed: Track,
         /** Subiu na fila pelo gosto aprendido: período do dia (0 madrugada … 3 noite), -1 = gosto geral, null = não. */
         val taste: Int? = null,
     ) : PlayReason
 
-    /** É a faixa de onde o mix SMART partiu. */
+    /** É a faixa de onde o mix Smart partiu. */
     data object MixStart : PlayReason
     data object Shuffle : PlayReason
     data object Chosen : PlayReason
 }
 
-/** Player do layout Ondas (3.0): progresso em onda, botões de modo com nome e painel embaixo. */
+/**
+ * Player dos estilos Sonivell, Ondas e Essencial. A estrutura é a mesma de todos os estilos
+ * (Tocando de · origem; título em até duas linhas e artista; embaralhar · anterior · play · próxima ·
+ * repetir; Smart como interruptor; rodapé Este telefone · Letra · Fila). Muda só a assinatura:
+ * - Sonivell: onda como progresso, capa com brilho na cor dela.
+ * - Ondas: onda como progresso, Aleatório e Repetir com nome, e a linha "por que" do Smart.
+ * - Essencial: capa grande em fundo liso, linha fina de 3 dp, rodapé sem caixa.
+ */
 @Composable
 fun NowPlayingScreenOndas(
     track: Track,
@@ -102,205 +89,61 @@ fun NowPlayingScreenOndas(
     isFavorite: Boolean,
     sourceLabel: String,
     actions: NowPlayingActions,
-    sleepTimer: SleepTimer = SleepTimer(),
-    lyrics: LyricsState = LyricsState.None,
-    lyricsOffsetMs: Long = 0L,
-    upNext: List<Track> = emptyList(),
     reason: PlayReason = PlayReason.Chosen,
     visualizer: Boolean = false,
-) {
-    if (SonivellTheme.glass) {
-        NowPlayingGlass(
-            track, state, shuffleMode, smartAvailable, isFavorite, sourceLabel, actions,
-            sleepTimer, lyrics, lyricsOffsetMs, upNext, reason, visualizer,
-        )
-        return
-    }
-    val c = SonivellTheme.colors
-    val icons = SonivellTheme.icons
-    val durationMs = state.durationMs.takeIf { it > 0 } ?: track.durationMs
-
-    Column(Modifier.fillMaxSize().background(c.background)) {
-        Column(
-            Modifier
-                .weight(1f)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            // Topo
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Square(icons.collapse, stringResource(R.string.cd_close_player), actions.onClose)
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.playing_from), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textSecondary)
-                    Text(sourceLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                Square(icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore)
-            }
-
-            // Capa
-            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Box(Modifier.widthIn(max = 420.dp).fillMaxWidth().aspectRatio(1f)) {
-                    AlbumArt(track, Modifier.fillMaxSize(), corner = 28.dp, detailed = true)
-                    if (visualizer) {
-                        AudioBars(
-                            playing = state.isPlaying,
-                            color = c.accent,
-                            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.32f).padding(horizontal = 16.dp, vertical = 14.dp),
-                        )
-                    }
-                }
-            }
-
-            // Título + curtir
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(track.title, style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp), color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        listOf(track.artist, track.album).filter { it.isNotBlank() }.joinToString(" · "),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = c.textSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                val likeLabel = stringResource(if (isFavorite) R.string.cd_unlike else R.string.cd_like)
-                Box(
-                    Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(if (isFavorite) c.accent else c.surface)
-                        .clickable(role = Role.Button, onClickLabel = likeLabel, onClick = actions.onFavorite)
-                        .semantics { contentDescription = likeLabel },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(if (isFavorite) icons.liked else icons.like, null, Modifier.size(22.dp), tint = if (isFavorite) c.onAccent else c.textPrimary)
-                }
-            }
-
-            // Progresso em onda
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                WaveSeekBar(track.id, state.positionMs, durationMs, actions.onSeek)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TimeLabel(formatDuration(state.positionMs))
-                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        track.formatLabel?.let { fmt ->
-                            val shape = RoundedCornerShape(6.dp)
-                            Text(
-                                fmt,
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.6.sp),
-                                fontWeight = FontWeight.ExtraBold,
-                                color = c.textSecondary,
-                                modifier = Modifier.border(1.dp, c.outline, shape).padding(horizontal = 7.dp, vertical = 2.dp),
-                            )
-                        }
-                    }
-                    TimeLabel(formatDuration(durationMs))
-                }
-            }
-
-            // Controles
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-                IconBtn(icons.skipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 56.dp, iconSize = 30.dp)
-                PlaySquircle(state.isPlaying, actions.onTogglePlay, size = 80.dp, corner = 26.dp, iconSize = 30.dp)
-                IconBtn(icons.skipNext, stringResource(R.string.cd_next), actions.onNext, size = 56.dp, iconSize = 30.dp)
-            }
-
-            // Modos com nome: ligado = preenchido.
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (smartAvailable) {
-                    ModeChip(
-                        icons.smart, stringResource(R.string.source_smart), shuffleMode == ShuffleMode.SMART, Modifier.weight(1f),
-                    ) { actions.onSetShuffle(if (shuffleMode == ShuffleMode.SMART) ShuffleMode.OFF else ShuffleMode.SMART) }
-                }
-                ModeChip(
-                    icons.shuffle, stringResource(R.string.mode_shuffle), shuffleMode == ShuffleMode.ON, Modifier.weight(1f),
-                ) { actions.onSetShuffle(if (shuffleMode == ShuffleMode.ON) ShuffleMode.OFF else ShuffleMode.ON) }
-                ModeChip(
-                    if (state.repeat == RepeatMode.ONE) icons.repeatOne else icons.repeat,
-                    stringResource(if (state.repeat == RepeatMode.ONE) R.string.mode_repeat_one else R.string.mode_repeat),
-                    state.repeat != RepeatMode.OFF,
-                    Modifier.weight(1f),
-                    onClick = actions.onRepeat,
-                )
-            }
-        }
-
-        BottomPanel(track, state, lyrics, lyricsOffsetMs, upNext, reason, sourceLabel, sleepTimer, actions)
-    }
-}
-
-/**
- * Player em vidro: o do Ondas mais limpo. A capa ganha um brilho na cor dela
- * (e uma luz suave no topo da tela), aleatório e repetir viram ícones ao lado dos controles, o SMART
- * vira um selo translúcido e o painel de baixo flutua em vidro. As ondas do progresso continuam.
- */
-@Composable
-private fun NowPlayingGlass(
-    track: Track,
-    state: PlayerState,
-    shuffleMode: ShuffleMode,
-    smartAvailable: Boolean,
-    isFavorite: Boolean,
-    sourceLabel: String,
-    actions: NowPlayingActions,
-    sleepTimer: SleepTimer,
-    lyrics: LyricsState,
-    lyricsOffsetMs: Long,
-    upNext: List<Track>,
-    reason: PlayReason,
-    visualizer: Boolean,
+    style: UiStyle = UiStyle.ONDAS,
 ) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val durationMs = state.durationMs.takeIf { it > 0 } ?: track.durationMs
+    val essencial = style == UiStyle.ESSENCIAL
+    val ondas = style == UiStyle.ONDAS
     val tone by animateColorAsState(artTint(track, ::glowTone), tween(600), label = "tone")
 
     Column(
         Modifier
             .fillMaxSize()
             .background(c.background)
-            // Luz ambiente da capa, bem fraca, no alto da tela.
-            .drawBehind {
-                drawRect(
-                    Brush.radialGradient(
-                        listOf(tone.copy(alpha = 0.20f), Color.Transparent),
-                        center = Offset(size.width / 2f, size.height * 0.24f),
-                        radius = size.width * 1.1f,
-                    ),
-                )
-            },
-    ) {
-        Column(
-            Modifier
-                .weight(1f)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            // Topo
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                GlassRound(icons.collapse, stringResource(R.string.cd_close_player), actions.onClose)
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        stringResource(R.string.playing_from).uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
-                        fontWeight = FontWeight.ExtraBold,
-                        color = c.textSecondary,
+            // Luz ambiente da capa, bem fraca, no alto da tela (o Essencial fica no fundo liso).
+            .then(
+                if (essencial) Modifier else Modifier.drawBehind {
+                    drawRect(
+                        Brush.radialGradient(
+                            listOf(tone.copy(alpha = 0.20f), Color.Transparent),
+                            center = Offset(size.width / 2f, size.height * 0.24f),
+                            radius = size.width * 1.1f,
+                        ),
                     )
-                    Text(sourceLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                GlassRound(icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore)
+                },
+            )
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        // Topo: Tocando de · origem real
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            TopRound(icons.collapse, stringResource(R.string.cd_close_player), actions.onClose)
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    stringResource(R.string.playing_from).uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = c.textSecondary,
+                )
+                Text(sourceLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            TopRound(icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore)
+        }
 
-            // Capa com brilho na cor dela. Quadrada no maior tamanho que cabe (largura ou altura que sobra):
-            // presa só à largura, ela transbordava por cima do topo e do título em telas mais baixas.
-            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                val side = minOf(maxWidth, maxHeight, 400.dp)
-                Box(
-                    Modifier
-                        .size(side)
-                        .drawBehind {
+        // Capa: quadrada no maior tamanho que cabe.
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            val side = minOf(maxWidth, maxHeight, if (essencial) 420.dp else 400.dp)
+            Box(
+                Modifier
+                    .size(side)
+                    .then(
+                        if (essencial) Modifier else Modifier.drawBehind {
                             drawRect(
                                 Brush.radialGradient(
                                     listOf(tone.copy(alpha = 0.42f), Color.Transparent),
@@ -311,163 +154,118 @@ private fun NowPlayingGlass(
                                 size = Size(size.width * 1.6f, size.height * 1.5f),
                             )
                         },
-                ) {
-                    AlbumArt(
-                        track,
-                        Modifier.fillMaxSize().border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(28.dp)),
-                        corner = 28.dp,
-                        detailed = true,
-                    )
-                    if (visualizer) {
-                        AudioBars(
-                            playing = state.isPlaying,
-                            color = c.accent,
-                            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.32f).padding(horizontal = 16.dp, vertical = 14.dp),
-                        )
-                    }
+                    ),
+            ) {
+                val corner = when (style) {
+                    UiStyle.ESSENCIAL -> 18.dp
+                    UiStyle.ONDAS -> 22.dp
+                    else -> 24.dp
                 }
-            }
-
-            // Título + curtir (só o coração, sem caixa)
-            Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(track.title, style = MaterialTheme.typography.headlineSmall.copy(fontSize = 24.sp), color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        listOf(track.artist, track.album).filter { it.isNotBlank() }.joinToString(" · "),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = c.textSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                IconBtn(
-                    if (isFavorite) icons.liked else icons.like,
-                    stringResource(if (isFavorite) R.string.cd_unlike else R.string.cd_like),
-                    actions.onFavorite,
-                    iconSize = 24.dp,
-                    tint = if (isFavorite) c.accent else c.textPrimary,
+                AlbumArt(
+                    track,
+                    Modifier.fillMaxSize().border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(corner)),
+                    corner = corner,
+                    detailed = true,
                 )
-            }
-
-            // Progresso em onda, sem o selo do formato no meio
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                WaveSeekBar(track.id, state.positionMs, durationMs, actions.onSeek)
-                Row {
-                    TimeLabel(formatDuration(state.positionMs))
-                    Box(Modifier.weight(1f))
-                    TimeLabel(formatDuration(durationMs))
-                }
-            }
-
-            // Controles: aleatório e repetir como ícones nas pontas
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                ModeIcon(icons.shuffle, stringResource(R.string.mode_shuffle), shuffleMode == ShuffleMode.ON) {
-                    actions.onSetShuffle(if (shuffleMode == ShuffleMode.ON) ShuffleMode.OFF else ShuffleMode.ON)
-                }
-                IconBtn(icons.skipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 52.dp, iconSize = 30.dp)
-                PlaySquircle(
-                    state.isPlaying,
-                    actions.onTogglePlay,
-                    // Brilho suave na cor de destaque por baixo do play.
-                    Modifier.drawBehind {
-                        drawCircle(
-                            Brush.radialGradient(
-                                listOf(c.accent.copy(alpha = 0.28f), Color.Transparent),
-                                center = Offset(size.width / 2f, size.height * 0.62f),
-                                radius = size.width * 0.95f,
-                            ),
-                            radius = size.width * 0.95f,
-                            center = Offset(size.width / 2f, size.height * 0.62f),
-                        )
-                    },
-                    size = 76.dp,
-                    corner = 26.dp,
-                    iconSize = 30.dp,
-                )
-                IconBtn(icons.skipNext, stringResource(R.string.cd_next), actions.onNext, size = 52.dp, iconSize = 30.dp)
-                ModeIcon(
-                    if (state.repeat == RepeatMode.ONE) icons.repeatOne else icons.repeat,
-                    stringResource(if (state.repeat == RepeatMode.ONE) R.string.mode_repeat_one else R.string.mode_repeat),
-                    state.repeat != RepeatMode.OFF,
-                    onClick = actions.onRepeat,
-                )
-            }
-
-            // SMART: selo translúcido; ligado, na cor de destaque.
-            if (smartAvailable) {
-                val on = shuffleMode == ShuffleMode.SMART
-                val shape = RoundedCornerShape(16.dp)
-                Row(
-                    Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .height(32.dp)
-                        .then(if (on) Modifier.glassAccent(shape, c.accent) else Modifier.glassSurface(shape, c.surface, c.outline, elevation = 0.dp))
-                        .toggleable(value = on, role = Role.Switch, onValueChange = {
-                            actions.onSetShuffle(if (on) ShuffleMode.OFF else ShuffleMode.SMART)
-                        })
-                        .padding(horizontal = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Icon(icons.smart, null, Modifier.size(14.dp), tint = if (on) c.accent else c.textSecondary)
-                    Text(
-                        stringResource(if (on) R.string.np_smart_on else R.string.source_smart),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = if (on) c.accent else c.textSecondary,
-                        maxLines = 1,
+                if (visualizer) {
+                    AudioBars(
+                        playing = state.isPlaying,
+                        color = c.accent,
+                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.32f).padding(horizontal = 16.dp, vertical = 14.dp),
                     )
                 }
             }
         }
 
-        BottomPanel(track, state, lyrics, lyricsOffsetMs, upNext, reason, sourceLabel, sleepTimer, actions, glass = true, tone = tone)
+        // Título (até duas linhas) + artista; no Ondas, a linha "por que" do Smart.
+        Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                PlayerTitle(track, titleSize = if (essencial) 26.sp else 24.sp)
+                if (ondas && reason is PlayReason.Smart) WhyLine(stringResource(R.string.why_line_smart, reason.seed.title))
+            }
+            IconBtn(
+                if (isFavorite) icons.liked else icons.like,
+                stringResource(if (isFavorite) R.string.cd_unlike else R.string.cd_like),
+                actions.onFavorite,
+                iconSize = 24.dp,
+                tint = if (isFavorite) c.accent else c.textPrimary,
+            )
+        }
+
+        // Progresso: onda (Sonivell e Ondas) ou linha fina (Essencial); tempo restante com "−".
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (essencial) {
+                LineSeekBar(state.positionMs, durationMs, actions.onSeek, thickness = 3.dp, fill = c.accent, knob = false)
+            } else {
+                WaveSeekBar(track.id, state.positionMs, durationMs, actions.onSeek)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TimeLabel(formatDuration(state.positionMs))
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { FormatText(track) }
+                TimeLabel(remainingLabel(state.positionMs, durationMs))
+            }
+        }
+
+        // Controles padrão: embaralhar · anterior · play · próxima · repetir.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            PlayerModeToggle(icons.shuffle, stringResource(R.string.mode_shuffle), shuffleMode == ShuffleMode.ON, showLabel = ondas, onClick = {
+                actions.onSetShuffle(if (shuffleMode == ShuffleMode.ON) ShuffleMode.OFF else ShuffleMode.ON)
+            })
+            IconBtn(icons.skipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 52.dp, iconSize = 30.dp)
+            PlayCircle(state.isPlaying, actions.onTogglePlay, size = if (essencial) 72.dp else if (ondas) 74.dp else 76.dp, iconSize = 30.dp)
+            IconBtn(icons.skipNext, stringResource(R.string.cd_next), actions.onNext, size = 52.dp, iconSize = 30.dp)
+            PlayerModeToggle(
+                if (state.repeat == RepeatMode.ONE) icons.repeatOne else icons.repeat,
+                stringResource(if (state.repeat == RepeatMode.ONE) R.string.mode_repeat_one else R.string.mode_repeat),
+                state.repeat != RepeatMode.OFF,
+                showLabel = ondas,
+                onClick = actions.onRepeat,
+            )
+        }
+
+        // Smart como interruptor (no Essencial, entre duas linhas finas).
+        if (smartAvailable) {
+            if (essencial) HorizontalDivider(color = c.outline)
+            SmartQueueSwitch(
+                on = shuffleMode == ShuffleMode.SMART,
+                onToggle = { on -> actions.onSetShuffle(if (on) ShuffleMode.SMART else ShuffleMode.OFF) },
+            )
+            if (essencial) HorizontalDivider(color = c.outline)
+        }
+
+        // Rodapé: Este telefone · Letra · Fila. Em caixa de vidro no Sonivell e no Ondas; solto no Essencial.
+        PlayerFooter(
+            onLyrics = actions.onLyrics,
+            onQueue = actions.onQueue,
+            modifier = if (essencial) Modifier else Modifier
+                .glassSurface(RoundedCornerShape(20.dp), c.surface, c.outline, tone = tone, elevation = 8.dp)
+                .padding(horizontal = 4.dp),
+        )
     }
 }
 
-/** Botão redondo em vidro do topo do player (fechar, mais opções). */
+/** Linha "por que" do estilo Ondas: ícone do Smart e uma frase curta. */
 @Composable
-private fun GlassRound(icon: ImageVector, label: String, onClick: () -> Unit) {
+fun WhyLine(text: String, modifier: Modifier = Modifier) {
+    val c = SonivellTheme.colors
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Icon(SonivellTheme.icons.smart, null, Modifier.size(14.dp), tint = c.accent)
+        Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textTertiary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** Botão redondo do topo do player (fechar, mais opções). */
+@Composable
+private fun TopRound(icon: ImageVector, label: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     Box(
         Modifier
             .size(44.dp)
-            .glassSurface(CircleShape, c.surface, c.outline, elevation = 6.dp)
+            .then(if (SonivellTheme.glass) Modifier.glassSurface(CircleShape, c.surface, c.outline, elevation = 6.dp) else Modifier.clip(CircleShape).border(1.dp, c.outline, CircleShape))
             .clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) { Icon(icon, null, Modifier.size(20.dp), tint = c.textPrimary) }
-}
-
-/** Aleatório/repetir no player em vidro: ícone discreto; ligado, na cor de destaque com um ponto embaixo. */
-@Composable
-private fun ModeIcon(icon: ImageVector, label: String, on: Boolean, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    Box(
-        Modifier
-            .size(44.dp)
-            .clip(CircleShape)
-            .toggleable(value = on, role = Role.Switch, onValueChange = { onClick() })
-            .semantics { contentDescription = label },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, null, Modifier.size(22.dp), tint = if (on) c.accent else c.textSecondary)
-        if (on) {
-            Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp).size(4.dp).clip(CircleShape).background(c.accent))
-        }
-    }
-}
-
-@Composable
-private fun Square(icon: ImageVector, label: String, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(14.dp)
-    Box(
-        Modifier.size(44.dp).clip(shape).border(1.dp, c.outline, shape)
-            .clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
-            .semantics { contentDescription = label },
-        contentAlignment = Alignment.Center,
-    ) { Icon(icon, null, Modifier.size(22.dp), tint = c.textPrimary) }
 }
 
 @Composable
@@ -475,201 +273,13 @@ private fun TimeLabel(text: String) {
     Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = SonivellTheme.colors.textSecondary)
 }
 
+/**
+ * Explicação completa de "Por que tocou", aberta pelo menu de opções do player (em todos os estilos).
+ */
 @Composable
-private fun ModeChip(icon: ImageVector, label: String, on: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun WhyContent(reason: PlayReason, sourceLabel: String, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(14.dp)
-    Row(
-        modifier
-            .height(42.dp)
-            .clip(shape)
-            .then(if (on) Modifier.background(c.accent) else Modifier.border(1.dp, c.outline, shape))
-            .toggleable(value = on, role = Role.Switch, onValueChange = { onClick() }),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-    ) {
-        Icon(icon, null, Modifier.size(16.dp), tint = if (on) c.onAccent else c.textTertiary)
-        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = if (on) c.onAccent else c.textTertiary, maxLines = 1)
-    }
-}
-
-/** Painel de baixo: Letra, A seguir e Por que tocou, mais o temporizador. */
-@Composable
-private fun BottomPanel(
-    track: Track,
-    state: PlayerState,
-    lyrics: LyricsState,
-    lyricsOffsetMs: Long,
-    upNext: List<Track>,
-    reason: PlayReason,
-    sourceLabel: String,
-    sleepTimer: SleepTimer,
-    actions: NowPlayingActions,
-    /** Vidro: barra flutuante com cantos arredondados e o brilho de [tone]. */
-    glass: Boolean = false,
-    tone: Color? = null,
-) {
-    val c = SonivellTheme.colors
-    var tab by rememberSaveable { mutableIntStateOf(0) }
-    // Começa minimizado: só a alça e as abas. Tocar numa aba (ou arrastar para cima) abre;
-    // tocar na aba aberta, na alça ou arrastar para baixo fecha.
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    val toggleLabel = stringResource(if (expanded) R.string.cd_collapse_panel else R.string.cd_expand_panel)
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .then(
-                if (glass) {
-                    Modifier
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-                        .glassSurface(RoundedCornerShape(22.dp), c.surface, c.outline, tone = tone, elevation = 12.dp)
-                } else {
-                    Modifier.clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)).background(c.surface)
-                },
-            )
-            .pointerInput(Unit) {
-                var drag = 0f
-                detectVerticalDragGestures(
-                    onDragStart = { drag = 0f },
-                    onVerticalDrag = { _, dy -> drag += dy },
-                    onDragEnd = {
-                        if (drag < -24f) expanded = true
-                        if (drag > 24f) expanded = false
-                    },
-                )
-            }
-            .then(if (glass) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars))
-            .animateContentSize(tween(220))
-            .padding(
-                start = if (glass) 12.dp else 20.dp,
-                end = 12.dp,
-                top = if (glass && !expanded) 8.dp else 4.dp,
-                bottom = if (expanded) 16.dp else if (glass) 8.dp else 6.dp,
-            ),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        // No vidro a alça só aparece com o painel aberto (fechado, a barra fica limpa; arrastar ainda abre).
-        if (!glass || expanded) Box(
-            Modifier
-                .align(Alignment.CenterHorizontally)
-                .size(width = 64.dp, height = 20.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .clickable(role = Role.Button, onClickLabel = toggleLabel) { expanded = !expanded }
-                .semantics { contentDescription = toggleLabel },
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(Modifier.width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.outline))
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                listOf(R.string.lyrics_label, R.string.tab_up_next, R.string.tab_why).forEachIndexed { i, label ->
-                    val on = expanded && tab == i
-                    Box(
-                        Modifier
-                            .height(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (on) c.surfaceHigh else Color.Transparent)
-                            .clickable(role = Role.Tab) {
-                                if (on) expanded = false else {
-                                    tab = i
-                                    expanded = true
-                                }
-                            }
-                            .semantics { selected = on }
-                            .padding(horizontal = 12.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            stringResource(label),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
-                            color = if (on) c.textPrimary else c.textSecondary,
-                            maxLines = 1,
-                        )
-                    }
-                }
-            }
-            SleepButton(sleepTimer, actions.onSleepTimer)
-        }
-        if (expanded) {
-            Box(Modifier.fillMaxWidth().heightIn(min = 76.dp).padding(top = 4.dp, end = 8.dp)) {
-                when (tab) {
-                    0 -> LyricsPeek(state, lyrics, lyricsOffsetMs, actions.onLyrics)
-                    1 -> UpNextPeek(upNext, actions.onQueue)
-                    else -> WhyPeek(reason, sourceLabel)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LyricsPeek(state: PlayerState, lyrics: LyricsState, offsetMs: Long, onOpen: () -> Unit) {
-    val c = SonivellTheme.colors
-    val loaded = (lyrics as? LyricsState.Loaded)?.lyrics?.takeIf { it.lines.isNotEmpty() }
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClickLabel = stringResource(R.string.open_full_lyrics), onClick = onOpen),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        if (loaded == null) {
-            Text(
-                stringResource(if (lyrics is LyricsState.Loading) R.string.lyrics_label else R.string.lyrics_none),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = c.textPrimary,
-            )
-            Text(stringResource(R.string.open_full_lyrics), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = c.accent)
-        } else {
-            val index = loaded.lineAt(state.positionMs - offsetMs)
-            val first = if (loaded.synced) index.coerceAtLeast(0) else 0
-            val current = loaded.lines.getOrNull(first)?.text.orEmpty()
-            val next = loaded.lines.getOrNull(first + 1)?.text.orEmpty()
-            Text(
-                current.ifBlank { "♪" },
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp, lineHeight = 23.sp),
-                fontWeight = FontWeight.ExtraBold,
-                color = c.textPrimary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (next.isNotBlank()) {
-                Text(next, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-    }
-}
-
-@Composable
-private fun UpNextPeek(upNext: List<Track>, onOpenQueue: () -> Unit) {
-    val c = SonivellTheme.colors
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (upNext.isEmpty()) {
-            Text(stringResource(R.string.up_next_empty), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-        }
-        upNext.take(2).forEach { t ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                AlbumArt(t, Modifier.size(32.dp), corner = 9.dp)
-                Column(Modifier.weight(1f)) {
-                    Text(t.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(t.artist, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-            }
-        }
-        Text(
-            stringResource(R.string.open_full_queue),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.ExtraBold,
-            color = c.accent,
-            modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(role = Role.Button, onClick = onOpenQueue).padding(vertical = 6.dp),
-        )
-    }
-}
-
-@Composable
-private fun WhyPeek(reason: PlayReason, sourceLabel: String) {
-    val c = SonivellTheme.colors
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
             Icon(
                 when (reason) {
@@ -708,45 +318,11 @@ private fun WhyPeek(reason: PlayReason, sourceLabel: String) {
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = c.accent,
+                        color = c.textTertiary,
                     )
                 }
                 Text(stringResource(R.string.why_smart_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
             }
         }
-    }
-}
-
-/** Temporizador: lua; ligado, mostra a contagem regressiva na cor de destaque. */
-@Composable
-private fun SleepButton(timer: SleepTimer, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    if (!timer.active) {
-        IconBtn(SonivellTheme.icons.sleep, stringResource(R.string.cd_sleep_timer), onClick, tint = c.textSecondary, iconSize = 19.dp)
-        return
-    }
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(timer) {
-        while (true) {
-            now = System.currentTimeMillis()
-            delay(1_000)
-        }
-    }
-    val label = when {
-        timer.endOfTrack -> stringResource(R.string.timer_end_of_track_short)
-        timer.endsAtMs != null -> formatDuration((timer.endsAtMs - now).coerceAtLeast(0))
-        else -> ""
-    }
-    Row(
-        Modifier
-            .height(40.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClickLabel = stringResource(R.string.sleep_timer), onClick = onClick)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Icon(SonivellTheme.icons.sleep, null, Modifier.size(16.dp), tint = c.accent)
-        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = c.accent)
     }
 }

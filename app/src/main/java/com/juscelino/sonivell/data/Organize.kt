@@ -124,6 +124,12 @@ private val GENERIC_GENRES = setOf(
     "unknown", "desconhecido", "misc", "miscellaneous", "various", "none", "n/a", "default",
 )
 
+/**
+ * Quantos gêneros "de verdade" a biblioteca tem: a contagem única mostrada em todas as telas e estilos
+ * (sem os genéricos, que vão para "Gêneros para arrumar").
+ */
+fun realGenreCount(genres: Collection<Genre>): Int = genres.count { !isGenericGenre(it.name) }
+
 /** Gênero que não diz nada ("Genre:", "Music", "Other"…): conta como gênero para arrumar. */
 fun isGenericGenre(name: String): Boolean {
     val n = name.trim().trimEnd(':', '.', ' ').lowercase()

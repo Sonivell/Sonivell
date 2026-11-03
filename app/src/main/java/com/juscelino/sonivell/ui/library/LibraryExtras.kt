@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -144,12 +145,14 @@ internal fun MoodRow(onPick: (Mood) -> Unit, modifier: Modifier = Modifier, cont
                 Modifier
                     .heightIn(min = 56.dp)
                     .clip(RoundedCornerShape(18.dp))
-                    .background(Color(mood.color))
+                    // Neutro: a cor fica para as capas, ação e estado (proposta visual).
+                    .background(SonivellTheme.colors.surface)
+                    .border(1.dp, SonivellTheme.colors.outline, RoundedCornerShape(18.dp))
                     .clickable(role = Role.Button, onClickLabel = label) { onPick(mood) }
                     .padding(horizontal = 18.dp, vertical = 16.dp),
                 contentAlignment = Alignment.CenterStart,
             ) {
-                Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = Color(0xFFF2F2EE))
+                Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = SonivellTheme.colors.textPrimary)
             }
         }
     }

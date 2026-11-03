@@ -118,7 +118,7 @@ internal fun LazyListScope.genreBrowse(
                     color = SonivellTheme.colors.textSecondary,
                 )
             }
-            if (rest.isNotEmpty()) GenreMosaic(rest, actions)
+            if (rest.isNotEmpty()) GenreMosaic(rest, total = good.size, actions)
             if (decades.isNotEmpty()) DecadeTimeline(state, decades, actions)
             if (generic.isNotEmpty()) GenericTagsCard(generic, actions)
         }
@@ -162,16 +162,17 @@ private fun LoadingCard() {
 
 @Composable
 private fun HeroCard(genre: Genre, isMonth: Boolean, listenedMs: Long, onOpen: () -> Unit, onPlay: () -> Unit) {
+    // Superfície neutra: o lima fica só no play (e, no Ondas, na onda, que é a assinatura do estilo).
     val c = SonivellTheme.colors
-    val ink = c.onAccent
+    val ink = c.textPrimary
+    val ondas = SonivellTheme.style == com.juscelino.sonivell.data.UiStyle.ONDAS
     val songs = pluralStringResource(R.plurals.songs_count, genre.tracks.size, genre.tracks.size)
     val listened = listenedText(listenedMs)
     val subtitle = if (listened != null) "$songs · ${stringResource(R.string.browse_listened, listened)}" else songs
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(26.dp))
-            .background(c.accent)
+            .cardSurface(RoundedCornerShape(24.dp))
             .clickable(onClick = onOpen)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -182,7 +183,7 @@ private fun HeroCard(genre: Genre, isMonth: Boolean, listenedMs: Long, onOpen: (
                     stringResource(if (isMonth) R.string.browse_month_genre else R.string.browse_top_genre).uppercase(),
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.7.sp),
                     fontWeight = FontWeight.ExtraBold,
-                    color = ink.copy(alpha = 0.72f),
+                    color = c.textSecondary,
                 )
                 Text(
                     genre.name,
@@ -192,7 +193,7 @@ private fun HeroCard(genre: Genre, isMonth: Boolean, listenedMs: Long, onOpen: (
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = ink.copy(alpha = 0.72f))
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textSecondary)
             }
             PlaySquircle(
                 isPlaying = false,
@@ -201,11 +202,11 @@ private fun HeroCard(genre: Genre, isMonth: Boolean, listenedMs: Long, onOpen: (
                 corner = 18.dp,
                 iconSize = 20.dp,
                 contentDescription = stringResource(R.string.browse_play_genre, genre.name),
-                background = ink,
-                tint = c.accent,
+                background = c.accent,
+                tint = c.onAccent,
             )
         }
-        SignatureBars(genre.name, ink, Modifier.fillMaxWidth().height(44.dp))
+        if (ondas) SignatureBars(genre.name, c.accent, Modifier.fillMaxWidth().height(44.dp))
     }
 }
 
@@ -241,7 +242,8 @@ private fun SignatureBars(seedText: String, color: Color, modifier: Modifier = M
 // ---------------------------------------------------------------- Mosaico
 
 @Composable
-private fun GenreMosaic(genres: List<Genre>, actions: LibraryActions) {
+/** [total]: a contagem única de gêneros ([com.juscelino.sonivell.data.realGenreCount]), igual em todas as telas. */
+private fun GenreMosaic(genres: List<Genre>, total: Int, actions: LibraryActions) {
     var showAll by rememberSaveable { mutableStateOf(false) }
     val shown = if (showAll) genres else genres.take(GRID_LIMIT)
     val gap = 10.dp
@@ -270,7 +272,7 @@ private fun GenreMosaic(genres: List<Genre>, actions: LibraryActions) {
         if (genres.size > GRID_LIMIT) {
             val c = SonivellTheme.colors
             Text(
-                if (showAll) stringResource(R.string.browse_show_less) else stringResource(R.string.browse_show_all, genres.size),
+                if (showAll) stringResource(R.string.browse_show_less) else stringResource(R.string.browse_show_all, total),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = c.accent,
@@ -287,7 +289,7 @@ private fun GenreMosaic(genres: List<Genre>, actions: LibraryActions) {
 @Composable
 private fun GenreTile(genre: Genre, index: Int, tall: Boolean, actions: LibraryActions, modifier: Modifier) {
     val c = SonivellTheme.colors
-    val tone = ArtTones.cores[index % ArtTones.cores.size]
+    val tone = c.textSecondary
     val shape = RoundedCornerShape(22.dp)
     Column(
         modifier
@@ -393,7 +395,6 @@ private fun DecadeStop(short: String, count: Int, highlighted: Boolean, descript
     Column(
         Modifier
             .width(72.dp)
-            .clip(RoundedCornerShape(14.dp))
             .clickable(role = Role.Button, onClick = onClick)
             .semantics(mergeDescendants = true) { contentDescription = description }
             .padding(vertical = 2.dp),
@@ -410,12 +411,15 @@ private fun DecadeStop(short: String, count: Int, highlighted: Boolean, descript
         ) {
             Text(short, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
         }
+        // Só o número, centralizado e tabular: "N músicas" não cabia na largura fixa e desalinhava a linha.
         Text(
-            pluralStringResource(R.plurals.songs_count, count, count),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
+            String.format(java.util.Locale.getDefault(), "%,d", count),
+            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.sp),
+            fontWeight = FontWeight.Bold,
             color = c.textSecondary,
             maxLines = 1,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -452,14 +456,15 @@ private fun GenericTagsCard(generic: List<Genre>, actions: LibraryActions) {
             }
             Box(
                 Modifier
+                    // Botão secundário (contorno), não um quarto estilo de botão.
                     .heightIn(min = 44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(c.textPrimary)
+                    .clip(RoundedCornerShape(999.dp))
+                    .border(1.dp, c.track, RoundedCornerShape(999.dp))
                     .clickable(role = Role.Button, onClick = actions.onOpenOrganize)
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 18.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(stringResource(R.string.browse_review), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = c.background)
+                Text(stringResource(R.string.browse_review), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
             }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
