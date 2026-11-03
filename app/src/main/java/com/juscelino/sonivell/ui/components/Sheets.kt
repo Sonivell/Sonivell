@@ -121,7 +121,15 @@ fun OptionsSheet(
     options: List<MenuOption>,
     onDismiss: () -> Unit,
     header: (@Composable () -> Unit)? = null,
+    /** Contraste: a folha no tom da capa (mais escuro), com texto e ícones brancos. */
+    tone: Color? = null,
 ) {
+    if (tone != null) {
+        androidx.compose.runtime.CompositionLocalProvider(
+            com.juscelino.sonivell.ui.theme.LocalSonivellColors provides tonedColors(SonivellTheme.colors, tone),
+        ) { OptionsSheet(options, onDismiss, header, tone = null) }
+        return
+    }
     val c = SonivellTheme.colors
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     SonivellSheet(onDismissRequest = onDismiss, sheetState = state) {

@@ -158,6 +158,7 @@ import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenContraste
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.PlayReason
 import com.juscelino.sonivell.ui.nowplaying.WhyContent
+import com.juscelino.sonivell.ui.nowplaying.artTint
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.nowplaying.WhyLine
 import com.juscelino.sonivell.ui.queue.QueueActions
@@ -575,6 +576,8 @@ private fun MainContent(vm: MainViewModel) {
                                 onTogglePlay = vm.player::togglePlay,
                                 liked = t.id in favorites,
                                 onLike = { vm.toggleFavorite(t.id) },
+                                // Assinatura do Contraste: o mini player toma a cor da capa.
+                                tone = artTint(t),
                             )
                             UiStyle.CLASSICA -> MiniPlayerClassica(
                                 track = t,
@@ -1264,7 +1267,9 @@ private fun MainContent(vm: MainViewModel) {
                 MenuOption(SonivellTheme.icons.artist, stringResource(R.string.go_to_artist)) { openArtist(track.artist) },
                 MenuOption(SonivellTheme.icons.share, stringResource(R.string.share)) { share(track) },
             )
-            OptionsSheet(options, onDismiss = { playerMenu = false }, header = {
+            // Contraste: o menu no mesmo tom da capa, mais escuro (a assinatura continua na folha).
+            val menuTone = if (uiStyle == UiStyle.CONTRASTE) androidx.compose.ui.graphics.lerp(artTint(track), androidx.compose.ui.graphics.Color.Black, 0.3f) else null
+            OptionsSheet(options, onDismiss = { playerMenu = false }, tone = menuTone, header = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     TrackHeader(track)
                     // Ondas: a linha "por que" também no cabeçalho do menu.

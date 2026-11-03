@@ -1,5 +1,6 @@
 package com.juscelino.sonivell.ui.library
 
+import com.juscelino.sonivell.ui.nowplaying.WhyLine
 import android.content.res.Resources
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
@@ -652,10 +653,11 @@ private fun LazyListScope.home(
                             Modifier.width(136.dp).clickable { actions.onPlayMix(seed) },
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            OndaArt(mix, seed.artist, title = null, subtitle = null, modifier = Modifier.size(width = 136.dp, height = 120.dp).clip(RoundedCornerShape(20.dp)))
-                            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                            // Capa real e a linha "por que" com o ícone do Smart (no lugar dos selos).
+                            AlbumArt(seed, Modifier.size(136.dp), corner = 14.dp)
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(mix, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = SonivellTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(stringResource(R.string.fy_sounds_like, seed.title), style = MaterialTheme.typography.labelMedium, color = SonivellTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                WhyLine(stringResource(R.string.fy_sounds_like, seed.title))
                             }
                         }
                     }

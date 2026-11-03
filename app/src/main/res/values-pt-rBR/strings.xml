@@ -718,4 +718,5 @@
     <string name="why_line_smart">Tocou porque soa como “%1$s”</string>
     <string name="why_details">Ver detalhes</string>
     <string name="action_playlist">Playlist</string>
+    <string name="sv_flow_play">Tocar Flow</string>
 </resources>

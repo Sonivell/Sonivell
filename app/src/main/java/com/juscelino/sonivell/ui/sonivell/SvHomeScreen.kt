@@ -1,5 +1,14 @@
 package com.juscelino.sonivell.ui.sonivell
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.foundation.layout.Spacer
+import com.juscelino.sonivell.ui.components.LabeledPill
+import com.juscelino.sonivell.ui.components.CoverCollage
+import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.data.realGenreCount
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,6 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -82,9 +92,10 @@ fun SvHomeScreen(
         state.allTracks.count { it.dateAdded * 1000 >= since }
     }
     val forYou = listOf(
-        SvShortcut(stringResource(R.string.source_liked), count(favoritesCount)) { onOpenAuto("curtidas") },
-        SvShortcut(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub)) { onOpenAuto("mais-ouvidas") },
-        SvShortcut(stringResource(R.string.sv_new), stringResource(R.string.sv_new_sub, newCount)) { onOpenAuto("recentes") },
+        // Cada coleção com o seu ícone de traço (coração, tendência, relógio) e uma meta clara.
+        SvShortcut(stringResource(R.string.source_liked), songsLabel(favoritesCount), icons.like) { onOpenAuto("curtidas") },
+        SvShortcut(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub), Icons.AutoMirrored.Rounded.TrendingUp) { onOpenAuto("mais-ouvidas") },
+        SvShortcut(stringResource(R.string.sv_new), stringResource(R.string.sv_new_sub, newCount), Icons.Rounded.Schedule) { onOpenAuto("recentes") },
     )
     val library = listOf(
         SvShortcut(stringResource(R.string.tab_songs), count(state.allTracks.size)) { onOpenLibrary(1) },
@@ -116,27 +127,24 @@ fun SvHomeScreen(
             )
         }
 
-        ShortcutGroup(stringResource(R.string.sv_collections), forYou, toneOffset = 0)
-        ShortcutGroup(stringResource(R.string.sv_library_title), library, toneOffset = 3)
+        CollectionCards(stringResource(R.string.sv_collections), forYou)
+        LibraryGrid(stringResource(R.string.sv_library_title), library)
         if (!smartAvailable) {
             Text(stringResource(R.string.sv_analysis_lite), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary)
         }
 
-        // Seu Flow de hoje: cartão do Ondas com a onda embaixo.
-        SvCard(Modifier.fillMaxWidth(), onClick = onOpenFlow, tone = nc.accent) {
-            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Seu Flow de hoje: o destaque da tela, em superfície neutra, com o ícone do Smart e um único
+        // botão primário. Sem onda decorativa (a onda só aparece onde mostra progresso).
+        SvCard(Modifier.fillMaxWidth(), onClick = onOpenFlow) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SvIconTile(icons.smart, 52.dp)
+                    SvIconTile(icons.smart, 48.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(stringResource(R.string.sv_flow_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary)
+                        Text(stringResource(R.string.sv_flow_title), style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp), fontWeight = FontWeight.ExtraBold, color = nc.textPrimary)
                         Text(stringResource(R.string.sv_flow_sub), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary, maxLines = 2)
                     }
-                    Box(
-                        Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(nc.accent),
-                        contentAlignment = Alignment.Center,
-                    ) { Icon(icons.play, null, Modifier.size(20.dp), tint = nc.onAccent) }
                 }
-                Waveform(seed = 7L, progress = 0f, modifier = Modifier.fillMaxWidth().height(22.dp), bars = 44)
+                LabeledPill(icons.play, stringResource(R.string.sv_flow_play), onOpenFlow, Modifier.height(52.dp).fillMaxWidth(), primary = true)
             }
         }
 
@@ -152,7 +160,14 @@ fun SvHomeScreen(
                                 .clickable(role = Role.Button, onClickLabel = label) { onPlayMix(seed) },
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            OndaArt(label, seed.artist, title = null, subtitle = null, modifier = Modifier.size(width = 136.dp, height = 120.dp).clip(RoundedCornerShape(20.dp)))
+                            // Colagem 2×2 das capas reais do artista, com o play lima no canto.
+                            val covers = remember(state.allTracks, seed.artist) {
+                                listOf(seed) + state.allTracks.filter { it.artist == seed.artist && it.albumId != seed.albumId }
+                            }
+                            Box(Modifier.size(136.dp)) {
+                                CoverCollage(covers, Modifier.fillMaxSize())
+                                PlaySquircle(false, { onPlayMix(seed) }, Modifier.align(Alignment.BottomEnd).padding(8.dp), size = 36.dp, iconSize = 16.dp, contentDescription = label)
+                            }
                             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                                 Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(stringResource(R.string.fy_sounds_like, seed.title), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -184,71 +199,56 @@ fun SvHomeScreen(
 }
 
 /** Um atalho do Início: nome, um número ou dica curta embaixo e para onde leva. */
-private class SvShortcut(val label: String, val detail: String, val onClick: () -> Unit)
+private class SvShortcut(val label: String, val detail: String, val icon: ImageVector? = null, val onClick: () -> Unit)
 
-/**
- * Grupo de atalhos com rótulo pequeno, em cartões de três por linha no modelo das antigas sensações:
- * nome, ponto colorido e onda curta, com o número à direita da onda.
- */
+/** Coleções: três cartões iguais, cada um com o ícone de traço próprio, o nome e a meta. */
 @Composable
-private fun ShortcutGroup(title: String, items: List<SvShortcut>, toneOffset: Int) {
+private fun CollectionCards(title: String, items: List<SvShortcut>) {
     val nc = SonivellTheme.colors
-    val glass = SonivellTheme.glass
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            title.uppercase(),
-            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.2.sp),
-            fontWeight = FontWeight.ExtraBold,
-            color = nc.textSecondary,
-            modifier = Modifier.padding(start = 2.dp),
-        )
-        items.chunked(3).forEachIndexed { r, row ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEachIndexed { col, item ->
-                    val tone = nc.textSecondary
-                    val shape = RoundedCornerShape(16.dp)
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .height(68.dp)
-                            .then(
-                                if (glass) Modifier.glassSurface(shape, nc.surface, nc.outline, tone, elevation = 8.dp)
-                                else Modifier.clip(shape).background(nc.surface).border(1.dp, nc.outline, shape),
-                            )
-                            .clickable(role = Role.Button, onClickLabel = item.label, onClick = item.onClick)
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            // Encolhe até caber ("Mais ouvidas" cortava em telas estreitas) em vez de virar "Mais ouvid…".
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SvSection(title)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            items.forEach { item ->
+                SvCard(Modifier.weight(1f).height(108.dp), onClick = item.onClick, elevation = 6.dp) {
+                    Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                        item.icon?.let { Icon(it, null, Modifier.size(22.dp), tint = nc.textPrimary) }
+                        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                             BasicText(
                                 item.label,
-                                modifier = Modifier.weight(1f, fill = false),
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold, color = nc.textPrimary),
                                 maxLines = 1,
                                 autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = 14.sp, stepSize = 0.5.sp),
                             )
-                            Box(Modifier.size(7.dp).clip(CircleShape).background(tone))
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            SvMiniWave(item.label, tone, Modifier.size(width = 40.dp, height = 14.dp))
-                            if (item.detail.isNotEmpty()) {
-                                Text(
-                                    item.detail,
-                                    // Sem o espaçamento entre letras do labelSmall, que separava os dígitos ("1 9 9 0").
-                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
-                                    fontWeight = FontWeight.Bold,
-                                    color = nc.textSecondary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    textAlign = TextAlign.End,
-                                    modifier = Modifier.weight(1f),
-                                )
-                            }
+                            Text(item.detail, style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+/** Biblioteca: grade 2×3 de linhas compactas, com a contagem à direita em números tabulares. */
+@Composable
+private fun LibraryGrid(title: String, items: List<SvShortcut>) {
+    val nc = SonivellTheme.colors
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SvSection(title)
+        items.chunked(2).forEach { pair ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                pair.forEach { item ->
+                    SvCard(Modifier.weight(1f).height(52.dp), onClick = item.onClick, elevation = 0.dp) {
+                        Row(
+                            Modifier.fillMaxSize().padding(horizontal = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(item.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                            Text(item.detail, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = nc.textSecondary, maxLines = 1)
+                        }
+                    }
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
             }
         }
     }
@@ -269,3 +269,7 @@ private fun greeting(): Int = when (Calendar.getInstance().get(Calendar.HOUR_OF_
 
 /** Contagem com separador de milhar no idioma do aparelho ("1.990"). */
 private fun count(n: Int): String = String.format(java.util.Locale.getDefault(), "%,d", n)
+
+/** "12 músicas", com separador de milhar. */
+@Composable
+private fun songsLabel(n: Int): String = pluralStringResource(R.plurals.songs_count, n, n)

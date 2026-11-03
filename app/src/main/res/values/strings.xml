@@ -721,4 +721,5 @@
     <string name="why_line_smart">Played because it sounds like “%1$s”</string>
     <string name="why_details">See details</string>
     <string name="action_playlist">Playlist</string>
+    <string name="sv_flow_play">Play Flow</string>
 </resources>

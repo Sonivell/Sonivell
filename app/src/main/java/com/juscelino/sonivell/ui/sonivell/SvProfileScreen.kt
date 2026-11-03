@@ -64,7 +64,7 @@ fun SvProfileScreen(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(top = contentPadding.calculateTopPadding() + 16.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         SvTitle(stringResource(R.string.nav_profile), stringResource(R.string.sv_profile_sub))

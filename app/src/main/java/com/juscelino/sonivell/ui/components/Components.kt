@@ -184,11 +184,13 @@ fun MiniPlayer(
     modifier: Modifier = Modifier,
     liked: Boolean = false,
     onLike: (() -> Unit)? = null,
+    /** Contraste: o cartão no tom da capa, com texto, coração e pausa brancos. */
+    tone: Color? = null,
 ) {
-    val c = SonivellTheme.colors
+    val c = if (tone == null) SonivellTheme.colors else tonedColors(SonivellTheme.colors, tone)
     val icons = SonivellTheme.icons
     val openPlayer = stringResource(R.string.cd_open_player)
-    Box(modifier.padding(horizontal = 8.dp).cardSurface(RoundedCornerShape(12.dp), c.miniPlayer, elevation = 12.dp)) {
+    Box(modifier.padding(horizontal = 8.dp).cardSurface(RoundedCornerShape(12.dp), tone ?: c.miniPlayer, elevation = 12.dp)) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -207,7 +209,7 @@ fun MiniPlayer(
                     icon = if (liked) icons.liked else icons.like,
                     contentDescription = stringResource(if (liked) R.string.cd_unlike else R.string.cd_like),
                     onClick = onLike,
-                    tint = if (liked) c.accent else c.textPrimary,
+                    tint = if (liked && tone == null) c.accent else c.textPrimary,
                     iconSize = 22.dp,
                 )
             }
@@ -320,3 +322,21 @@ fun LabeledPill(icon: ImageVector, label: String, onClick: () -> Unit, modifier:
         Text(label, style = MaterialTheme.typography.labelLarge, color = if (primary) c.onAccent else c.textPrimary, maxLines = 1)
     }
 }
+
+/**
+ * Cores sobre o tom da capa (Contraste): superfície no tom, texto e ícones brancos, linhas translúcidas.
+ * O tom vem escurecido da capa, então o branco fica sempre legível.
+ */
+fun tonedColors(base: com.juscelino.sonivell.ui.theme.SonivellColors, tone: Color) = base.copy(
+    background = tone,
+    surface = tone,
+    surfaceLow = tone,
+    surfaceHigh = Color.White.copy(alpha = 0.12f),
+    miniPlayer = tone,
+    outline = Color.White.copy(alpha = 0.16f),
+    track = Color.White.copy(alpha = 0.25f),
+    textPrimary = Color.White,
+    textSecondary = Color.White.copy(alpha = 0.72f),
+    textTertiary = Color.White.copy(alpha = 0.86f),
+    isDark = true,
+)
