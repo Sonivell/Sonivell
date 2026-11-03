@@ -66,6 +66,8 @@ WAIT=50
 for STYLE in ONDAS SONIVELL ESSENCIAL CONTRASTE CLASSICA; do
   s=$(echo "$STYLE" | tr 'A-Z' 'a-z')
   prefs "$STYLE"
+  # Cada estilo começa na janela completa (o modo compacto do estilo anterior fica gravado).
+  rm -f "$HOME/.local/share/sonivell/shared_prefs/desktop.xml"
   # --action=shuffle: toca a biblioteca em ordem aleatória assim que ela carregar.
   "$APP" --action=shuffle > "$OUT/app-$s.log" 2>&1 &
   APPPID=$!
