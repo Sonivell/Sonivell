@@ -179,12 +179,6 @@ fun LibraryScreenContraste(
                         if (state.allTracks.isNotEmpty()) LabeledPill(icons.shuffle, stringResource(R.string.mode_shuffle), actions.onShuffleAll)
                     }
                     LibraryMode.Biblioteca -> {
-                // Aviso compacto de faixas com tags para arrumar (sem artista, gênero genérico…), com Revisar.
-                if (tagBannerCount > 0) {
-                    item(key = "tags-banner") {
-                        TagsBanner(tagBannerCount, actions.onOpenOrganize, actions.onDismissTagBanner, Modifier.padding(bottom = 12.dp))
-                    }
-                }
                         IconBtn(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
                         LabeledPill(icons.add, stringResource(R.string.action_playlist), actions.onNewPlaylist)
                     }
@@ -224,6 +218,12 @@ fun LibraryScreenContraste(
             LibraryMode.Inicio -> homeContent(state, favorites, labels, actions, smartProgress, forYou, decades)
             LibraryMode.Buscar -> searchContent(state, currentId, labels, actions, playlists, semanticResults, decades, showAllSongs) { showAllSongs = true }
             LibraryMode.Biblioteca -> {
+                // Aviso compacto de faixas com tags para arrumar (sem artista, gênero genérico…), com Revisar.
+                if (tagBannerCount > 0) {
+                    item(key = "tags-banner") {
+                        TagsBanner(tagBannerCount, actions.onOpenOrganize, actions.onDismissTagBanner, Modifier.padding(bottom = 12.dp))
+                    }
+                }
                 item(key = "chips") {
                     Row(
                         Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 8.dp),
