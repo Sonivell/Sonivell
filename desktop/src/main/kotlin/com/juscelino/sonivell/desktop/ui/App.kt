@@ -32,7 +32,6 @@ fun SonivellApp(ctl: Controller) {
         val actions = remember { Actions(ctl, nav) }
         val player by ctl.player.collectAsState()
         val audioRoute by ctl.audioRoute.collectAsState()
-        val essencial = settings.layout == com.juscelino.sonivell.desktop.ScreenLayout.ESSENCIAL
         if (settings.compact) CompactPlayer(ctl)
         else BoxWithConstraints(Modifier.fillMaxSize().background(c.background)) {
             val wide = maxWidth >= 1180.dp
@@ -43,9 +42,9 @@ fun SonivellApp(ctl: Controller) {
                         val d = nav.detail
                         if (d != null) DetailScreen(d, ctl, nav, actions)
                         else when (nav.route) {
-                            Route.ForYou -> if (essencial) ForYouEssencial(ctl, nav, actions) else ForYouScreen(ctl, nav, actions)
-                            Route.Search -> if (essencial) SearchEssencial(ctl, nav, actions) else SearchScreen(ctl, nav, actions)
-                            Route.Library -> if (essencial) LibraryEssencial(ctl, nav, actions) else LibraryScreen(ctl, nav, actions)
+                            Route.ForYou -> ForYouEssencial(ctl, nav, actions)
+                            Route.Search -> SearchEssencial(ctl, nav, actions)
+                            Route.Library -> LibraryEssencial(ctl, nav, actions)
                             Route.Settings -> SettingsScreen(ctl)
                             Route.NowPlaying -> NowPlayingScreen(ctl, nav, actions)
                         }

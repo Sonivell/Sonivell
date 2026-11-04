@@ -30,15 +30,11 @@ enum class ThemeMode { AUTO, LIGHT, DARK }
 enum class Accent { Lima, Azul, Laranja, Lilas, Rosa, Turquesa, Verde }
 enum class DarkBg { Grafite, Preto }
 
-/** Layout das telas: Ondas (padrão) ou Essencial (enxuto, capas em destaque). */
-enum class ScreenLayout { ONDAS, ESSENCIAL }
-
 data class Settings(
     val musicDirs: List<String> = emptyList(),
     val theme: ThemeMode = ThemeMode.AUTO,
     val accent: Accent = Accent.Lima,
     val darkBg: DarkBg = DarkBg.Grafite,
-    val layout: ScreenLayout = ScreenLayout.ONDAS,
     /** Fundo e superfícies no tom da cor de destaque. */
     val tinted: Boolean = false,
     val volume: Float = 0.8f,
@@ -66,7 +62,6 @@ object SettingsStore {
             theme = enumOf("theme", ThemeMode.values(), ThemeMode.AUTO),
             accent = enumOf("accent", Accent.values(), Accent.Lima),
             darkBg = enumOf("darkBg", DarkBg.values(), DarkBg.Grafite),
-            layout = enumOf("layout", ScreenLayout.values(), ScreenLayout.ONDAS),
             tinted = p.getProperty("tinted") == "true",
             volume = p.getProperty("volume")?.toFloatOrNull()?.coerceIn(0f, 1f) ?: 0.8f,
             shuffle = p.getProperty("shuffle") == "true",
@@ -85,7 +80,6 @@ object SettingsStore {
         p.setProperty("theme", s.theme.name)
         p.setProperty("accent", s.accent.name)
         p.setProperty("darkBg", s.darkBg.name)
-        p.setProperty("layout", s.layout.name)
         p.setProperty("tinted", s.tinted.toString())
         p.setProperty("volume", s.volume.toString())
         p.setProperty("shuffle", s.shuffle.toString())
