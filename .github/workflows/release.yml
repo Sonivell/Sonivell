@@ -173,17 +173,8 @@ jobs:
           {
             echo "## What's new in Sonivell $NOME"
             echo
-            echo "A visual redesign: the five styles (Sonivell, Ondas, Essential, Contrast and Classic) now share one structure, and each keeps its own look."
-            echo
-            echo "- Same four tabs in every style: For you, Explore, Library and Profile"
-            echo "- One player for all styles: shuffle, previous, play, next and repeat with visible state, Smart as a real switch, remaining time and a This phone / Lyrics / Queue footer"
-            echo "- \"Playing from\" shows where the music really comes from; \"Why it played\" and the sleep timer state live in the options menu"
-            echo "- Profile tab in every style, with Settings as its last item; Settings grouped into General, Sound, Smart and library, and Data"
-            echo "- Appearance: the five styles side by side, plus Dark / Light / System mode"
-            echo "- Each style's own colors; covers without artwork show initials instead of repeating the title"
-            echo "- Mixes use real album covers; compilations show \"Various artists\""
-            echo "- Fixed: first letter cut off in carousels, player progress showing through the options menu, inconsistent genre counts"
-            echo "- Tabular numbers and thousands separators everywhere"
+            echo "- New app icon: a lime wave on graphite, on Android and PC"
+            echo "- PC: one clean layout, Essential, with large covers. The five styles stay on Android"
             echo "- Version $NOME everywhere: Android (lite and SMART), .deb and AppImage (versionCode $CODIGO)"
             echo
             echo "## Downloads"
