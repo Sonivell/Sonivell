@@ -38,15 +38,9 @@ import com.juscelino.sonivell.playback.toMediaItem
 import com.juscelino.sonivell.smart.SmartProgress
 import com.juscelino.sonivell.ui.library.LibraryActions
 import com.juscelino.sonivell.ui.library.LibraryMode
-import com.juscelino.sonivell.ui.library.LibraryScreenClassica
-import com.juscelino.sonivell.ui.library.LibraryScreenContraste
-import com.juscelino.sonivell.ui.library.LibraryScreenEssencial
 import com.juscelino.sonivell.ui.library.LibraryScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingActions
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenClassica
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenContraste
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenOndas
-import com.juscelino.sonivell.ui.sonivell.SvHomeScreen
 import com.juscelino.sonivell.ui.sonivell.SvProfileScreen
 import com.juscelino.sonivell.ui.theme.AccentChoice
 import com.juscelino.sonivell.ui.theme.SonivellTheme
@@ -137,35 +131,20 @@ class TelasCapturasTest {
     }
 
     @Composable
-    private fun Home(style: UiStyle) {
+    private fun Home() {
         val pad = PaddingValues(top = 8.dp, bottom = 16.dp)
-        when (style) {
-            UiStyle.SONIVELL -> SvHomeScreen(pad, library, 12, 0, forYou.mixSeeds, true, smart, {}, {}, {}, {}, {}, {}, tracks[8], 90_000L)
-            UiStyle.ONDAS -> LibraryScreenOndas(mode = LibraryMode.Inicio, state = library, favorites = setOf(tracks[0].id), currentId = current.id, contentPadding = pad, actions = actions, smartProgress = smart, forYou = forYou)
-            UiStyle.ESSENCIAL -> LibraryScreenEssencial(mode = LibraryMode.Inicio, state = library, favorites = setOf(tracks[0].id), currentId = current.id, contentPadding = pad, actions = actions, forYou = forYou)
-            UiStyle.CONTRASTE -> LibraryScreenContraste(mode = LibraryMode.Inicio, state = library, favorites = setOf(tracks[0].id), currentId = current.id, contentPadding = pad, actions = actions, smartProgress = smart, forYou = forYou)
-            UiStyle.CLASSICA -> LibraryScreenClassica(mode = LibraryMode.Inicio, state = library, favorites = setOf(tracks[0].id), currentId = current.id, contentPadding = pad, actions = actions, smartProgress = smart, forYou = forYou)
-        }
+        LibraryScreenOndas(mode = LibraryMode.Inicio, state = library, favorites = setOf(tracks[0].id), currentId = current.id, contentPadding = pad, actions = actions, smartProgress = smart, forYou = forYou)
     }
 
     @Composable
-    private fun Library(style: UiStyle) {
+    private fun Library() {
         val pad = PaddingValues(top = 8.dp, bottom = 16.dp)
-        when (style) {
-            UiStyle.SONIVELL, UiStyle.ONDAS -> LibraryScreenOndas(mode = LibraryMode.Biblioteca, state = library, favorites = emptySet(), currentId = current.id, contentPadding = pad, actions = actions)
-            UiStyle.ESSENCIAL -> LibraryScreenEssencial(mode = LibraryMode.Biblioteca, state = library, favorites = emptySet(), currentId = current.id, contentPadding = pad, actions = actions)
-            UiStyle.CONTRASTE -> LibraryScreenContraste(mode = LibraryMode.Biblioteca, state = library, favorites = emptySet(), currentId = current.id, contentPadding = pad, actions = actions)
-            UiStyle.CLASSICA -> LibraryScreenClassica(mode = LibraryMode.Biblioteca, state = library, favorites = emptySet(), currentId = current.id, contentPadding = pad, actions = actions)
-        }
+        LibraryScreenOndas(mode = LibraryMode.Biblioteca, state = library, favorites = emptySet(), currentId = current.id, contentPadding = pad, actions = actions)
     }
 
     @Composable
-    private fun Player(style: UiStyle) {
-        when (style) {
-            UiStyle.CONTRASTE -> NowPlayingScreenContraste(current, player, ShuffleMode.SMART, true, true, "Seu Flow de hoje", np)
-            UiStyle.CLASSICA -> NowPlayingScreenClassica(current, player, ShuffleMode.SMART, true, true, "Seu Flow de hoje", np)
-            else -> NowPlayingScreenOndas(current, player, ShuffleMode.SMART, true, true, "Seu Flow de hoje", np, style = style)
-        }
+    private fun Player() {
+        NowPlayingScreenOndas(current, player, ShuffleMode.SMART, true, true, "Seu Flow de hoje", np)
     }
 
     @Test
@@ -177,16 +156,14 @@ class TelasCapturasTest {
     }
 
     private fun capturas() {
-        UiStyle.entries.forEach { style ->
-            val n = style.name.lowercase()
-            runCatching { shot("tela-$n-1-para-voce") { Window(style, "inicio") { Home(style) } } }.onFailure { println("FALHOU $n para você: $it") }
-            runCatching { shot("tela-$n-2-biblioteca") { Window(style, "biblioteca") { Library(style) } } }.onFailure { println("FALHOU $n biblioteca: $it") }
-            runCatching { shot("tela-$n-3-player") { Window(style, "inicio") { Player(style) } } }.onFailure { println("FALHOU $n player: $it") }
-        }
+        val style = UiStyle.ONDAS
+        runCatching { shot("tela-1-para-voce") { Window(style, "inicio") { Home() } } }.onFailure { println("FALHOU para você: $it") }
+        runCatching { shot("tela-2-biblioteca") { Window(style, "biblioteca") { Library() } } }.onFailure { println("FALHOU biblioteca: $it") }
+        runCatching { shot("tela-3-player") { Window(style, "inicio") { Player() } } }.onFailure { println("FALHOU player: $it") }
         runCatching {
-            shot("tela-perfil") {
-                Window(UiStyle.SONIVELL, "perfil") {
-                    SvProfileScreen(1990, 1053, 43_200_000L, true, 640, 1990, "Sonivell", PaddingValues(top = 8.dp), {}, {}, {}, {}, {}, {})
+            shot("tela-4-perfil") {
+                Window(style, "perfil") {
+                    SvProfileScreen(1990, 1053, 43_200_000L, true, 640, 1990, PaddingValues(top = 8.dp), {}, {})
                 }
             }
         }.onFailure { println("FALHOU perfil: $it") }

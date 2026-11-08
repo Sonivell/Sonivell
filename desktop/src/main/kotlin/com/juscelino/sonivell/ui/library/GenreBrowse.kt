@@ -454,18 +454,6 @@ private fun GenericTagsCard(generic: List<Genre>, actions: LibraryActions) {
                 Text(stringResource(R.string.browse_tags_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
                 Text(pluralStringResource(R.plurals.browse_tags_sub, total, total), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
             }
-            Box(
-                Modifier
-                    // Botão secundário (contorno), não um quarto estilo de botão.
-                    .heightIn(min = 44.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .border(1.dp, c.track, RoundedCornerShape(999.dp))
-                    .clickable(role = Role.Button, onClick = actions.onOpenOrganize)
-                    .padding(horizontal = 18.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.browse_review), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
-            }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             generic.forEach { g ->

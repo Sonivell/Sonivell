@@ -75,5 +75,4 @@ object DesktopWindow {
     const val ACTION_SHUFFLE = "shuffle"
     const val ACTION_LIKED = "liked"
     const val ACTION_SEARCH = "search"
-    const val ACTION_CAR = "car"
 }

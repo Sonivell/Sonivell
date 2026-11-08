@@ -70,7 +70,8 @@ OX=48; OY=48
 shot() { import -window root -crop 1400x880+48+48 +repage "$OUT/$1.png"; }
 tab() { xdotool mousemove $((110+OX)) $((OY+$1)) click 1; sleep 3; }
 WAIT=50
-for STYLE in ONDAS SONIVELL ESSENCIAL CONTRASTE CLASSICA; do
+# No PC só existe o estilo Ondas.
+for STYLE in ONDAS; do
   s=$(echo "$STYLE" | tr 'A-Z' 'a-z')
   prefs "$STYLE"
   # Cada estilo começa na janela completa (o modo compacto do estilo anterior fica gravado).

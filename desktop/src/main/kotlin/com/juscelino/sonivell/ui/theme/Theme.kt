@@ -80,31 +80,6 @@ enum class DarkBackground { Grafite, Preto }
  * fundo preto, fundo colorido e o modo claro seguem as paletas próprias.
  */
 fun styleDarkColors(style: UiStyle, accent: Color): SonivellColors = when (style) {
-    UiStyle.SONIVELL -> SonivellColors(
-        background = Color(0xFF0E0F12), surface = Color(0xFF16181D), surfaceLow = Color(0xFF131519),
-        surfaceHigh = Color(0xFF1D2026), outline = Color(0xFF272A31), track = Color(0xFF343843),
-        textPrimary = Color(0xFFF3F4F6), textSecondary = Color(0xFF9EA3AE), textTertiary = Color(0xFFC9CDD3),
-        accent = accent, onAccent = Color(0xFF12150A), miniPlayer = Color(0xFF1D2026),
-    )
-    UiStyle.CLASSICA -> SonivellColors(
-        background = Color(0xFF0F1013), surface = Color(0xFF17181C), surfaceLow = Color(0xFF141518),
-        surfaceHigh = Color(0xFF24262C), outline = Color(0xFF2A2C32), track = Color(0xFF383B43),
-        textPrimary = Color(0xFFF2F3F5), textSecondary = Color(0xFFA0A4AD), textTertiary = Color(0xFFC9CDD3),
-        accent = accent, onAccent = Color(0xFF12150A), miniPlayer = Color(0xFF1E2025),
-    )
-    UiStyle.CONTRASTE -> SonivellColors(
-        background = Color(0xFF0C0C0E), surface = Color(0xFF18191C), surfaceLow = Color(0xFF131416),
-        surfaceHigh = Color(0xFF222327), outline = Color(0xFF2A2B30), track = Color(0xFF34353B),
-        // Texto de apoio mais claro que nos outros estilos.
-        textPrimary = Color(0xFFFFFFFF), textSecondary = Color(0xFFB9BDC6), textTertiary = Color(0xFFDADDE3),
-        accent = accent, onAccent = Color(0xFF0C0C0E), miniPlayer = Color(0xFF222327),
-    )
-    UiStyle.ESSENCIAL -> SonivellColors(
-        background = Color(0xFF101113), surface = Color(0xFF191A1E), surfaceLow = Color(0xFF151619),
-        surfaceHigh = Color(0xFF212328), outline = Color(0xFF26282D), track = Color(0xFF30333A),
-        textPrimary = Color(0xFFF4F5F7), textSecondary = Color(0xFF9FA4AE), textTertiary = Color(0xFFC9CDD3),
-        accent = accent, onAccent = Color(0xFF101113), miniPlayer = Color(0xFF191A1E),
-    )
     UiStyle.ONDAS -> SonivellColors(
         background = Color(0xFF0D0F12), surface = Color(0xFF15181D), surfaceLow = Color(0xFF121418),
         surfaceHigh = Color(0xFF1D2026), outline = Color(0xFF252830), track = Color(0xFF3A3E47),
@@ -214,10 +189,7 @@ val Manrope = FontFamily(
     androidx.compose.ui.text.platform.Font(resource = "fonts/manrope-800.ttf", weight = FontWeight.ExtraBold),
 )
 
-/** A Manrope (800) como fonte do Java, para desenhar imagens fora do Compose (Retrospectiva). */
-fun manropeAwtFont(): java.awt.Font = runCatching {
-    SonivellColors::class.java.getResourceAsStream("/fonts/manrope-800.ttf")!!.use { java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, it) }
-}.getOrElse { java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, 12) }
+.getOrElse { java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, 12) }
 
 /** Números tabulares (tnum) em todo o app: contagens, durações e tempos alinham em coluna. */
 private val SonivellTypography = Typography(

@@ -61,6 +61,7 @@
     <string name="desktop_analysis_count">%1$,d of %2$,d songs</string>
     <string name="desktop_show_in_folder">Show in folder</string>
     <string name="desktop_path_copied">File path copied</string>
+    <string name="desktop_settings_hint">Appearance, sound, library and data</string>
     <string name="desktop_trash_title">Move to trash?</string>
     <plurals name="desktop_trash_message">
         <item quantity="one">%,d file goes to the system trash. You can restore it from there.</item>

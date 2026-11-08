@@ -185,7 +185,7 @@ internal fun initialsOf(name: String): String =
 @Composable
 fun InitialsArt(name: String, toneKey: String, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
-    val frosted = SonivellTheme.style == UiStyle.SONIVELL && c.isDark
+    val frosted = false
     val bg = if (frosted) FrostedTones[OndaSeed.cor(toneKey)] else c.surfaceHigh
     val fg = if (frosted) Color(0xFFF3F4F6).copy(alpha = 0.92f) else c.textSecondary
     BoxWithConstraints(modifier.background(bg), contentAlignment = Alignment.Center) {

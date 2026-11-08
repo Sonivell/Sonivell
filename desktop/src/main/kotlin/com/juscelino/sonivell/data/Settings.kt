@@ -9,37 +9,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Layout das telas principais (Para você, Busca, Biblioteca, player e mini player). */
+/**
+ * Layout das telas. No PC só existe o Ondas; o tipo continua para os ajustes e o backup serem os
+ * mesmos do celular (um estilo que não existe aqui vira Ondas).
+ */
 enum class UiStyle {
     /** 3.0: identidade própria, com a onda, botões com nome e o porquê do SMART. */
     ONDAS,
-
-    /** 2.0: player tingido pela capa e texto branco. */
-    CONTRASTE,
-
-    /** 1.0: o visual da primeira versão. */
-    CLASSICA,
-
-    /** Enxuto: capas em destaque e só o essencial em cada tela (usa o player do Ondas). */
-    ESSENCIAL,
-
-    /**
-     * Tema "Sonivell": o visual do Ondas (cores, fonte e componentes, seguindo os ajustes de
-     * tema) com as telas de descoberta: sensações, Flow, Mapa, Momentos, Respira e Perfil.
-     */
-    SONIVELL,
 }
 
-/**
- * Peso dos ícones de cada estilo (a escolha manual saiu da Aparência): traço em todos, e o traço fino
- * no Essencial, o estilo limpo.
- */
+/** Peso dos ícones: traço. */
 val UiStyle.iconStyle: IconStyle
-    get() = if (this == UiStyle.ESSENCIAL) IconStyle.FINO else IconStyle.TRACO
-
-/** Temas que usam as telas do Sonivell (Para você, Biblioteca pelos cartões, Perfil, Flow, Mapa…). */
-val UiStyle.usesSonivellScreens: Boolean
-    get() = this == UiStyle.SONIVELL
+    get() = IconStyle.TRACO
 
 data class AppSettings(
     val theme: ThemeMode = ThemeMode.AUTO,
@@ -144,8 +125,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         theme = ThemeMode.entries.getOrElse(prefs.getInt(KEY_THEME, 0)) { ThemeMode.AUTO },
         accent = AccentChoice.entries.getOrElse(prefs.getInt(KEY_ACCENT, AccentChoice.Lima.ordinal)) { AccentChoice.Lima },
         uiStyle = prefs.getString(KEY_UI_STYLE, null).let { saved ->
-            // O tema Desenvolvimento (o Sonivell com vidro) virou o Sonivell: o vidro agora vale em todos.
-            UiStyle.entries.firstOrNull { it.name == saved } ?: if (saved == "DESENVOLVIMENTO") UiStyle.SONIVELL else UiStyle.ONDAS
+            UiStyle.entries.firstOrNull { it.name == saved } ?: UiStyle.ONDAS
         },
         iconStyle = IconStyle.entries.firstOrNull { it.name == prefs.getString(KEY_ICON_STYLE, null) } ?: IconStyle.TRACO,
         darkBackground = DarkBackground.entries.firstOrNull { it.name == prefs.getString(KEY_DARK_BACKGROUND, null) } ?: DarkBackground.Grafite,

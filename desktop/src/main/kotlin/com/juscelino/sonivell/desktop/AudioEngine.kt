@@ -1,6 +1,5 @@
 package com.juscelino.sonivell.desktop
 
-import com.juscelino.sonivell.playback.Spectrum
 import java.io.InputStream
 import java.util.Locale
 import javax.sound.sampled.AudioFormat
@@ -233,7 +232,6 @@ class AudioEngine(
         val mbuf = ByteArray(CHUNK)
         val tbuf = ByteArray(CHUNK)
         val out = ByteArray(CHUNK)
-        val mono = FloatArray(CHUNK / 4)
         while (true) {
             var gen = 0
             var mm: Decoder? = null
@@ -280,10 +278,8 @@ class AudioEngine(
                 val rv = (r0 * master).toInt().coerceIn(-32768, 32767)
                 out[o] = (lv and 0xff).toByte(); out[o + 1] = ((lv shr 8) and 0xff).toByte()
                 out[o + 2] = (rv and 0xff).toByte(); out[o + 3] = ((rv shr 8) and 0xff).toByte()
-                mono[i] = (lv + rv) / 65536f
                 i++
             }
-            if (frames > 0 && Spectrum.active) Spectrum.feed(mono, frames)
             var off = 0
             while (off < frames * 4) {
                 if (synchronized(lock) { generation != gen && main !== m }) break

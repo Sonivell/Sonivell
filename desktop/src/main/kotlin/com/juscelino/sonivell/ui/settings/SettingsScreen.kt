@@ -97,19 +97,14 @@ data class SettingsActions(
     val onBack: () -> Unit,
     val onUpdate: ((AppSettings) -> AppSettings) -> Unit,
     val onOpenEqualizer: () -> Unit,
-    val onOpenStats: () -> Unit,
     val onRefreshLibrary: () -> Unit,
     val onClearHistory: () -> Unit,
-    val onExportHistory: () -> Unit,
     val onReset: () -> Unit,
     val onPickLyricsFolder: () -> Unit = {},
-    val onOpenOrganize: () -> Unit = {},
     val onUnblockTrack: (Long) -> Unit = {},
     val onUnblockArtist: (String) -> Unit = {},
     val onRetrainTaste: () -> Unit = {},
     val onForgetTaste: () -> Unit = {},
-    val onOpenCarMode: () -> Unit = {},
-    val onOpenRetro: () -> Unit = {},
     val onBackup: () -> Unit = {},
     val onRestore: () -> Unit = {},
     /** PC: escolher e tirar pastas de música. */
@@ -243,15 +238,6 @@ private fun IndexPage(
         return
     }
 
-    val layout = stringResource(
-        when (settings.uiStyle) {
-            UiStyle.ONDAS -> R.string.layout_ondas
-            UiStyle.ESSENCIAL -> R.string.layout_essencial
-            UiStyle.CONTRASTE -> R.string.layout_contrast
-            UiStyle.CLASSICA -> R.string.layout_classic
-            UiStyle.SONIVELL -> R.string.layout_sonivell
-        }
-    )
     val theme = stringResource(
         when (settings.theme) {
             ThemeMode.AUTO -> R.string.theme_auto
@@ -265,8 +251,7 @@ private fun IndexPage(
     // Quatro grupos com rótulo em caixa-alta; linhas com título, valor atual e seta, sem tiles coloridos.
     Group(stringResource(R.string.settings_group_general)) {
         Card {
-            NavRow(Icons.Rounded.Palette, stringResource(R.string.settings_appearance), "$layout · $theme · $color") { open(SettingsPage.Aparencia) }
-            NavRow(Icons.Rounded.DirectionsCar, stringResource(R.string.car_mode), stringResource(R.string.sum_car), onClick = actions.onOpenCarMode)
+            NavRow(Icons.Rounded.Palette, stringResource(R.string.settings_appearance), "$theme · $color") { open(SettingsPage.Aparencia) }
         }
     }
     Group(stringResource(R.string.settings_group_sound)) {
@@ -331,7 +316,6 @@ private fun searchEntries(smartAvailable: Boolean): List<SearchEntry> {
         add(e(R.string.settings_normalize, R.string.settings_normalize_hint, SettingsPage.Reproducao))
         add(e(R.string.settings_speed, null, SettingsPage.Reproducao))
         add(e(R.string.settings_skip_silence, R.string.settings_skip_silence_hint, SettingsPage.Reproducao))
-        add(e(R.string.settings_visualizer, R.string.settings_visualizer_hint, SettingsPage.Reproducao))
         add(e(R.string.settings_crossfade, R.string.settings_crossfade_hint, SettingsPage.Transicoes))
         add(e(R.string.settings_crossfade_albums, R.string.settings_crossfade_albums_hint, SettingsPage.Transicoes))
         if (smartAvailable) {
@@ -345,16 +329,13 @@ private fun searchEntries(smartAvailable: Boolean): List<SearchEntry> {
         add(e(R.string.settings_ignored_folders, null, SettingsPage.Biblioteca))
         add(e(R.string.settings_publish_playlists, R.string.settings_publish_playlists_hint, SettingsPage.Biblioteca))
         add(e(R.string.lyrics_pick_folder, R.string.lyrics_folder_hint, SettingsPage.Biblioteca))
-        add(e(R.string.organize, R.string.organize_hint, SettingsPage.Biblioteca))
         add(e(R.string.settings_history_pause, R.string.settings_history_pause_hint, SettingsPage.Historico))
-        add(e(R.string.settings_history_export, null, SettingsPage.Historico))
         add(e(R.string.settings_history_clear, null, SettingsPage.Historico))
         add(e(R.string.backup_export, R.string.backup_hint, SettingsPage.Dados))
         add(e(R.string.backup_restore, R.string.backup_restore_hint, SettingsPage.Dados))
         add(e(R.string.thanks_title, null, SettingsPage.Sobre))
         add(e(R.string.settings_reset, null, SettingsPage.Sobre))
         add(SearchEntry(stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), SettingsPage.Index) { it.onOpenEqualizer() })
-        add(SearchEntry(stringResource(R.string.car_mode), stringResource(R.string.car_mode_hint), SettingsPage.Index) { it.onOpenCarMode() })
     }
 }
 
@@ -393,23 +374,6 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
     val c = SonivellTheme.colors
     // Prévia ao vivo: já usa o tema aplicado, então mostra o resultado de cada escolha.
     AppearancePreview()
-    // Os cinco estilos lado a lado, descritos pela assinatura visual (nunca por recursos: Flow, mapa
-    // musical, Momentos, Respira e Perfil existem em qualquer estilo).
-    Group(stringResource(R.string.settings_layout)) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(
-                Triple(UiStyle.SONIVELL, R.string.layout_sonivell, R.string.layout_sonivell_hint),
-                Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
-                Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
-                Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
-                Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
-            ).forEach { (style, name, hint) ->
-                LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
-                    actions.onUpdate { it.copy(uiStyle = style) }
-                }
-            }
-        }
-    }
     Group(stringResource(R.string.settings_accent)) {
         val dynamicAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         val usingSystem = dynamicAvailable && settings.systemColors
@@ -505,9 +469,6 @@ private fun PlaybackPage(settings: AppSettings, actions: SettingsActions) {
                 actions.onUpdate { it.copy(skipSilence = on) }
             }
         }
-    }
-    Group(stringResource(R.string.group_screen)) {
-        Card { VisualizerSwitch(settings.visualizer) { on -> actions.onUpdate { it.copy(visualizer = on) } } }
     }
 }
 
@@ -612,19 +573,17 @@ private fun LibraryPage(settings: AppSettings, folders: List<String>, actions: S
     }
     Card {
         NavRow(null, stringResource(R.string.lyrics_pick_folder), stringResource(R.string.lyrics_folder_hint), onClick = actions.onPickLyricsFolder)
-        NavRow(null, stringResource(R.string.organize), stringResource(R.string.organize_hint), onClick = actions.onOpenOrganize)
         NavRow(null, stringResource(R.string.cd_refresh), stringResource(R.string.settings_refresh_hint), onClick = actions.onRefreshLibrary)
     }
 }
 
 @Composable
 private fun HistoryPage(settings: AppSettings, actions: SettingsActions) {
-    // Só pausar, exportar e limpar: estatísticas e "seu mês em música" moram em Seu perfil sonoro, no Perfil.
+    // Só pausar e limpar: estatísticas e "seu mês em música" moram em Seu perfil sonoro, no Perfil.
     Card {
         SwitchRow(stringResource(R.string.settings_history_pause), stringResource(R.string.settings_history_pause_hint), settings.historyPaused) { on ->
             actions.onUpdate { it.copy(historyPaused = on) }
         }
-        NavRow(null, stringResource(R.string.settings_history_export), null, onClick = actions.onExportHistory)
         DangerRow(stringResource(R.string.settings_history_clear), null, actions.onClearHistory)
     }
 }
@@ -721,30 +680,6 @@ private fun AppearancePreview() {
 
 /** Nomes dos estilos de ícone, na ordem de [IconStyle]. */
 private val iconStyleNames = listOf(R.string.icon_style_fine, R.string.icon_style_rounded, R.string.icon_style_line)
-
-/** Uma opção de layout: nome e uma linha do que muda; a escolhida ganha contorno na cor de destaque. */
-@Composable
-private fun LayoutOption(name: String, hint: String, selected: Boolean, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(16.dp)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .cardSurface(shape, if (selected) c.surfaceHigh else c.surface, elevation = 0.dp)
-            .border(if (selected) 2.dp else 1.dp, if (selected) c.accent else c.outline, shape)
-            .clickable(role = Role.RadioButton, onClick = onClick)
-            .semantics { this.selected = selected }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(name, style = MaterialTheme.typography.titleSmall, color = c.textPrimary)
-            Text(hint, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-        }
-        if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(20.dp), tint = c.accent)
-    }
-}
 
 /** Cartão com uma amostra dos ícones do estilo, para comparar antes de escolher. */
 @Composable
@@ -1003,16 +938,6 @@ private fun tasteStatusText(st: TasteModel.Status): String {
         st.accuracy != null -> base + " · " + stringResource(R.string.taste_accuracy, (st.accuracy * 100).toInt())
         else -> base
     }
-}
-
-/** Liga o visualizador. No PC o espectro vem do próprio motor de áudio: não precisa de microfone. */
-@Composable
-private fun VisualizerSwitch(on: Boolean, onChange: (Boolean) -> Unit) {
-    SwitchRow(
-        stringResource(R.string.settings_visualizer),
-        stringResource(R.string.settings_visualizer_hint),
-        on,
-    ) { enable -> onChange(enable) }
 }
 
 /** "há 5 min", "há 2 h", "há 3 dias" (como o DateUtils do Android, em português ou inglês). */

@@ -61,6 +61,7 @@
     <string name="desktop_analysis_count">%1$,d de %2$,d músicas</string>
     <string name="desktop_show_in_folder">Mostrar na pasta</string>
     <string name="desktop_path_copied">Caminho do arquivo copiado</string>
+    <string name="desktop_settings_hint">Aparência, som, biblioteca e dados</string>
     <string name="desktop_trash_title">Mandar para a lixeira?</string>
     <plurals name="desktop_trash_message">
         <item quantity="one">%,d arquivo vai para a lixeira do sistema. Dá para recuperar de lá.</item>

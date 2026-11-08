@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.ShuffleMode
 import com.juscelino.sonivell.data.Track
-import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.playback.PlayerState
 import com.juscelino.sonivell.playback.RepeatMode
@@ -74,12 +73,9 @@ sealed interface PlayReason {
 }
 
 /**
- * Player dos estilos Sonivell, Ondas e Essencial. A estrutura é a mesma de todos os estilos
- * (Tocando de · origem; título em até duas linhas e artista; embaralhar · anterior · play · próxima ·
- * repetir; Smart como interruptor; rodapé Este telefone · Letra · Fila). Muda só a assinatura:
- * - Sonivell: onda como progresso, capa com brilho na cor dela.
- * - Ondas: onda como progresso, Aleatório e Repetir com nome, e a linha "por que" do Smart.
- * - Essencial: capa grande em fundo liso, linha fina de 3 dp, rodapé sem caixa.
+ * Player do PC (estilo Ondas): Tocando de · origem; capa com o brilho da cor dela; título e artista com
+ * a linha "por que" do Smart; onda como progresso; Aleatório e Repetir com nome; Smart como interruptor;
+ * rodapé Este computador · Letra · Fila.
  */
 @Composable
 fun NowPlayingScreenOndas(
@@ -91,23 +87,18 @@ fun NowPlayingScreenOndas(
     sourceLabel: String,
     actions: NowPlayingActions,
     reason: PlayReason = PlayReason.Chosen,
-    visualizer: Boolean = false,
-    style: UiStyle = UiStyle.ONDAS,
 ) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
     val durationMs = state.durationMs.takeIf { it > 0 } ?: track.durationMs
-    val essencial = style == UiStyle.ESSENCIAL
-    val ondas = style == UiStyle.ONDAS
     val tone by animateColorAsState(artTint(track, ::glowTone), tween(600), label = "tone")
 
     Column(
         Modifier
             .fillMaxSize()
             .background(c.background)
-            // Luz ambiente da capa, bem fraca, no alto da tela (o Essencial fica no fundo liso).
-            .then(
-                if (essencial) Modifier else Modifier.drawBehind {
+            // Luz ambiente da capa, bem fraca, no alto da tela.
+            .drawBehind {
                     drawRect(
                         Brush.radialGradient(
                             listOf(tone.copy(alpha = 0.20f), Color.Transparent),
@@ -115,8 +106,7 @@ fun NowPlayingScreenOndas(
                             radius = size.width * 1.1f,
                         ),
                     )
-                },
-            )
+                }
             .windowInsetsPadding(WindowInsets.statusBars)
             .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 8.dp),
@@ -139,12 +129,11 @@ fun NowPlayingScreenOndas(
 
         // Capa: quadrada no maior tamanho que cabe.
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            val side = minOf(maxWidth, maxHeight, if (essencial) 420.dp else 400.dp)
+            val side = minOf(maxWidth, maxHeight, 400.dp)
             Box(
                 Modifier
                     .size(side)
-                    .then(
-                        if (essencial) Modifier else Modifier.drawBehind {
+                    .drawBehind {
                             drawRect(
                                 Brush.radialGradient(
                                     listOf(tone.copy(alpha = 0.42f), Color.Transparent),
@@ -155,34 +144,22 @@ fun NowPlayingScreenOndas(
                                 size = Size(size.width * 1.6f, size.height * 1.5f),
                             )
                         },
-                    ),
             ) {
-                val corner = when (style) {
-                    UiStyle.ESSENCIAL -> 18.dp
-                    UiStyle.ONDAS -> 22.dp
-                    else -> 24.dp
-                }
+                val corner = 22.dp
                 AlbumArt(
                     track,
                     Modifier.fillMaxSize().border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(corner)),
                     corner = corner,
                     detailed = true,
                 )
-                if (visualizer) {
-                    AudioBars(
-                        playing = state.isPlaying,
-                        color = c.accent,
-                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.32f).padding(horizontal = 16.dp, vertical = 14.dp),
-                    )
-                }
             }
         }
 
         // Título (até duas linhas) + artista; no Ondas, a linha "por que" do Smart.
         Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                PlayerTitle(track, titleSize = if (essencial) 26.sp else 24.sp)
-                if (ondas && reason is PlayReason.Smart) WhyLine(stringResource(R.string.why_line_smart, reason.seed.title))
+                PlayerTitle(track, titleSize = 24.sp)
+                if (reason is PlayReason.Smart) WhyLine(stringResource(R.string.why_line_smart, reason.seed.title))
             }
             IconBtn(
                 if (isFavorite) icons.liked else icons.like,
@@ -195,11 +172,7 @@ fun NowPlayingScreenOndas(
 
         // Progresso: onda (Sonivell e Ondas) ou linha fina (Essencial); tempo restante com "−".
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            if (essencial) {
-                LineSeekBar(state.livePositionMs, durationMs, actions.onSeek, thickness = 3.dp, fill = c.accent, knob = false)
-            } else {
-                WaveSeekBar(track.id, state.livePositionMs, durationMs, actions.onSeek)
-            }
+            WaveSeekBar(track.id, state.livePositionMs, durationMs, actions.onSeek)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TimeLabel(formatDuration(state.livePositionMs))
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { FormatText(track) }
@@ -209,36 +182,34 @@ fun NowPlayingScreenOndas(
 
         // Controles padrão: embaralhar · anterior · play · próxima · repetir.
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            PlayerModeToggle(icons.shuffle, stringResource(R.string.mode_shuffle), shuffleMode == ShuffleMode.ON, showLabel = ondas, onClick = {
+            PlayerModeToggle(icons.shuffle, stringResource(R.string.mode_shuffle), shuffleMode == ShuffleMode.ON, showLabel = true, onClick = {
                 actions.onSetShuffle(if (shuffleMode == ShuffleMode.ON) ShuffleMode.OFF else ShuffleMode.ON)
             })
             IconBtn(icons.skipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, size = 52.dp, iconSize = 30.dp)
-            PlayCircle(state.isPlaying, actions.onTogglePlay, size = if (essencial) 72.dp else if (ondas) 74.dp else 76.dp, iconSize = 30.dp)
+            PlayCircle(state.isPlaying, actions.onTogglePlay, size = 74.dp, iconSize = 30.dp)
             IconBtn(icons.skipNext, stringResource(R.string.cd_next), actions.onNext, size = 52.dp, iconSize = 30.dp)
             PlayerModeToggle(
                 if (state.repeat == RepeatMode.ONE) icons.repeatOne else icons.repeat,
                 stringResource(if (state.repeat == RepeatMode.ONE) R.string.mode_repeat_one else R.string.mode_repeat),
                 state.repeat != RepeatMode.OFF,
-                showLabel = ondas,
+                showLabel = true,
                 onClick = actions.onRepeat,
             )
         }
 
         // Smart como interruptor (no Essencial, entre duas linhas finas).
         if (smartAvailable) {
-            if (essencial) HorizontalDivider(color = c.outline)
             SmartQueueSwitch(
                 on = shuffleMode == ShuffleMode.SMART,
                 onToggle = { on -> actions.onSetShuffle(if (on) ShuffleMode.SMART else ShuffleMode.OFF) },
             )
-            if (essencial) HorizontalDivider(color = c.outline)
         }
 
         // Rodapé: Este telefone · Letra · Fila. Em caixa de vidro no Sonivell e no Ondas; solto no Essencial.
         PlayerFooter(
             onLyrics = actions.onLyrics,
             onQueue = actions.onQueue,
-            modifier = if (essencial) Modifier else Modifier
+            modifier = Modifier
                 .glassSurface(RoundedCornerShape(20.dp), c.surface, c.outline, tone = tone, elevation = 8.dp)
                 .padding(horizontal = 4.dp),
         )

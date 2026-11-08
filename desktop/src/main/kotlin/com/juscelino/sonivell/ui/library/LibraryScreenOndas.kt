@@ -141,7 +141,6 @@ fun LibraryScreenOndas(
     lyricHits: List<com.juscelino.sonivell.data.LyricHit> = emptyList(),
     genreOfMonth: Ranked<String>? = null,
     recentSearches: List<String> = emptyList(),
-    tagBannerCount: Int = 0,
 ) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -251,11 +250,6 @@ fun LibraryScreenOndas(
             LibraryMode.Inicio -> home(state, favorites, labels, actions, smartProgress, forYou, decades)
             LibraryMode.Buscar -> search(state, currentId, labels, actions, playlists, semanticResults, decades, genreOfMonth, recentSearches, showAllSongs, lyricHits) { showAllSongs = true }
             LibraryMode.Biblioteca -> {
-                if (tagBannerCount > 0) {
-                    item(key = "tags-banner") {
-                        TagsBanner(tagBannerCount, actions.onOpenOrganize, actions.onDismissTagBanner, Modifier.padding(bottom = 12.dp))
-                    }
-                }
                 item(key = "segments") {
                     Segmented(
                         listOf(LibraryTab.Tudo, LibraryTab.Playlists, LibraryTab.Albuns, LibraryTab.Artistas, LibraryTab.Musicas, LibraryTab.Generos, LibraryTab.Pastas),

@@ -34,8 +34,7 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassSurface
 
 /**
- * Aba Perfil, a mesma em todos os estilos: três números neutros, "Descobrir" (mapa musical, Momentos,
- * Respira, Seu perfil sonoro e a Análise do som com progresso) e Ajustes por último, mostrando o estilo atual.
+ * Aba Perfil: três números neutros, a Análise do som com progresso (quando o Smart existe) e Ajustes.
  */
 @Composable
 fun SvProfileScreen(
@@ -46,14 +45,8 @@ fun SvProfileScreen(
     /** Músicas já analisadas pelo motor e o total da biblioteca. */
     analysed: Int,
     analysisTotal: Int,
-    /** Nome do estilo atual ("Clássico"), mostrado no item Ajustes. */
-    styleName: String,
     contentPadding: PaddingValues,
-    onStats: () -> Unit,
     onSettings: () -> Unit,
-    onMap: () -> Unit,
-    onMoments: () -> Unit,
-    onBreathe: () -> Unit,
     onAnalysis: () -> Unit,
 ) {
     val nc = SonivellTheme.colors
@@ -73,17 +66,8 @@ fun SvProfileScreen(
             Stat(count(artistCount), stringResource(R.string.sv_stat_artists), Modifier.weight(1f))
             Stat(count(hours) + " h", stringResource(R.string.sv_stat_hours), Modifier.weight(1f))
         }
-        SvSection(stringResource(R.string.sv_discover), Modifier.padding(top = 4.dp))
-        // O mesmo ícone de mapa usado no Para você.
-        Item(icons.genre, stringResource(R.string.sv_map_title), stringResource(R.string.sv_map_sub), onMap)
-        Item(icons.album, stringResource(R.string.sv_moments_title), stringResource(R.string.sv_moments_sub), onMoments)
-        Item(icons.sleep, stringResource(R.string.sv_breathe_title), stringResource(R.string.sv_breathe_sub), onBreathe)
-        // Seu perfil sonoro reúne estatísticas, histórico e "seu mês em música".
-        Item(icons.musicNote, stringResource(R.string.sv_row_profile), stringResource(R.string.sv_row_profile_hint), onStats)
         if (smartAvailable) AnalysisItem(analysed, analysisTotal, onAnalysis)
-
-        // Ajustes por último, com o mesmo nome da tela que abre e o estilo atual.
-        Item(icons.settings, stringResource(R.string.sv_row_settings), styleName, onSettings, Modifier.padding(top = 10.dp))
+        Item(icons.settings, stringResource(R.string.sv_row_settings), stringResource(R.string.desktop_settings_hint), onSettings, Modifier.padding(top = 10.dp))
 
     }
 }

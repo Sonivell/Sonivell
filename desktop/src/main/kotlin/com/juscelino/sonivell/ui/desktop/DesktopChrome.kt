@@ -59,7 +59,6 @@ import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.Waveform
 import com.juscelino.sonivell.ui.nowplaying.LineSeekBar
 import com.juscelino.sonivell.ui.nowplaying.PlayCircle
-import com.juscelino.sonivell.ui.nowplaying.artTint
 import com.juscelino.sonivell.ui.nowplaying.remainingLabel
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.cardSurface
@@ -100,7 +99,6 @@ fun DesktopSidebar(
     modifier: Modifier = Modifier,
 ) {
     val c = SonivellTheme.colors
-    val style = SonivellTheme.style
     Column(
         modifier
             .width(232.dp)
@@ -119,11 +117,8 @@ fun DesktopSidebar(
         }
         tabs.forEach { tab ->
             val selected = tab.route == active
-            val (bg, fg) = when (style) {
-                UiStyle.CONTRASTE -> (if (selected) c.surfaceHigh else Color.Transparent) to (if (selected) c.textPrimary else c.textSecondary)
-                UiStyle.CLASSICA -> (if (selected) c.accent.copy(alpha = 0.10f) else Color.Transparent) to (if (selected) c.accent else c.textSecondary)
-                else -> (if (selected) c.accent.copy(alpha = 0.14f) else Color.Transparent) to (if (selected) c.accent else c.textSecondary)
-            }
+            val bg = if (selected) c.accent.copy(alpha = 0.14f) else Color.Transparent
+            val fg = if (selected) c.accent else c.textSecondary
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -218,21 +213,17 @@ fun DesktopPlayerBar(
     modifier: Modifier = Modifier,
 ) {
     val base = SonivellTheme.colors
-    val style = SonivellTheme.style
-    val contraste = style == UiStyle.CONTRASTE
-    // Contraste: o player toma a cor da capa e o branco marca as ações.
-    val tone = if (contraste && track != null) artTint(track) else null
-    val primary = if (tone != null) Color.White else base.textPrimary
-    val secondary = if (tone != null) Color.White.copy(alpha = 0.72f) else base.textSecondary
+    val primary = base.textPrimary
+    val secondary = base.textSecondary
     val accent = base.accent
-    val playBg = if (contraste) Color.White else accent
-    val playFg = if (contraste) (tone ?: Color.Black) else base.onAccent
+    val playBg = accent
+    val playFg = base.onAccent
     val shape = RoundedCornerShape(22.dp)
     Row(
         modifier
             .fillMaxWidth()
             .height(104.dp)
-            .then(if (tone != null) Modifier.clip(shape).background(tone) else Modifier.cardSurface(shape, base.surface, elevation = 10.dp))
+            .cardSurface(shape, base.surface, elevation = 10.dp)
             .padding(horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(18.dp),
@@ -296,12 +287,7 @@ fun DesktopPlayerBar(
                 Text(formatDuration(state.livePositionMs), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = secondary)
                 Box(Modifier.weight(1f)) {
                     if (track != null) {
-                        when (style) {
-                            UiStyle.SONIVELL, UiStyle.ONDAS -> BarWave(track.id, state.livePositionMs, duration, actions.onSeek)
-                            UiStyle.ESSENCIAL -> LineSeekBar(state.livePositionMs, duration, actions.onSeek, thickness = 3.dp, fill = accent, knob = false)
-                            UiStyle.CLASSICA -> LineSeekBar(state.livePositionMs, duration, actions.onSeek, thickness = 4.dp, fill = accent, knob = true)
-                            UiStyle.CONTRASTE -> LineSeekBar(state.livePositionMs, duration, actions.onSeek, thickness = 4.dp, fill = Color.White, track = Color.White.copy(alpha = 0.25f), knob = true)
-                        }
+                        BarWave(track.id, state.livePositionMs, duration, actions.onSeek)
                     }
                 }
                 Text(if (track != null) remainingLabel(state.livePositionMs, duration) else "", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = secondary)
@@ -333,7 +319,7 @@ fun DesktopPlayerBar(
                         onCheckedChange = null,
                         modifier = Modifier.height(28.dp),
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = if (contraste) (tone ?: Color.Black) else base.onAccent,
+                            checkedThumbColor = base.onAccent,
                             checkedTrackColor = if (contraste) Color.White else accent,
                             uncheckedThumbColor = secondary,
                             uncheckedTrackColor = Color.Transparent,
@@ -348,7 +334,7 @@ fun DesktopPlayerBar(
                 FooterButton(SonivellTheme.icons.queue, stringResource(R.string.np_queue), if (queueOpen) (if (contraste) Color.White else accent) else secondary, actions.onQueue)
                 Spacer(Modifier.weight(1f))
                 IconBtn(SonivellTheme.icons.volumeUp, stringResource(R.string.cd_volume), { actions.onVolume(if (volume > 0f) 0f else 0.8f) }, size = 34.dp, iconSize = 18.dp, tint = secondary)
-                VolumeLine(volume, actions.onVolume, Modifier.width(72.dp), fill = if (contraste) Color.White else accent, track = if (tone != null) Color.White.copy(alpha = 0.25f) else base.track)
+                VolumeLine(volume, actions.onVolume, Modifier.width(72.dp), fill = accent, track = base.track)
                 IconBtn(SonivellTheme.icons.collapse, stringResource(R.string.desktop_compact_mode), actions.onCompact, size = 34.dp, iconSize = 18.dp, tint = secondary)
             }
         }

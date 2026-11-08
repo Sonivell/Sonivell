@@ -23,8 +23,6 @@ import com.juscelino.sonivell.data.RuleOp
 import com.juscelino.sonivell.data.SmartPlaylist
 import com.juscelino.sonivell.data.SmartPlaylists
 import com.juscelino.sonivell.data.SmartRule
-import com.juscelino.sonivell.ui.organize.OrganizeActions
-import com.juscelino.sonivell.ui.organize.OrganizeScreen
 import com.juscelino.sonivell.ui.smartlist.SmartEditorActions
 import com.juscelino.sonivell.ui.smartlist.SmartPlaylistEditor
 import com.juscelino.sonivell.ui.lyrics.LyricsActions
@@ -33,7 +31,6 @@ import com.juscelino.sonivell.ui.settings.EqualizerActions
 import com.juscelino.sonivell.ui.settings.EqualizerScreen
 import com.juscelino.sonivell.ui.settings.SettingsActions
 import com.juscelino.sonivell.ui.settings.SettingsScreen
-import com.juscelino.sonivell.ui.settings.StatsScreen
 import com.juscelino.sonivell.ui.collection.CollectionScreen
 import com.juscelino.sonivell.ui.components.AddToPlaylistSheet
 import com.juscelino.sonivell.ui.components.ConfirmDialog
@@ -119,20 +116,11 @@ import androidx.navigation.compose.rememberNavController
 import com.juscelino.sonivell.MainViewModel
 import com.juscelino.sonivell.ShuffleMode
 import com.juscelino.sonivell.playback.toTrack
-import com.juscelino.sonivell.data.UiStyle
-import com.juscelino.sonivell.data.usesSonivellScreens
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.filled.Person
 import com.juscelino.sonivell.ui.sonivell.BottomNavSonivell
 import com.juscelino.sonivell.ui.sonivell.MiniPlayerSonivell
 import com.juscelino.sonivell.ui.sonivell.SvAnalysisScreen
-import com.juscelino.sonivell.ui.sonivell.SvBreatheScreen
-import com.juscelino.sonivell.ui.sonivell.SvFlowScreen
-import com.juscelino.sonivell.ui.sonivell.SvHomeScreen
-import com.juscelino.sonivell.ui.sonivell.SvLibraryScreen
-import com.juscelino.sonivell.ui.sonivell.SvMapScreen
-import com.juscelino.sonivell.ui.sonivell.SvMomentsScreen
-import com.juscelino.sonivell.ui.sonivell.SvMood
 import com.juscelino.sonivell.ui.sonivell.SvProfileScreen
 import com.juscelino.sonivell.ui.sonivell.SvTab
 import com.juscelino.sonivell.ui.components.MiniPlayer
@@ -140,31 +128,20 @@ import com.juscelino.sonivell.ui.components.MiniPlayerClassica
 import com.juscelino.sonivell.ui.components.MiniPlayerOndas
 import com.juscelino.sonivell.ui.library.LibraryActions
 import com.juscelino.sonivell.ui.library.LibraryMode
-import com.juscelino.sonivell.ui.library.LibraryScreenClassica
-import com.juscelino.sonivell.ui.library.LibraryScreenContraste
 import androidx.compose.material.icons.rounded.NotificationsActive
-import com.juscelino.sonivell.ui.extras.CarModeScreen
-import com.juscelino.sonivell.ui.extras.RetroScreen
-import com.juscelino.sonivell.ui.extras.TagEditorScreen
 import com.juscelino.sonivell.system.Backup
-import com.juscelino.sonivell.data.CustomCovers
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.juscelino.sonivell.ui.components.miniPlayerGestures
-import com.juscelino.sonivell.ui.library.LibraryScreenEssencial
 import com.juscelino.sonivell.ui.library.LibraryScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingActions
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenClassica
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenContraste
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.PlayReason
 import com.juscelino.sonivell.ui.nowplaying.WhyContent
-import com.juscelino.sonivell.ui.nowplaying.artTint
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.nowplaying.WhyLine
 import com.juscelino.sonivell.ui.queue.QueueActions
@@ -188,28 +165,18 @@ private object Routes {
     const val PLAYLIST = "playlist/{id}"
     const val SETTINGS = "ajustes"
     const val EQUALIZER = "equalizador"
-    const val STATS = "estatisticas"
     const val LYRICS = "letra"
     const val AUTO = "auto/{key}"
     const val SMARTLIST = "inteligente/{id}"
     const val SMART_EDIT = "inteligente-editar/{id}"
-    const val ORGANIZE = "organizar"
-    const val CAR = "carro"
-    const val TAGS = "tags/{id}"
-    const val RETRO = "retrospectiva"
     // Tema Sonivell
     const val PROFILE = "perfil"
-    const val SV_FLOW = "sv-flow"
-    const val SV_MAP = "sv-mapa"
     const val SV_ANALYSIS = "sv-analise"
-    const val SV_MOMENTS = "sv-momentos"
-    const val SV_BREATHE = "sv-respira"
-    fun tags(id: Long) = "tags/$id"
     fun auto(key: String) = "auto/$key"
     fun smartlist(id: Long) = "inteligente/$id"
     fun smartEdit(id: Long) = "inteligente-editar/$id"
     /** Telas de coleção: mostram o mini player e a barra de navegação. */
-    val COLLECTIONS = setOf(ALBUM, ARTIST, GENRE, FOLDER, PLAYLIST, AUTO, SMARTLIST, SMART_EDIT, ORGANIZE)
+    val COLLECTIONS = setOf(ALBUM, ARTIST, GENRE, FOLDER, PLAYLIST, AUTO, SMARTLIST, SMART_EDIT)
 
     fun album(id: Long) = "album/$id"
     fun artist(name: String) = "artista/" + Uri.encode(name)
@@ -292,7 +259,6 @@ private fun MainContent(vm: MainViewModel) {
     val genreOfMonth by vm.genreOfMonth.collectAsState()
     val recentSearches by vm.recentSearches.collectAsState()
     val scannedFolders by vm.scannedFolders.collectAsState()
-    val tagBannerCount by vm.tagBannerCount.collectAsState()
     val playlists by vm.playlists.collectAsState()
     val sleepTimer by vm.sleepTimer.collectAsState()
 
@@ -339,16 +305,9 @@ private fun MainContent(vm: MainViewModel) {
         }
     }
     var whySheet by remember { mutableStateOf(false) }
-    val uiStyle = settings.uiStyle
     // As quatro abas no formato da barra do Sonivell (usada também pelo Ondas e pelo Essencial).
     val icons = SonivellTheme.icons
-    val svTabs = tabs.map { SvTab(it.route, it.label, it.icon(icons), it.activeIcon(icons)) }
-    // Aba da biblioteca aberta por um cartão do Início (0 Todas, 1 Músicas, 2 Álbuns, 3 Artistas, 4 Gêneros, 5 Pastas).
-    var svLibraryTab by rememberSaveable { mutableIntStateOf(0) }
-    val initialStyle = remember { settings.uiStyle }
-    var startRouted by rememberSaveable { mutableStateOf(false) }
     val equalizer by vm.equalizer.collectAsState()
-    val stats by vm.stats.collectAsState()
     val monthStats by vm.monthStats.collectAsState()
     val ratings by vm.ratings.collectAsState()
     var confirmRestore by remember { mutableStateOf<Uri?>(null) }
@@ -372,29 +331,13 @@ private fun MainContent(vm: MainViewModel) {
     val restoreLauncher = DesktopLauncher<Array<String>> {
         openFile(R.string.backup_restore, listOf("zip")) { uri -> confirmRestore = uri }
     }
-    val coverLauncher = DesktopLauncher<Long> { albumId ->
-        scope.launch {
-            val file = withContext(Dispatchers.IO) { DesktopSystem.chooseImage(res.getString(R.string.cover_change)) } ?: return@launch
-            val ok = withContext(Dispatchers.IO) { CustomCovers.set(context, albumId, Uri.fromFile(file)) }
-            toast(res.getString(if (ok) R.string.cover_changed else R.string.cover_failed))
-        }
-    }
-    val historyExportLauncher = DesktopLauncher<String> { name ->
-        saveAs(R.string.settings_history_export, name) { uri ->
-            toast(res.getString(if (vm.exportHistory(uri)) R.string.history_exported else R.string.export_failed))
-        }
-    }
     val smartPlaylists by vm.smartPlaylists.collectAsState()
     val semanticResults by vm.semanticResults.collectAsState()
     val lyricHits by vm.lyricHits.collectAsState()
-    val duplicates by vm.duplicates.collectAsState()
-    val metadataIssues by vm.metadataIssues.collectAsState()
     val playStats by vm.playStats.collectAsState()
     val blockedTracks by vm.recommendations.blockedTracks.collectAsState()
     val blockedArtists by vm.recommendations.blockedArtists.collectAsState()
     var deletingSmart by remember { mutableStateOf<SmartPlaylist?>(null) }
-    // Apagar cópias (Organizar): no PC vão para a lixeira do sistema, depois de confirmar.
-    var deletingCopies by remember { mutableStateOf<List<Track>?>(null) }
     val lyricsState by vm.lyrics.collectAsState()
     val lyricsOffset by vm.lyricsOffset.collectAsState()
     val lyricsFolderLauncher = DesktopLauncher<Unit?> {
@@ -483,14 +426,12 @@ private fun MainContent(vm: MainViewModel) {
                 restoreState = true
             }
         },
-        onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
         onRemoveRecentSearch = vm::removeRecentSearch,
         onPlayLyric = { hit ->
             commitSearch()
             source = res.getString(R.string.search_in_lyrics)
             vm.playFrom(listOf(hit.track), 0, startPositionMs = ((hit.timeMs ?: 0L) - 1_500L).coerceAtLeast(0L))
         },
-        onDismissTagBanner = vm::dismissTagBanner,
     )
 
     // Atalhos do ícone: esperam a biblioteca carregar e então fazem a ação.
@@ -509,14 +450,13 @@ private fun MainContent(vm: MainViewModel) {
             DesktopWindow.ACTION_SHUFFLE -> libraryActions.onShuffleAll()
             DesktopWindow.ACTION_LIKED -> nav.navigate(Routes.auto("curtidas"))
             DesktopWindow.ACTION_SEARCH -> libraryActions.onOpenSearch()
-            DesktopWindow.ACTION_CAR -> nav.navigate(Routes.CAR)
         }
         vm.consumeShortcut()
     }
 
     val chromeRoutes = remember {
         tabs.map { it.route }.toSet() + Routes.COLLECTIONS +
-            setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.STATS, Routes.PROFILE, Routes.SV_FLOW, Routes.SV_MAP, Routes.SV_MOMENTS, Routes.SV_ANALYSIS)
+            setOf(Routes.SETTINGS, Routes.EQUALIZER, Routes.PROFILE, Routes.SV_ANALYSIS)
     }
     val showChrome = route in chromeRoutes
     val tabRoutes = remember { tabs.map { it.route }.toSet() }
@@ -529,7 +469,7 @@ private fun MainContent(vm: MainViewModel) {
             restoreState = true
         }
     }
-    val fullScreenRoutes = remember { setOf(Routes.PLAYER, Routes.QUEUE, Routes.LYRICS, Routes.CAR) }
+    val fullScreenRoutes = remember { setOf(Routes.PLAYER, Routes.QUEUE, Routes.LYRICS) }
 
     // ---- Janela do PC: barra lateral, conteúdo, painel da fila e a barra do player embaixo ----
     var queueOpen by rememberSaveable { mutableStateOf(DesktopWindow.queueOpen) }
@@ -540,9 +480,8 @@ private fun MainContent(vm: MainViewModel) {
     val audioError by vm.player.error.collectAsState()
     val musicFolders by vm.musicFolders.collectAsState()
     val desktopTabs = tabs.map { DesktopTab(it.route, it.label, it.icon(icons), it.activeIcon(icons)) }
-    // O modo carro ocupa a janela toda; o player completo esconde a barra de baixo (ele mesmo tem os controles).
-    val immersive = route == Routes.CAR
-    val showBar = !immersive && route != Routes.PLAYER && route != Routes.QUEUE
+    // O player completo esconde a barra de baixo (ele mesmo tem os controles).
+    val showBar = route != Routes.PLAYER && route != Routes.QUEUE
     // Esc (ou o botão "voltar" do mouse) volta uma tela quando nenhuma tela tratou antes.
     DisposableEffect(nav) {
         DesktopWindow.backFallback = { if (nav.previousBackStackEntry != null) { nav.popBackStack(); true } else false }
@@ -562,21 +501,19 @@ private fun MainContent(vm: MainViewModel) {
     }
 
     Box(Modifier.fillMaxSize().background(SonivellTheme.colors.background)) {
-      Column(Modifier.fillMaxSize().padding(if (immersive) 0.dp else 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+      Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-          if (!immersive) {
-              val activeTab = if (route in tabRoutes) route else lastTab
-              DesktopSidebar(
-                  tabs = desktopTabs,
-                  active = activeTab,
-                  onSelect = goToTab,
-                  scanning = scanning,
-                  smartAvailable = vm.smart.isAvailable,
-                  smartProgress = smartProgress,
-                  onOpenAnalysis = { nav.navigate(Routes.SV_ANALYSIS) },
-              )
-          }
-          Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(if (immersive) 0.dp else 22.dp))) {
+          val activeTab = if (route in tabRoutes) route else lastTab
+          DesktopSidebar(
+              tabs = desktopTabs,
+              active = activeTab,
+              onSelect = goToTab,
+              scanning = scanning,
+              smartAvailable = vm.smart.isAvailable,
+              smartProgress = smartProgress,
+              onOpenAnalysis = { nav.navigate(Routes.SV_ANALYSIS) },
+          )
+          Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(22.dp))) {
         val listPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
 
         @Composable
@@ -619,7 +556,7 @@ private fun MainContent(vm: MainViewModel) {
 
         NavHost(
             navController = nav,
-            startDestination = Routes.LIBRARY,
+            startDestination = Routes.HOME,
             modifier = Modifier.fillMaxSize(),
             enterTransition = { fadeIn(tween(180)) },
             exitTransition = { fadeOut(tween(180)) },
@@ -630,90 +567,17 @@ private fun MainContent(vm: MainViewModel) {
                 Routes.LIBRARY to LibraryMode.Biblioteca,
             ).forEach { (r, mode) ->
                 composable(r) {
-                    if (r == Routes.LIBRARY && initialStyle.usesSonivellScreens && !startRouted) {
-                        LaunchedEffect(Unit) {
-                            startRouted = true
-                            nav.navigate(Routes.HOME) {
-                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    }
-                    when (uiStyle) {
-                        UiStyle.ONDAS -> LibraryScreenOndas(
-                            mode = mode, state = library, favorites = favorites, currentId = current?.id,
-                            contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
-                            forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
-                            genreOfMonth = genreOfMonth, recentSearches = recentSearches, tagBannerCount = tagBannerCount,
-                            lyricHits = lyricHits,
-                        )
-                        UiStyle.CONTRASTE -> LibraryScreenContraste(
-                            mode = mode, state = library, favorites = favorites, currentId = current?.id,
-                            contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
-                            forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
-                            tagBannerCount = tagBannerCount,
-                        )
-                        UiStyle.ESSENCIAL -> LibraryScreenEssencial(
-                            mode = mode, state = library, favorites = favorites, currentId = current?.id,
-                            contentPadding = listPadding, actions = libraryActions,
-                            forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
-                            recentSearches = recentSearches, tagBannerCount = tagBannerCount,
-                            lyricHits = lyricHits,
-                        )
-                        UiStyle.SONIVELL -> when (mode) {
-                            LibraryMode.Inicio -> {
-                                // Início é a raiz do tema: no PC, Esc aqui não faz nada (não cai na
-                                // biblioteca, o destino inicial do grafo, que deixou de ser uma aba).
-                                BackHandler { }
-                                SvHomeScreen(
-                                    contentPadding = listPadding,
-                                    state = library,
-                                    favoritesCount = favorites.size,
-                                    playlistCount = playlists.size,
-                                    mixSeeds = forYou.mixSeeds,
-                                    smartAvailable = vm.smart.isAvailable,
-                                    smartProgress = smartProgress,
-                                    onOpenAuto = libraryActions.onOpenAuto,
-                                    // A Biblioteca é uma aba: o cartão escolhe o filtro e troca de aba.
-                                    onOpenLibrary = { t ->
-                                        svLibraryTab = t
-                                        goToTab(Routes.LIBRARY)
-                                    },
-                                    onPlayMix = libraryActions.onPlayMix,
-                                    onOpenFlow = { nav.navigate(Routes.SV_FLOW) },
-                                    onOpenMap = { nav.navigate(Routes.SV_MAP) },
-                                    onOpenAnalysis = { nav.navigate(Routes.SV_ANALYSIS) },
-                                    continueTrack = forYou.unfinished.firstOrNull(),
-                                    continueAtMs = forYou.unfinished.firstOrNull()?.let { forYou.resumeAtMs[it.id] } ?: 0L,
-                                    onResume = libraryActions.onResume,
-                                )
-                            }
-                            LibraryMode.Buscar -> LibraryScreenOndas(
-                                mode = mode, state = library, favorites = favorites, currentId = current?.id,
-                                contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
-                                forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
-                                genreOfMonth = genreOfMonth, recentSearches = recentSearches, tagBannerCount = tagBannerCount,
-                                lyricHits = lyricHits,
-                            )
-                            LibraryMode.Biblioteca -> SvLibraryScreen(
-                                state = library, favorites = favorites, playlists = playlists, smartPlaylists = smartPlaylists,
-                                contentPadding = listPadding, actions = libraryActions,
-                                tab = svLibraryTab, onTab = { svLibraryTab = it },
-                                tagBannerCount = tagBannerCount,
-                            )
-                        }
-                        UiStyle.CLASSICA -> LibraryScreenClassica(
-                            mode = mode, state = library, favorites = favorites, currentId = current?.id,
-                            contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
-                            forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
-                            recentSearches = recentSearches, genreOfMonth = genreOfMonth, tagBannerCount = tagBannerCount,
-                        )
-                    }
+                    LibraryScreenOndas(
+                        mode = mode, state = library, favorites = favorites, currentId = current?.id,
+                        contentPadding = listPadding, actions = libraryActions, smartProgress = smartProgress,
+                        forYou = forYou, playlists = playlists, smartPlaylists = smartPlaylists, semanticResults = semanticResults,
+                        genreOfMonth = genreOfMonth, recentSearches = recentSearches,
+                        lyricHits = lyricHits,
+                    )
                 }
             }
 
-            // Perfil: a mesma aba em todos os estilos, com Ajustes como último item.
+            // Perfil: números, análise do som e Ajustes.
             composable(Routes.PROFILE) {
                 SvProfileScreen(
                     trackCount = library.allTracks.size,
@@ -722,41 +586,9 @@ private fun MainContent(vm: MainViewModel) {
                     smartAvailable = vm.smart.isAvailable,
                     analysed = smartProgress.analysed,
                     analysisTotal = smartProgress.total,
-                    styleName = stringResource(
-                        when (uiStyle) {
-                            UiStyle.ONDAS -> R.string.layout_ondas
-                            UiStyle.ESSENCIAL -> R.string.layout_essencial
-                            UiStyle.CONTRASTE -> R.string.layout_contrast
-                            UiStyle.CLASSICA -> R.string.layout_classic
-                            UiStyle.SONIVELL -> R.string.layout_sonivell
-                        },
-                    ),
                     contentPadding = listPadding,
-                    onStats = { nav.navigate(Routes.STATS) },
                     onSettings = { nav.navigate(Routes.SETTINGS) },
-                    onMap = { nav.navigate(Routes.SV_MAP) },
-                    onMoments = { nav.navigate(Routes.SV_MOMENTS) },
-                    onBreathe = { nav.navigate(Routes.SV_BREATHE) },
                     onAnalysis = { nav.navigate(Routes.SV_ANALYSIS) },
-                )
-            }
-            composable(Routes.SV_FLOW) {
-                SvFlowScreen(
-                    forYou = forYou,
-                    allTracks = library.allTracks,
-                    contentPadding = listPadding,
-                    onBack = { nav.popBackStack() },
-                    onPlay = { tracks, index -> libraryActions.onPlay(tracks, index, res.getString(R.string.sv_flow_title)) },
-                    onResume = libraryActions.onResume,
-                    onCustomize = { nav.navigate(Routes.SETTINGS) },
-                )
-            }
-            composable(Routes.SV_MAP) {
-                SvMapScreen(
-                    genres = library.genres,
-                    contentPadding = listPadding,
-                    onBack = { nav.popBackStack() },
-                    onOpenGenre = { nav.navigate(Routes.genre(it)) },
                 )
             }
             composable(Routes.SV_ANALYSIS) {
@@ -765,33 +597,6 @@ private fun MainContent(vm: MainViewModel) {
                     smartAvailable = vm.smart.isAvailable,
                     contentPadding = listPadding,
                     onBack = { nav.popBackStack() },
-                )
-            }
-            composable(Routes.SV_MOMENTS) {
-                SvMomentsScreen(
-                    tracks = library.allTracks,
-                    contentPadding = listPadding,
-                    onBack = { nav.popBackStack() },
-                    onOpenAuto = { nav.navigate(Routes.auto(it)) },
-                )
-            }
-            composable(Routes.SV_BREATHE) {
-                SvBreatheScreen(
-                    isPlaying = player.isPlaying,
-                    contentPadding = listPadding,
-                    onBack = { nav.popBackStack() },
-                    onStart = {
-                        scope.launch {
-                            val found = vm.queryTracks(SvMood.Calmo.query)
-                            if (found.isEmpty()) toast(res.getString(R.string.mood_empty))
-                            else {
-                                source = res.getString(R.string.sv_breathe_title)
-                                vm.playMood(found)
-                            }
-                        }
-                    },
-                    onTogglePlay = vm.player::togglePlay,
-                    onTimer = { timerSheet = true },
                 )
             }
 
@@ -893,68 +698,6 @@ private fun MainContent(vm: MainViewModel) {
                     ),
                 )
             }
-            composable(Routes.CAR) {
-                val t = current
-                CarModeScreen(
-                    track = t,
-                    isPlaying = player.isPlaying,
-                    liked = t != null && t.id in favorites,
-                    onPrevious = { vm.player.previous() },
-                    onTogglePlay = vm.player::togglePlay,
-                    onNext = { vm.player.next() },
-                    onLike = { t?.let { vm.toggleFavorite(it.id) } },
-                    onMixNow = { vm.requestShortcut(DesktopWindow.ACTION_MIX_NOW) },
-                    onExit = { nav.popBackStack() },
-                )
-            }
-            composable(Routes.TAGS, arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->
-                val id = entry.arguments?.getLong("id") ?: 0L
-                val original = remember(id) { vm.originalTrack(id) }
-                if (original == null) {
-                    LaunchedEffect(Unit) { nav.popBackStack() }
-                } else {
-                    TagEditorScreen(
-                        original = original,
-                        current = remember(id) { vm.tagEditOf(id) },
-                        contentPadding = listPadding,
-                        onSave = { edit ->
-                            vm.saveTags(id, edit)
-                            toast(res.getString(if (edit.isEmpty) R.string.tags_restored else R.string.tags_saved))
-                        },
-                        onBack = { nav.popBackStack() },
-                    )
-                }
-            }
-            composable(Routes.RETRO) {
-                RetroScreen(
-                    stats = monthStats,
-                    contentPadding = listPadding,
-                    onBack = { nav.popBackStack() },
-                    onPlayTop = {
-                        val top = monthStats.topTracks.map { it.item }
-                        if (top.isNotEmpty()) {
-                            source = res.getString(R.string.retro_title)
-                            vm.playFrom(top, 0)
-                        }
-                    },
-                )
-            }
-            composable(Routes.ORGANIZE) {
-                OrganizeScreen(
-                    duplicates = duplicates,
-                    issues = metadataIssues,
-                    canDelete = true,
-                    contentPadding = listPadding,
-                    actions = OrganizeActions(
-                        onBack = { nav.popBackStack() },
-                        onDeleteCopies = { copies -> deletingCopies = copies },
-                        onNotDuplicate = { vm.recommendations.markNotDuplicate(it.key) },
-                        onPlay = { t -> vm.playFrom(listOf(t), 0) },
-                        onResetIgnored = vm.recommendations::clearNotDuplicates,
-                    ),
-                )
-            }
-
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     settings = settings,
@@ -965,15 +708,10 @@ private fun MainContent(vm: MainViewModel) {
                         onBack = { nav.popBackStack() },
                         onUpdate = vm::updateSettings,
                         onOpenEqualizer = { nav.navigate(Routes.EQUALIZER) },
-                        onOpenStats = { nav.navigate(Routes.STATS) },
                         onRefreshLibrary = vm::refresh,
                         onClearHistory = { confirmClearHistory = true },
-                        onExportHistory = { historyExportLauncher.launch("sonivell-historico.csv") },
                         onReset = { confirmReset = true },
                         onPickLyricsFolder = { lyricsFolderLauncher.launch(null) },
-                        onOpenOrganize = { nav.navigate(Routes.ORGANIZE) },
-                        onOpenCarMode = { nav.navigate(Routes.CAR) },
-                        onOpenRetro = { nav.navigate(Routes.RETRO) },
                         onBackup = { backupLauncher.launch("sonivell-backup.zip") },
                         onRestore = { restoreLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
                         onUnblockTrack = { vm.recommendations.blockTrack(it, false) },
@@ -1011,20 +749,6 @@ private fun MainContent(vm: MainViewModel) {
                     ),
                 )
             }
-            composable(Routes.STATS) {
-                StatsScreen(
-                    stats = stats,
-                    contentPadding = listPadding,
-                    onBack = { nav.popBackStack() },
-                    onPeriod = vm::setStatsPeriod,
-                    onRetro = { nav.navigate(Routes.RETRO) },
-                    onPlayTrack = { t ->
-                        source = res.getString(R.string.stats)
-                        vm.playFrom(listOf(t), 0)
-                    },
-                )
-            }
-
             composable(
                 Routes.PLAYER,
                 enterTransition = { slideInVertically(tween(280)) { it } },
@@ -1049,21 +773,11 @@ private fun MainContent(vm: MainViewModel) {
                         onSleepTimer = { timerSheet = true },
                         onSetShuffle = vm::setShuffleMode,
                     )
-                    when (uiStyle) {
-                        UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL -> NowPlayingScreenOndas(
-                            track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
-                            reason = playReason, visualizer = settings.visualizer, style = uiStyle,
-                        )
-                        UiStyle.CONTRASTE -> NowPlayingScreenContraste(
-                            track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
-                        )
-                        UiStyle.CLASSICA -> NowPlayingScreenClassica(
-                            track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
-                        )
-                    }
+                    NowPlayingScreenOndas(
+                        track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
+                        isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
+                        reason = playReason,
+                    )
                 }
             }
 
@@ -1128,7 +842,7 @@ private fun MainContent(vm: MainViewModel) {
                 }
             }
           }
-          if (!immersive && queueOpen && route != Routes.QUEUE) {
+          if (queueOpen && route != Routes.QUEUE) {
               Box(Modifier.width(380.dp).fillMaxHeight().clip(RoundedCornerShape(22.dp))) {
                   val byId = remember(library.allTracks) { library.allTracks.associateBy { it.id } }
                   val upNext = player.upNext.map { iv ->
@@ -1212,13 +926,6 @@ private fun MainContent(vm: MainViewModel) {
             add(MenuOption(SonivellTheme.icons.album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) })
             add(MenuOption(SonivellTheme.icons.artist, stringResource(R.string.go_to_artist)) { openArtist(track.artist) })
             add(MenuOption(SonivellTheme.icons.folderOpen, stringResource(R.string.desktop_show_in_folder)) { share(track) })
-            add(MenuOption(Icons.Rounded.Edit, stringResource(R.string.tags_edit)) { nav.navigate(Routes.tags(track.id)) })
-            add(MenuOption(Icons.Rounded.Image, stringResource(R.string.cover_change)) {
-                coverLauncher.launch(track.albumId)
-            })
-            if (CustomCovers.has(track.albumId)) {
-                add(MenuOption(Icons.Rounded.HideImage, stringResource(R.string.cover_remove)) { CustomCovers.clear(track.albumId) })
-            }
             val trackBlocked = track.id in blockedTracks
             add(MenuOption(Icons.Rounded.Block, stringResource(if (trackBlocked) R.string.recommend_again else R.string.dont_recommend)) {
                 vm.recommendations.blockTrack(track.id, !trackBlocked)
@@ -1290,14 +997,12 @@ private fun MainContent(vm: MainViewModel) {
                 MenuOption(SonivellTheme.icons.artist, stringResource(R.string.go_to_artist)) { openArtist(track.artist) },
                 MenuOption(SonivellTheme.icons.folderOpen, stringResource(R.string.desktop_show_in_folder)) { share(track) },
             )
-            // Contraste: o menu no mesmo tom da capa, mais escuro (a assinatura continua na folha).
-            val menuTone = if (uiStyle == UiStyle.CONTRASTE) androidx.compose.ui.graphics.lerp(artTint(track), androidx.compose.ui.graphics.Color.Black, 0.3f) else null
-            OptionsSheet(options, onDismiss = { playerMenu = false }, tone = menuTone, header = {
+            OptionsSheet(options, onDismiss = { playerMenu = false }, header = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     TrackHeader(track)
-                    // Ondas: a linha "por que" também no cabeçalho do menu.
+                    // A linha "por que" também no cabeçalho do menu.
                     val r = playReason
-                    if (uiStyle == UiStyle.ONDAS && r is PlayReason.Smart) WhyLine(stringResource(R.string.why_line_smart, r.seed.title))
+                    if (r is PlayReason.Smart) WhyLine(stringResource(R.string.why_line_smart, r.seed.title))
                 }
             })
         }
@@ -1395,21 +1100,6 @@ private fun MainContent(vm: MainViewModel) {
                 if (route == Routes.SMARTLIST || route == Routes.SMART_EDIT) nav.popBackStack()
             },
             onDismiss = { deletingSmart = null },
-        )
-    }
-
-    deletingCopies?.let { copies ->
-        ConfirmDialog(
-            title = stringResource(R.string.desktop_trash_title),
-            message = pluralStringResource(R.plurals.desktop_trash_message, copies.size, copies.size),
-            confirmLabel = stringResource(R.string.delete),
-            onConfirm = {
-                scope.launch {
-                    val done = vm.deleteFiles(copies)
-                    toast(if (done > 0) res.getString(R.string.copies_deleted) else res.getString(R.string.desktop_trash_failed))
-                }
-            },
-            onDismiss = { deletingCopies = null },
         )
     }
 

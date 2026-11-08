@@ -14,12 +14,10 @@ import com.juscelino.sonivell.data.AppSettings
 import com.juscelino.sonivell.data.SettingsStore
 import com.juscelino.sonivell.data.Ranked
 import com.juscelino.sonivell.data.Stats
-import com.juscelino.sonivell.data.TagEdit
 import com.juscelino.sonivell.data.TagOverrides
 import com.juscelino.sonivell.data.sortKey
 import com.juscelino.sonivell.data.StatsPeriod
 import com.juscelino.sonivell.data.StatsState
-import com.juscelino.sonivell.data.historyCsv
 import com.juscelino.sonivell.playback.AudioEffects
 import com.juscelino.sonivell.playback.EqualizerInfo
 import com.juscelino.sonivell.data.Genre
@@ -60,9 +58,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import com.juscelino.sonivell.data.DuplicateGroup
-import com.juscelino.sonivell.data.MetadataIssues
-import com.juscelino.sonivell.data.Organize
 import com.juscelino.sonivell.data.PlayStats
 import com.juscelino.sonivell.data.RecommendationPrefs
 import com.juscelino.sonivell.data.Search
@@ -455,16 +450,6 @@ class MainViewModel {
 
     fun clearHistory() { viewModelScope.launch { history.clear() } }
 
-    /** Exporta o histórico de escuta como CSV. */
-    suspend fun exportHistory(target: Uri): Boolean {
-        val csv = historyCsv(history.recent(), allTracks.value.orEmpty())
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                File(target.path).writeBytes(csv.toByteArray())
-            }.isSuccess
-        }
-    }
-
     // ---- Equalizador (aplicado pelo serviço de reprodução) ----
 
     private val _eq = MutableStateFlow(readEq())
@@ -524,16 +509,6 @@ class MainViewModel {
         lyricsRepo.setOffset(id, lyricsRepo.offsetFor(id) + deltaMs)
         offsetVersion.value++
     }
-
-    // ---- Estatísticas ----
-
-    private val statsPeriod = MutableStateFlow(StatsPeriod.Mes)
-    val stats: StateFlow<StatsState> = combine(allTracks, history.revision, statsPeriod) { all, _, period ->
-        Stats.compute(all.orEmpty(), history.recent(), period)
-    }.flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StatsState())
-
-    fun setStatsPeriod(period: StatsPeriod) { statsPeriod.value = period }
 
     /** Gênero mais ouvido nos últimos 30 dias: o destaque da busca vazia. Null sem histórico. */
     val genreOfMonth: StateFlow<Ranked<String>?> = combine(allTracks, history.revision) { all, _ ->
@@ -690,19 +665,6 @@ class MainViewModel {
 
     private var scanned: List<Track> = emptyList()
     private val tagOverrides = TagOverrides(app)
-
-    /** Tags como vieram do arquivo (para o editor mostrar e restaurar). */
-    fun originalTrack(id: Long): Track? = scanned.firstOrNull { it.id == id }
-
-    fun tagEditOf(id: Long): TagEdit? = tagOverrides.get(id)
-
-    /** Salva a correção de tags (vazia = volta ao original) e atualiza a biblioteca na hora. */
-    fun saveTags(id: Long, edit: TagEdit) {
-        tagOverrides.put(id, edit)
-        applyLibraryFilter()
-        // A gravação no disco sai da thread principal (antes travava a tela durante o I/O).
-        viewModelScope.launch(Dispatchers.IO) { tagOverrides.save() }
-    }
 
     // ---- Notas (estrelas) ----
 
@@ -971,33 +933,6 @@ class MainViewModel {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // ---- Organizar: duplicatas e metadados ----
-
-    val duplicates: StateFlow<List<DuplicateGroup>> = combine(allTracks, recommendations.notDuplicates) { all, ignored ->
-        Organize.duplicates(all.orEmpty(), ignored)
-    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    val metadataIssues: StateFlow<MetadataIssues> = allTracks
-        .map { Organize.issues(it.orEmpty()) }
-        .flowOn(Dispatchers.Default)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MetadataIssues())
-
-    // ---- Aviso "tags para arrumar" na Biblioteca ----
-
-    /** Quantas faixas tinham problema quando o aviso foi dispensado; ele volta se aumentar. */
-    private val tagBannerDismissedAt = MutableStateFlow(prefs.getInt(KEY_TAG_BANNER_DISMISSED, 0))
-
-    /** Faixas com tags para arrumar, ou 0 quando o aviso não deve aparecer. */
-    val tagBannerCount: StateFlow<Int> = combine(metadataIssues, tagBannerDismissedAt) { issues, dismissed ->
-        issues.total.takeIf { it > dismissed } ?: 0
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
-
-    fun dismissTagBanner() {
-        val total = metadataIssues.value.total
-        tagBannerDismissedAt.value = total
-        prefs.edit().putInt(KEY_TAG_BANNER_DISMISSED, total).apply()
-    }
-
     // ---- Boas-vindas (primeiro uso) ----
 
     private val _showWelcome = MutableStateFlow(false)
@@ -1075,13 +1010,6 @@ class MainViewModel {
         prefs.edit().putString(KEY_RECENT_SEARCHES, next.joinToString("\n")).apply()
     }
 
-    /** Manda os arquivos para a lixeira do sistema (a tela já pediu confirmação). Devolve quantos saíram. */
-    suspend fun deleteFiles(tracks: List<Track>): Int = withContext(Dispatchers.IO) {
-        val done = tracks.count { com.juscelino.sonivell.system.DesktopSystem.moveToTrash(File(it.path)) }
-        if (done > 0) withContext(Dispatchers.Main) { refresh() }
-        done
-    }
-
     private suspend fun planSmart(seed: Track, excluding: Set<Long>): List<Track> {
         val all = allTracks.value.orEmpty()
         val byId = all.associateBy { it.id }
@@ -1110,7 +1038,6 @@ class MainViewModel {
         const val SMART_TOP_UP_BELOW = 5
         const val SMART_HISTORY_LIMIT = 2_000
         const val KEY_RECENT_SEARCHES = "recent_searches"
-        const val KEY_TAG_BANNER_DISMISSED = "tag_banner_dismissed"
         const val MAX_RECENT_SEARCHES = 8
         const val KEY_WELCOME_SEEN = "welcome_seen"
         const val AUTO_REFRESH_DEBOUNCE_MS = 3_000L

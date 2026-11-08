@@ -52,7 +52,6 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 @Composable
 fun CompactPlayer(vm: MainViewModel) {
     val c = SonivellTheme.colors
-    val style = SonivellTheme.style
     val p by vm.playerState.collectAsState()
     val t by vm.currentTrack.collectAsState()
     val favorites by vm.favorites.collectAsState()
@@ -82,11 +81,7 @@ fun CompactPlayer(vm: MainViewModel) {
 
         Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 8.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
             if (track != null) {
-                when (style) {
-                    UiStyle.SONIVELL, UiStyle.ONDAS -> WaveSeekBar(track.id, p.livePositionMs, track.durationMs, vm.player::seekTo)
-                    UiStyle.ESSENCIAL -> LineSeekBar(p.livePositionMs, track.durationMs, vm.player::seekTo, thickness = 3.dp, fill = c.accent, knob = false)
-                    else -> LineSeekBar(p.livePositionMs, track.durationMs, vm.player::seekTo, fill = if (style == UiStyle.CONTRASTE) c.textPrimary else c.accent)
-                }
+                WaveSeekBar(track.id, p.livePositionMs, track.durationMs, vm.player::seekTo)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(formatDuration(p.livePositionMs), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
@@ -105,7 +100,7 @@ fun CompactPlayer(vm: MainViewModel) {
                 val shuffleOn = shuffleMode == ShuffleMode.ON
                 IconBtn(SonivellTheme.icons.shuffle, stringResource(if (shuffleOn) R.string.cd_shuffle_on else R.string.cd_shuffle_off), { vm.setShuffleMode(if (shuffleOn) ShuffleMode.OFF else ShuffleMode.ON) }, tint = if (shuffleOn) c.accent else c.textSecondary)
                 IconBtn(SonivellTheme.icons.skipPrevious, stringResource(R.string.cd_previous), { vm.player.previous() }, iconSize = 24.dp)
-                PlayCircle(p.isPlaying, vm.player::togglePlay, size = 56.dp, background = if (style == UiStyle.CONTRASTE) c.textPrimary else c.accent, tint = if (style == UiStyle.CONTRASTE) c.background else c.onAccent)
+                PlayCircle(p.isPlaying, vm.player::togglePlay, size = 56.dp, background = c.accent, tint = c.onAccent)
                 IconBtn(SonivellTheme.icons.skipNext, stringResource(R.string.cd_next), { vm.player.next() }, iconSize = 24.dp)
                 IconBtn(
                     if (p.repeat == RepeatMode.ONE) SonivellTheme.icons.repeatOne else SonivellTheme.icons.repeat,

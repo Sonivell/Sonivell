@@ -54,7 +54,7 @@ fun main(args: Array<String>) {
         val vm = remember { MainViewModel() }
         // No PC não há permissão a pedir: as músicas vêm das pastas escolhidas. Liga o player e lê a biblioteca.
         LaunchedEffect(Unit) { vm.onPermissionGranted() }
-        // Atalhos do lançador: sonivell --action=mix_now (mix_now, shuffle, liked, search, car).
+        // Atalhos do lançador: sonivell --action=mix_now (mix_now, shuffle, liked, search).
         LaunchedEffect(Unit) {
             args.firstOrNull { it.startsWith("--action=") }?.substringAfter('=')?.let(vm::requestShortcut)
         }

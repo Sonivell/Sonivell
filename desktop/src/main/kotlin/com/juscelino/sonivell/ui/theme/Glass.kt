@@ -118,9 +118,8 @@ fun Modifier.cardSurface(
     color: Color = SonivellTheme.colors.surface,
     elevation: Dp = 6.dp,
 ): Modifier {
-    // Essencial e Contraste: cards sem borda, o contraste vem da superfície. O Ondas tem contorno em tudo.
-    val style = SonivellTheme.style
-    val outline = if (style == UiStyle.ESSENCIAL || style == UiStyle.CONTRASTE) Color.Transparent else SonivellTheme.colors.outline
+    // O Ondas tem contorno em tudo.
+    val outline = SonivellTheme.colors.outline
     return if (SonivellTheme.glass) glassSurface(shape, color, outline, elevation = elevation)
     else clip(shape).background(color)
 }
