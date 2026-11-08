@@ -1,10 +1,5 @@
 package com.juscelino.sonivell.ui.library
 
-import androidx.compose.material.icons.automirrored.rounded.TrendingUp
-import androidx.compose.material.icons.automirrored.rounded.TrendingDown
-import androidx.compose.material.icons.rounded.FiberNew
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.StarOutline
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,6 +82,7 @@ import com.juscelino.sonivell.ui.components.LabeledPill
 import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.theme.screenBackground
+import com.juscelino.sonivell.ui.theme.SonivellIcons
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
 import com.juscelino.sonivell.ui.theme.cardSurface
@@ -943,16 +939,16 @@ private fun LazyListScope.essPlaylistRows(state: LibraryState, playlists: List<P
     }
     // Cada automática com o seu ícone (tendência, novo, relógio, estrela, seta para baixo), não a mesma nota.
     val autos = listOf(
-        Triple("mais-ouvidas", R.string.auto_most, androidx.compose.material.icons.Icons.AutoMirrored.Rounded.TrendingUp),
-        Triple("nunca-tocadas", R.string.auto_never, androidx.compose.material.icons.Icons.Rounded.FiberNew),
-        Triple("ouvidas-recentemente", R.string.auto_recent_played, androidx.compose.material.icons.Icons.Rounded.Schedule),
-        Triple("bem-avaliadas", R.string.auto_top_rated, androidx.compose.material.icons.Icons.Rounded.StarOutline),
-        Triple("menos-ouvidas", R.string.auto_least, androidx.compose.material.icons.Icons.AutoMirrored.Rounded.TrendingDown),
+        Triple("mais-ouvidas", R.string.auto_most, { i: SonivellIcons -> i.trendUp }),
+        Triple("nunca-tocadas", R.string.auto_never, { i: SonivellIcons -> i.fresh }),
+        Triple("ouvidas-recentemente", R.string.auto_recent_played, { i: SonivellIcons -> i.recent }),
+        Triple("bem-avaliadas", R.string.auto_top_rated, { i: SonivellIcons -> i.star }),
+        Triple("menos-ouvidas", R.string.auto_least, { i: SonivellIcons -> i.trendDown }),
     )
     items(autos, key = { "auto-${it.first}" }) { (key, label, icon) ->
         EssListRow(stringResource(label), stringResource(R.string.kind_auto), onClick = { actions.onOpenAuto(key) }) {
             Box(Modifier.size(52.dp).cardSurface(RoundedCornerShape(12.dp), elevation = 0.dp), contentAlignment = Alignment.Center) {
-                Icon(icon, null, Modifier.size(22.dp), tint = SonivellTheme.colors.textSecondary)
+                Icon(icon(SonivellTheme.icons), null, Modifier.size(22.dp), tint = SonivellTheme.colors.textSecondary)
             }
         }
     }

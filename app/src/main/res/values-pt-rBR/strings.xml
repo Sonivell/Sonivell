@@ -173,7 +173,7 @@
     <string name="settings_accent">Cor de destaque</string>
     <string name="settings_icon_style">Estilo dos ícones</string>
     <string name="icon_style_fine">Fino</string>
-    <string name="icon_style_rounded">Arredondado</string>
+    <string name="icon_style_rounded">Grosso</string>
     <string name="accent_lime">Lima</string>
     <string name="accent_blue">Azul</string>
     <string name="accent_orange">Laranja</string>
@@ -216,6 +216,7 @@
     <string name="settings_version">Sonivell %1$s</string>
     <string name="settings_privacy">Tudo acontece neste celular: sem conta, sem internet, nada é enviado para lugar nenhum.</string>
     <string name="settings_credits_smart">O Smart usa o motor do LatentJam (Apache License 2.0).</string>
+    <string name="settings_credits_icons">Ícones do Phosphor (MIT License), Copyright (c) 2023 Phosphor Icons.</string>
     <string name="settings_reset">Restaurar ajustes padrão</string>
     <string name="reset_title">Restaurar os ajustes padrão?</string>
     <string name="reset_message">Tema, cor e comportamento voltam ao que eram. Histórico, playlists e curtidas continuam.</string>
@@ -411,7 +412,7 @@
     <string name="layout_contrast_hint">Intenso: o player toma a cor da capa e o branco marca as ações</string>
     <string name="layout_classic">Clássico</string>
     <string name="layout_classic_hint">Sóbrio: capas reais, linha de progresso e rótulos em caixa-alta</string>
-    <string name="icon_style_line">Traço</string>
+    <string name="icon_style_line">Regular</string>
     <string name="cd_expand_panel">Abrir painel</string>
     <string name="cd_collapse_panel">Minimizar painel</string>
     <string name="taste_section">O que o Smart aprendeu</string>

@@ -1,6 +1,5 @@
 package com.juscelino.sonivell.ui
 
-import androidx.compose.material.icons.Icons
 import androidx.annotation.StringRes
 import androidx.compose.ui.res.stringResource
 import com.juscelino.sonivell.R
@@ -16,10 +15,6 @@ import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.collection.CollectionActions
 import android.os.Build
 import androidx.activity.result.IntentSenderRequest
-import androidx.compose.material.icons.rounded.Block
-import androidx.compose.material.icons.rounded.PersonOff
-import androidx.compose.material.icons.rounded.SaveAlt
-import androidx.compose.material.icons.rounded.Tune
 import com.juscelino.sonivell.data.RuleField
 import com.juscelino.sonivell.data.RuleOp
 import com.juscelino.sonivell.data.SmartPlaylist
@@ -112,8 +107,6 @@ import com.juscelino.sonivell.ShuffleMode
 import com.juscelino.sonivell.playback.toTrack
 import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.data.usesSonivellScreens
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.filled.Person
 import com.juscelino.sonivell.ui.sonivell.BottomNavSonivell
 import com.juscelino.sonivell.ui.sonivell.MiniPlayerSonivell
 import com.juscelino.sonivell.ui.sonivell.SvAnalysisScreen
@@ -134,18 +127,12 @@ import com.juscelino.sonivell.ui.library.LibraryMode
 import com.juscelino.sonivell.ui.library.LibraryScreenClassica
 import com.juscelino.sonivell.ui.library.LibraryScreenContraste
 import com.juscelino.sonivell.system.AppShortcuts
-import androidx.compose.material.icons.rounded.NotificationsActive
 import com.juscelino.sonivell.ui.extras.CarModeScreen
 import com.juscelino.sonivell.ui.extras.RetroScreen
 import com.juscelino.sonivell.ui.extras.TagEditorScreen
 import com.juscelino.sonivell.system.Backup
 import com.juscelino.sonivell.data.CustomCovers
 import androidx.activity.result.PickVisualMediaRequest
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.HideImage
-import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.juscelino.sonivell.system.Ringtones
@@ -231,7 +218,7 @@ private val tabs = listOf(
     Tab(Routes.HOME, R.string.nav_home, { it.forYou }, { it.forYouActive }),
     Tab(Routes.SEARCH, R.string.nav_explore, { it.search }, { it.searchActive }),
     Tab(Routes.LIBRARY, R.string.nav_library, { it.library }, { it.libraryActive }),
-    Tab(Routes.PROFILE, R.string.nav_profile, { Icons.Outlined.Person }, { Icons.Filled.Person }),
+    Tab(Routes.PROFILE, R.string.nav_profile, { it.profile }, { it.profileActive }),
 )
 
 private fun audioPermission() =
@@ -1196,15 +1183,15 @@ private fun MainContent(vm: MainViewModel) {
             add(MenuOption(SonivellTheme.icons.album, stringResource(R.string.go_to_album)) { openAlbum(track.albumId) })
             add(MenuOption(SonivellTheme.icons.artist, stringResource(R.string.go_to_artist)) { openArtist(track.artist) })
             add(MenuOption(SonivellTheme.icons.share, stringResource(R.string.share)) { share(track) })
-            add(MenuOption(Icons.Rounded.Edit, stringResource(R.string.tags_edit)) { nav.navigate(Routes.tags(track.id)) })
-            add(MenuOption(Icons.Rounded.Image, stringResource(R.string.cover_change)) {
+            add(MenuOption(SonivellTheme.icons.edit, stringResource(R.string.tags_edit)) { nav.navigate(Routes.tags(track.id)) })
+            add(MenuOption(SonivellTheme.icons.image, stringResource(R.string.cover_change)) {
                 coverFor = track.albumId
                 coverLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             })
             if (CustomCovers.has(track.albumId)) {
-                add(MenuOption(Icons.Rounded.HideImage, stringResource(R.string.cover_remove)) { CustomCovers.clear(track.albumId) })
+                add(MenuOption(SonivellTheme.icons.imageRemove, stringResource(R.string.cover_remove)) { CustomCovers.clear(track.albumId) })
             }
-            add(MenuOption(Icons.Rounded.NotificationsActive, stringResource(R.string.set_ringtone)) {
+            add(MenuOption(SonivellTheme.icons.ringtone, stringResource(R.string.set_ringtone)) {
                 if (Ringtones.canWrite(context)) {
                     toast(res.getString(if (Ringtones.setAsRingtone(context, track)) R.string.ringtone_set else R.string.ringtone_failed))
                 } else {
@@ -1213,11 +1200,11 @@ private fun MainContent(vm: MainViewModel) {
                 }
             })
             val trackBlocked = track.id in blockedTracks
-            add(MenuOption(Icons.Rounded.Block, stringResource(if (trackBlocked) R.string.recommend_again else R.string.dont_recommend)) {
+            add(MenuOption(SonivellTheme.icons.block, stringResource(if (trackBlocked) R.string.recommend_again else R.string.dont_recommend)) {
                 vm.recommendations.blockTrack(track.id, !trackBlocked)
             })
             if (track.rawArtist != null && track.artist !in blockedArtists) {
-                add(MenuOption(Icons.Rounded.PersonOff, stringResource(R.string.dont_recommend_artist, track.artist)) {
+                add(MenuOption(SonivellTheme.icons.blockArtist, stringResource(R.string.dont_recommend_artist, track.artist)) {
                     vm.recommendations.blockArtist(track.artist, true)
                 })
             }
@@ -1241,10 +1228,10 @@ private fun MainContent(vm: MainViewModel) {
             })
             val smart = data.smart
             if (smart != null) {
-                add(MenuOption(Icons.Rounded.Tune, stringResource(R.string.edit_rules)) { nav.navigate(Routes.smartEdit(smart.id)) })
+                add(MenuOption(SonivellTheme.icons.rules, stringResource(R.string.edit_rules)) { nav.navigate(Routes.smartEdit(smart.id)) })
             }
             if (smart != null || data.automatic) {
-                add(MenuOption(Icons.Rounded.SaveAlt, stringResource(R.string.save_as_playlist)) { newPlaylistWith = data.tracks })
+                add(MenuOption(SonivellTheme.icons.save, stringResource(R.string.save_as_playlist)) { newPlaylistWith = data.tracks })
             }
             if (smart != null) {
                 add(MenuOption(SonivellTheme.icons.delete, stringResource(R.string.delete)) { deletingSmart = smart })
@@ -1580,7 +1567,7 @@ private fun StarRow(stars: Int, onRate: (Int) -> Unit) {
                     .semantics { contentDescription = label },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(if (on) Icons.Rounded.Star else Icons.Rounded.StarBorder, null, Modifier.size(26.dp), tint = if (on) c.accent else c.textSecondary)
+                Icon(if (on) SonivellTheme.icons.starFilled else SonivellTheme.icons.star, null, Modifier.size(26.dp), tint = if (on) c.accent else c.textSecondary)
             }
         }
     }

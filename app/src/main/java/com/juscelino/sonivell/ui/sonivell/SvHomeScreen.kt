@@ -1,8 +1,5 @@
 package com.juscelino.sonivell.ui.sonivell
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.TrendingUp
-import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.foundation.layout.Spacer
@@ -98,8 +95,8 @@ fun SvHomeScreen(
     val forYou = listOf(
         // Cada coleção com o seu ícone de traço (coração, tendência, relógio) e uma meta clara.
         SvShortcut(stringResource(R.string.source_liked), songsLabel(favoritesCount), icons.like) { onOpenAuto("curtidas") },
-        SvShortcut(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub), Icons.AutoMirrored.Rounded.TrendingUp) { onOpenAuto("mais-ouvidas") },
-        SvShortcut(stringResource(R.string.sv_new), stringResource(R.string.sv_new_sub, newCount), Icons.Rounded.Schedule) { onOpenAuto("recentes") },
+        SvShortcut(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub), icons.trendUp) { onOpenAuto("mais-ouvidas") },
+        SvShortcut(stringResource(R.string.sv_new), stringResource(R.string.sv_new_sub, newCount), icons.recent) { onOpenAuto("recentes") },
     )
     val library = listOf(
         SvShortcut(stringResource(R.string.tab_songs), count(state.allTracks.size)) { onOpenLibrary(1) },

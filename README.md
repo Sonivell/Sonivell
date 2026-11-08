@@ -85,3 +85,4 @@ Para lançar: aumente o `versionName`, faça o merge na `main` e rode **Actions 
 
 - Motor SMART e modelos: [LatentJam](https://github.com/Nikita-sud/latentjam), Apache License 2.0 — veja `NOTICE`. Os próprios autores avisam que parte dos pesos dos modelos ainda não passou pela revisão de direitos dos dados de treino; por isso a edição SMART é, por enquanto, só para uso pessoal.
 - Fonte [Manrope](https://github.com/googlefonts/manrope), licença SIL Open Font License 1.1.
+- Ícones do app (Android): [Phosphor](https://phosphoricons.com), licença MIT — veja `LICENSE-Phosphor.txt`.
