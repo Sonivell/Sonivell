@@ -64,6 +64,7 @@ import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.components.TrackRow
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.cardSurface
 
@@ -103,7 +104,7 @@ fun LibraryScreenClassica(
     LaunchedEffect(mode) { if (mode == LibraryMode.Buscar) runCatching { focus.requestFocus() } }
 
     LazyColumn(
-        Modifier.fillMaxSize().background(c.background),
+        Modifier.fillMaxSize().screenBackground(),
         contentPadding = PaddingValues(
             start = 20.dp,
             end = 20.dp,

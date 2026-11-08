@@ -3,17 +3,6 @@ package com.juscelino.sonivell.ui.settings
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Backup
-import androidx.compose.material.icons.rounded.DirectionsCar
-import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Insights
-import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.PlayCircle
-import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -84,6 +73,7 @@ import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.AccentChoice
 import com.juscelino.sonivell.ui.theme.DarkBackground
 import com.juscelino.sonivell.ui.theme.IconStyle
@@ -144,7 +134,7 @@ fun SettingsScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .background(c.background)
+            .screenBackground()
             .padding(top = contentPadding.calculateTopPadding()),
     ) {
         Row(
@@ -260,15 +250,15 @@ private fun IndexPage(
     // Quatro grupos com rótulo em caixa-alta; linhas com título, valor atual e seta, sem tiles coloridos.
     Group(stringResource(R.string.settings_group_general)) {
         Card {
-            NavRow(Icons.Rounded.Palette, stringResource(R.string.settings_appearance), "$layout · $theme · $color") { open(SettingsPage.Aparencia) }
-            NavRow(Icons.Rounded.DirectionsCar, stringResource(R.string.car_mode), stringResource(R.string.sum_car), onClick = actions.onOpenCarMode)
+            NavRow(SonivellTheme.icons.appearance, stringResource(R.string.settings_appearance), "$layout · $theme · $color") { open(SettingsPage.Aparencia) }
+            NavRow(SonivellTheme.icons.car, stringResource(R.string.car_mode), stringResource(R.string.sum_car), onClick = actions.onOpenCarMode)
         }
     }
     Group(stringResource(R.string.settings_group_sound)) {
         Card {
-            NavRow(Icons.Rounded.PlayCircle, stringResource(R.string.settings_playback), stringResource(R.string.sum_playback, speedLabel(settings.playbackSpeed))) { open(SettingsPage.Reproducao) }
+            NavRow(SonivellTheme.icons.playback, stringResource(R.string.settings_playback), stringResource(R.string.sum_playback, speedLabel(settings.playbackSpeed))) { open(SettingsPage.Reproducao) }
             NavRow(
-                Icons.Rounded.SwapHoriz,
+                SonivellTheme.icons.transitions,
                 stringResource(R.string.settings_transitions),
                 when {
                     !settings.crossfade -> stringResource(R.string.sum_crossfade_off)
@@ -276,13 +266,13 @@ private fun IndexPage(
                     else -> stringResource(R.string.sum_crossfade, settings.crossfadeSeconds)
                 },
             ) { open(SettingsPage.Transicoes) }
-            NavRow(Icons.Rounded.GraphicEq, stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), onClick = actions.onOpenEqualizer)
+            NavRow(SonivellTheme.icons.nowPlaying, stringResource(R.string.equalizer), stringResource(R.string.equalizer_hint), onClick = actions.onOpenEqualizer)
         }
     }
     Group(stringResource(R.string.settings_group_smart_library)) {
         Card {
             NavRow(
-                Icons.Rounded.AutoAwesome,
+                SonivellTheme.icons.smart,
                 stringResource(R.string.settings_smart_page),
                 if (smartAvailable) stringResource(
                     R.string.sum_smart,
@@ -291,7 +281,7 @@ private fun IndexPage(
                 ) else stringResource(R.string.not_recommended),
             ) { open(SettingsPage.Smart) }
             NavRow(
-                Icons.Rounded.LibraryMusic,
+                SonivellTheme.icons.library,
                 stringResource(R.string.nav_library),
                 stringResource(if (settings.autoRefresh) R.string.sum_library_auto else R.string.sum_library),
             ) { open(SettingsPage.Biblioteca) }
@@ -300,9 +290,9 @@ private fun IndexPage(
     Group(stringResource(R.string.settings_group_data)) {
         Card {
             // Histórico fica só com limpar e exportar; as estatísticas moram em Seu perfil sonoro (Perfil).
-            NavRow(Icons.Rounded.Insights, stringResource(R.string.settings_history_page), stringResource(R.string.sum_history)) { open(SettingsPage.Historico) }
-            NavRow(Icons.Rounded.Backup, stringResource(R.string.backup_section), stringResource(R.string.sum_data)) { open(SettingsPage.Dados) }
-            NavRow(Icons.Rounded.Info, stringResource(R.string.settings_about), stringResource(R.string.sum_about, versionName)) { open(SettingsPage.Sobre) }
+            NavRow(SonivellTheme.icons.history, stringResource(R.string.settings_history_page), stringResource(R.string.sum_history)) { open(SettingsPage.Historico) }
+            NavRow(SonivellTheme.icons.backup, stringResource(R.string.backup_section), stringResource(R.string.sum_data)) { open(SettingsPage.Dados) }
+            NavRow(SonivellTheme.icons.info, stringResource(R.string.settings_about), stringResource(R.string.sum_about, versionName)) { open(SettingsPage.Sobre) }
         }
     }
 }
@@ -465,6 +455,15 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
                 stringResource(if (c.isDark) R.string.settings_black_background_hint else R.string.settings_dark_background_hint),
                 settings.darkBackground == DarkBackground.Preto,
             ) { on -> actions.onUpdate { it.copy(darkBackground = if (on) DarkBackground.Preto else DarkBackground.Grafite) } }
+        }
+        // Vidro: o fundo com a capa só faz sentido com a transparência ligada.
+        if (!settings.reduceTransparency) {
+            SwitchRow(stringResource(R.string.settings_art_backdrop), stringResource(R.string.settings_art_backdrop_hint), settings.artBackdrop) { on ->
+                actions.onUpdate { it.copy(artBackdrop = on) }
+            }
+        }
+        SwitchRow(stringResource(R.string.settings_reduce_transparency), stringResource(R.string.settings_reduce_transparency_hint), settings.reduceTransparency) { on ->
+            actions.onUpdate { it.copy(reduceTransparency = on) }
         }
     }
     // O peso dos ícones é definido por cada estilo; a escolha manual saiu.
@@ -638,6 +637,7 @@ private fun AboutPage(versionName: String, smartAvailable: Boolean, actions: Set
         InfoRow(stringResource(R.string.settings_version, versionName), primary = true)
         InfoRow(stringResource(R.string.settings_privacy))
         if (smartAvailable) InfoRow(stringResource(R.string.settings_credits_smart))
+        InfoRow(stringResource(R.string.settings_credits_icons))
     }
     Group(stringResource(R.string.thanks_title)) {
         Card {

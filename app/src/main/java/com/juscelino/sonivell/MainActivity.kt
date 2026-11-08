@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.juscelino.sonivell.system.AppShortcuts
 import com.juscelino.sonivell.ui.SonivellApp
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.rememberPowerSaveMode
 import com.juscelino.sonivell.ui.theme.ThemeMode
 
 class MainActivity : ComponentActivity() {
@@ -30,6 +31,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handleShortcut(intent)
         setContent {
             val settings by vm.settings.collectAsStateWithLifecycle()
+            val powerSave by rememberPowerSaveMode()
             val dark = when (settings.theme) {
                 ThemeMode.AUTO -> isSystemInDarkTheme()
                 ThemeMode.LIGHT -> false
@@ -49,6 +51,9 @@ class MainActivity : ComponentActivity() {
                 tintedBackground = settings.tintedBackground,
                 systemColors = settings.systemColors,
                 style = settings.uiStyle,
+                artBackdrop = settings.artBackdrop,
+                reduceTransparency = settings.reduceTransparency,
+                powerSave = powerSave,
             ) {
                 SonivellApp(vm)
             }
