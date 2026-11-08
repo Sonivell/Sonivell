@@ -252,7 +252,7 @@ fun DesktopPlayerBar(
                     stringResource(if (liked) R.string.cd_unlike else R.string.cd_like),
                     actions.onLike,
                     iconSize = 20.dp,
-                    tint = if (liked) (if (contraste) Color.White else accent) else secondary,
+                    tint = if (liked) accent else secondary,
                 )
             }
         }
@@ -265,7 +265,7 @@ fun DesktopPlayerBar(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 val shuffleOn = shuffleMode == ShuffleMode.ON
-                ModeButton(SonivellTheme.icons.shuffle, stringResource(if (shuffleOn) R.string.cd_shuffle_on else R.string.cd_shuffle_off), shuffleOn, if (contraste) Color.White else accent, secondary) {
+                ModeButton(SonivellTheme.icons.shuffle, stringResource(if (shuffleOn) R.string.cd_shuffle_on else R.string.cd_shuffle_off), shuffleOn, accent, secondary) {
                     actions.onSetShuffle(if (shuffleOn) ShuffleMode.OFF else ShuffleMode.ON)
                 }
                 IconBtn(SonivellTheme.icons.skipPrevious, stringResource(R.string.cd_previous), actions.onPrevious, iconSize = 24.dp, tint = primary)
@@ -275,7 +275,7 @@ fun DesktopPlayerBar(
                 ModeButton(
                     if (state.repeat == RepeatMode.ONE) SonivellTheme.icons.repeatOne else SonivellTheme.icons.repeat,
                     stringResource(when (state.repeat) { RepeatMode.OFF -> R.string.cd_repeat_off; RepeatMode.ALL -> R.string.cd_repeat_all; RepeatMode.ONE -> R.string.cd_repeat_one }),
-                    repeatOn, if (contraste) Color.White else accent, secondary, actions.onRepeat,
+                    repeatOn, accent, secondary, actions.onRepeat,
                 )
             }
             Row(
@@ -311,7 +311,7 @@ fun DesktopPlayerBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Icon(SonivellTheme.icons.smart, null, Modifier.size(16.dp), tint = if (on) (if (contraste) Color.White else accent) else secondary)
+                    Icon(SonivellTheme.icons.smart, null, Modifier.size(16.dp), tint = if (on) accent else secondary)
                     Text(stringResource(R.string.np_queue_by_sound), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = primary, modifier = Modifier.weight(1f), maxLines = 1)
                     Text(stringResource(R.string.np_smart), style = MaterialTheme.typography.bodyMedium, color = secondary)
                     Switch(
@@ -320,10 +320,10 @@ fun DesktopPlayerBar(
                         modifier = Modifier.height(28.dp),
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = base.onAccent,
-                            checkedTrackColor = if (contraste) Color.White else accent,
+                            checkedTrackColor = accent,
                             uncheckedThumbColor = secondary,
                             uncheckedTrackColor = Color.Transparent,
-                            uncheckedBorderColor = if (contraste) Color.White.copy(alpha = 0.4f) else base.outline,
+                            uncheckedBorderColor = base.outline,
                         ),
                     )
                 }
@@ -331,7 +331,7 @@ fun DesktopPlayerBar(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 FooterButton(SonivellTheme.icons.device, stringResource(R.string.this_phone), secondary, actions.onOutput)
                 FooterButton(SonivellTheme.icons.lyrics, stringResource(R.string.lyrics_label), secondary, actions.onLyrics)
-                FooterButton(SonivellTheme.icons.queue, stringResource(R.string.np_queue), if (queueOpen) (if (contraste) Color.White else accent) else secondary, actions.onQueue)
+                FooterButton(SonivellTheme.icons.queue, stringResource(R.string.np_queue), if (queueOpen) accent else secondary, actions.onQueue)
                 Spacer(Modifier.weight(1f))
                 IconBtn(SonivellTheme.icons.volumeUp, stringResource(R.string.cd_volume), { actions.onVolume(if (volume > 0f) 0f else 0.8f) }, size = 34.dp, iconSize = 18.dp, tint = secondary)
                 VolumeLine(volume, actions.onVolume, Modifier.width(72.dp), fill = accent, track = base.track)

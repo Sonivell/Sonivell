@@ -189,7 +189,6 @@ val Manrope = FontFamily(
     androidx.compose.ui.text.platform.Font(resource = "fonts/manrope-800.ttf", weight = FontWeight.ExtraBold),
 )
 
-.getOrElse { java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, 12) }
 
 /** Números tabulares (tnum) em todo o app: contagens, durações e tempos alinham em coluna. */
 private val SonivellTypography = Typography(
