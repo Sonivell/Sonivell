@@ -154,6 +154,7 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlinx.coroutines.launch
 import com.juscelino.sonivell.ui.theme.cardSurface
 import com.juscelino.sonivell.ui.theme.glassAccent
+import com.juscelino.sonivell.ui.theme.BarFade
 import com.juscelino.sonivell.ui.theme.glassBar
 import com.juscelino.sonivell.ui.components.ArtBackdrop
 import dev.chrisbanes.haze.HazeState
@@ -544,7 +545,7 @@ private fun MainContent(vm: MainViewModel) {
         contentWindowInsets = WindowInsets.statusBars,
         bottomBar = {
             if (showChrome) {
-                Column(Modifier.glassBar(haze).windowInsetsPadding(WindowInsets.navigationBars)) {
+                Column(Modifier.glassBar(haze, BarFade.Top).windowInsetsPadding(WindowInsets.navigationBars)) {
                     current?.let { t ->
                         val progress = if (player.durationMs > 0) player.positionMs.toFloat() / player.durationMs else 0f
                         Box(Modifier.miniPlayerGestures(onNext = { vm.player.next() }, onPrevious = { vm.player.previous() }, onOpen = { nav.navigate(Routes.PLAYER) })) {

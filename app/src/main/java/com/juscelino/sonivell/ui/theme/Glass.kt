@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
@@ -68,10 +67,13 @@ fun Modifier.glassSurface(
     val alpha = if (dark) surfaceAlpha else maxOf(surfaceAlpha, LIGHT_SURFACE_ALPHA)
     Modifier
         .then(
+            // A sombra do sistema também é desenhada por baixo da forma e, atrás do vidro translúcido,
+            // aparecia como um bloco escuro dentro do cartão (pior sobre o fundo da capa). Nos dois
+            // temas a sombra agora é só por fora ([sombraExterna]); no escuro, mais forte.
             when {
                 elevation <= 0.dp -> Modifier
-                dark -> Modifier.shadow(elevation, shape, clip = false)
-                else -> Modifier.sombraClara(shape, elevation)
+                dark -> Modifier.sombraExterna(shape, elevation, DARK_SHADOW_ALPHA)
+                else -> Modifier.sombraExterna(shape, elevation, LIGHT_SHADOW_ALPHA)
             },
         )
         .clip(shape)
@@ -90,11 +92,11 @@ fun Modifier.glassSurface(
 }
 
 /**
- * Sombra do modo claro, só do lado de fora de [shape]: camadas de contorno cada vez mais largas e
+ * Sombra só do lado de fora de [shape]: camadas de contorno cada vez mais largas e
  * fracas, um pouco deslocadas para baixo, com o miolo da forma recortado. Assim nada escurece o
  * vidro por dentro. Criada uma vez por tamanho ([drawWithCache]).
  */
-private fun Modifier.sombraClara(shape: Shape, elevation: Dp): Modifier = drawWithCache {
+private fun Modifier.sombraExterna(shape: Shape, elevation: Dp, alpha: Float): Modifier = drawWithCache {
     val corpo = Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawWithCache)) }
     val alcance = elevation.toPx() * 0.9f
     val queda = elevation.toPx() * 0.25f
@@ -104,7 +106,7 @@ private fun Modifier.sombraClara(shape: Shape, elevation: Dp): Modifier = drawWi
                 for (i in SHADOW_LAYERS downTo 1) {
                     drawPath(
                         corpo,
-                        Color.Black.copy(alpha = LIGHT_SHADOW_ALPHA / SHADOW_LAYERS),
+                        Color.Black.copy(alpha = alpha / SHADOW_LAYERS),
                         style = Stroke(width = alcance * 2f * i / SHADOW_LAYERS, join = StrokeJoin.Round),
                     )
                 }
@@ -115,6 +117,7 @@ private fun Modifier.sombraClara(shape: Shape, elevation: Dp): Modifier = drawWi
 
 private const val LIGHT_SURFACE_ALPHA = 0.86f
 private const val LIGHT_SHADOW_ALPHA = 0.07f
+private const val DARK_SHADOW_ALPHA = 0.30f
 private const val SHADOW_LAYERS = 16
 
 /** Item selecionado em vidro (aba atual, botão principal): translúcido na cor de destaque, com contorno. */
@@ -183,9 +186,22 @@ fun Modifier.screenBackground(): Modifier =
  */
 @OptIn(ExperimentalHazeApi::class)
 @Composable
-fun Modifier.glassBar(state: HazeState): Modifier {
+fun Modifier.glassBar(state: HazeState, fade: BarFade = BarFade.None): Modifier {
     val c = SonivellTheme.colors
-    if (!LocalGlassMaterial.current.blur) return background(c.background)
+    // As barras de baixo são pílulas soltas; um retângulo de vidro com borda reta atrás delas
+    // aparecia como uma faixa. Com [fade] a borda livre se dissolve no fundo.
+    val mask = when (fade) {
+        BarFade.None -> null
+        BarFade.Top -> Brush.verticalGradient(0f to Color.Transparent, 0.12f to Color.Black)
+        BarFade.Bottom -> Brush.verticalGradient(0.65f to Color.Black, 1f to Color.Transparent)
+    }
+    if (!LocalGlassMaterial.current.blur) {
+        return when (fade) {
+            BarFade.None -> background(c.background)
+            BarFade.Top -> background(Brush.verticalGradient(0f to Color.Transparent, 0.12f to c.background))
+            BarFade.Bottom -> background(Brush.verticalGradient(0.65f to c.background, 1f to Color.Transparent))
+        }
+    }
     val style = HazeStyle(
         backgroundColor = c.background,
         tints = listOf(HazeTint(c.background.copy(alpha = if (c.isDark) BAR_TINT_DARK else BAR_TINT_LIGHT))),
@@ -195,8 +211,12 @@ fun Modifier.glassBar(state: HazeState): Modifier {
     )
     return hazeEffect(state, style) {
         inputScale = HazeInputScale.Fixed(BAR_INPUT_SCALE)
+        this.mask = mask
     }
 }
+
+/** Qual borda de uma barra de vidro se dissolve no fundo ([glassBar]). */
+enum class BarFade { None, Top, Bottom }
 
 private const val BAR_TINT_DARK = 0.58f
 private const val BAR_TINT_LIGHT = 0.66f
