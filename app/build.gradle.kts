@@ -133,6 +133,7 @@ dependencies {
     }
 
     implementation(libs.coil.compose)
+    implementation(libs.haze)
 
     // Só a edição SMART leva o motor e o ONNX Runtime.
     "smartImplementation"(project(":core:smart"))

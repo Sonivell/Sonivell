@@ -476,6 +476,10 @@
     <string name="thanks_url" translatable="false">https://github.com/Nikita-sud/latentjam</string>
     <string name="settings_tinted_background">Colored background</string>
     <string name="settings_tinted_background_hint">Background and cards take the tone of the accent color, in every layout</string>
+    <string name="settings_art_backdrop">Album art background</string>
+    <string name="settings_art_backdrop_hint">Screens take the colors of the playing cover, blurred under the theme tone</string>
+    <string name="settings_reduce_transparency">Reduce transparency</string>
+    <string name="settings_reduce_transparency_hint">Solid bars and cards, no blur. Blur also pauses in battery saver</string>
     <string name="settings_system_colors">Android colors</string>
     <string name="settings_system_colors_hint">Use the color from your wallpaper (Material You) instead of the accent color</string>
     <plurals name="lib_tags_banner">

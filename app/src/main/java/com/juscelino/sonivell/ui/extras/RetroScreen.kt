@@ -45,6 +45,7 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.StatsState
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.IconBtn
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.io.File
 import java.text.SimpleDateFormat
@@ -66,7 +67,7 @@ fun RetroScreen(stats: StatsState, contentPadding: PaddingValues, onBack: () -> 
     Column(
         Modifier
             .fillMaxSize()
-            .background(c.background)
+            .screenBackground()
             .verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),

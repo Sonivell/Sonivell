@@ -43,6 +43,7 @@ import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.components.TrackRow
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Locale
 import com.juscelino.sonivell.ui.theme.cardSurface
@@ -68,7 +69,7 @@ fun OrganizeScreen(
     var tab by rememberSaveable { mutableStateOf(0) }
     var openIssue by rememberSaveable { mutableStateOf(-1) }
     LazyColumn(
-        Modifier.fillMaxSize().background(c.background),
+        Modifier.fillMaxSize().screenBackground(),
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

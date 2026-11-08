@@ -86,6 +86,7 @@ import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.LabeledPill
 import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.components.TrackRow
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
 import com.juscelino.sonivell.ui.theme.cardSurface
@@ -156,7 +157,7 @@ fun LibraryScreenEssencial(
 
     Box(Modifier.fillMaxSize()) {
     LazyColumn(
-        Modifier.fillMaxSize().background(c.background),
+        Modifier.fillMaxSize().screenBackground(),
         state = listState,
         contentPadding = PaddingValues(
             top = contentPadding.calculateTopPadding() + 16.dp,

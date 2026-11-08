@@ -1,8 +1,18 @@
 package com.juscelino.sonivell.ui.theme
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.PowerManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -21,8 +31,16 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.juscelino.sonivell.data.UiStyle
+import dev.chrisbanes.haze.ExperimentalHazeApi
+import dev.chrisbanes.haze.HazeInputScale
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
 
 /** Liga os cartões em vidro (ver SonivellTheme, que hoje liga em todos os temas). */
 val LocalGlass = staticCompositionLocalOf { false }
@@ -123,4 +141,86 @@ fun Modifier.cardSurface(
     val outline = if (style == UiStyle.ESSENCIAL || style == UiStyle.CONTRASTE) Color.Transparent else SonivellTheme.colors.outline
     return if (SonivellTheme.glass) glassSurface(shape, color, outline, elevation = elevation)
     else clip(shape).background(color)
+}
+
+/**
+ * Como o vidro do app está se comportando agora, decidido uma vez em [SonivellTheme] a partir
+ * dos ajustes, da versão do Android e da economia de bateria. As telas só consultam.
+ *
+ * - [backdrop]: as telas ficam transparentes sobre o fundo com a capa desfocada ([screenBackground]).
+ * - [blur]: as barras (abas, mini player, faixa da barra de status) desfocam o que passa por baixo
+ *   ([glassBar]). Desligado, elas ficam sólidas no fundo do tema, como antes.
+ * - [scrim]: quanto do fundo do tema cobre a capa. Alto o bastante para o texto de apoio passar
+ *   4,5:1 mesmo sobre uma capa branca (no escuro) ou preta (no claro).
+ */
+@Immutable
+data class GlassMaterial(
+    val backdrop: Boolean = false,
+    val blur: Boolean = false,
+    val scrim: Float = SCRIM_DARK,
+)
+
+val LocalGlassMaterial = staticCompositionLocalOf { GlassMaterial() }
+
+internal const val SCRIM_DARK = 0.80f
+internal const val SCRIM_BLACK = 0.88f
+internal const val SCRIM_TINTED = 0.74f
+internal const val SCRIM_LIGHT = 0.82f
+
+/**
+ * Fundo da raiz de uma tela comum. Com o fundo da capa ligado fica transparente, para a capa
+ * desfocada aparecer atrás; senão é o fundo liso do tema de sempre.
+ */
+@Composable
+fun Modifier.screenBackground(): Modifier =
+    if (LocalGlassMaterial.current.backdrop) this else background(SonivellTheme.colors.background)
+
+/**
+ * Vidro das barras fixas. O que passa por baixo é desfocado pelo Haze a um terço da resolução
+ * (nove vezes menos pixels; o desfoque esconde a diferença) e coberto pelo fundo do tema a meia
+ * opacidade, então cada tema tinge as barras com a própria cor. Sem desfoque (Reduzir
+ * transparência, economia de bateria, Android abaixo do 12) a barra é sólida, como era.
+ */
+@OptIn(ExperimentalHazeApi::class)
+@Composable
+fun Modifier.glassBar(state: HazeState): Modifier {
+    val c = SonivellTheme.colors
+    if (!LocalGlassMaterial.current.blur) return background(c.background)
+    val style = HazeStyle(
+        backgroundColor = c.background,
+        tints = listOf(HazeTint(c.background.copy(alpha = if (c.isDark) BAR_TINT_DARK else BAR_TINT_LIGHT))),
+        blurRadius = 24.dp,
+        noiseFactor = 0f,
+        fallbackTint = HazeTint(c.background),
+    )
+    return hazeEffect(state, style) {
+        inputScale = HazeInputScale.Fixed(BAR_INPUT_SCALE)
+    }
+}
+
+private const val BAR_TINT_DARK = 0.58f
+private const val BAR_TINT_LIGHT = 0.66f
+private const val BAR_INPUT_SCALE = 0.33f
+
+/** Economia de bateria do Android, acompanhada ao vivo: com ela ligada o desfoque das barras para. */
+@Composable
+fun rememberPowerSaveMode(): State<Boolean> {
+    val context = LocalContext.current
+    val power = remember(context) { context.getSystemService(PowerManager::class.java) }
+    val state = remember(power) { mutableStateOf(power?.isPowerSaveMode == true) }
+    DisposableEffect(context, power) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context?, i: Intent?) {
+                state.value = power?.isPowerSaveMode == true
+            }
+        }
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        onDispose { context.unregisterReceiver(receiver) }
+    }
+    return state
 }

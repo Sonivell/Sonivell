@@ -84,6 +84,7 @@ import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.AccentChoice
 import com.juscelino.sonivell.ui.theme.DarkBackground
 import com.juscelino.sonivell.ui.theme.IconStyle
@@ -144,7 +145,7 @@ fun SettingsScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .background(c.background)
+            .screenBackground()
             .padding(top = contentPadding.calculateTopPadding()),
     ) {
         Row(
@@ -465,6 +466,15 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
                 stringResource(if (c.isDark) R.string.settings_black_background_hint else R.string.settings_dark_background_hint),
                 settings.darkBackground == DarkBackground.Preto,
             ) { on -> actions.onUpdate { it.copy(darkBackground = if (on) DarkBackground.Preto else DarkBackground.Grafite) } }
+        }
+        // Vidro: o fundo com a capa só faz sentido com a transparência ligada.
+        if (!settings.reduceTransparency) {
+            SwitchRow(stringResource(R.string.settings_art_backdrop), stringResource(R.string.settings_art_backdrop_hint), settings.artBackdrop) { on ->
+                actions.onUpdate { it.copy(artBackdrop = on) }
+            }
+        }
+        SwitchRow(stringResource(R.string.settings_reduce_transparency), stringResource(R.string.settings_reduce_transparency_hint), settings.reduceTransparency) { on ->
+            actions.onUpdate { it.copy(reduceTransparency = on) }
         }
     }
     // O peso dos ícones é definido por cada estilo; a escolha manual saiu.

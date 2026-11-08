@@ -469,6 +469,10 @@
     <string name="thanks_link">Ver o LatentJam no GitHub</string>
     <string name="settings_tinted_background">Fundo colorido</string>
     <string name="settings_tinted_background_hint">Fundo e cartões no tom da cor de destaque, em todos os layouts</string>
+    <string name="settings_art_backdrop">Fundo com a capa</string>
+    <string name="settings_art_backdrop_hint">As telas ganham as cores da capa que está tocando, desfocada sob o tom do tema</string>
+    <string name="settings_reduce_transparency">Reduzir transparência</string>
+    <string name="settings_reduce_transparency_hint">Barras e cartões sólidos, sem desfoque. Na economia de bateria o desfoque também para</string>
     <string name="settings_system_colors">Cores do Android</string>
     <string name="settings_system_colors_hint">Usa a cor do papel de parede (Material You) no lugar da cor de destaque</string>
     <plurals name="lib_tags_banner">
