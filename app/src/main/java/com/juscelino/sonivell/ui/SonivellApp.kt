@@ -140,9 +140,7 @@ import com.juscelino.sonivell.ui.components.miniPlayerGestures
 import com.juscelino.sonivell.ui.library.LibraryScreenEssencial
 import com.juscelino.sonivell.ui.library.LibraryScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingActions
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenClassica
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenContraste
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenOndas
+import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenVidro
 import com.juscelino.sonivell.ui.nowplaying.rememberSpatialLabel
 import com.juscelino.sonivell.ui.nowplaying.PlayReason
 import com.juscelino.sonivell.ui.nowplaying.WhyContent
@@ -156,6 +154,7 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlinx.coroutines.launch
 import com.juscelino.sonivell.ui.theme.cardSurface
 import com.juscelino.sonivell.ui.theme.glassAccent
+import com.juscelino.sonivell.ui.theme.BarFade
 import com.juscelino.sonivell.ui.theme.glassBar
 import com.juscelino.sonivell.ui.components.ArtBackdrop
 import dev.chrisbanes.haze.HazeState
@@ -546,7 +545,7 @@ private fun MainContent(vm: MainViewModel) {
         contentWindowInsets = WindowInsets.statusBars,
         bottomBar = {
             if (showChrome) {
-                Column(Modifier.glassBar(haze).windowInsetsPadding(WindowInsets.navigationBars)) {
+                Column(Modifier.glassBar(haze, BarFade.Top).windowInsetsPadding(WindowInsets.navigationBars)) {
                     current?.let { t ->
                         val progress = if (player.durationMs > 0) player.positionMs.toFloat() / player.durationMs else 0f
                         Box(Modifier.miniPlayerGestures(onNext = { vm.player.next() }, onPrevious = { vm.player.previous() }, onOpen = { nav.navigate(Routes.PLAYER) })) {
@@ -1073,21 +1072,12 @@ private fun MainContent(vm: MainViewModel) {
                             onSetShuffle = vm::setShuffleMode,
                         )
                         val spatialLabel = rememberSpatialLabel(player.audio, settings.spatial, settings.systemSpatial)
-                        when (uiStyle) {
-                            UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL -> NowPlayingScreenOndas(
-                                track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                                isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
-                                reason = playReason, visualizer = settings.visualizer, style = uiStyle, spatialLabel = spatialLabel,
-                            )
-                            UiStyle.CONTRASTE -> NowPlayingScreenContraste(
-                                track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                                isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, spatialLabel = spatialLabel,
-                            )
-                            UiStyle.CLASSICA -> NowPlayingScreenClassica(
-                                track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                                isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, spatialLabel = spatialLabel,
-                            )
-                        }
+                        // Player Vidro: o mesmo em todos os estilos e temas.
+                        NowPlayingScreenVidro(
+                            track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
+                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
+                            reason = playReason, visualizer = settings.visualizer, spatialLabel = spatialLabel,
+                        )
                     }
                 }
 

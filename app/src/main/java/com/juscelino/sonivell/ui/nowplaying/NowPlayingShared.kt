@@ -287,6 +287,8 @@ fun LineSeekBar(
     fill: Color = SonivellTheme.colors.textPrimary,
     track: Color = SonivellTheme.colors.track,
     knob: Boolean = true,
+    /** Cor do botão de arrasto; por padrão, a mesma da parte tocada. */
+    knobColor: Color = fill,
     /** Rótulo para leitores de tela; por padrão, o da busca na faixa. */
     label: String? = null,
 ) {
@@ -331,7 +333,7 @@ fun LineSeekBar(
                     .offset(x = (width * fraction) - size / 2)
                     .size(size)
                     .clip(CircleShape)
-                    .background(fill),
+                    .background(knobColor),
             )
         }
     }
