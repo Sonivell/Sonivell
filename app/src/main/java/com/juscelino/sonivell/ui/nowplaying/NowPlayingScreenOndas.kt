@@ -88,6 +88,8 @@ fun NowPlayingScreenOndas(
     smartAvailable: Boolean,
     isFavorite: Boolean,
     sourceLabel: String,
+    /** Selo de som espacial no topo (null = nenhum). */
+    spatialLabel: String? = null,
     actions: NowPlayingActions,
     reason: PlayReason = PlayReason.Chosen,
     visualizer: Boolean = false,
@@ -132,6 +134,7 @@ fun NowPlayingScreenOndas(
                     color = c.textSecondary,
                 )
                 Text(sourceLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                SpatialBadge(spatialLabel)
             }
             TopRound(icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore)
         }

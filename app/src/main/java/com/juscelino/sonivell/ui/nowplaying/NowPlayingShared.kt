@@ -336,3 +336,45 @@ fun LineSeekBar(
         }
     }
 }
+
+
+/**
+ * Selo discreto no topo do player quando o som está espacial: Dolby Atmos, multicanal no áudio espacial
+ * do aparelho, ou o Som espacial do Sonivell na música estéreo. [tint] troca a cor (o Contraste usa branco).
+ */
+@Composable
+fun SpatialBadge(label: String?, modifier: Modifier = Modifier, tint: androidx.compose.ui.graphics.Color = SonivellTheme.colors.accent) {
+    if (label == null) return
+    Box(
+        modifier
+            .padding(top = 4.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(tint.copy(alpha = 0.14f))
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold, color = tint, maxLines = 1)
+    }
+}
+
+/** Texto do [SpatialBadge] para o áudio tocando agora, ou null quando o som é estéreo comum. */
+@Composable
+fun rememberSpatialLabel(audio: com.juscelino.sonivell.playback.AudioInfo, sonivellSpatial: Boolean, systemSpatial: Boolean): String? {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val system = androidx.compose.runtime.remember(audio, systemSpatial) {
+        systemSpatial && com.juscelino.sonivell.playback.SpatialAudio.systemStatus(context).let {
+            it == com.juscelino.sonivell.playback.SpatialAudio.SystemStatus.On ||
+                it == com.juscelino.sonivell.playback.SpatialAudio.SystemStatus.OnHeadTracking
+        }
+    }
+    val layout = when (audio.channels) {
+        6 -> "5.1"
+        8 -> "7.1"
+        else -> audio.channels.toString()
+    }
+    return when {
+        audio.isAtmos -> stringResource(R.string.spatial_badge_atmos)
+        audio.isMultichannel -> if (system) stringResource(R.string.spatial_badge_system, layout) else stringResource(R.string.spatial_badge_channels, layout)
+        audio.channels == 2 && sonivellSpatial -> stringResource(R.string.spatial_badge_sonivell)
+        else -> null
+    }
+}

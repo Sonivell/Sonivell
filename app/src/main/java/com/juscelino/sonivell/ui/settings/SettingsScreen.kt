@@ -326,6 +326,8 @@ private fun searchEntries(smartAvailable: Boolean): List<SearchEntry> {
         add(e(R.string.settings_normalize, R.string.settings_normalize_hint, SettingsPage.Reproducao))
         add(e(R.string.settings_speed, null, SettingsPage.Reproducao))
         add(e(R.string.settings_skip_silence, R.string.settings_skip_silence_hint, SettingsPage.Reproducao))
+        add(e(R.string.settings_spatial, R.string.settings_spatial_hint, SettingsPage.Reproducao))
+        add(e(R.string.settings_system_spatial, R.string.settings_system_spatial_on, SettingsPage.Reproducao))
         add(e(R.string.settings_visualizer, R.string.settings_visualizer_hint, SettingsPage.Reproducao))
         add(e(R.string.settings_crossfade, R.string.settings_crossfade_hint, SettingsPage.Transicoes))
         add(e(R.string.settings_crossfade_albums, R.string.settings_crossfade_albums_hint, SettingsPage.Transicoes))
@@ -498,6 +500,18 @@ private fun PlaybackPage(settings: AppSettings, actions: SettingsActions) {
             ) { i -> actions.onUpdate { it.copy(playbackSpeed = SPEED_STEPS[i]) } }
             SwitchRow(stringResource(R.string.settings_skip_silence), stringResource(R.string.settings_skip_silence_hint), settings.skipSilence) { on ->
                 actions.onUpdate { it.copy(skipSilence = on) }
+            }
+        }
+    }
+    Group(stringResource(R.string.group_spatial)) {
+        Card {
+            SwitchRow(stringResource(R.string.settings_spatial), stringResource(R.string.settings_spatial_hint), settings.spatial) { on ->
+                actions.onUpdate { it.copy(spatial = on) }
+            }
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val status = androidx.compose.runtime.remember { com.juscelino.sonivell.playback.SpatialAudio.systemStatus(context) }
+            SwitchRow(stringResource(R.string.settings_system_spatial), stringResource(systemSpatialHint(status)), settings.systemSpatial) { on ->
+                actions.onUpdate { it.copy(systemSpatial = on) }
             }
         }
     }
@@ -1019,4 +1033,13 @@ private fun VisualizerSwitch(on: Boolean, onChange: (Boolean) -> Unit) {
         ) onChange(true)
         else launcher.launch(android.Manifest.permission.RECORD_AUDIO)
     }
+}
+
+/** Como está o áudio espacial do aparelho, em uma linha. */
+private fun systemSpatialHint(status: com.juscelino.sonivell.playback.SpatialAudio.SystemStatus): Int = when (status) {
+    com.juscelino.sonivell.playback.SpatialAudio.SystemStatus.Unsupported -> R.string.settings_system_spatial_unsupported
+    com.juscelino.sonivell.playback.SpatialAudio.SystemStatus.None -> R.string.settings_system_spatial_none
+    com.juscelino.sonivell.playback.SpatialAudio.SystemStatus.Off -> R.string.settings_system_spatial_off
+    com.juscelino.sonivell.playback.SpatialAudio.SystemStatus.On -> R.string.settings_system_spatial_on
+    com.juscelino.sonivell.playback.SpatialAudio.SystemStatus.OnHeadTracking -> R.string.settings_system_spatial_head
 }

@@ -95,6 +95,7 @@ fun NowPlayingScreenContraste(
     smartAvailable: Boolean,
     isFavorite: Boolean,
     sourceLabel: String,
+    spatialLabel: String? = null,
     actions: NowPlayingActions,
 ) {
     val c = SonivellTheme.colors
@@ -121,6 +122,7 @@ fun NowPlayingScreenContraste(
                     color = OnTintSoft,
                 )
                 Text(sourceLabel, style = MaterialTheme.typography.titleSmall, color = OnTint, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                SpatialBadge(spatialLabel, tint = OnTint)
             }
             IconBtn(icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore, tint = OnTint)
         }

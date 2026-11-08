@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.compose.runtime.Immutable
 import androidx.core.net.toUri
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -26,6 +27,13 @@ import kotlinx.coroutines.launch
 enum class RepeatMode { OFF, ALL, ONE }
 
 @Immutable
+/** Formato do áudio: tipo (MIME) e número de canais (0 quando não se sabe). */
+data class AudioInfo(val mime: String? = null, val channels: Int = 0) {
+    /** Dolby Atmos em E-AC-3 JOC (o formato do Atmos em música). */
+    val isAtmos: Boolean get() = mime == "audio/eac3-joc"
+    val isMultichannel: Boolean get() = channels > 2
+}
+
 data class PlayerState(
     val queue: List<MediaItem> = emptyList(),
     val currentIndex: Int = -1,
@@ -34,6 +42,8 @@ data class PlayerState(
     val durationMs: Long = 0,
     val shuffle: Boolean = false,
     val repeat: RepeatMode = RepeatMode.OFF,
+    /** Formato do áudio tocando agora (para o selo de som espacial no player). */
+    val audio: AudioInfo = AudioInfo(),
 ) {
     val current: MediaItem? get() = queue.getOrNull(currentIndex)
     val hasMedia: Boolean get() = current != null
@@ -213,7 +223,15 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
                 Player.REPEAT_MODE_ONE -> RepeatMode.ONE
                 else -> RepeatMode.OFF
             },
+            audio = audioInfo(p),
         )
+    }
+
+    private fun audioInfo(p: Player): AudioInfo {
+        if (!p.isCommandAvailable(Player.COMMAND_GET_TRACKS)) return AudioInfo()
+        val group = p.currentTracks.groups.firstOrNull { it.type == C.TRACK_TYPE_AUDIO && it.isSelected } ?: return AudioInfo()
+        val format = (0 until group.length).firstOrNull { group.isTrackSelected(it) }?.let(group::getTrackFormat) ?: return AudioInfo()
+        return AudioInfo(mime = format.sampleMimeType, channels = format.channelCount.takeIf { it > 0 } ?: 0)
     }
 
     private fun startProgress() {
