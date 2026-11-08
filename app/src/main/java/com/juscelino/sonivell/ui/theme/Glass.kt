@@ -168,7 +168,8 @@ val LocalGlassMaterial = staticCompositionLocalOf { GlassMaterial() }
 internal const val SCRIM_DARK = 0.80f
 internal const val SCRIM_BLACK = 0.88f
 internal const val SCRIM_TINTED = 0.74f
-internal const val SCRIM_LIGHT = 0.82f
+// Claro: quase branco puro, como no iOS; a capa só tinge de leve.
+internal const val SCRIM_LIGHT = 0.90f
 
 /**
  * Fundo da raiz de uma tela comum. Com o fundo da capa ligado fica transparente, para a capa

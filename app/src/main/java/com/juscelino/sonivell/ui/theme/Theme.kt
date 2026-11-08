@@ -41,20 +41,23 @@ data class SonivellColors(
     val isDark: Boolean = true,
 )
 
-/** Paleta clara: mesmos papéis, contraste invertido. Textos passam 4,5:1 sobre o fundo. */
+/**
+ * Paleta clara no padrão iOS: fundo branco, superfícies em cinza-claro frio (#F2F2F7), contornos
+ * quase invisíveis e texto preto. Textos passam 4,5:1 sobre o fundo e sobre as superfícies.
+ */
 fun lightColors(accent: Color) = SonivellColors(
-    background = Color(0xFFF6F6F3),
-    surface = Color(0xFFEBEBE6),
-    surfaceLow = Color(0xFFF0F0EC),
-    surfaceHigh = Color(0xFFE0E0DA),
-    outline = Color(0xFFCFCFC8),
-    track = Color(0xFFD6D6CF),
-    textPrimary = Color(0xFF141518),
-    textSecondary = Color(0xFF5B6068),
-    textTertiary = Color(0xFF3B3F46),
+    background = Color(0xFFFFFFFF),
+    surface = Color(0xFFF2F2F7),
+    surfaceLow = Color(0xFFF7F7FA),
+    surfaceHigh = Color(0xFFE5E5EA),
+    outline = Color(0xFFE5E5EA),
+    track = Color(0xFFE5E5EA),
+    textPrimary = Color(0xFF000000),
+    textSecondary = Color(0xFF6C6C70),
+    textTertiary = Color(0xFF3C3C43),
     accent = accent,
     onAccent = Color(0xFFFFFFFF),
-    miniPlayer = Color(0xFFE4E4DE),
+    miniPlayer = Color(0xFFF2F2F7),
     isDark = false,
 )
 
