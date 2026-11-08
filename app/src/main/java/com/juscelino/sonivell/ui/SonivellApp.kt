@@ -140,9 +140,7 @@ import com.juscelino.sonivell.ui.components.miniPlayerGestures
 import com.juscelino.sonivell.ui.library.LibraryScreenEssencial
 import com.juscelino.sonivell.ui.library.LibraryScreenOndas
 import com.juscelino.sonivell.ui.nowplaying.NowPlayingActions
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenClassica
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenContraste
-import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenOndas
+import com.juscelino.sonivell.ui.nowplaying.NowPlayingScreenVidro
 import com.juscelino.sonivell.ui.nowplaying.rememberSpatialLabel
 import com.juscelino.sonivell.ui.nowplaying.PlayReason
 import com.juscelino.sonivell.ui.nowplaying.WhyContent
@@ -1073,21 +1071,12 @@ private fun MainContent(vm: MainViewModel) {
                             onSetShuffle = vm::setShuffleMode,
                         )
                         val spatialLabel = rememberSpatialLabel(player.audio, settings.spatial, settings.systemSpatial)
-                        when (uiStyle) {
-                            UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL -> NowPlayingScreenOndas(
-                                track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                                isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
-                                reason = playReason, visualizer = settings.visualizer, style = uiStyle, spatialLabel = spatialLabel,
-                            )
-                            UiStyle.CONTRASTE -> NowPlayingScreenContraste(
-                                track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                                isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, spatialLabel = spatialLabel,
-                            )
-                            UiStyle.CLASSICA -> NowPlayingScreenClassica(
-                                track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
-                                isFavorite = t.id in favorites, sourceLabel = source, actions = npActions, spatialLabel = spatialLabel,
-                            )
-                        }
+                        // Player Vidro: o mesmo em todos os estilos e temas.
+                        NowPlayingScreenVidro(
+                            track = t, state = player, shuffleMode = shuffleMode, smartAvailable = vm.smart.isAvailable,
+                            isFavorite = t.id in favorites, sourceLabel = source, actions = npActions,
+                            reason = playReason, visualizer = settings.visualizer, spatialLabel = spatialLabel,
+                        )
                     }
                 }
 
