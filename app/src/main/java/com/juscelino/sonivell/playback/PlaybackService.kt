@@ -13,7 +13,6 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import kotlin.math.pow
 import android.provider.MediaStore
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -69,6 +68,8 @@ class PlaybackService : MediaLibraryService() {
             SettingsStore.KEY_PAUSE_ON_UNPLUG -> player.setHandleAudioBecomingNoisy(p.getBoolean(key, true))
             SettingsStore.KEY_NORMALIZE -> applyNormalization(player)
             SettingsStore.KEY_PLAYBACK_SPEED, SettingsStore.KEY_SKIP_SILENCE -> applySpeed(player)
+            SettingsStore.KEY_SPATIAL -> SpatialAudio.enabled = p.getBoolean(key, false)
+            SettingsStore.KEY_SYSTEM_SPATIAL -> player.setAudioAttributes(SpatialAudio.attributes(p.getBoolean(key, true)), /* handleAudioFocus = */ true)
         }
     }
 
@@ -77,12 +78,11 @@ class PlaybackService : MediaLibraryService() {
         super.onCreate()
         prefs = getSharedPreferences(SettingsStore.PREFS, MODE_PRIVATE)
         effects = AudioEffects(prefs)
-        val player = ExoPlayer.Builder(this)
+        SpatialAudio.enabled = prefs.getBoolean(SettingsStore.KEY_SPATIAL, false)
+        // Com o som espacial do Sonivell na cadeia de áudio; multicanal e Atmos vão para o do aparelho.
+        val player = ExoPlayer.Builder(this, SpatialAudio.renderersFactory(this))
             .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(C.USAGE_MEDIA)
-                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                    .build(),
+                SpatialAudio.attributes(prefs.getBoolean(SettingsStore.KEY_SYSTEM_SPATIAL, true)),
                 /* handleAudioFocus = */ true,
             )
             .setHandleAudioBecomingNoisy(prefs.getBoolean(SettingsStore.KEY_PAUSE_ON_UNPLUG, true))

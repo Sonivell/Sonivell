@@ -79,6 +79,10 @@ data class AppSettings(
     val playbackSpeed: Float = 1f,
     /** Cortar trechos de silêncio (podcasts, aulas). */
     val skipSilence: Boolean = false,
+    /** Som espacial do Sonivell: a música estéreo em caixas virtuais em volta da cabeça (fone). */
+    val spatial: Boolean = false,
+    /** Deixar o áudio espacial do aparelho (Spatializer, Dolby Atmos) agir no som multicanal. */
+    val systemSpatial: Boolean = true,
     /** Atualizar a biblioteca sozinha quando músicas chegam ou saem do aparelho. */
     val autoRefresh: Boolean = true,
     /** Ignorar áudios mais curtos que isso, em segundos (0 = não ignora). */
@@ -134,6 +138,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putBoolean(KEY_EQ_PER_OUTPUT, next.eqPerOutput)
             .putFloat(KEY_PLAYBACK_SPEED, next.playbackSpeed)
             .putBoolean(KEY_SKIP_SILENCE, next.skipSilence)
+            .putBoolean(KEY_SPATIAL, next.spatial)
+            .putBoolean(KEY_SYSTEM_SPATIAL, next.systemSpatial)
             .putBoolean(KEY_AUTO_REFRESH, next.autoRefresh)
             .putInt(KEY_MIN_DURATION, next.minDurationSec)
             .putStringSet(KEY_IGNORED_FOLDERS, next.ignoredFolders)
@@ -170,6 +176,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         eqPerOutput = prefs.getBoolean(KEY_EQ_PER_OUTPUT, false),
         playbackSpeed = prefs.getFloat(KEY_PLAYBACK_SPEED, 1f),
         skipSilence = prefs.getBoolean(KEY_SKIP_SILENCE, false),
+        spatial = prefs.getBoolean(KEY_SPATIAL, false),
+        systemSpatial = prefs.getBoolean(KEY_SYSTEM_SPATIAL, true),
         autoRefresh = prefs.getBoolean(KEY_AUTO_REFRESH, true),
         minDurationSec = prefs.getInt(KEY_MIN_DURATION, 0),
         ignoredFolders = prefs.getStringSet(KEY_IGNORED_FOLDERS, null)?.toSet().orEmpty(),
@@ -201,6 +209,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_EQ_PER_OUTPUT = "per_output_eq"
         const val KEY_PLAYBACK_SPEED = "playback_speed"
         const val KEY_SKIP_SILENCE = "skip_silence"
+        const val KEY_SPATIAL = "spatial_sonivell"
+        const val KEY_SYSTEM_SPATIAL = "spatial_system"
         const val KEY_AUTO_REFRESH = "auto_refresh"
         const val KEY_MIN_DURATION = "min_duration"
         const val KEY_IGNORED_FOLDERS = "ignored_folders"

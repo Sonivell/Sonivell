@@ -75,6 +75,7 @@ fun NowPlayingScreenClassica(
     smartAvailable: Boolean,
     isFavorite: Boolean,
     sourceLabel: String,
+    spatialLabel: String? = null,
     actions: NowPlayingActions,
 ) {
     val c = SonivellTheme.colors
@@ -94,6 +95,7 @@ fun NowPlayingScreenClassica(
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(R.string.playing_from).uppercase(), style = MaterialTheme.typography.labelSmall, color = c.textSecondary)
                 Text(sourceLabel, style = MaterialTheme.typography.titleSmall, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                SpatialBadge(spatialLabel)
             }
             IconBtn(icons.moreHoriz, stringResource(R.string.cd_more_options), actions.onMore, background = c.surface)
         }

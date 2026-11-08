@@ -7,7 +7,6 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.OptIn
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -240,12 +239,10 @@ class Crossfader(
 
     private fun prepareTail(item: MediaItem, positionMs: Long) {
         releaseTail()
-        tail = ExoPlayer.Builder(context)
+        // A faixa que entra soa igual à principal (mesmo som espacial).
+        tail = ExoPlayer.Builder(context, SpatialAudio.renderersFactory(context))
             .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(C.USAGE_MEDIA)
-                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                    .build(),
+                SpatialAudio.attributes(prefs.getBoolean(SettingsStore.KEY_SYSTEM_SPATIAL, true)),
                 /* handleAudioFocus = */ false, // o foco é do player principal
             )
             .build()
