@@ -93,6 +93,10 @@ data class AppSettings(
     val publishPlaylists: Boolean = false,
     /** Barras animadas sobre a capa no player (pede a permissão de microfone do Android). */
     val visualizer: Boolean = false,
+    /** Fundo das telas com as cores da capa que está tocando, desfocada e sob um véu no tom do tema. */
+    val artBackdrop: Boolean = true,
+    /** Troca todo o vidro (fundo da capa, desfoque e cartões translúcidos) por superfícies sólidas. */
+    val reduceTransparency: Boolean = false,
 )
 
 /** Velocidades oferecidas. */
@@ -141,6 +145,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putStringSet(KEY_IGNORED_FOLDERS, next.ignoredFolders)
             .putBoolean(KEY_PUBLISH_PLAYLISTS, next.publishPlaylists)
             .putBoolean(KEY_VISUALIZER, next.visualizer)
+            .putBoolean(KEY_ART_BACKDROP, next.artBackdrop)
+            .putBoolean(KEY_REDUCE_TRANSPARENCY, next.reduceTransparency)
             .apply()
     }
 
@@ -177,6 +183,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         ignoredFolders = prefs.getStringSet(KEY_IGNORED_FOLDERS, null)?.toSet().orEmpty(),
         publishPlaylists = prefs.getBoolean(KEY_PUBLISH_PLAYLISTS, false),
         visualizer = prefs.getBoolean(KEY_VISUALIZER, false),
+        artBackdrop = prefs.getBoolean(KEY_ART_BACKDROP, true),
+        reduceTransparency = prefs.getBoolean(KEY_REDUCE_TRANSPARENCY, false),
     )
 
     companion object {
@@ -208,6 +216,8 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_IGNORED_FOLDERS = "ignored_folders"
         const val KEY_PUBLISH_PLAYLISTS = "publish_playlists"
         const val KEY_VISUALIZER = "visualizer"
+        const val KEY_ART_BACKDROP = "art_backdrop"
+        const val KEY_REDUCE_TRANSPARENCY = "reduce_transparency"
         /** Escrita pelo MainViewModel: a fila atual é do SMART. */
         const val KEY_SMART_MODE = "smart_mode"
     }

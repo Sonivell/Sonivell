@@ -269,6 +269,12 @@ fun SonivellTheme(
     glass: Boolean = true,
     /** Estilo visual: escolhe a paleta escura e a assinatura dos componentes comuns. */
     style: UiStyle = UiStyle.ONDAS,
+    /** Fundo das telas com a capa que está tocando, desfocada ([GlassMaterial.backdrop]). */
+    artBackdrop: Boolean = true,
+    /** Tudo sólido: sem fundo da capa, sem desfoque e sem cartões translúcidos. */
+    reduceTransparency: Boolean = false,
+    /** Economia de bateria ligada: o desfoque das barras para (o resto do vidro fica). */
+    powerSave: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -300,10 +306,24 @@ fun SonivellTheme(
         onSurfaceVariant = colors.textSecondary,
         outline = colors.outline,
     )
+    // Um material só para todos os temas: o véu sobre a capa é o próprio fundo do tema, então
+    // Grafite, Preto, Fundo colorido, Material You e Claro tingem o vidro com a cor de cada um.
+    val material = GlassMaterial(
+        backdrop = artBackdrop && !reduceTransparency,
+        // O Haze desfoca com RenderEffect a partir do Android 12; antes disso, barra sólida.
+        blur = !reduceTransparency && !powerSave && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+        scrim = when {
+            !darkTheme -> SCRIM_LIGHT
+            tintedBackground -> SCRIM_TINTED
+            darkBackground == DarkBackground.Preto -> SCRIM_BLACK
+            else -> SCRIM_DARK
+        },
+    )
     androidx.compose.runtime.CompositionLocalProvider(
         LocalSonivellColors provides colors,
         LocalSonivellIcons provides iconStyle.icons(),
-        LocalGlass provides glass,
+        LocalGlass provides (glass && !reduceTransparency),
+        LocalGlassMaterial provides material,
         LocalUiStyle provides style,
     ) {
         MaterialTheme(colorScheme = scheme, typography = SonivellTypography, content = content)

@@ -179,8 +179,8 @@
     <string name="theme_dark">Dark</string>
     <string name="settings_accent">Accent color</string>
     <string name="settings_icon_style">Icon style</string>
-    <string name="icon_style_fine">Fine</string>
-    <string name="icon_style_rounded">Rounded</string>
+    <string name="icon_style_fine">Light</string>
+    <string name="icon_style_rounded">Bold</string>
     <string name="accent_lime">Lime</string>
     <string name="accent_blue">Blue</string>
     <string name="accent_orange">Orange</string>
@@ -223,6 +223,7 @@
     <string name="settings_version">Sonivell %1$s</string>
     <string name="settings_privacy">Everything happens on this phone: no account, no internet, nothing is sent anywhere.</string>
     <string name="settings_credits_smart">Smart uses the LatentJam engine (Apache License 2.0).</string>
+    <string name="settings_credits_icons">Icons by Phosphor (MIT License), Copyright (c) 2023 Phosphor Icons.</string>
     <string name="settings_reset">Restore default settings</string>
     <string name="reset_title">Restore default settings?</string>
     <string name="reset_message">Theme, color and behavior go back to how they were. History, playlists and likes stay.</string>
@@ -418,7 +419,7 @@
     <string name="layout_contrast_hint">Intense: the player takes the cover color and white marks the actions</string>
     <string name="layout_classic">Classic</string>
     <string name="layout_classic_hint">Sober: real covers, a progress line and uppercase labels</string>
-    <string name="icon_style_line">Line</string>
+    <string name="icon_style_line">Regular</string>
     <string name="cd_expand_panel">Expand panel</string>
     <string name="cd_collapse_panel">Collapse panel</string>
     <string name="taste_section">What Smart learned</string>
@@ -476,6 +477,10 @@
     <string name="thanks_url" translatable="false">https://github.com/Nikita-sud/latentjam</string>
     <string name="settings_tinted_background">Colored background</string>
     <string name="settings_tinted_background_hint">Background and cards take the tone of the accent color, in every layout</string>
+    <string name="settings_art_backdrop">Album art background</string>
+    <string name="settings_art_backdrop_hint">Screens take the colors of the playing cover, blurred under the theme tone</string>
+    <string name="settings_reduce_transparency">Reduce transparency</string>
+    <string name="settings_reduce_transparency_hint">Solid bars and cards, no blur. Blur also pauses in battery saver</string>
     <string name="settings_system_colors">Android colors</string>
     <string name="settings_system_colors_hint">Use the color from your wallpaper (Material You) instead of the accent color</string>
     <plurals name="lib_tags_banner">

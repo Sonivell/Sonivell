@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -49,6 +50,8 @@ import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.TrackRow
+import com.juscelino.sonivell.ui.theme.LocalGlassMaterial
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.roundToInt
 
@@ -94,7 +97,7 @@ fun CollectionScreen(
     }
 
     LazyColumn(
-        Modifier.fillMaxSize().background(c.background),
+        Modifier.fillMaxSize().screenBackground(),
         contentPadding = PaddingValues(
             start = 24.dp,
             end = 16.dp,
@@ -148,6 +151,7 @@ fun CollectionScreen(
         itemsIndexed(keyed, key = { _, k -> k.first }) { index, (itemKey, track) ->
             val latestIndex by rememberUpdatedState(index)
             val isDragging = dragging == index
+            val rowBackground = if (LocalGlassMaterial.current.backdrop) Color.Transparent else c.background
             val reorder = actions.onMove
             Box(
                 Modifier
@@ -155,7 +159,8 @@ fun CollectionScreen(
                     .offset { IntOffset(0, if (isDragging) dragOffset.roundToInt() else 0) }
                     .height(rowHeight)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (isDragging) c.surface else c.background),
+                    // Parada, a linha é transparente (deixa ver o fundo da capa); arrastada, ganha a superfície.
+                    .background(if (isDragging) c.surface else rowBackground),
                 contentAlignment = Alignment.Center,
             ) {
                 TrackRow(

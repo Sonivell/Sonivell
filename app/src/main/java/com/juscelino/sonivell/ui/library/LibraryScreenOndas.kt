@@ -94,6 +94,7 @@ import com.juscelino.sonivell.ui.components.OndaArt
 import com.juscelino.sonivell.ui.components.PlaySquircle
 import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.components.Waveform
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
@@ -186,7 +187,7 @@ fun LibraryScreenOndas(
 
     Box(Modifier.fillMaxSize()) {
     LazyColumn(
-        Modifier.fillMaxSize().background(c.background),
+        Modifier.fillMaxSize().screenBackground(),
         state = listState,
         contentPadding = PaddingValues(
             start = 20.dp,

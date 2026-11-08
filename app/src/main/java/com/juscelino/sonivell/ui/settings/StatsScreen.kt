@@ -39,6 +39,7 @@ import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.Chip
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.SectionLabel
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.text.DateFormatSymbols
 import com.juscelino.sonivell.ui.theme.cardSurface
@@ -57,7 +58,7 @@ fun StatsScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .background(c.background)
+            .screenBackground()
             .verticalScroll(rememberScrollState())
             .padding(start = 24.dp, end = 24.dp, top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding() + 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),

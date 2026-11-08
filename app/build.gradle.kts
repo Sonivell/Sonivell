@@ -118,7 +118,6 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
@@ -133,6 +132,7 @@ dependencies {
     }
 
     implementation(libs.coil.compose)
+    implementation(libs.haze)
 
     // Só a edição SMART leva o motor e o ONNX Runtime.
     "smartImplementation"(project(":core:smart"))

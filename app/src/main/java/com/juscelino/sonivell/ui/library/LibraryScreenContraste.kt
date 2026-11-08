@@ -77,6 +77,7 @@ import com.juscelino.sonivell.ui.components.SectionTitle
 import com.juscelino.sonivell.ui.components.glassTone
 import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.sonivell.SvMiniWave
+import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Calendar
 import com.juscelino.sonivell.ui.theme.cardSurface
@@ -145,7 +146,7 @@ fun LibraryScreenContraste(
     }
 
     LazyColumn(
-        Modifier.fillMaxSize().background(c.background),
+        Modifier.fillMaxSize().screenBackground(),
         contentPadding = PaddingValues(
             start = 20.dp,
             end = 20.dp,
