@@ -46,16 +46,13 @@
     <string name="import_none">Nenhuma música desse arquivo está nas suas pastas</string>
     <string name="settings_privacy">Tudo acontece neste computador: sem conta, sem internet, nada é enviado para lugar nenhum.</string>
     <string name="taste_learn_hint">Treina um modelo pequeno neste computador com o que você ouve até o fim e o que você pula. As filas do Smart puxam para o seu gosto. Nada sai daqui.</string>
-    <string name="welcome_smart_count">%1$,d de %2$,d · continua em segundo plano enquanto o Sonivell está aberto</string>
     <string name="settings_auto_refresh_hint">Músicas novas aparecem sozinhas quando chegam às suas pastas</string>
     <string name="search_lyrics_hint">Procura nas letras salvas no computador (ao lado das músicas, na pasta de letras e nas embutidas que você já abriu).</string>
     <string name="settings_publish_playlists_hint">Salva suas playlists em Música/Playlists/Sonivell para outros players do Linux verem</string>
     <string name="settings_visualizer_hint">Barras animadas sobre a capa no player, a partir do som que o próprio Sonivell está tocando. Nada é gravado.</string>
     <string name="lyrics_folder_hint">Escolha a pasta com seus arquivos .lrc, com o mesmo nome das músicas (os .lrc ao lado das músicas são lidos sempre)</string>
     <string name="sv_analysis_private">Nada sai do seu computador.</string>
-    <string name="welcome_point_private">Tudo fica no seu computador</string>
     <string name="equalizer_unavailable">O equalizador está pronto: mexa nas bandas para ouvir a diferença.</string>
-    <string name="permission_message">O Sonivell lê as músicas das pastas que você escolher. Nada sai do seu computador.</string>
 
     <!-- Exclusivos do PC -->
     <string name="desktop_analysis_count">%1$,d de %2$,d músicas</string>

@@ -46,16 +46,13 @@
     <string name="import_none">None of the songs in that file are in your folders</string>
     <string name="settings_privacy">Everything happens on this computer: no account, no internet, nothing is sent anywhere.</string>
     <string name="taste_learn_hint">Trains a small model on this computer with what you finish and what you skip. Smart queues lean towards your taste. Nothing leaves here.</string>
-    <string name="welcome_smart_count">%1$,d of %2$,d · keeps going in the background while Sonivell is open</string>
     <string name="settings_auto_refresh_hint">New songs show up by themselves when they arrive in your folders</string>
     <string name="search_lyrics_hint">Searches the lyrics saved on this computer (next to the songs, in the lyrics folder and embedded lyrics you have opened).</string>
     <string name="settings_publish_playlists_hint">Saves your playlists in Music/Playlists/Sonivell so other Linux players can see them</string>
     <string name="settings_visualizer_hint">Animated bars over the cover in the player, from the sound Sonivell itself is playing. Nothing is recorded.</string>
     <string name="lyrics_folder_hint">Choose the folder with your .lrc files, named like the songs (.lrc files next to the songs are always read)</string>
     <string name="sv_analysis_private">Nothing leaves your computer.</string>
-    <string name="welcome_point_private">Everything stays on your computer</string>
     <string name="equalizer_unavailable">The equalizer is ready: move the bands to hear the difference.</string>
-    <string name="permission_message">Sonivell reads the songs in the folders you choose. Nothing leaves your computer.</string>
 
     <!-- PC only -->
     <string name="desktop_analysis_count">%1$,d of %2$,d songs</string>

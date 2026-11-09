@@ -139,7 +139,7 @@ kotlin.sourceSets["main"].kotlin.srcDir(generatedR)
 tasks.named("processResources") { dependsOn(generateStrings) }
 tasks.named("compileKotlin") { dependsOn(generateStrings) }
 
-tasks.test { useJUnitPlatform() }
+tasks.test { useJUnitPlatform(); jvmArgs("-Duser.language=pt", "-Duser.country=BR") }
 
 // Versão única do Sonivell (version.properties na raiz), a mesma do app Android.
 val sonivellVersionName: String = Properties()
