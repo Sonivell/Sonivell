@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.unit.Density
-import com.juscelino.sonivell.data.AccentChoice
+import com.juscelino.sonivell.ui.theme.AccentChoice
 import com.juscelino.sonivell.data.UiStyle
 import com.juscelino.sonivell.data.iconStyle
 import com.juscelino.sonivell.smart.SmartProgress
