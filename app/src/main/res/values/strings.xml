@@ -95,8 +95,10 @@
 
     <!-- General -->
     <string name="coming_soon">Coming in a future version of Sonivell</string>
-    <string name="permission_message">To play your music, Sonivell needs access to the audio files on this device. Nothing leaves your phone.</string>
+    <string name="permission_message">To play your music, Sonivell needs to see the audio files on this device.</string>
     <string name="permission_allow">Allow access</string>
+    <string name="permission_point_audio">Only your music</string>
+    <string name="permission_point_audio_text">Sonivell reads audio files only. Photos, videos and documents stay out.</string>
     <!-- Smart (edição smart) -->
     <string name="source_smart" translatable="false">SMART</string>
     <string name="cd_shuffle_smart">Switch to Smart shuffle</string>
@@ -179,8 +181,8 @@
     <string name="theme_dark">Dark</string>
     <string name="settings_accent">Accent color</string>
     <string name="settings_icon_style">Icon style</string>
-    <string name="icon_style_fine">Fine</string>
-    <string name="icon_style_rounded">Rounded</string>
+    <string name="icon_style_fine">Light</string>
+    <string name="icon_style_rounded">Bold</string>
     <string name="accent_lime">Lime</string>
     <string name="accent_blue">Blue</string>
     <string name="accent_orange">Orange</string>
@@ -223,6 +225,7 @@
     <string name="settings_version">Sonivell %1$s</string>
     <string name="settings_privacy">Everything happens on this phone: no account, no internet, nothing is sent anywhere.</string>
     <string name="settings_credits_smart">Smart uses the LatentJam engine (Apache License 2.0).</string>
+    <string name="settings_credits_icons">Icons by Phosphor (MIT License), Copyright (c) 2023 Phosphor Icons.</string>
     <string name="settings_reset">Restore default settings</string>
     <string name="reset_title">Restore default settings?</string>
     <string name="reset_message">Theme, color and behavior go back to how they were. History, playlists and likes stay.</string>
@@ -418,7 +421,7 @@
     <string name="layout_contrast_hint">Intense: the player takes the cover color and white marks the actions</string>
     <string name="layout_classic">Classic</string>
     <string name="layout_classic_hint">Sober: real covers, a progress line and uppercase labels</string>
-    <string name="icon_style_line">Line</string>
+    <string name="icon_style_line">Regular</string>
     <string name="cd_expand_panel">Expand panel</string>
     <string name="cd_collapse_panel">Collapse panel</string>
     <string name="taste_section">What Smart learned</string>
@@ -476,6 +479,10 @@
     <string name="thanks_url" translatable="false">https://github.com/Nikita-sud/latentjam</string>
     <string name="settings_tinted_background">Colored background</string>
     <string name="settings_tinted_background_hint">Background and cards take the tone of the accent color, in every layout</string>
+    <string name="settings_art_backdrop">Album art background</string>
+    <string name="settings_art_backdrop_hint">Screens take the colors of the playing cover, blurred under the theme tone</string>
+    <string name="settings_reduce_transparency">Reduce transparency</string>
+    <string name="settings_reduce_transparency_hint">Solid bars and cards, no blur. Blur also pauses in battery saver</string>
     <string name="settings_system_colors">Android colors</string>
     <string name="settings_system_colors_hint">Use the color from your wallpaper (Material You) instead of the accent color</string>
     <plurals name="lib_tags_banner">
@@ -525,6 +532,19 @@
     <string name="settings_speed">Speed</string>
     <string name="settings_skip_silence">Skip silence</string>
     <string name="settings_skip_silence_hint">Cuts pauses in podcasts, lectures and audiobooks</string>
+    <string name="group_spatial">Spatial sound</string>
+    <string name="settings_spatial">Sonivell spatial sound</string>
+    <string name="settings_spatial_hint">With headphones, stereo music sounds like speakers around you instead of inside your head</string>
+    <string name="settings_system_spatial">Device spatial audio</string>
+    <string name="settings_system_spatial_unsupported">Needs Android 12L or newer. Multichannel and Dolby Atmos still play when the device can decode them</string>
+    <string name="settings_system_spatial_none">This device has no spatial audio. Multichannel and Dolby Atmos still play when it can decode them</string>
+    <string name="settings_system_spatial_off">Lets Android render 5.1, 7.1 and Dolby Atmos in 3D. Turn on spatial audio in the system sound settings</string>
+    <string name="settings_system_spatial_on">Android renders 5.1, 7.1 and Dolby Atmos in 3D on these headphones</string>
+    <string name="settings_system_spatial_head">Android renders 5.1, 7.1 and Dolby Atmos in 3D, with head tracking</string>
+    <string name="spatial_badge_atmos">Dolby Atmos</string>
+    <string name="spatial_badge_system">Spatial · %1$s</string>
+    <string name="spatial_badge_channels">Multichannel %1$s</string>
+    <string name="spatial_badge_sonivell">Spatial sound</string>
     <string name="settings_eq_per_output">Equalizer per output</string>
     <string name="settings_eq_per_output_hint">Remembers one setting for headphones, Bluetooth and speaker, and switches by itself</string>
     <string name="settings_auto_refresh">Update by itself</string>

@@ -89,8 +89,10 @@
 
     <!-- Geral -->
     <string name="coming_soon">Chega numa próxima versão do Sonivell</string>
-    <string name="permission_message">Para tocar suas músicas, o Sonivell precisa de acesso aos arquivos de áudio do aparelho. Nada sai do seu celular.</string>
+    <string name="permission_message">Para tocar suas músicas, o Sonivell precisa ver os arquivos de áudio do aparelho.</string>
     <string name="permission_allow">Permitir acesso</string>
+    <string name="permission_point_audio">Só a sua música</string>
+    <string name="permission_point_audio_text">O Sonivell lê apenas arquivos de áudio. Fotos, vídeos e documentos ficam de fora.</string>
     <!-- Smart (edição smart) -->
     <string name="cd_shuffle_smart">Ativar aleatório Smart</string>
     <string name="cd_smart_off">Desativar aleatório Smart</string>
@@ -173,7 +175,7 @@
     <string name="settings_accent">Cor de destaque</string>
     <string name="settings_icon_style">Estilo dos ícones</string>
     <string name="icon_style_fine">Fino</string>
-    <string name="icon_style_rounded">Arredondado</string>
+    <string name="icon_style_rounded">Grosso</string>
     <string name="accent_lime">Lima</string>
     <string name="accent_blue">Azul</string>
     <string name="accent_orange">Laranja</string>
@@ -216,6 +218,7 @@
     <string name="settings_version">Sonivell %1$s</string>
     <string name="settings_privacy">Tudo acontece neste celular: sem conta, sem internet, nada é enviado para lugar nenhum.</string>
     <string name="settings_credits_smart">O Smart usa o motor do LatentJam (Apache License 2.0).</string>
+    <string name="settings_credits_icons">Ícones do Phosphor (MIT License), Copyright (c) 2023 Phosphor Icons.</string>
     <string name="settings_reset">Restaurar ajustes padrão</string>
     <string name="reset_title">Restaurar os ajustes padrão?</string>
     <string name="reset_message">Tema, cor e comportamento voltam ao que eram. Histórico, playlists e curtidas continuam.</string>
@@ -411,7 +414,7 @@
     <string name="layout_contrast_hint">Intenso: o player toma a cor da capa e o branco marca as ações</string>
     <string name="layout_classic">Clássico</string>
     <string name="layout_classic_hint">Sóbrio: capas reais, linha de progresso e rótulos em caixa-alta</string>
-    <string name="icon_style_line">Traço</string>
+    <string name="icon_style_line">Regular</string>
     <string name="cd_expand_panel">Abrir painel</string>
     <string name="cd_collapse_panel">Minimizar painel</string>
     <string name="taste_section">O que o Smart aprendeu</string>
@@ -469,6 +472,10 @@
     <string name="thanks_link">Ver o LatentJam no GitHub</string>
     <string name="settings_tinted_background">Fundo colorido</string>
     <string name="settings_tinted_background_hint">Fundo e cartões no tom da cor de destaque, em todos os layouts</string>
+    <string name="settings_art_backdrop">Fundo com a capa</string>
+    <string name="settings_art_backdrop_hint">As telas ganham as cores da capa que está tocando, desfocada sob o tom do tema</string>
+    <string name="settings_reduce_transparency">Reduzir transparência</string>
+    <string name="settings_reduce_transparency_hint">Barras e cartões sólidos, sem desfoque. Na economia de bateria o desfoque também para</string>
     <string name="settings_system_colors">Cores do Android</string>
     <string name="settings_system_colors_hint">Usa a cor do papel de parede (Material You) no lugar da cor de destaque</string>
     <plurals name="lib_tags_banner">
@@ -521,6 +528,19 @@
     <string name="settings_speed">Velocidade</string>
     <string name="settings_skip_silence">Pular silêncio</string>
     <string name="settings_skip_silence_hint">Corta pausas em podcasts, aulas e audiolivros</string>
+    <string name="group_spatial">Som espacial</string>
+    <string name="settings_spatial">Som espacial do Sonivell</string>
+    <string name="settings_spatial_hint">No fone, a música estéreo soa como caixas em volta de você, e não dentro da cabeça</string>
+    <string name="settings_system_spatial">Áudio espacial do aparelho</string>
+    <string name="settings_system_spatial_unsupported">Precisa do Android 12L ou mais novo. Multicanal e Dolby Atmos tocam mesmo assim quando o aparelho decodifica</string>
+    <string name="settings_system_spatial_none">Este aparelho não tem áudio espacial. Multicanal e Dolby Atmos tocam mesmo assim quando ele decodifica</string>
+    <string name="settings_system_spatial_off">Deixa o Android tocar 5.1, 7.1 e Dolby Atmos em 3D. Ligue o áudio espacial nos ajustes de som do sistema</string>
+    <string name="settings_system_spatial_on">O Android toca 5.1, 7.1 e Dolby Atmos em 3D neste fone</string>
+    <string name="settings_system_spatial_head">O Android toca 5.1, 7.1 e Dolby Atmos em 3D, com rastreamento de cabeça</string>
+    <string name="spatial_badge_atmos">Dolby Atmos</string>
+    <string name="spatial_badge_system">Espacial · %1$s</string>
+    <string name="spatial_badge_channels">Multicanal %1$s</string>
+    <string name="spatial_badge_sonivell">Som espacial</string>
     <string name="settings_eq_per_output">Equalizador por saída</string>
     <string name="settings_eq_per_output_hint">Guarda um ajuste para fone, Bluetooth e alto-falante, e troca sozinho</string>
     <string name="settings_auto_refresh">Atualizar sozinha</string>
