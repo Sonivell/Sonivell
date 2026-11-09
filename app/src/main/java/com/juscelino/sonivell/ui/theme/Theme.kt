@@ -123,7 +123,7 @@ fun styleDarkColors(style: UiStyle, accent: Color): SonivellColors = when (style
 }
 
 /** Estilo visual atual, para os componentes comuns ajustarem a assinatura (capa vazia, progresso…). */
-val LocalUiStyle = staticCompositionLocalOf { UiStyle.ONDAS }
+val LocalUiStyle = staticCompositionLocalOf { UiStyle.SONIVELL }
 
 /** Paleta escura em preto: fundo #121212, superfícies a partir de #191414 e texto secundário #B3B3B3. */
 fun blackColors(accent: Color) = SonivellColors(
@@ -271,7 +271,7 @@ fun SonivellTheme(
     /** Cartões em vidro: translúcidos, com sombra e brilho. Ligado em todos os temas. */
     glass: Boolean = true,
     /** Estilo visual: escolhe a paleta escura e a assinatura dos componentes comuns. */
-    style: UiStyle = UiStyle.ONDAS,
+    style: UiStyle = UiStyle.SONIVELL,
     /** Fundo das telas com a capa que está tocando, desfocada ([GlassMaterial.backdrop]). */
     artBackdrop: Boolean = true,
     /** Tudo sólido: sem fundo da capa, sem desfoque e sem cartões translúcidos. */

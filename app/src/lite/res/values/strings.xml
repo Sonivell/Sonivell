@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A edição leve (sem o Smart). A completa se chama só Sonivell. -->
+    <string name="app_name" translatable="false">Sonivell LITE</string>
+</resources>
