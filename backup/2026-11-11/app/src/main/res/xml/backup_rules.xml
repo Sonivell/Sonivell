@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup do Android até o 11: as mesmas exclusões da nuvem em data_extraction_rules.xml. -->
+<full-backup-content>
+    <exclude domain="file" path="historico.tsv" />
+    <exclude domain="file" path="gosto.bin" />
+    <exclude domain="file" path="smart_index.bin" />
+    <exclude domain="file" path="smart_text_index.bin" />
+    <exclude domain="file" path="map_layout.bin" />
+</full-backup-content>
