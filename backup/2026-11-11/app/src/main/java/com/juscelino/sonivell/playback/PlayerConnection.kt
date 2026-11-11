@@ -1,0 +1,309 @@
+package com.juscelino.sonivell.playback
+
+import com.juscelino.sonivell.R
+import android.content.ComponentName
+import android.content.Context
+import android.os.Bundle
+import androidx.compose.runtime.Immutable
+import androidx.core.net.toUri
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.juscelino.sonivell.data.Track
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+
+enum class RepeatMode { OFF, ALL, ONE }
+
+@Immutable
+/** Formato do áudio: tipo (MIME) e número de canais (0 quando não se sabe). */
+data class AudioInfo(val mime: String? = null, val channels: Int = 0) {
+    /** Dolby Atmos em E-AC-3 JOC (o formato do Atmos em música). */
+    val isAtmos: Boolean get() = mime == "audio/eac3-joc"
+    val isMultichannel: Boolean get() = channels > 2
+}
+
+data class PlayerState(
+    val queue: List<MediaItem> = emptyList(),
+    val currentIndex: Int = -1,
+    val isPlaying: Boolean = false,
+    val positionMs: Long = 0,
+    val durationMs: Long = 0,
+    val shuffle: Boolean = false,
+    val repeat: RepeatMode = RepeatMode.OFF,
+    /** Formato do áudio tocando agora (para o selo de som espacial no player). */
+    val audio: AudioInfo = AudioInfo(),
+) {
+    val current: MediaItem? get() = queue.getOrNull(currentIndex)
+    val hasMedia: Boolean get() = current != null
+    val upNext: List<IndexedValue<MediaItem>>
+        get() = queue.withIndex().filter { it.index > currentIndex }
+}
+
+/** Ponte entre a UI e o [PlaybackService] via MediaController. */
+class PlayerConnection(private val context: Context, private val scope: CoroutineScope) {
+
+    private val _state = MutableStateFlow(PlayerState())
+    val state: StateFlow<PlayerState> = _state.asStateFlow()
+
+    private var controller: MediaController? = null
+
+    private val _connected = MutableStateFlow(false)
+    /** true quando a ligação com o serviço de reprodução está pronta. */
+    val connected: StateFlow<Boolean> = _connected.asStateFlow()
+    private var progressJob: Job? = null
+
+    private val listener = object : Player.Listener {
+        override fun onEvents(player: Player, events: Player.Events) {
+            publish(player)
+            if (player.isPlaying) startProgress() else stopProgress()
+        }
+    }
+
+    fun connect() {
+        if (controller != null) return
+        scope.launch {
+            val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+            val c = MediaController.Builder(context, token).buildAsync().await()
+            controller = c
+            c.addListener(listener)
+            publish(c)
+            _connected.value = true
+            if (c.isPlaying) startProgress()
+        }
+    }
+
+    fun release() {
+        _connected.value = false
+        stopProgress()
+        controller?.removeListener(listener)
+        controller?.release()
+        controller = null
+    }
+
+    // ---- Ações ----
+
+    fun play(tracks: List<Track>, startIndex: Int, shuffle: Boolean = false, startPositionMs: Long = 0L) {
+        val c = controller ?: return
+        c.shuffleModeEnabled = shuffle
+        c.setMediaItems(tracks.map { it.toMediaItem() }, startIndex.coerceAtLeast(0), startPositionMs.coerceAtLeast(0L))
+        c.prepare()
+        c.play()
+    }
+
+    fun togglePlay() {
+        val c = controller ?: return
+        if (c.isPlaying) c.pause() else {
+            if (c.playbackState == Player.STATE_ENDED) c.seekToDefaultPosition()
+            c.play()
+        }
+    }
+
+    fun next() = controller?.seekToNextMediaItem()
+
+    /** Como nos players comuns: volta ao início se já passou de 3 s. */
+    fun previous() = controller?.seekToPrevious()
+
+    fun seekTo(positionMs: Long) {
+        controller?.seekTo(positionMs)
+        _state.update { it.copy(positionMs = positionMs) }
+    }
+
+    fun playAt(index: Int) {
+        val c = controller ?: return
+        c.seekToDefaultPosition(index)
+        c.play()
+    }
+
+    fun toggleShuffle() {
+        val c = controller ?: return
+        c.shuffleModeEnabled = !c.shuffleModeEnabled
+    }
+
+    fun cycleRepeat() {
+        val c = controller ?: return
+        c.repeatMode = when (c.repeatMode) {
+            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+            else -> Player.REPEAT_MODE_OFF
+        }
+    }
+
+    fun moveItem(from: Int, to: Int) {
+        controller?.moveMediaItem(from, to)
+    }
+
+    fun removeItem(index: Int) {
+        controller?.removeMediaItem(index)
+    }
+
+    /** "Limpar": remove tudo que vem depois da faixa atual. */
+    fun clearUpNext() {
+        val c = controller ?: return
+        val from = c.currentMediaItemIndex + 1
+        if (from < c.mediaItemCount) c.removeMediaItems(from, c.mediaItemCount)
+    }
+
+    /**
+     * Restaura a sessão salva sem começar a tocar (como os players do sistema fazem).
+     * Não faz nada se já houver algo na fila — por exemplo, o serviço ainda estava vivo.
+     */
+    fun restore(tracks: List<Track>, index: Int, positionMs: Long, shuffle: Boolean, repeatMode: Int) {
+        val c = controller ?: return
+        if (c.mediaItemCount > 0 || tracks.isEmpty()) return
+        c.setMediaItems(tracks.map { it.toMediaItem() }, index.coerceIn(0, tracks.lastIndex), positionMs.coerceAtLeast(0))
+        c.shuffleModeEnabled = shuffle
+        c.repeatMode = repeatMode
+        c.prepare()
+    }
+
+    /** Coloca as faixas logo depois da atual ("tocar a seguir"). */
+    fun playNext(tracks: List<Track>) {
+        val c = controller ?: return
+        if (tracks.isEmpty()) return
+        if (c.mediaItemCount == 0) return play(tracks, 0)
+        c.addMediaItems(c.currentMediaItemIndex + 1, tracks.map { it.toMediaItem() })
+    }
+
+    fun pause() {
+        controller?.pause()
+    }
+
+    /** Modo de repetição cru do Media3, para salvar a sessão. */
+    val rawRepeatMode: Int get() = controller?.repeatMode ?: Player.REPEAT_MODE_OFF
+
+    fun setShuffle(enabled: Boolean) {
+        controller?.shuffleModeEnabled = enabled
+    }
+
+    /** Coloca [tracks] no fim da fila. */
+    fun append(tracks: List<Track>) {
+        val c = controller ?: return
+        if (tracks.isEmpty()) return
+        if (c.mediaItemCount == 0) return play(tracks, 0)
+        c.addMediaItems(tracks.map { it.toMediaItem() })
+    }
+
+    /** Troca tudo que vem depois da faixa atual por [tracks]. */
+    fun replaceUpNext(tracks: List<Track>) {
+        clearUpNext()
+        append(tracks)
+    }
+
+    fun addNext(track: Track) {
+        val c = controller ?: return
+        if (c.mediaItemCount == 0) return play(listOf(track), 0)
+        c.addMediaItem(c.currentMediaItemIndex + 1, track.toMediaItem())
+    }
+
+    // ---- Estado ----
+
+    private fun publish(p: Player) {
+        val items = List(p.mediaItemCount) { p.getMediaItemAt(it) }
+        _state.value = PlayerState(
+            queue = items,
+            currentIndex = if (items.isEmpty()) -1 else p.currentMediaItemIndex,
+            isPlaying = p.isPlaying,
+            positionMs = p.currentPosition.coerceAtLeast(0),
+            durationMs = p.duration.takeIf { it > 0 } ?: 0,
+            shuffle = p.shuffleModeEnabled,
+            repeat = when (p.repeatMode) {
+                Player.REPEAT_MODE_ALL -> RepeatMode.ALL
+                Player.REPEAT_MODE_ONE -> RepeatMode.ONE
+                else -> RepeatMode.OFF
+            },
+            audio = audioInfo(p),
+        )
+    }
+
+    private fun audioInfo(p: Player): AudioInfo {
+        if (!p.isCommandAvailable(Player.COMMAND_GET_TRACKS)) return AudioInfo()
+        val group = p.currentTracks.groups.firstOrNull { it.type == C.TRACK_TYPE_AUDIO && it.isSelected } ?: return AudioInfo()
+        val format = (0 until group.length).firstOrNull { group.isTrackSelected(it) }?.let(group::getTrackFormat) ?: return AudioInfo()
+        return AudioInfo(mime = format.sampleMimeType, channels = format.channelCount.takeIf { it > 0 } ?: 0)
+    }
+
+    private fun startProgress() {
+        if (progressJob?.isActive == true) return
+        progressJob = scope.launch {
+            while (isActive) {
+                controller?.let { c ->
+                    _state.update {
+                        it.copy(
+                            positionMs = c.currentPosition.coerceAtLeast(0),
+                            durationMs = c.duration.takeIf { d -> d > 0 } ?: it.durationMs,
+                        )
+                    }
+                }
+                delay(500)
+            }
+        }
+    }
+
+    private fun stopProgress() {
+        progressJob?.cancel()
+        progressJob = null
+    }
+}
+
+// ---- Conversão Track <-> MediaItem ----
+
+private const val EXTRA_ALBUM_ID = "albumId"
+private const val EXTRA_MIME = "mime"
+private const val EXTRA_DURATION = "duration"
+private const val EXTRA_MODIFIED = "modified"
+private const val EXTRA_SIZE = "size"
+
+fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
+    .setMediaId(id.toString())
+    .setUri(uri)
+    .setMediaMetadata(
+        MediaMetadata.Builder()
+            .setTitle(title)
+            .setArtist(artist)
+            .setAlbumTitle(album)
+            .setArtworkUri(artUri)
+            .setIsPlayable(true)
+            .setIsBrowsable(false)
+            .setExtras(Bundle().apply {
+                putLong(EXTRA_ALBUM_ID, albumId)
+                putString(EXTRA_MIME, mimeType)
+                putLong(EXTRA_DURATION, durationMs)
+                // Fazem parte da URI da capa; guardados para a faixa reconstruída da fila apontar para a mesma.
+                dateModified?.let { putLong(EXTRA_MODIFIED, it) }
+                sizeBytes?.let { putLong(EXTRA_SIZE, it) }
+            })
+            .build()
+    )
+    .build()
+
+/** Reconstrói uma Track a partir do item da fila (o MediaController preserva os metadados). */
+fun MediaItem.toTrack(context: Context): Track {
+    val md = mediaMetadata
+    val extras = md.extras
+    return Track(
+        id = mediaId.toLongOrNull() ?: 0L,
+        uri = localConfiguration?.uri ?: "".toUri(),
+        title = md.title?.toString() ?: context.getString(R.string.unknown_title),
+        artist = md.artist?.toString() ?: context.getString(R.string.unknown_artist),
+        album = md.albumTitle?.toString() ?: "",
+        albumId = extras?.getLong(EXTRA_ALBUM_ID) ?: 0L,
+        durationMs = extras?.getLong(EXTRA_DURATION) ?: 0L,
+        mimeType = extras?.getString(EXTRA_MIME),
+        folder = "",
+        dateAdded = 0L,
+        dateModified = extras?.takeIf { it.containsKey(EXTRA_MODIFIED) }?.getLong(EXTRA_MODIFIED),
+        sizeBytes = extras?.takeIf { it.containsKey(EXTRA_SIZE) }?.getLong(EXTRA_SIZE),
+    )
+}

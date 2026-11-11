@@ -45,6 +45,7 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.MiniPlayerOndas
+import com.juscelino.sonivell.ui.theme.LocalInDock
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassAccent
 import com.juscelino.sonivell.ui.theme.glassSurface
@@ -168,7 +169,7 @@ fun SvPill(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, fi
         modifier
             .heightIn(min = 52.dp)
             .clip(shape)
-            .then(if (filled) Modifier.background(nc.accent) else Modifier.border(1.dp, nc.outline, shape))
+            .then(if (filled) Modifier.background(nc.accent) else Modifier.background(nc.surface))
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -190,7 +191,7 @@ fun SvSquare(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Mo
                     glass && filled -> Modifier.glassAccent(shape, nc.accent)
                     glass -> Modifier.glassSurface(shape, nc.surface, nc.outline, elevation = 6.dp)
                     filled -> Modifier.clip(shape).background(nc.accent)
-                    else -> Modifier.clip(shape).border(1.dp, nc.outline, shape)
+                    else -> Modifier.clip(shape).background(nc.surface)
                 },
             )
             .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
@@ -288,16 +289,26 @@ fun SvCircleArt(track: Track?, size: androidx.compose.ui.unit.Dp, modifier: Modi
 fun BottomNavSonivell(route: String?, tabs: List<SvTab>, onSelect: (String) -> Unit) {
     val nc = SonivellTheme.colors
     val glass = SonivellTheme.glass
+    val docked = LocalInDock.current
     val barShape = RoundedCornerShape(22.dp)
     val tabShape = RoundedCornerShape(16.dp)
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)
-            .height(64.dp)
+            // No dock a barra divide a superfície com o mini player: sem margem nem cartão próprios.
             .then(
-                if (glass) Modifier.glassSurface(barShape, nc.surface, nc.outline, elevation = 12.dp)
-                else Modifier.clip(barShape).background(nc.surface),
+                when {
+                    docked -> Modifier.height(60.dp)
+                    glass -> Modifier
+                        .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)
+                        .height(64.dp)
+                        .glassSurface(barShape, nc.surface, nc.outline, elevation = 12.dp)
+                    else -> Modifier
+                        .padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 12.dp)
+                        .height(64.dp)
+                        .clip(barShape)
+                        .background(nc.surface)
+                },
             )
             .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),

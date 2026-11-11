@@ -217,7 +217,7 @@ private fun PillButton(
         modifier
             .height(48.dp)
             .clip(shape)
-            .then(if (filled) Modifier.background(if (enabled) c.accent else c.surfaceHigh) else Modifier.border(1.dp, c.outline, shape))
+            .then(if (filled) Modifier.background(if (enabled) c.accent else c.surfaceHigh) else Modifier.background(c.surface))
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,

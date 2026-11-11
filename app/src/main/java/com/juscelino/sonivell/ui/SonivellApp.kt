@@ -78,6 +78,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -152,6 +153,7 @@ import com.juscelino.sonivell.ui.queue.QueueScreen
 import com.juscelino.sonivell.ui.theme.SonivellIcons
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlinx.coroutines.launch
+import com.juscelino.sonivell.ui.theme.LocalInDock
 import com.juscelino.sonivell.ui.theme.cardSurface
 import com.juscelino.sonivell.ui.theme.glassAccent
 import com.juscelino.sonivell.ui.theme.BarFade
@@ -546,6 +548,14 @@ private fun MainContent(vm: MainViewModel) {
         bottomBar = {
             if (showChrome) {
                 Column(Modifier.glassBar(haze, BarFade.Top).windowInsetsPadding(WindowInsets.navigationBars)) {
+                // Dock: mini player e abas num bloco só (redesign), em todos os temas. Cada um desenha só
+                // o conteúdo; a superfície, a margem e a sombra são do dock.
+                Column(
+                    Modifier
+                        .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp)
+                        .cardSurface(RoundedCornerShape(24.dp), SonivellTheme.colors.miniPlayer, elevation = 12.dp),
+                ) {
+                CompositionLocalProvider(LocalInDock provides true) {
                     current?.let { t ->
                         val progress = if (player.durationMs > 0) player.positionMs.toFloat() / player.durationMs else 0f
                         Box(Modifier.miniPlayerGestures(onNext = { vm.player.next() }, onPrevious = { vm.player.previous() }, onOpen = { nav.navigate(Routes.PLAYER) })) {
@@ -556,7 +566,6 @@ private fun MainContent(vm: MainViewModel) {
                                 progress = progress,
                                 onOpen = { nav.navigate(Routes.PLAYER) },
                                 onTogglePlay = vm.player::togglePlay,
-                                modifier = Modifier.padding(top = 8.dp),
                                 // A onda em todo progresso é do Ondas; o Essencial usa a linha fina.
                                 wave = uiStyle == UiStyle.ONDAS,
                             )
@@ -584,7 +593,6 @@ private fun MainContent(vm: MainViewModel) {
                                 progress = progress,
                                 onOpen = { nav.navigate(Routes.PLAYER) },
                                 onTogglePlay = vm.player::togglePlay,
-                                modifier = Modifier.padding(top = 8.dp),
                             )
                         }
                         }
@@ -596,6 +604,8 @@ private fun MainContent(vm: MainViewModel) {
                         UiStyle.CLASSICA -> BottomNavClassica(activeTab, goToTab)
                         UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL -> BottomNavSonivell(activeTab, svTabs, goToTab)
                     }
+                }
+                }
                 }
             }
         },
@@ -715,6 +725,8 @@ private fun MainContent(vm: MainViewModel) {
                                         continueTrack = forYou.unfinished.firstOrNull(),
                                         continueAtMs = forYou.unfinished.firstOrNull()?.let { forYou.resumeAtMs[it.id] } ?: 0L,
                                         onResume = libraryActions.onResume,
+                                        currentId = current?.id,
+                                        onOpenAlbum = libraryActions.onOpenAlbum,
                                     )
                                 }
                                 LibraryMode.Buscar -> LibraryScreenOndas(
@@ -1440,8 +1452,11 @@ private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 8.dp)
-            .cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp)
+            // No dock a barra divide a superfície com o mini player: sem margem nem cartão próprios.
+            .then(
+                if (LocalInDock.current) Modifier
+                else Modifier.padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 8.dp).cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp),
+            )
             .padding(4.dp),
     ) {
         tabs.forEach { tab ->
@@ -1478,8 +1493,11 @@ private fun BottomNavClassica(route: String?, onSelect: (String) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp)
-            .cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp)
+            // No dock a barra divide a superfície com o mini player: sem margem nem cartão próprios.
+            .then(
+                if (LocalInDock.current) Modifier
+                else Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp).cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp),
+            )
             .padding(4.dp),
     ) {
         tabs.forEach { tab ->

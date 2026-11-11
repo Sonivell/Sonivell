@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash: a onda lima sobre o fundo grafite (ícone "Onda plana"). Mesma curva do
+     tools/gen_app_icons.py, a 75% como na camada adaptativa, centrada no quadro de 108. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFC6F24E"
+        android:strokeWidth="6.75"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M33,54C42,34.5 51,34.5 54,54C57,73.5 66,73.5 75,54" />
+</vector>

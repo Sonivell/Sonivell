@@ -1,0 +1,334 @@
+package com.juscelino.sonivell.ui.theme
+
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import android.os.Build
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.juscelino.sonivell.R
+import com.juscelino.sonivell.data.UiStyle
+
+/** Paleta do mockup: grafite + um único acento. */
+@Immutable
+data class SonivellColors(
+    val background: Color = Color(0xFF0E0F11),
+    val surface: Color = Color(0xFF1A1C20),
+    val surfaceLow: Color = Color(0xFF16181B),
+    val surfaceHigh: Color = Color(0xFF24272C),
+    val outline: Color = Color(0xFF2E3137),
+    val track: Color = Color(0xFF2A2D33),
+    val textPrimary: Color = Color(0xFFF2F3F5),
+    val textSecondary: Color = Color(0xFF9BA1A9),
+    val textTertiary: Color = Color(0xFFC9CDD3),
+    val accent: Color = Accents.Lima,
+    val onAccent: Color = Color(0xFF0E0F11),
+    /** Fundo do mini player, um degrau acima da superfície. */
+    val miniPlayer: Color = Color(0xFF1E2125),
+    val isDark: Boolean = true,
+)
+
+/**
+ * Paleta clara no padrão iOS: fundo branco, superfícies em cinza-claro frio (#F2F2F7), contornos
+ * quase invisíveis e texto preto. Textos passam 4,5:1 sobre o fundo e sobre as superfícies.
+ */
+fun lightColors(accent: Color) = SonivellColors(
+    background = Color(0xFFFFFFFF),
+    surface = Color(0xFFF2F2F7),
+    surfaceLow = Color(0xFFF7F7FA),
+    surfaceHigh = Color(0xFFE5E5EA),
+    outline = Color(0xFFE5E5EA),
+    track = Color(0xFFE5E5EA),
+    textPrimary = Color(0xFF000000),
+    textSecondary = Color(0xFF6C6C70),
+    textTertiary = Color(0xFF3C3C43),
+    accent = accent,
+    onAccent = Color(0xFFFFFFFF),
+    miniPlayer = Color(0xFFF2F2F7),
+    isDark = false,
+)
+
+enum class ThemeMode { AUTO, LIGHT, DARK }
+
+/**
+ * Cores de destaque. Cada uma tem a versão para o tema escuro (clara, vibrante) e para o
+ * claro (mais escura), para que texto e ícones na cor de destaque sigam legíveis.
+ */
+enum class AccentChoice(val dark: Color, val light: Color) {
+    Lima(Color(0xFFC8F04A), Color(0xFF4A7300)),
+    Azul(Color(0xFF7CC4FF), Color(0xFF0B5FAA)),
+    Laranja(Color(0xFFFF9F5A), Color(0xFFAD4A00)),
+    Lilas(Color(0xFFE8A6FF), Color(0xFF8338A8)),
+    Rosa(Color(0xFFFF8FB1), Color(0xFFB0305C)),
+    Turquesa(Color(0xFF5FE3D0), Color(0xFF00756A)),
+    /** Verde #1DB954 (RGB 29, 185, 84); no tema claro, um tom mais escuro para o texto passar 4,5:1. */
+    Verde(Color(0xFF1DB954), Color(0xFF117A37)),
+    /** Creme; no claro, um dourado escuro para o texto passar 4,5:1. */
+    Creme(Color(0xFFEFE3CC), Color(0xFF7A5A1E)),
+}
+
+/** Fundo do tema escuro: grafite (padrão do Sonivell) ou preto. */
+enum class DarkBackground { Grafite, Preto }
+
+/**
+ * Paletas escuras de cada estilo (tokens da proposta visual). A estrutura é a mesma; mudam o fundo,
+ * as superfícies, as linhas e os textos de apoio. Vale no modo escuro com o fundo grafite padrão;
+ * fundo preto, fundo colorido e o modo claro seguem as paletas próprias.
+ */
+fun styleDarkColors(style: UiStyle, accent: Color): SonivellColors = when (style) {
+    UiStyle.SONIVELL -> SonivellColors(
+        background = Color(0xFF0E0F12), surface = Color(0xFF16181D), surfaceLow = Color(0xFF131519),
+        surfaceHigh = Color(0xFF1D2026), outline = Color(0xFF272A31), track = Color(0xFF343843),
+        textPrimary = Color(0xFFF3F4F6), textSecondary = Color(0xFF9EA3AE), textTertiary = Color(0xFFC9CDD3),
+        accent = accent, onAccent = Color(0xFF12150A), miniPlayer = Color(0xFF1D2026),
+    )
+    UiStyle.CLASSICA -> SonivellColors(
+        background = Color(0xFF0F1013), surface = Color(0xFF17181C), surfaceLow = Color(0xFF141518),
+        surfaceHigh = Color(0xFF24262C), outline = Color(0xFF2A2C32), track = Color(0xFF383B43),
+        textPrimary = Color(0xFFF2F3F5), textSecondary = Color(0xFFA0A4AD), textTertiary = Color(0xFFC9CDD3),
+        accent = accent, onAccent = Color(0xFF12150A), miniPlayer = Color(0xFF1E2025),
+    )
+    UiStyle.CONTRASTE -> SonivellColors(
+        background = Color(0xFF0C0C0E), surface = Color(0xFF18191C), surfaceLow = Color(0xFF131416),
+        surfaceHigh = Color(0xFF222327), outline = Color(0xFF2A2B30), track = Color(0xFF34353B),
+        // Texto de apoio mais claro que nos outros estilos.
+        textPrimary = Color(0xFFFFFFFF), textSecondary = Color(0xFFB9BDC6), textTertiary = Color(0xFFDADDE3),
+        accent = accent, onAccent = Color(0xFF0C0C0E), miniPlayer = Color(0xFF222327),
+    )
+    UiStyle.ESSENCIAL -> SonivellColors(
+        background = Color(0xFF101113), surface = Color(0xFF191A1E), surfaceLow = Color(0xFF151619),
+        surfaceHigh = Color(0xFF212328), outline = Color(0xFF26282D), track = Color(0xFF30333A),
+        textPrimary = Color(0xFFF4F5F7), textSecondary = Color(0xFF9FA4AE), textTertiary = Color(0xFFC9CDD3),
+        accent = accent, onAccent = Color(0xFF101113), miniPlayer = Color(0xFF191A1E),
+    )
+    UiStyle.ONDAS -> SonivellColors(
+        background = Color(0xFF0D0F12), surface = Color(0xFF15181D), surfaceLow = Color(0xFF121418),
+        surfaceHigh = Color(0xFF1D2026), outline = Color(0xFF252830), track = Color(0xFF3A3E47),
+        textPrimary = Color(0xFFF2F3F5), textSecondary = Color(0xFF9BA1A9), textTertiary = Color(0xFFC9CCD3),
+        accent = accent, onAccent = Color(0xFF0D0F12), miniPlayer = Color(0xFF1A1D22),
+    )
+}
+
+/** Estilo visual atual, para os componentes comuns ajustarem a assinatura (capa vazia, progresso…). */
+val LocalUiStyle = staticCompositionLocalOf { UiStyle.ONDAS }
+
+/** Paleta escura em preto: fundo #121212, superfícies a partir de #191414 e texto secundário #B3B3B3. */
+fun blackColors(accent: Color) = SonivellColors(
+    background = Color(0xFF121212),
+    surface = Color(0xFF1F1B1B),
+    surfaceLow = Color(0xFF191414),
+    surfaceHigh = Color(0xFF2A2626),
+    outline = Color(0xFF3A3535),
+    track = Color(0xFF3E3E3E),
+    textPrimary = Color(0xFFFFFFFF),
+    textSecondary = Color(0xFFB3B3B3),
+    textTertiary = Color(0xFFD9D9D9),
+    accent = accent,
+    onAccent = Color(0xFF121212),
+    miniPlayer = Color(0xFF282424),
+    isDark = true,
+)
+
+/**
+ * Paleta "fundo colorido": o fundo, as superfícies e os textos de apoio ganham o tom da cor de
+ * destaque (como no mockup "fundo na cor do tema"). No escuro, tons bem fundos da cor; no
+ * claro, tons pastel. Vale para qualquer layout.
+ */
+fun tintedColors(accent: Color, dark: Boolean): SonivellColors {
+    val (h, sat, _) = accent.toHsl()
+    fun tone(s: Float, l: Float) = Color.hsl(h, (sat * s).coerceIn(0f, 1f), l)
+    return if (dark) SonivellColors(
+        background = tone(0.55f, 0.10f),
+        surface = tone(0.45f, 0.15f),
+        surfaceLow = tone(0.50f, 0.125f),
+        surfaceHigh = tone(0.42f, 0.19f),
+        outline = tone(0.38f, 0.25f),
+        track = tone(0.38f, 0.24f),
+        textPrimary = Color(0xFFF6F4F0),
+        textSecondary = tone(0.35f, 0.78f),
+        textTertiary = tone(0.25f, 0.88f),
+        accent = accent,
+        onAccent = tone(0.60f, 0.09f),
+        miniPlayer = tone(0.44f, 0.17f),
+        isDark = true,
+    ) else SonivellColors(
+        background = tone(0.55f, 0.955f),
+        surface = tone(0.45f, 0.91f),
+        surfaceLow = tone(0.50f, 0.935f),
+        surfaceHigh = tone(0.42f, 0.87f),
+        outline = tone(0.35f, 0.80f),
+        track = tone(0.35f, 0.84f),
+        textPrimary = Color(0xFF141518),
+        textSecondary = tone(0.30f, 0.33f),
+        textTertiary = tone(0.25f, 0.22f),
+        accent = accent,
+        onAccent = Color(0xFFFFFFFF),
+        miniPlayer = tone(0.44f, 0.89f),
+        isDark = false,
+    )
+}
+
+/** Matiz (0–360), saturação e luminosidade (0–1) de uma cor. */
+private fun Color.toHsl(): Triple<Float, Float, Float> {
+    val max = maxOf(red, green, blue)
+    val min = minOf(red, green, blue)
+    val l = (max + min) / 2f
+    val d = max - min
+    if (d == 0f) return Triple(0f, 0f, l)
+    val s = d / (1f - kotlin.math.abs(2f * l - 1f))
+    val h = when (max) {
+        red -> 60f * (((green - blue) / d) % 6f)
+        green -> 60f * ((blue - red) / d + 2f)
+        else -> 60f * ((red - green) / d + 4f)
+    }
+    return Triple((h + 360f) % 360f, s.coerceIn(0f, 1f), l)
+}
+
+object Accents {
+    val Lima = Color(0xFFC8F04A)
+    val Azul = Color(0xFF7CC4FF)
+    val Laranja = Color(0xFFFF9F5A)
+    val Lilas = Color(0xFFE8A6FF)
+}
+
+/** Tons das capas geradas quando a faixa não tem arte embutida. */
+object ArtTones {
+    val backgrounds = listOf(
+        Color(0xFF1B2A26), Color(0xFF1D2433), Color(0xFF2E221A), Color(0xFF2A1D30),
+    )
+    val rings = listOf(
+        Color(0xFF3B6457), Color(0xFF3A4A6B), Color(0xFF6B4A33), Color(0xFF5A3D66),
+    )
+    val cores = listOf(Accents.Lima, Accents.Azul, Accents.Laranja, Accents.Lilas)
+}
+
+@OptIn(ExperimentalTextApi::class)
+private fun manrope(weight: Int) = Font(
+    resId = R.font.manrope,
+    weight = FontWeight(weight),
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight)),
+)
+
+val Manrope = FontFamily(
+    manrope(400), manrope(500), manrope(600), manrope(700), manrope(800),
+)
+
+/** Números tabulares (tnum) em todo o app: contagens, durações e tempos alinham em coluna. */
+private val SonivellTypography = Typography(
+    displaySmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.ExtraBold, fontSize = 30.sp, letterSpacing = (-0.6).sp),
+    headlineSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, letterSpacing = (-0.5).sp),
+    titleLarge = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp),
+    titleMedium = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 15.sp),
+    titleSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 14.sp),
+    bodyLarge = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Medium, fontSize = 15.sp),
+    bodyMedium = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Medium, fontSize = 13.sp),
+    labelLarge = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 14.sp),
+    labelMedium = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.SemiBold, fontSize = 12.sp),
+    labelSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.4.sp),
+)
+
+val LocalSonivellColors = staticCompositionLocalOf { SonivellColors() }
+
+object SonivellTheme {
+    val colors: SonivellColors
+        @Composable get() = LocalSonivellColors.current
+
+    val icons: SonivellIcons
+        @Composable get() = LocalSonivellIcons.current
+
+    /** Cartões em vidro (em todos os temas); ver [glassSurface]. */
+    val glass: Boolean
+        @Composable get() = LocalGlass.current
+
+    /** Estilo visual atual (Sonivell, Ondas, Essencial, Contraste, Clássico). */
+    val style: UiStyle
+        @Composable get() = LocalUiStyle.current
+}
+
+@Composable
+fun SonivellTheme(
+    accent: AccentChoice = AccentChoice.Lima,
+    darkTheme: Boolean = true,
+    iconStyle: IconStyle = IconStyle.FINO,
+    darkBackground: DarkBackground = DarkBackground.Grafite,
+    /** Fundo e superfícies no tom da cor de destaque, em qualquer layout. */
+    tintedBackground: Boolean = false,
+    /** Cor de destaque tirada do papel de parede (Material You, Android 12+). */
+    systemColors: Boolean = false,
+    /** Cartões em vidro: translúcidos, com sombra e brilho. Ligado em todos os temas. */
+    glass: Boolean = true,
+    /** Estilo visual: escolhe a paleta escura e a assinatura dos componentes comuns. */
+    style: UiStyle = UiStyle.ONDAS,
+    /** Fundo das telas com a capa que está tocando, desfocada ([GlassMaterial.backdrop]). */
+    artBackdrop: Boolean = true,
+    /** Tudo sólido: sem fundo da capa, sem desfoque e sem cartões translúcidos. */
+    reduceTransparency: Boolean = false,
+    /** Economia de bateria ligada: o desfoque das barras para (o resto do vidro fica). */
+    powerSave: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    val context = LocalContext.current
+    val dynamic = systemColors && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val accentColor = when {
+        dynamic && darkTheme -> dynamicDarkColorScheme(context).primary
+        dynamic -> dynamicLightColorScheme(context).primary
+        darkTheme -> accent.dark
+        else -> accent.light
+    }
+    val base = when {
+        tintedBackground -> tintedColors(accentColor, darkTheme)
+        !darkTheme -> lightColors(accentColor)
+        darkBackground == DarkBackground.Preto -> blackColors(accentColor)
+        else -> styleDarkColors(style, accentColor)
+    }
+    // A cor do sistema pode ser clara ou escura: o texto sobre ela segue a escolha do sistema.
+    val colors = if (dynamic) {
+        base.copy(onAccent = if (darkTheme) dynamicDarkColorScheme(context).onPrimary else dynamicLightColorScheme(context).onPrimary)
+    } else base
+    val scheme = (if (darkTheme) darkColorScheme() else lightColorScheme()).copy(
+        primary = colors.accent,
+        onPrimary = colors.onAccent,
+        background = colors.background,
+        onBackground = colors.textPrimary,
+        surface = colors.background,
+        onSurface = colors.textPrimary,
+        surfaceVariant = colors.surface,
+        onSurfaceVariant = colors.textSecondary,
+        outline = colors.outline,
+    )
+    // Um material só para todos os temas: o véu sobre a capa é o próprio fundo do tema, então
+    // Grafite, Preto, Fundo colorido, Material You e Claro tingem o vidro com a cor de cada um.
+    val material = GlassMaterial(
+        backdrop = artBackdrop && !reduceTransparency,
+        // O Haze desfoca com RenderEffect a partir do Android 12; antes disso, barra sólida.
+        blur = !reduceTransparency && !powerSave && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+        scrim = when {
+            !darkTheme -> SCRIM_LIGHT
+            tintedBackground -> SCRIM_TINTED
+            darkBackground == DarkBackground.Preto -> SCRIM_BLACK
+            else -> SCRIM_DARK
+        },
+    )
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalSonivellColors provides colors,
+        LocalSonivellIcons provides iconStyle.icons(),
+        LocalGlass provides (glass && !reduceTransparency),
+        LocalGlassMaterial provides material,
+        LocalUiStyle provides style,
+    ) {
+        MaterialTheme(colorScheme = scheme, typography = SonivellTypography, content = content)
+    }
+}

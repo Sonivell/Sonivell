@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.components.OndaArt
@@ -85,8 +86,8 @@ fun SvLibraryScreen(
                 if (onBack != null) SvSquare(icons.back, stringResource(R.string.cd_back), onBack)
                 SvTitle(stringResource(R.string.sv_library_title), modifier = Modifier.weight(1f))
                 SvSquare(icons.search, stringResource(R.string.cd_search_library), actions.onOpenSearch)
-                // Botão com rótulo: "+ Playlist".
-                com.juscelino.sonivell.ui.components.LabeledPill(icons.add, stringResource(R.string.action_playlist), actions.onNewPlaylist, primary = true)
+                // Nova playlist: botão neutro, como a busca; a cor de destaque fica para tocar.
+                SvSquare(icons.add, stringResource(R.string.action_playlist), actions.onNewPlaylist)
             }
         }
         if (tagBannerCount > 0) {
@@ -95,24 +96,18 @@ fun SvLibraryScreen(
             }
         }
         item {
-            // Abas no segmentado do Ondas: a atual num degrau acima da superfície.
-            val segShape = RoundedCornerShape(16.dp)
+            // Redesign: chips soltos e roláveis no lugar do segmentado; o ativo invertido (claro no escuro).
             Row(
-                Modifier.fillMaxWidth()
-                    .then(
-                        if (SonivellTheme.glass) Modifier.glassSurface(segShape, nc.surface, nc.outline, elevation = 6.dp)
-                        else Modifier.clip(segShape).background(nc.surface),
-                    )
-                    .horizontalScroll(rememberScrollState()).padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 tabs.forEachIndexed { i, label ->
                     val on = tab == i
                     Box(
                         Modifier
                             .height(36.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (on) nc.surfaceHigh else Color.Transparent)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(if (on) nc.textPrimary else nc.surface)
                             .clickable(role = Role.Tab) { onTab(i) }
                             .padding(horizontal = 14.dp),
                         contentAlignment = Alignment.Center,
@@ -121,7 +116,7 @@ fun SvLibraryScreen(
                             stringResource(label),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
-                            color = if (on) nc.textPrimary else nc.textSecondary,
+                            color = if (on) nc.background else nc.textPrimary,
                             maxLines = 1,
                         )
                     }
@@ -133,14 +128,15 @@ fun SvLibraryScreen(
                 item {
                     SvSection(stringResource(R.string.sv_collections), Modifier.padding(top = 10.dp))
                 }
-                item { collection(stringResource(R.string.source_liked), songs(favorites.size), Color(0xFFA86A3A), Color(0xFF2A1A10)) { actions.onOpenAuto("curtidas") } }
-                item { collection(stringResource(R.string.auto_most), "", Color(0xFF6A7A8A), Color(0xFF1A1F26)) { actions.onOpenAuto("mais-ouvidas") } }
-                item { collection(stringResource(R.string.auto_recent_added), "", Color(0xFF8A6A4A), Color(0xFF221810)) { actions.onOpenAuto("recentes") } }
+                // Cada coleção com o seu ícone e a sua cor (antes todas tinham a mesma onda).
+                item { collection(stringResource(R.string.source_liked), songs(favorites.size), icons.liked, nc.accent) { actions.onOpenAuto("curtidas") } }
+                item { collection(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub), icons.trendUp, collectionAmber()) { actions.onOpenAuto("mais-ouvidas") } }
+                item { collection(stringResource(R.string.auto_recent_added), "", icons.recent, collectionBlue()) { actions.onOpenAuto("recentes") } }
                 items(smartPlaylists, key = { "s${it.id}" }) { sp ->
-                    collection(sp.name, stringResource(R.string.smart_playlists), Color(0xFF7A5A8A), Color(0xFF1C1226)) { actions.onOpenSmartPlaylist(sp.id) }
+                    collection(sp.name, stringResource(R.string.smart_playlists), icons.smart, collectionPurple()) { actions.onOpenSmartPlaylist(sp.id) }
                 }
                 items(playlists, key = { "p${it.id}" }) { p ->
-                    collection(p.name, songs(p.trackIds.size), Color(0xFF9A8A6A), Color(0xFF1E1A12)) { actions.onOpenPlaylist(p.id) }
+                    collection(p.name, songs(p.trackIds.size), icons.musicNote, nc.textSecondary) { actions.onOpenPlaylist(p.id) }
                 }
                 if (state.artists.isNotEmpty()) {
                     item {
@@ -154,10 +150,32 @@ fun SvLibraryScreen(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(6.dp),
                                 ) {
-                                    SvCircleArt(artist.tracks.firstOrNull(), 64.dp)
-                                    Text(artist.name, style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.size(width = 72.dp, height = 16.dp))
+                                    // Artista em círculo, como de costume em apps de música.
+                                    com.juscelino.sonivell.ui.components.AlbumArt(artist.tracks.firstOrNull(), Modifier.size(76.dp), corner = 38.dp)
+                                    Text(artist.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.size(width = 84.dp, height = 16.dp))
                                 }
                             }
+                        }
+                    }
+                }
+                // Álbuns tocados há pouco, em grade de capas: a tela não termina num vazio.
+                if (state.recentAlbums.isNotEmpty()) {
+                    item {
+                        SvSection(stringResource(R.string.sv_albums), Modifier.padding(top = 14.dp))
+                    }
+                    items(state.recentAlbums.take(6).chunked(3), key = { row -> "ra-" + row.first().id }) { row ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            row.forEach { album ->
+                                Column(
+                                    Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) { actions.onOpenAlbum(album.id) },
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    com.juscelino.sonivell.ui.components.AlbumArt(album.tracks.firstOrNull(), Modifier.fillMaxWidth().aspectRatio(1f), corner = 12.dp)
+                                    Text(album.title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(album.artist, style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                         }
                     }
                 }
@@ -207,24 +225,19 @@ fun SvLibraryScreen(
                 itemsIndexed(rows, key = { _, r -> "g-" + r.first().name }) { r, pair ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         pair.forEachIndexed { col, genre ->
-                            val bg = SonivellTheme.colors.surface
-                            val wave = SonivellTheme.colors.textSecondary
-                            val glass = SonivellTheme.glass
+                            // Redesign: cada gênero com a sua cor (a mesma do Explorar), sem a onda decorativa.
                             val genreShape = RoundedCornerShape(18.dp)
                             Box(
                                 Modifier.weight(1f).height(96.dp)
-                                    .then(
-                                        if (glass) Modifier.glassSurface(genreShape, nc.surface, nc.outline, wave, elevation = 0.dp)
-                                        else Modifier.clip(genreShape).background(bg),
-                                    )
+                                    .clip(genreShape)
+                                    .background(com.juscelino.sonivell.ui.library.genreTone(genre.name))
                                     .clickable(role = Role.Button) { actions.onOpenGenre(genre.name) }
                                     .padding(horizontal = 14.dp, vertical = 12.dp),
                             ) {
                                 Column(Modifier.align(Alignment.TopStart), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                     Text(genre.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
-                                Text(songs(genre.tracks.size), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, modifier = Modifier.align(Alignment.BottomStart))
-                                SvMiniWave(genre.name, wave, Modifier.align(Alignment.BottomEnd).size(width = 64.dp, height = 22.dp))
+                                Text(songs(genre.tracks.size), style = MaterialTheme.typography.labelMedium, color = nc.textPrimary.copy(alpha = 0.82f), modifier = Modifier.align(Alignment.BottomStart))
                             }
                         }
                         if (pair.size == 1) Spacer(Modifier.weight(1f))
@@ -243,7 +256,26 @@ fun SvLibraryScreen(
     }
 }
 
+/** Coleção: ícone próprio num quadrado tingido com a cor dela, o nome e a meta. */
 @Composable
-private fun collection(title: String, subtitle: String, top: Color, bottom: Color, onClick: () -> Unit) {
-    SvRow(title, subtitle, onClick, art = { OndaArt(title, title, title = null, subtitle = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(30))) }, tone = top)
+private fun collection(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color, onClick: () -> Unit) {
+    SvRow(
+        title, subtitle, onClick,
+        art = {
+            Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(tint.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                Icon(icon, null, Modifier.size(22.dp), tint = tint)
+            }
+        },
+        elevation = 0.dp,
+    )
 }
+
+/** Tons das coleções: mais escuros no tema claro, para o ícone seguir legível. */
+@Composable
+private fun collectionAmber(): Color = if (SonivellTheme.colors.isDark) Color(0xFFF5B841) else Color(0xFF8A5A00)
+
+@Composable
+private fun collectionBlue(): Color = if (SonivellTheme.colors.isDark) Color(0xFF7DB4FF) else Color(0xFF0B5FAA)
+
+@Composable
+private fun collectionPurple(): Color = if (SonivellTheme.colors.isDark) Color(0xFFD7A6F0) else Color(0xFF7A3A9A)

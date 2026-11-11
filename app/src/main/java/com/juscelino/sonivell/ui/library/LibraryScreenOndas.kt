@@ -412,7 +412,7 @@ private fun OutlinedSquare(icon: ImageVector, label: String, onClick: () -> Unit
     val c = SonivellTheme.colors
     val shape = RoundedCornerShape(14.dp)
     Box(
-        Modifier.size(44.dp).clip(shape).border(1.dp, c.outline, shape).clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
+        Modifier.size(44.dp).clip(shape).background(c.surface).clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) { Icon(icon, null, Modifier.size(20.dp), tint = c.textPrimary) }
@@ -433,7 +433,7 @@ private fun SmallOutlined(label: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     val shape = RoundedCornerShape(12.dp)
     Box(
-        Modifier.height(36.dp).clip(shape).border(1.dp, c.outline, shape).clickable(role = Role.Button, onClick = onClick).padding(horizontal = 12.dp),
+        Modifier.height(36.dp).clip(shape).background(c.surface).clickable(role = Role.Button, onClick = onClick).padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) { Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textTertiary) }
 }
@@ -798,7 +798,7 @@ private fun ContinueCard(track: Track, resumeAtMs: Long, onPlay: (Long) -> Unit)
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            PlaySquircle(false, { onPlay(resumeAtMs) }, size = 48.dp, corner = 16.dp, iconSize = 20.dp, contentDescription = stringResource(R.string.cd_continue, track.title))
+            PlaySquircle(false, { onPlay(resumeAtMs) }, size = 48.dp, corner = 16.dp, iconSize = 20.dp, background = c.surfaceHigh, tint = c.textPrimary, contentDescription = stringResource(R.string.cd_continue, track.title))
         }
         Waveform(track.id, fraction, Modifier.fillMaxWidth().height(22.dp), bars = 44)
     }
@@ -822,7 +822,8 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
             Text(track.artist, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(stringResource(if (neverPlayed) R.string.fy_pick_never else R.string.fy_pick_long), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textSecondary)
         }
-        PlaySquircle(false, onPlay, size = 48.dp, corner = 16.dp, iconSize = 20.dp)
+        // Play neutro: o lima fica no destaque da tela (Curtidas) e no que está tocando.
+        PlaySquircle(false, onPlay, size = 48.dp, corner = 16.dp, iconSize = 20.dp, background = c.surfaceHigh, tint = c.textPrimary)
     }
 }
 
@@ -1027,7 +1028,7 @@ private fun LazyListScope.search(
             val c = SonivellTheme.colors
             val shape = RoundedCornerShape(22.dp)
             Column(
-                Modifier.padding(top = 16.dp).fillMaxWidth().clip(shape).border(1.dp, c.outline, shape).padding(14.dp),
+                Modifier.padding(top = 16.dp).fillMaxWidth().clip(shape).background(c.surface).padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 4.dp)) {

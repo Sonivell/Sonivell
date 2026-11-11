@@ -697,7 +697,7 @@ private fun IgnoredFolders(folders: List<String>, ignored: Set<String>, onToggle
 private fun AppearancePreview() {
     val c = SonivellTheme.colors
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(c.background).border(1.dp, c.outline, RoundedCornerShape(24.dp)).padding(14.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(c.surfaceLow).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.settings_preview).uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.7.sp), color = c.textSecondary)

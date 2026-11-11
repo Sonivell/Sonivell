@@ -39,6 +39,7 @@ import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassAccent
 import com.juscelino.sonivell.ui.theme.glassSurface
+import com.juscelino.sonivell.ui.theme.LocalInDock
 import com.juscelino.sonivell.ui.theme.cardSurface
 
 /** Botão de ícone com área de toque de no mínimo 44 dp. */
@@ -97,7 +98,7 @@ fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
                     glass && selected -> Modifier.glassAccent(shape, c.accent)
                     glass -> Modifier.glassSurface(shape, c.surface, c.outline, elevation = 0.dp)
                     selected -> Modifier.clip(shape).background(c.accent)
-                    else -> Modifier.clip(shape).border(1.dp, c.outline, shape)
+                    else -> Modifier.clip(shape).background(c.surface)
                 }
             )
             .clickable(role = Role.Tab, onClick = onClick)
@@ -190,7 +191,12 @@ fun MiniPlayer(
     val c = if (tone == null) SonivellTheme.colors else tonedColors(SonivellTheme.colors, tone)
     val icons = SonivellTheme.icons
     val openPlayer = stringResource(R.string.cd_open_player)
-    Box(modifier.padding(horizontal = 8.dp).cardSurface(RoundedCornerShape(12.dp), tone ?: c.miniPlayer, elevation = 12.dp)) {
+    // No dock a superfície é do dock; o tom da capa (Contraste) continua como fundo da faixa do mini player.
+    val docked = LocalInDock.current
+    Box(
+        if (docked) modifier.then(if (tone != null) Modifier.background(tone) else Modifier)
+        else modifier.padding(horizontal = 8.dp).cardSurface(RoundedCornerShape(12.dp), tone ?: c.miniPlayer, elevation = 12.dp),
+    ) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -261,11 +267,12 @@ fun MiniPlayerClassica(
 ) {
     val c = SonivellTheme.colors
     val openPlayer = stringResource(R.string.cd_open_player)
+    val docked = LocalInDock.current
     Column(
         modifier
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = if (docked) 0.dp else 12.dp)
             .fillMaxWidth()
-            .cardSurface(RoundedCornerShape(16.dp), c.miniPlayer, elevation = 12.dp)
+            .then(if (docked) Modifier else Modifier.cardSurface(RoundedCornerShape(16.dp), c.miniPlayer, elevation = 12.dp))
             .clickable(onClickLabel = openPlayer, onClick = onOpen),
     ) {
         Row(
@@ -282,8 +289,9 @@ fun MiniPlayerClassica(
                 icon = if (isPlaying) SonivellTheme.icons.pause else SonivellTheme.icons.play,
                 contentDescription = stringResource(if (isPlaying) R.string.cd_pause else R.string.cd_play),
                 onClick = onTogglePlay,
-                background = c.accent,
-                tint = c.onAccent,
+                // No dock o play fica neutro: o destaque é da ação principal de cada tela.
+                background = if (docked) c.textPrimary else c.accent,
+                tint = if (docked) c.background else c.onAccent,
                 iconSize = 20.dp,
             )
         }
@@ -312,7 +320,7 @@ fun LabeledPill(icon: ImageVector, label: String, onClick: () -> Unit, modifier:
         modifier
             .height(40.dp)
             .clip(shape)
-            .then(if (primary) Modifier.background(c.accent) else Modifier.border(1.dp, c.outline, shape))
+            .then(if (primary) Modifier.background(c.accent) else Modifier.background(c.surface))
             .clickable(role = Role.Button, onClick = onClick)
             .padding(start = 12.dp, end = 14.dp),
         verticalAlignment = Alignment.CenterVertically,

@@ -45,7 +45,13 @@ import dev.chrisbanes.haze.hazeEffect
 val LocalGlass = staticCompositionLocalOf { false }
 
 /**
- * Superfície em vidro do app: fundo translúcido, contorno fino, sombra suave por fora
+ * Dentro do dock (mini player e abas num bloco só, na base das telas principais): o mini player e a
+ * barra de abas não desenham superfície nem margem próprias; quem desenha é o dock, uma vez.
+ */
+val LocalInDock = staticCompositionLocalOf { false }
+
+/**
+ * Superfície em vidro do app: fundo translúcido sem contorno (a separação vem do nível do fundo), sombra suave por fora
  * e, com [tone], um brilho fraco na parte de baixo na cor do cartão.
  *
  * Leve de propósito: não há desfoque do que fica atrás (o fundo do app é liso, então a transparência
@@ -58,7 +64,8 @@ fun Modifier.glassSurface(
     outline: Color,
     tone: Color? = null,
     elevation: Dp = 10.dp,
-    surfaceAlpha: Float = 0.72f,
+    // Sem contorno, o cartão se separa do fundo só pelo tom: um pouco mais opaco que antes.
+    surfaceAlpha: Float = 0.82f,
 ): Modifier = composed {
     // Escuro: como sempre foi. Claro: a sombra do sistema seria desenhada também por baixo do vidro
     // translúcido e apareceria como um bloco cinza dentro do cartão; no claro a sombra é desenhada só
@@ -88,7 +95,6 @@ fun Modifier.glassSurface(
                 onDrawBehind { drawRect(brush) }
             },
         )
-        .border(1.dp, outline, shape)
 }
 
 /**
@@ -123,8 +129,7 @@ private const val SHADOW_LAYERS = 16
 /** Item selecionado em vidro (aba atual, botão principal): translúcido na cor de destaque, com contorno. */
 fun Modifier.glassAccent(shape: Shape, accent: Color): Modifier = this
     .clip(shape)
-    .background(accent.copy(alpha = 0.13f))
-    .border(1.dp, accent.copy(alpha = 0.55f), shape)
+    .background(accent.copy(alpha = 0.16f))
 
 private const val GLOW_ALPHA = 0.18f
 
@@ -139,7 +144,7 @@ fun Modifier.cardSurface(
     color: Color = SonivellTheme.colors.surface,
     elevation: Dp = 6.dp,
 ): Modifier {
-    // Essencial e Contraste: cards sem borda, o contraste vem da superfície. O Ondas tem contorno em tudo.
+    // Redesign: nenhum tema usa contorno nos cartões; o [outline] fica só como parâmetro de compatibilidade.
     val style = SonivellTheme.style
     val outline = if (style == UiStyle.ESSENCIAL || style == UiStyle.CONTRASTE) Color.Transparent else SonivellTheme.colors.outline
     return if (SonivellTheme.glass) glassSurface(shape, color, outline, elevation = elevation)

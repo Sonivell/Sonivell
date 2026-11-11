@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -84,7 +85,8 @@ fun NowPlayingScreenVidro(
     val tone by animateColorAsState(artTint(track, ::glowTone), tween(600), label = "tomVidro")
     // Com o fundo da capa ligado, a capa desfocada já está atrás; senão, o fundo liso do tema.
     val backdrop = LocalGlassMaterial.current.backdrop
-    val glowStrong = if (c.isDark) 0.34f else 0.22f
+    // Redesign: o tom da capa mais presente no fundo.
+    val glowStrong = if (c.isDark) 0.48f else 0.26f
     val glowSoft = if (c.isDark) 0.12f else 0.08f
 
     Column(
@@ -155,31 +157,39 @@ fun NowPlayingScreenVidro(
                 PlayerTitle(track, titleSize = 26.sp)
                 if (reason is PlayReason.Smart) WhyLine(stringResource(R.string.why_line_smart, reason.seed.title))
             }
-            GlassRound(
+            com.juscelino.sonivell.ui.components.IconBtn(
                 if (isFavorite) icons.liked else icons.like,
                 stringResource(if (isFavorite) R.string.cd_unlike else R.string.cd_like),
                 actions.onFavorite,
                 tint = if (isFavorite) c.accent else c.textPrimary,
-                iconSize = 22.dp,
+                iconSize = 26.dp,
             )
         }
 
         // Progresso: barra lisa na cor de destaque, botão claro; selos entre os tempos.
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // Barra neutra: a cor de destaque fica só no play e no que está ligado.
             LineSeekBar(
                 state.positionMs, durationMs, actions.onSeek,
-                thickness = 6.dp,
-                fill = c.accent,
+                thickness = 5.dp,
+                fill = c.textPrimary,
                 track = c.textPrimary.copy(alpha = 0.18f),
                 knobColor = if (c.isDark) Color.White else c.textPrimary,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TimeText(formatDuration(state.positionMs))
-                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)) {
-                    spatialLabel?.let { Chip(it, c.accent, c.accent.copy(alpha = 0.14f)) }
-                    track.formatLabel?.let { Chip(it, c.textTertiary, c.textPrimary.copy(alpha = 0.08f)) }
-                }
+                Box(Modifier.weight(1f))
                 TimeText(remainingLabel(state.positionMs, durationMs))
+            }
+            // Selos à esquerda; "Fila pelo som" (Smart) vira um chip liga/desliga à direita.
+            Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                spatialLabel?.let { Chip(it, c.textTertiary, c.textPrimary.copy(alpha = 0.08f)) }
+                track.formatLabel?.let { Chip(it, c.textTertiary, c.textPrimary.copy(alpha = 0.08f)) }
+                Box(Modifier.weight(1f))
+                if (smartAvailable) {
+                    val on = shuffleMode == ShuffleMode.SMART
+                    SmartChip(on) { actions.onSetShuffle(if (on) ShuffleMode.OFF else ShuffleMode.SMART) }
+                }
             }
         }
 
@@ -201,27 +211,12 @@ fun NowPlayingScreenVidro(
             )
         }
 
-        // Painel de vidro: Smart em cima, atalhos embaixo.
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .glassSurface(RoundedCornerShape(24.dp), c.surface, c.outline, tone = tone, elevation = 8.dp)
-                .padding(6.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            if (smartAvailable) {
-                SmartQueueSwitch(
-                    on = shuffleMode == ShuffleMode.SMART,
-                    onToggle = { on -> actions.onSetShuffle(if (on) ShuffleMode.SMART else ShuffleMode.OFF) },
-                    modifier = Modifier.padding(start = 6.dp),
-                )
-            }
-            val context = LocalContext.current
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                GlassPill(icons.device, stringResource(R.string.this_phone), Modifier.weight(1f)) { openOutputSwitcher(context) }
-                GlassPill(icons.lyrics, stringResource(R.string.lyrics_label), Modifier.weight(1f), actions.onLyrics)
-                GlassPill(icons.queue, stringResource(R.string.np_queue), Modifier.weight(1f), actions.onQueue)
-            }
+        // Rodapé simples: Este telefone · Letra · Fila, sem painel (o Smart subiu para os selos).
+        val context = LocalContext.current
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            GlassPill(icons.device, stringResource(R.string.this_phone), Modifier.weight(1f)) { openOutputSwitcher(context) }
+            GlassPill(icons.lyrics, stringResource(R.string.lyrics_label), Modifier.weight(1f), actions.onLyrics)
+            GlassPill(icons.queue, stringResource(R.string.np_queue), Modifier.weight(1f), actions.onQueue)
         }
     }
 }
@@ -254,14 +249,33 @@ private fun GlassPill(icon: ImageVector, label: String, modifier: Modifier, onCl
         modifier
             .heightIn(min = 44.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(c.textPrimary.copy(alpha = 0.06f))
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
     ) {
-        Icon(icon, null, Modifier.size(16.dp), tint = c.textPrimary)
-        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Icon(icon, null, Modifier.size(18.dp), tint = c.textSecondary)
+        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** "Fila pelo som" como chip: aceso na cor de destaque quando ligado, neutro quando desligado. */
+@Composable
+private fun SmartChip(on: Boolean, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    val label = stringResource(R.string.np_queue_by_sound)
+    Row(
+        Modifier
+            .heightIn(min = 32.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(if (on) c.accent.copy(alpha = 0.18f) else c.textPrimary.copy(alpha = 0.08f))
+            .toggleable(value = on, role = Role.Switch, onValueChange = { onClick() })
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(SonivellTheme.icons.smart, null, Modifier.size(14.dp), tint = if (on) c.accent else c.textSecondary)
+        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = if (on) c.textPrimary else c.textSecondary, maxLines = 1)
     }
 }
 

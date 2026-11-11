@@ -1,6 +1,9 @@
 package com.juscelino.sonivell.ui.sonivell
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,24 +70,62 @@ fun SvProfileScreen(
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        SvTitle(stringResource(R.string.nav_profile), stringResource(R.string.sv_profile_sub))
+        // Ajustes viram um botão no topo, ao lado do título (antes era o último cartão da lista).
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            SvTitle(stringResource(R.string.nav_profile), stringResource(R.string.sv_profile_sub), Modifier.weight(1f))
+            SvSquare(icons.settings, stringResource(R.string.sv_row_settings) + " · " + styleName, onSettings)
+        }
         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Stat(count(trackCount), stringResource(R.string.sv_stat_songs), Modifier.weight(1f))
             Stat(count(artistCount), stringResource(R.string.sv_stat_artists), Modifier.weight(1f))
-            Stat(count(hours) + " h", stringResource(R.string.sv_stat_hours), Modifier.weight(1f))
         }
+        // Análise concluída vira um selo discreto; em andamento, o cartão com a barra.
+        if (smartAvailable) {
+            if (analysisTotal > 0 && analysed >= analysisTotal) {
+                Row(
+                    Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(nc.accent.copy(alpha = 0.14f))
+                        .clickable(role = Role.Button, onClick = onAnalysis)
+                        .heightIn(min = 32.dp)
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Icon(icons.smart, null, Modifier.size(14.dp), tint = nc.accent)
+                    Text(count(analysed) + " " + stringResource(R.string.sv_analysis_done), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = nc.textPrimary)
+                }
+            } else {
+                AnalysisItem(analysed, analysisTotal, onAnalysis)
+            }
+        }
+
+        // Seu perfil sonoro em destaque: as horas do mês em número grande.
+        SvCard(Modifier.fillMaxWidth(), onClick = onStats, elevation = 0.dp) {
+            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stringResource(R.string.sv_row_profile).uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.8.sp),
+                        fontWeight = FontWeight.ExtraBold,
+                        color = nc.textSecondary,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary)
+                }
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(count(hours) + " h", style = MaterialTheme.typography.displaySmall.copy(fontSize = 38.sp), color = nc.textPrimary)
+                    Text(stringResource(R.string.sv_stat_hours), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = nc.textSecondary, modifier = Modifier.padding(bottom = 8.dp))
+                }
+                Text(stringResource(R.string.sv_row_profile_hint), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary)
+            }
+        }
+
         SvSection(stringResource(R.string.sv_discover), Modifier.padding(top = 4.dp))
-        // O mesmo ícone de mapa usado no Para você.
+        // Lista mais leve: linhas sem sombra, cada uma com o ícone na sua cor.
         Item(icons.genre, stringResource(R.string.sv_map_title), stringResource(R.string.sv_map_sub), onMap)
         Item(icons.album, stringResource(R.string.sv_moments_title), stringResource(R.string.sv_moments_sub), onMoments)
         Item(icons.sleep, stringResource(R.string.sv_breathe_title), stringResource(R.string.sv_breathe_sub), onBreathe)
-        // Seu perfil sonoro reúne estatísticas, histórico e "seu mês em música".
-        Item(icons.musicNote, stringResource(R.string.sv_row_profile), stringResource(R.string.sv_row_profile_hint), onStats)
-        if (smartAvailable) AnalysisItem(analysed, analysisTotal, onAnalysis)
-
-        // Ajustes por último, com o mesmo nome da tela que abre e o estilo atual.
-        Item(icons.settings, stringResource(R.string.sv_row_settings), styleName, onSettings, Modifier.padding(top = 10.dp))
-
     }
 }
 
@@ -116,6 +157,7 @@ private fun Item(icon: ImageVector, title: String, subtitle: String, onClick: ()
         title, subtitle, onClick, modifier,
         art = { SvIconTile(icon) },
         trailing = { Icon(SonivellTheme.icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
+        elevation = 0.dp,
     )
 }
 
