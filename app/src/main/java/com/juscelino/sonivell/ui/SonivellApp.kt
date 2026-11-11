@@ -1526,41 +1526,6 @@ private fun BottomNavClassica(route: String?, onSelect: (String) -> Unit) {
     }
 }
 
-@Composable
-private fun PermissionScreen(onRequest: () -> Unit) {
-    val c = SonivellTheme.colors
-    Box(
-        Modifier.fillMaxSize().background(c.background).safeDrawingPadding().padding(32.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            com.juscelino.sonivell.ui.components.GeneratedArt(
-                seed = 0,
-                modifier = Modifier.size(160.dp).clip(RoundedCornerShape(28.dp)),
-            )
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall, color = c.textPrimary)
-            Text(
-                stringResource(R.string.permission_message),
-                style = MaterialTheme.typography.bodyLarge,
-                color = c.textSecondary,
-                textAlign = TextAlign.Center,
-            )
-            Box(
-                Modifier
-                    .padding(top = 8.dp)
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(c.accent)
-                    .clickable(role = Role.Button, onClick = onRequest)
-                    .padding(horizontal = 28.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.permission_allow), style = MaterialTheme.typography.labelLarge, color = c.onAccent)
-            }
-        }
-    }
-}
-
 /** Nota de 1 a 5 estrelas; tocar na estrela marcada apaga a nota. */
 @Composable
 private fun StarRow(stars: Int, onRate: (Int) -> Unit) {

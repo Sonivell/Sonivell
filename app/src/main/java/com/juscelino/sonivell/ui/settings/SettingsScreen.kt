@@ -647,6 +647,15 @@ private fun DataPage(actions: SettingsActions) {
 
 @Composable
 private fun AboutPage(versionName: String, smartAvailable: Boolean, actions: SettingsActions) {
+    // O ícone e o nome da edição (Sonivell ou Sonivell LITE) no alto, como na abertura.
+    Column(
+        Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        com.juscelino.sonivell.ui.components.AppIcon(72.dp, glow = true)
+        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = SonivellTheme.colors.textPrimary)
+    }
     Card {
         InfoRow(stringResource(R.string.settings_version, versionName), primary = true)
         InfoRow(stringResource(R.string.settings_privacy))

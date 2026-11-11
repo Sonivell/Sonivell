@@ -89,8 +89,10 @@
 
     <!-- Geral -->
     <string name="coming_soon">Chega numa próxima versão do Sonivell</string>
-    <string name="permission_message">Para tocar suas músicas, o Sonivell precisa de acesso aos arquivos de áudio do aparelho. Nada sai do seu celular.</string>
+    <string name="permission_message">Para tocar suas músicas, o Sonivell precisa ver os arquivos de áudio do aparelho.</string>
     <string name="permission_allow">Permitir acesso</string>
+    <string name="permission_point_audio">Só a sua música</string>
+    <string name="permission_point_audio_text">O Sonivell lê apenas arquivos de áudio. Fotos, vídeos e documentos ficam de fora.</string>
     <!-- Smart (edição smart) -->
     <string name="cd_shuffle_smart">Ativar aleatório Smart</string>
     <string name="cd_smart_off">Desativar aleatório Smart</string>

@@ -44,7 +44,8 @@ val UiStyle.usesSonivellScreens: Boolean
 data class AppSettings(
     val theme: ThemeMode = ThemeMode.AUTO,
     val accent: AccentChoice = AccentChoice.Lima,
-    val uiStyle: UiStyle = UiStyle.ONDAS,
+    /** Estilo padrão: o Sonivell (quem já escolheu outro continua com o seu). */
+    val uiStyle: UiStyle = UiStyle.SONIVELL,
     /** Traço (padrão, dos mockups), fino (como o Lumivell) ou arredondado. */
     val iconStyle: IconStyle = IconStyle.TRACO,
     /** Fundo usado no tema escuro. */
@@ -157,7 +158,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         accent = AccentChoice.entries.getOrElse(prefs.getInt(KEY_ACCENT, AccentChoice.Lima.ordinal)) { AccentChoice.Lima },
         uiStyle = prefs.getString(KEY_UI_STYLE, null).let { saved ->
             // O tema Desenvolvimento (o Sonivell com vidro) virou o Sonivell: o vidro agora vale em todos.
-            UiStyle.entries.firstOrNull { it.name == saved } ?: if (saved == "DESENVOLVIMENTO") UiStyle.SONIVELL else UiStyle.ONDAS
+            UiStyle.entries.firstOrNull { it.name == saved } ?: UiStyle.SONIVELL
         },
         iconStyle = IconStyle.entries.firstOrNull { it.name == prefs.getString(KEY_ICON_STYLE, null) } ?: IconStyle.TRACO,
         darkBackground = DarkBackground.entries.firstOrNull { it.name == prefs.getString(KEY_DARK_BACKGROUND, null) } ?: DarkBackground.Grafite,

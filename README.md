@@ -12,7 +12,7 @@ Player de música moderno, leve e eficiente para Android — Kotlin + Jetpack Co
 
 ## Duas edições
 
-| | **Sonivell** (lite) | **Sonivell SMART** |
+| | **Sonivell LITE** | **Sonivell** |
 |---|---|---|
 | Player, biblioteca, fila | ✓ | ✓ |
 | Aleatório SMART | — | ✓ |
