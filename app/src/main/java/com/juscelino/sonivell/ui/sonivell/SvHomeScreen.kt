@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -58,24 +59,25 @@ import com.juscelino.sonivell.ui.theme.glassSurface
 import java.util.Calendar
 
 /**
- * Início do tema Sonivell, no visual do Ondas: atalhos em cartões pequenos (Coleções e Sua biblioteca),
- * o Flow de hoje, os mixes pelo som (edição SMART) e o mapa. A biblioteca deixou de ser uma aba: os
- * cartões abrem as coleções automáticas e a biblioteca já no filtro escolhido.
+ * Início do tema Sonivell (redesign): capas logo no topo, numa grade de atalhos (coleções e álbuns
+ * recentes); o Flow de hoje como destaque, com o mosaico das capas e o único play na cor de destaque;
+ * "Continuar ouvindo" só quando não é a faixa que já está tocando; os mixes pelo som e o mapa.
+ * A grade "Sua biblioteca" saiu daqui: os mesmos filtros estão na aba Biblioteca.
  */
 @Composable
 fun SvHomeScreen(
     contentPadding: PaddingValues,
     state: LibraryState,
     favoritesCount: Int,
-    /** Quantas playlists o usuário criou; com zero, o atalho diz "Criar". */
-    playlistCount: Int,
+    /** Quantas playlists o usuário criou (mantido para a chamada; a grade da biblioteca saiu do Início). */
+    @Suppress("UNUSED_PARAMETER") playlistCount: Int,
     mixSeeds: List<Track>,
     smartAvailable: Boolean,
     smartProgress: SmartProgress,
     /** Coleção automática por chave ("curtidas", "mais-ouvidas", "recentes"). */
     onOpenAuto: (String) -> Unit,
-    /** Biblioteca no filtro dado: 0 Todas, 1 Músicas, 2 Álbuns, 3 Artistas, 4 Gêneros, 5 Pastas. */
-    onOpenLibrary: (Int) -> Unit,
+    /** Biblioteca no filtro dado (mantido para a chamada; os filtros ficam na aba Biblioteca). */
+    @Suppress("UNUSED_PARAMETER") onOpenLibrary: (Int) -> Unit,
     onPlayMix: (Track) -> Unit,
     onOpenFlow: () -> Unit,
     onOpenMap: () -> Unit,
@@ -84,6 +86,9 @@ fun SvHomeScreen(
     continueTrack: Track? = null,
     continueAtMs: Long = 0L,
     onResume: (Track, Long) -> Unit = { _, _ -> },
+    /** Faixa tocando agora: o "Continuar ouvindo" some quando seria ela mesma. */
+    currentId: Long? = null,
+    onOpenAlbum: (Long) -> Unit = {},
 ) {
     val nc = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -92,24 +97,21 @@ fun SvHomeScreen(
         val since = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000
         state.allTracks.count { it.dateAdded * 1000 >= since }
     }
-    val forYou = listOf(
-        // Cada coleção com o seu ícone de traço (coração, tendência, relógio) e uma meta clara.
-        SvShortcut(stringResource(R.string.source_liked), songsLabel(favoritesCount), icons.like) { onOpenAuto("curtidas") },
-        SvShortcut(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub), icons.trendUp) { onOpenAuto("mais-ouvidas") },
-        SvShortcut(stringResource(R.string.sv_new), stringResource(R.string.sv_new_sub, newCount), icons.recent) { onOpenAuto("recentes") },
-    )
-    val library = listOf(
-        SvShortcut(stringResource(R.string.tab_songs), count(state.allTracks.size)) { onOpenLibrary(1) },
-        SvShortcut(stringResource(R.string.sv_albums), count(state.albums.size)) { onOpenLibrary(2) },
-        SvShortcut(stringResource(R.string.sv_artists), count(state.artists.size)) { onOpenLibrary(3) },
-        // Mesma contagem do Explorar: sem os gêneros genéricos.
-        SvShortcut(stringResource(R.string.sv_genres), count(realGenreCount(state.genres))) { onOpenLibrary(4) },
-        SvShortcut(stringResource(R.string.tab_folders), count(state.folders.size)) { onOpenLibrary(5) },
-        SvShortcut(
-            stringResource(R.string.tab_playlists),
-            if (playlistCount == 0) stringResource(R.string.create) else count(playlistCount),
-        ) { onOpenLibrary(0) },
-    )
+    // Tons dos ícones das coleções: um por coleção, mais escuros no tema claro para o ícone seguir legível.
+    val amber = if (nc.isDark) Color(0xFFF5B841) else Color(0xFF8A5A00)
+    val blue = if (nc.isDark) Color(0xFF7DB4FF) else Color(0xFF0B5FAA)
+    val quick = buildList {
+        add(SvQuick(stringResource(R.string.source_liked), songsLabel(favoritesCount), { onOpenAuto("curtidas") }, icon = icons.liked, tint = nc.accent))
+        add(SvQuick(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub), { onOpenAuto("mais-ouvidas") }, icon = icons.trendUp, tint = amber))
+        add(SvQuick(stringResource(R.string.sv_new), stringResource(R.string.sv_new_sub, newCount), { onOpenAuto("recentes") }, icon = icons.recent, tint = blue))
+        state.recentAlbums.take(3).forEach { album ->
+            add(SvQuick(album.title, album.artist, { onOpenAlbum(album.id) }, cover = album.tracks.firstOrNull()))
+        }
+    }
+    // Capas do mosaico do Flow: as dos mixes e dos álbuns recentes, um álbum por capa.
+    val flowCovers = remember(mixSeeds, state.recentAlbums) {
+        (mixSeeds + state.recentAlbums.mapNotNull { it.tracks.firstOrNull() }).distinctBy { it.albumId }
+    }
     Column(
         Modifier
             .fillMaxWidth()
@@ -118,7 +120,7 @@ fun SvHomeScreen(
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Cabeçalho do Ondas: saudação pequena e o título grande.
+        // Cabeçalho: saudação pequena e o título grande.
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(greeting()), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = nc.textSecondary)
             Text(
@@ -128,76 +130,100 @@ fun SvHomeScreen(
             )
         }
 
-        CollectionCards(stringResource(R.string.sv_collections), forYou)
-        LibraryGrid(stringResource(R.string.sv_library_title), library)
+        // Atalhos 2×N: coleções com ícone próprio e os álbuns recentes com a capa.
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            quick.chunked(2).forEach { pair ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    pair.forEach { QuickTile(it, Modifier.weight(1f)) }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+        }
         if (!smartAvailable) {
             Text(stringResource(R.string.sv_analysis_lite), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary)
         }
 
-        // Seu Flow de hoje: o destaque da tela, em superfície neutra, com o ícone do Smart e um único
-        // botão primário. Sem onda decorativa (a onda só aparece onde mostra progresso).
-        SvCard(Modifier.fillMaxWidth(), onClick = onOpenFlow) {
-            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SvIconTile(icons.smart, 48.dp)
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(stringResource(R.string.sv_flow_title), style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp), fontWeight = FontWeight.ExtraBold, color = nc.textPrimary)
+        // Seu Flow de hoje: o destaque da tela. Mosaico das capas, o texto e um play redondo, o único
+        // elemento cheio na cor de destaque da tela.
+        val flowLabel = stringResource(R.string.sv_flow_play)
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(lerp(nc.surface, nc.accent, 0.10f))
+                .clickable(role = Role.Button, onClickLabel = flowLabel, onClick = onOpenFlow),
+        ) {
+            Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (flowCovers.isNotEmpty()) CoverCollage(flowCovers, Modifier.size(96.dp), corner = 14.dp)
+                    else SvIconTile(icons.smart, 96.dp)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(stringResource(R.string.sv_flow_title), style = MaterialTheme.typography.titleMedium.copy(fontSize = 19.sp), fontWeight = FontWeight.ExtraBold, color = nc.textPrimary)
                         Text(stringResource(R.string.sv_flow_sub), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary, maxLines = 2)
                     }
                 }
-                LabeledPill(icons.play, stringResource(R.string.sv_flow_play), onOpenFlow, Modifier.height(52.dp).fillMaxWidth(), primary = true)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        stringResource(R.string.sv_flow_desc),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = nc.textSecondary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    PlaySquircle(false, onOpenFlow, size = 56.dp, iconSize = 22.dp, contentDescription = flowLabel)
+                }
             }
         }
 
-        // Continuar ouvindo: capa, progresso fino, tempo restante e play.
-        continueTrack?.let { t ->
+        // Continuar ouvindo: só quando não é a faixa que já está no mini player.
+        continueTrack?.takeIf { it.id != currentId }?.let { t ->
             SvSection(stringResource(R.string.fy_continue), Modifier.padding(top = 4.dp))
             val fraction = if (t.durationMs > 0) (continueAtMs.toFloat() / t.durationMs).coerceIn(0f, 1f) else 0f
-            SvCard(Modifier.fillMaxWidth(), onClick = { onResume(t, continueAtMs) }) {
+            SvCard(Modifier.fillMaxWidth(), onClick = { onResume(t, continueAtMs) }, elevation = 0.dp) {
                 Row(
                     Modifier.fillMaxWidth().padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    com.juscelino.sonivell.ui.components.AlbumArt(t, Modifier.size(56.dp), corner = 14.dp)
+                    com.juscelino.sonivell.ui.components.AlbumArt(t, Modifier.size(56.dp), corner = 12.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(t.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(nc.track)) {
-                            Box(Modifier.fillMaxWidth(fraction).height(3.dp).background(nc.accent))
+                            Box(Modifier.fillMaxWidth(fraction).height(3.dp).background(nc.textPrimary))
                         }
                         Text(
-                            stringResource(R.string.ess_remaining, com.juscelino.sonivell.data.formatDuration((t.durationMs - continueAtMs).coerceAtLeast(0L))),
+                            t.artist + " · " + stringResource(R.string.ess_remaining, com.juscelino.sonivell.data.formatDuration((t.durationMs - continueAtMs).coerceAtLeast(0L))),
                             style = MaterialTheme.typography.labelMedium,
                             color = nc.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    PlaySquircle(false, { onResume(t, continueAtMs) }, size = 44.dp, iconSize = 18.dp)
+                    // Play neutro: o destaque da tela é o Flow.
+                    PlaySquircle(false, { onResume(t, continueAtMs) }, size = 44.dp, iconSize = 16.dp, background = nc.surfaceHigh, tint = nc.textPrimary)
                 }
             }
         }
 
-        // Mixes pelo som (edição SMART): os mesmos do Para você do Ondas, um por artista que você ouve.
+        // Mixes pelo som (edição SMART): capas limpas, sem botão por cima; o cartão inteiro toca.
         if (smartAvailable && mixSeeds.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 SvSection(stringResource(R.string.fy_mixes), Modifier.padding(top = 4.dp)) { SvSmartTag() }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    itemsIndexed(mixSeeds, key = { _, seed -> "mix-" + seed.id }) { i, seed ->
+                    itemsIndexed(mixSeeds, key = { _, seed -> "mix-" + seed.id }) { _, seed ->
                         val label = stringResource(R.string.fy_mix_of, seed.artist)
                         Column(
-                            Modifier.width(136.dp)
+                            Modifier.width(144.dp)
                                 .clickable(role = Role.Button, onClickLabel = label) { onPlayMix(seed) },
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            // Colagem 2×2 das capas reais do artista, com o play lima no canto.
                             val covers = remember(state.allTracks, seed.artist) {
                                 listOf(seed) + state.allTracks.filter { it.artist == seed.artist && it.albumId != seed.albumId }
                             }
-                            Box(Modifier.size(136.dp)) {
-                                CoverCollage(covers, Modifier.fillMaxSize())
-                                PlaySquircle(false, { onPlayMix(seed) }, Modifier.align(Alignment.BottomEnd).padding(8.dp), size = 36.dp, iconSize = 16.dp, contentDescription = label)
-                            }
+                            CoverCollage(covers, Modifier.size(144.dp), corner = 16.dp)
                             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                                Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(seed.artist, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(stringResource(R.string.fy_sounds_like, seed.title), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
@@ -211,7 +237,7 @@ fun SvHomeScreen(
             subtitle = stringResource(R.string.sv_map_sub),
             onClick = onOpenMap,
             art = { SvIconTile(icons.genre) },
-            tone = nc.textSecondary,
+            elevation = 0.dp,
             trailing = { Icon(icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
         )
         if (smartAvailable && (smartProgress.running || smartProgress.analysed < smartProgress.total)) {
@@ -220,64 +246,46 @@ fun SvHomeScreen(
                 subtitle = stringResource(R.string.sv_analysis_count, smartProgress.analysed, smartProgress.total),
                 onClick = onOpenAnalysis,
                 art = { SvIconTile(icons.smart) },
+                elevation = 0.dp,
                 trailing = { Icon(icons.chevron, null, Modifier.size(20.dp), tint = nc.textSecondary) },
             )
         }
     }
 }
 
-/** Um atalho do Início: nome, um número ou dica curta embaixo e para onde leva. */
-private class SvShortcut(val label: String, val detail: String, val icon: ImageVector? = null, val onClick: () -> Unit)
+/** Um atalho do Início: coleção (ícone num quadrado tingido) ou álbum (capa). */
+private class SvQuick(
+    val label: String,
+    val detail: String,
+    val onClick: () -> Unit,
+    val icon: ImageVector? = null,
+    val tint: Color = Color.Unspecified,
+    val cover: Track? = null,
+)
 
-/** Coleções: três cartões iguais, cada um com o ícone de traço próprio, o nome e a meta. */
+/** Atalho compacto: arte quadrada colada à esquerda, nome e detalhe; superfície sem contorno. */
 @Composable
-private fun CollectionCards(title: String, items: List<SvShortcut>) {
+private fun QuickTile(item: SvQuick, modifier: Modifier = Modifier) {
     val nc = SonivellTheme.colors
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SvSection(title)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items.forEach { item ->
-                SvCard(Modifier.weight(1f).height(108.dp), onClick = item.onClick, elevation = 6.dp) {
-                    Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                        item.icon?.let { Icon(it, null, Modifier.size(22.dp), tint = nc.textPrimary) }
-                        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                            BasicText(
-                                item.label,
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold, color = nc.textPrimary),
-                                maxLines = 1,
-                                autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = 14.sp, stepSize = 0.5.sp),
-                            )
-                            Text(item.detail, style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                }
-            }
+    Row(
+        modifier
+            .height(60.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(nc.surface)
+            .clickable(role = Role.Button, onClick = item.onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(
+            Modifier.size(60.dp).then(if (item.icon != null) Modifier.background(item.tint.copy(alpha = 0.16f)) else Modifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (item.icon != null) Icon(item.icon, null, Modifier.size(22.dp), tint = item.tint)
+            else com.juscelino.sonivell.ui.components.AlbumArt(item.cover, Modifier.fillMaxSize(), corner = 0.dp)
         }
-    }
-}
-
-/** Biblioteca: grade 2×3 de linhas compactas, com a contagem à direita em números tabulares. */
-@Composable
-private fun LibraryGrid(title: String, items: List<SvShortcut>) {
-    val nc = SonivellTheme.colors
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SvSection(title)
-        items.chunked(2).forEach { pair ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                pair.forEach { item ->
-                    SvCard(Modifier.weight(1f).height(52.dp), onClick = item.onClick, elevation = 0.dp) {
-                        Row(
-                            Modifier.fillMaxSize().padding(horizontal = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(item.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                            Text(item.detail, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = nc.textSecondary, maxLines = 1)
-                        }
-                    }
-                }
-                if (pair.size == 1) Spacer(Modifier.weight(1f))
-            }
+        Column(Modifier.weight(1f).padding(end = 8.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(item.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(item.detail, style = MaterialTheme.typography.labelMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

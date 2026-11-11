@@ -298,7 +298,7 @@ private fun EssChip(label: String, selected: Boolean, onClick: () -> Unit) {
         Modifier
             .height(36.dp)
             .clip(shape)
-            .then(if (selected) Modifier.background(c.accent) else Modifier.border(1.dp, c.outline, shape))
+            .then(if (selected) Modifier.background(c.accent) else Modifier.background(c.surface))
             .clickable(role = Role.Tab, onClick = onClick)
             .semantics { this.selected = selected }
             .padding(horizontal = 14.dp),

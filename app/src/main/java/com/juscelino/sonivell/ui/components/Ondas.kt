@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.LocalInDock
 import com.juscelino.sonivell.ui.theme.glassSurface
 import kotlin.math.abs
 import kotlin.math.cos
@@ -179,14 +180,19 @@ fun MiniPlayerOndas(
     val c = SonivellTheme.colors
     val openPlayer = stringResource(R.string.cd_open_player)
     val shape = RoundedCornerShape(20.dp)
+    // No dock a superfície é do próprio dock (mini player e abas num bloco só).
+    val docked = LocalInDock.current
     Column(
         modifier
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = if (docked) 0.dp else 12.dp)
             .fillMaxWidth()
             // Vidro: o mini player também em vidro.
             .then(
-                if (SonivellTheme.glass) Modifier.glassSurface(shape, c.surface, c.outline, elevation = 12.dp)
-                else Modifier.clip(shape).background(c.surface).border(1.dp, c.outline, shape),
+                when {
+                    docked -> Modifier
+                    SonivellTheme.glass -> Modifier.glassSurface(shape, c.surface, c.outline, elevation = 12.dp)
+                    else -> Modifier.clip(shape).background(c.surface)
+                },
             )
             .clickable(onClickLabel = openPlayer, onClick = onOpen),
     ) {
@@ -204,7 +210,9 @@ fun MiniPlayerOndas(
                     Text(track.artist, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-            PlaySquircle(isPlaying, onTogglePlay)
+            // No dock o play é neutro e menor: a cor de destaque fica para a ação principal de cada tela.
+            if (docked) PlaySquircle(isPlaying, onTogglePlay, size = 40.dp, iconSize = 16.dp, background = c.textPrimary, tint = c.background)
+            else PlaySquircle(isPlaying, onTogglePlay)
         }
         if (!wave) {
             Box(Modifier.padding(horizontal = 14.dp).fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -60,7 +62,10 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Genre
 import com.juscelino.sonivell.data.Ranked
 import com.juscelino.sonivell.data.isGenericGenre
+import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.PlaySquircle
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.text.font.FontFamily
 import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.concurrent.TimeUnit
@@ -169,21 +174,30 @@ private fun HeroCard(genre: Genre, isMonth: Boolean, listenedMs: Long, onOpen: (
     val songs = pluralStringResource(R.plurals.songs_count, genre.tracks.size, genre.tracks.size)
     val listened = listenedText(listenedMs)
     val subtitle = if (listened != null) "$songs · ${stringResource(R.string.browse_listened, listened)}" else songs
+    // Redesign: o destaque ganha o tom do gênero e uma colagem de capas, em vez de uma superfície lisa.
+    val covers = remember(genre) { genre.tracks.distinctBy { it.albumId }.take(2) }
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(genreTone(genre.name))
+            .clickable(onClick = onOpen),
+    ) {
+        covers.getOrNull(1)?.let { AlbumArt(it, Modifier.align(Alignment.TopEnd).padding(top = 18.dp, end = 4.dp).size(96.dp).rotate(12f), corner = 12.dp) }
+        covers.getOrNull(0)?.let { AlbumArt(it, Modifier.align(Alignment.TopEnd).padding(top = 34.dp, end = 72.dp).size(84.dp).rotate(-8f), corner = 12.dp) }
     Column(
         Modifier
             .fillMaxWidth()
-            .cardSurface(RoundedCornerShape(24.dp))
-            .clickable(onClick = onOpen)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(verticalAlignment = Alignment.Top) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(Modifier.weight(1f).padding(end = 120.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     stringResource(if (isMonth) R.string.browse_month_genre else R.string.browse_top_genre).uppercase(),
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.7.sp),
                     fontWeight = FontWeight.ExtraBold,
-                    color = c.textSecondary,
+                    color = ink.copy(alpha = 0.82f),
                 )
                 Text(
                     genre.name,
@@ -193,8 +207,10 @@ private fun HeroCard(genre: Genre, isMonth: Boolean, listenedMs: Long, onOpen: (
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = c.textSecondary)
             }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = ink.copy(alpha = 0.82f), modifier = Modifier.weight(1f))
             PlaySquircle(
                 isPlaying = false,
                 onClick = onPlay,
@@ -208,6 +224,17 @@ private fun HeroCard(genre: Genre, isMonth: Boolean, listenedMs: Long, onOpen: (
         }
         if (ondas) SignatureBars(genre.name, c.accent, Modifier.fillMaxWidth().height(44.dp))
     }
+    }
+}
+
+/**
+ * Cor própria de cada gênero (sempre a mesma para o mesmo nome): no escuro um tom fundo, onde o texto
+ * branco passa 7:1; no claro, um tom pastel com texto preto.
+ */
+@Composable
+internal fun genreTone(name: String): Color {
+    val hue = (abs(name.lowercase().hashCode()) % 360).toFloat()
+    return if (SonivellTheme.colors.isDark) Color.hsl(hue, 0.42f, 0.22f) else Color.hsl(hue, 0.55f, 0.88f)
 }
 
 @Composable
@@ -289,14 +316,22 @@ private fun GenreMosaic(genres: List<Genre>, total: Int, actions: LibraryActions
 @Composable
 private fun GenreTile(genre: Genre, index: Int, tall: Boolean, actions: LibraryActions, modifier: Modifier) {
     val c = SonivellTheme.colors
-    val tone = c.textSecondary
-    val shape = RoundedCornerShape(22.dp)
-    Column(
+    val shape = RoundedCornerShape(20.dp)
+    // Redesign: cada gênero com a sua cor e uma capa dele no canto; sem o ponto e a onda decorativos.
+    val cover = remember(genre) { genre.tracks.firstOrNull() }
+    Box(
         modifier
-            .cardSurface(shape)
-            .border(1.dp, c.outline, shape)
-            .clickable { actions.onOpenGenre(genre.name) }
-            .padding(16.dp),
+            .clip(shape)
+            .background(genreTone(genre.name))
+            .clickable { actions.onOpenGenre(genre.name) },
+    ) {
+    if (cover != null) {
+        AlbumArt(cover, Modifier.align(Alignment.BottomEnd).offset(x = 14.dp, y = 12.dp).size(if (tall) 92.dp else 70.dp).rotate(18f), corner = 10.dp)
+    }
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(14.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -307,21 +342,20 @@ private fun GenreTile(genre: Genre, index: Int, tall: Boolean, actions: LibraryA
                 color = c.textPrimary,
                 maxLines = if (tall) 3 else 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).padding(end = 24.dp),
             )
-            Box(Modifier.padding(top = 6.dp).size(8.dp).clip(CircleShape).background(tone))
         }
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 pluralStringResource(R.plurals.songs_count, genre.tracks.size, genre.tracks.size),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = c.textSecondary,
+                color = c.textPrimary.copy(alpha = 0.82f),
                 maxLines = 1,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).padding(end = 52.dp),
             )
-            MiniWave(genre.name, tone, Modifier.size(width = 56.dp, height = 18.dp))
         }
+    }
     }
 }
 
@@ -357,31 +391,25 @@ private fun DecadeTimeline(state: LibraryState, decades: List<Int>, actions: Lib
         state.allTracks.mapNotNull { it.year?.takeIf { y -> y in 1900..2100 }?.let { y -> y / 10 * 10 } }.groupingBy { it }.eachCount()
     }
     val top = ordered.maxByOrNull { counts[it] ?: 0 }
-    val line = c.outline
-    val circle = 44.dp
+    val max = (ordered.maxOfOrNull { counts[it] ?: 0 } ?: 0).coerceAtLeast(1)
+    // Redesign: as décadas viram um minigráfico; a altura de cada barra é a quantidade de músicas.
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Heading(stringResource(R.string.browse_decades))
         Row(
             Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .drawBehind {
-                    val y = 2.dp.toPx() + circle.toPx() / 2f
-                    val inset = 36.dp.toPx()
-                    if (size.width > inset * 2) {
-                        drawLine(line, Offset(inset, y), Offset(size.width - inset, y), strokeWidth = 2.dp.toPx())
-                    }
-                },
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.Bottom,
         ) {
             ordered.forEach { d ->
                 val name = res.getString(R.string.decade_label, if (d in 1900..1999) (d % 100).toString() else d.toString())
-                DecadeStop(
+                DecadeBar(
                     short = "%02d".format(d % 100),
                     count = counts[d] ?: 0,
+                    fraction = (counts[d] ?: 0).toFloat() / max,
                     highlighted = d == top,
                     description = name,
-                    circle = circle,
                     onClick = { actions.onOpenAuto("decada-$d") },
                 )
             }
@@ -390,37 +418,33 @@ private fun DecadeTimeline(state: LibraryState, decades: List<Int>, actions: Lib
 }
 
 @Composable
-private fun DecadeStop(short: String, count: Int, highlighted: Boolean, description: String, circle: Dp, onClick: () -> Unit) {
+private fun DecadeBar(short: String, count: Int, fraction: Float, highlighted: Boolean, description: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     Column(
         Modifier
-            .width(72.dp)
+            .width(56.dp)
+            .clip(RoundedCornerShape(12.dp))
             .clickable(role = Role.Button, onClick = onClick)
             .semantics(mergeDescendants = true) { contentDescription = description }
-            .padding(vertical = 2.dp),
+            .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(
-            Modifier
-                .size(circle)
-                .clip(CircleShape)
-                .background(c.background)
-                .border(2.dp, if (highlighted) c.accent else c.outline, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(short, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
-        }
-        // Só o número, centralizado e tabular: "N músicas" não cabia na largura fixa e desalinhava a linha.
         Text(
             String.format(java.util.Locale.getDefault(), "%,d", count),
             style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.sp),
             fontWeight = FontWeight.Bold,
             color = c.textSecondary,
             maxLines = 1,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
         )
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(6.dp + 104.dp * fraction.coerceIn(0f, 1f))
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (highlighted) c.accent else c.surfaceHigh),
+        )
+        Text(short, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
     }
 }
 
@@ -430,22 +454,12 @@ private fun DecadeStop(short: String, count: Int, highlighted: Boolean, descript
 @Composable
 private fun GenericTagsCard(generic: List<Genre>, actions: LibraryActions) {
     val c = SonivellTheme.colors
-    val dash = c.outline
     val total = remember(generic) { generic.flatMap { it.tracks }.distinctBy { it.id }.size }
     Column(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.dp))
-            .drawBehind {
-                val w = 1.dp.toPx()
-                drawRoundRect(
-                    color = dash,
-                    topLeft = Offset(w / 2, w / 2),
-                    size = Size(size.width - w, size.height - w),
-                    cornerRadius = CornerRadius(22.dp.toPx()),
-                    style = Stroke(width = w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx()))),
-                )
-            }
+            .background(c.surface)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -459,7 +473,7 @@ private fun GenericTagsCard(generic: List<Genre>, actions: LibraryActions) {
                     // Botão secundário (contorno), não um quarto estilo de botão.
                     .heightIn(min = 44.dp)
                     .clip(RoundedCornerShape(999.dp))
-                    .border(1.dp, c.track, RoundedCornerShape(999.dp))
+                    .background(c.surfaceHigh)
                     .clickable(role = Role.Button, onClick = actions.onOpenOrganize)
                     .padding(horizontal = 18.dp),
                 contentAlignment = Alignment.Center,
@@ -478,7 +492,8 @@ private fun GenericTagsCard(generic: List<Genre>, actions: LibraryActions) {
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(g.name.trim(), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = c.textTertiary)
+                    // Valor bruto da tag, entre aspas e em fonte mono: fica claro que é o texto do arquivo.
+                    Text("\u201C" + g.name.trim() + "\u201D", style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace), color = c.textTertiary)
                 }
             }
         }

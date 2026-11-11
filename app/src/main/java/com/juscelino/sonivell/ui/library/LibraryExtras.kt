@@ -147,7 +147,6 @@ internal fun MoodRow(onPick: (Mood) -> Unit, modifier: Modifier = Modifier, cont
                     .clip(RoundedCornerShape(18.dp))
                     // Neutro: a cor fica para as capas, ação e estado (proposta visual).
                     .background(SonivellTheme.colors.surface)
-                    .border(1.dp, SonivellTheme.colors.outline, RoundedCornerShape(18.dp))
                     .clickable(role = Role.Button, onClickLabel = label) { onPick(mood) }
                     .padding(horizontal = 18.dp, vertical = 16.dp),
                 contentAlignment = Alignment.CenterStart,
