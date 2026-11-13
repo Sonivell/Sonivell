@@ -244,3 +244,22 @@ func offset(gtx C, x, y int, w layout.Widget) D {
 	defer op.Offset(image.Pt(x, y)).Push(gtx.Ops).Pop()
 	return w(gtx)
 }
+
+// minHeight desenha w centralizado na vertical numa altura mínima de h (sem esticar os filhos:
+// num Flex, a altura mínima passada adiante deixaria os textos colados no topo).
+func minHeight(gtx C, h unit.Dp, w layout.Widget) D {
+	min := gtx.Dp(h)
+	gtx.Constraints.Min.Y = 0
+	m := op.Record(gtx.Ops)
+	d := w(gtx)
+	call := m.Stop()
+	if d.Size.Y >= min {
+		call.Add(gtx.Ops)
+		return d
+	}
+	st := op.Offset(image.Pt(0, (min-d.Size.Y)/2)).Push(gtx.Ops)
+	call.Add(gtx.Ops)
+	st.Pop()
+	d.Size.Y = min
+	return d
+}

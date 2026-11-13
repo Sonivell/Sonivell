@@ -94,113 +94,114 @@ func (u *UI) playerBar(gtx C, st player.State) D {
 		paint.FillShape(gtx.Ops, color.NRGBA{R: 255, G: 255, B: 255, A: 0x14}, clip.Stroke{Path: rr.Path(gtx.Ops), Width: float32(gtx.Dp(1))}.Op())
 		return D{Size: sz}
 	}, func(gtx C) D {
-		gtx.Constraints.Min.Y = gtx.Dp(88)
-		return layout.Inset{Top: 12, Bottom: 12, Left: 20, Right: 20}.Layout(gtx, func(gtx C) D {
-			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-				// esquerda: capa + título
-				layout.Flexed(1, func(gtx C) D {
-					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return u.openNow.Layout(gtx, func(gtx C) D {
-								pointer.CursorPointer.Add(gtx.Ops)
-								return u.coverArt(gtx, t, 58, 16)
-							})
-						}),
-						layout.Rigid(layout.Spacer{Width: 14}.Layout),
-						layout.Flexed(1, func(gtx C) D {
-							if t == nil {
-								return u.label(i18n.T("nothing_playing"), 14, font.Bold, u.pal.Text2).Layout(gtx)
-							}
-							return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-								layout.Rigid(u.label(t.Title, 15, font.ExtraBold, u.pal.Text).Layout),
-								layout.Rigid(u.label(t.DisplayArtist(), 13, font.Medium, u.pal.Text2).Layout),
-							)
-						}),
-						layout.Rigid(func(gtx C) D {
-							if t == nil {
-								return D{}
-							}
-							return u.iconButton(gtx, &u.likeBtn, IcHeart, 44, 20, u.pal.Text3, u.ctl.IsFavorite(t.ID))
-						}),
-					)
-				}),
-				// centro: controles + posição
-				layout.Flexed(1.3, func(gtx C) D {
-					return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-								layout.Rigid(func(gtx C) D {
-									return u.iconButton(gtx, &u.shufBtn, IcShuffle, 40, 20, u.pal.Text3, st.Shuffle)
-								}),
-								layout.Rigid(layout.Spacer{Width: 8}.Layout),
-								layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.prevBtn, IcSkipBack, 44, 22, u.pal.Text, false) }),
-								layout.Rigid(layout.Spacer{Width: 8}.Layout),
-								layout.Rigid(func(gtx C) D { return u.playButton(gtx, &u.playBtn, st.Playing, 50, u.pal.Accent, u.pal.OnAccent) }),
-								layout.Rigid(layout.Spacer{Width: 8}.Layout),
-								layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.nextBtn, IcSkipForward, 44, 22, u.pal.Text, false) }),
-								layout.Rigid(layout.Spacer{Width: 8}.Layout),
-								layout.Rigid(func(gtx C) D {
-									return u.iconButton(gtx, &u.repBtn, u.repeatIcon(st.Repeat), 40, 20, u.pal.Text3, st.Repeat != player.RepeatOff)
-								}),
-							)
-						}),
-						layout.Rigid(layout.Spacer{Height: 2}.Layout),
-						layout.Rigid(func(gtx C) D {
-							if gtx.Constraints.Max.X > gtx.Dp(620) {
-								gtx.Constraints.Max.X = gtx.Dp(620)
-							}
-							var dur int64
-							if t != nil {
-								dur = t.DurationMs
-							}
-							return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-								layout.Rigid(u.timeLabel(u.ctl.PositionMs(), u.pal.Text2)),
-								layout.Rigid(layout.Spacer{Width: 10}.Layout),
-								layout.Flexed(1, func(gtx C) D { return u.seekBar(gtx, st, u.pal.Outline, u.pal.Accent) }),
-								layout.Rigid(layout.Spacer{Width: 10}.Layout),
-								layout.Rigid(u.timeLabel(dur, u.pal.Text2)),
-							)
-						}),
-					)
-				}),
-				// direita: formato, volume, fila, compacto
-				layout.Flexed(1, func(gtx C) D {
-					return layout.E.Layout(gtx, func(gtx C) D {
+		return minHeight(gtx, 88, func(gtx C) D {
+			return layout.Inset{Top: 12, Bottom: 12, Left: 20, Right: 20}.Layout(gtx, func(gtx C) D {
+				return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+					// esquerda: capa + título
+					layout.Flexed(1, func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
-								if t == nil || t.Format == "" {
+								return u.openNow.Layout(gtx, func(gtx C) D {
+									pointer.CursorPointer.Add(gtx.Ops)
+									return u.coverArt(gtx, t, 58, 16)
+								})
+							}),
+							layout.Rigid(layout.Spacer{Width: 14}.Layout),
+							layout.Flexed(1, func(gtx C) D {
+								if t == nil {
+									return u.label(i18n.T("nothing_playing"), 14, font.Bold, u.pal.Text2).Layout(gtx)
+								}
+								return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+									layout.Rigid(u.label(t.Title, 15, font.ExtraBold, u.pal.Text).Layout),
+									layout.Rigid(u.label(t.DisplayArtist(), 13, font.Medium, u.pal.Text2).Layout),
+								)
+							}),
+							layout.Rigid(func(gtx C) D {
+								if t == nil {
 									return D{}
 								}
-								return layout.Inset{Right: 12}.Layout(gtx, func(gtx C) D { return u.pill(gtx, t.Format, u.pal.Outline, u.pal.Text3) })
-							}),
-							layout.Rigid(func(gtx C) D {
-								ic := IcSpeakerHigh
-								if st.Volume == 0 {
-									ic = IcSpeakerX
-								} else if st.Volume < 0.4 {
-									ic = IcSpeakerLow
-								}
-								return drawIcon(gtx, ic, 20, u.pal.Text3, false)
-							}),
-							layout.Rigid(layout.Spacer{Width: 8}.Layout),
-							layout.Rigid(func(gtx C) D {
-								gtx.Constraints.Max.X = gtx.Dp(96)
-								gtx.Constraints.Min.X = gtx.Constraints.Max.X
-								d, changed := u.progressBar(gtx, &u.volume, float32(st.Volume), 5, u.pal.Outline, u.pal.Text)
-								if changed {
-									u.ctl.SetVolume(float64(u.volume.Value))
-								}
-								return d
-							}),
-							layout.Rigid(layout.Spacer{Width: 8}.Layout),
-							layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.queueBtn, IcQueue, 44, 20, u.pal.Text3, u.showQueue) }),
-							layout.Rigid(func(gtx C) D {
-								return u.iconButton(gtx, &u.compactBtn, IcPictureInPicture, 44, 20, u.pal.Text3, false)
+								return u.iconButton(gtx, &u.likeBtn, IcHeart, 44, 20, u.pal.Text3, u.ctl.IsFavorite(t.ID))
 							}),
 						)
-					})
-				}),
-			)
+					}),
+					// centro: controles + posição
+					layout.Flexed(1.3, func(gtx C) D {
+						return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+									layout.Rigid(func(gtx C) D {
+										return u.iconButton(gtx, &u.shufBtn, IcShuffle, 40, 20, u.pal.Text3, st.Shuffle)
+									}),
+									layout.Rigid(layout.Spacer{Width: 8}.Layout),
+									layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.prevBtn, IcSkipBack, 44, 22, u.pal.Text, false) }),
+									layout.Rigid(layout.Spacer{Width: 8}.Layout),
+									layout.Rigid(func(gtx C) D { return u.playButton(gtx, &u.playBtn, st.Playing, 50, u.pal.Accent, u.pal.OnAccent) }),
+									layout.Rigid(layout.Spacer{Width: 8}.Layout),
+									layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.nextBtn, IcSkipForward, 44, 22, u.pal.Text, false) }),
+									layout.Rigid(layout.Spacer{Width: 8}.Layout),
+									layout.Rigid(func(gtx C) D {
+										return u.iconButton(gtx, &u.repBtn, u.repeatIcon(st.Repeat), 40, 20, u.pal.Text3, st.Repeat != player.RepeatOff)
+									}),
+								)
+							}),
+							layout.Rigid(layout.Spacer{Height: 2}.Layout),
+							layout.Rigid(func(gtx C) D {
+								if gtx.Constraints.Max.X > gtx.Dp(620) {
+									gtx.Constraints.Max.X = gtx.Dp(620)
+								}
+								var dur int64
+								if t != nil {
+									dur = t.DurationMs
+								}
+								return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+									layout.Rigid(u.timeLabel(u.ctl.PositionMs(), u.pal.Text2)),
+									layout.Rigid(layout.Spacer{Width: 10}.Layout),
+									layout.Flexed(1, func(gtx C) D { return u.seekBar(gtx, st, u.pal.Outline, u.pal.Accent) }),
+									layout.Rigid(layout.Spacer{Width: 10}.Layout),
+									layout.Rigid(u.timeLabel(dur, u.pal.Text2)),
+								)
+							}),
+						)
+					}),
+					// direita: formato, volume, fila, compacto
+					layout.Flexed(1, func(gtx C) D {
+						return layout.E.Layout(gtx, func(gtx C) D {
+							return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+								layout.Rigid(func(gtx C) D {
+									if t == nil || t.Format == "" {
+										return D{}
+									}
+									return layout.Inset{Right: 12}.Layout(gtx, func(gtx C) D { return u.pill(gtx, t.Format, u.pal.Outline, u.pal.Text3) })
+								}),
+								layout.Rigid(func(gtx C) D {
+									ic := IcSpeakerHigh
+									if st.Volume == 0 {
+										ic = IcSpeakerX
+									} else if st.Volume < 0.4 {
+										ic = IcSpeakerLow
+									}
+									return drawIcon(gtx, ic, 20, u.pal.Text3, false)
+								}),
+								layout.Rigid(layout.Spacer{Width: 8}.Layout),
+								layout.Rigid(func(gtx C) D {
+									gtx.Constraints.Max.X = gtx.Dp(96)
+									gtx.Constraints.Min.X = gtx.Constraints.Max.X
+									d, changed := u.progressBar(gtx, &u.volume, float32(st.Volume), 5, u.pal.Outline, u.pal.Text)
+									if changed {
+										u.ctl.SetVolume(float64(u.volume.Value))
+									}
+									return d
+								}),
+								layout.Rigid(layout.Spacer{Width: 8}.Layout),
+								layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.queueBtn, IcQueue, 44, 20, u.pal.Text3, u.showQueue) }),
+								layout.Rigid(func(gtx C) D {
+									return u.iconButton(gtx, &u.compactBtn, IcPictureInPicture, 44, 20, u.pal.Text3, false)
+								}),
+							)
+						})
+					}),
+				)
+			})
 		})
 	})
 }
@@ -288,7 +289,7 @@ func glow(gtx C, cx, cy, radius int, col color.NRGBA, strength float32) {
 
 // vidroColors deriva do tom da capa o fundo e o texto secundário do player Vidro.
 func vidroColors(tone color.NRGBA) (bg, soft color.NRGBA) {
-	bg = mix(tone, color.NRGBA{A: 255}, 0.78)
+	bg = mix(tone, color.NRGBA{A: 255}, 0.72)
 	soft = mix(tone, color.NRGBA{R: 255, G: 255, B: 255, A: 255}, 0.62)
 	return
 }
@@ -304,7 +305,7 @@ func (u *UI) nowPlayingView(gtx C, st player.State) D {
 	bg, soft := vidroColors(tone)
 	sz := gtx.Constraints.Max
 	paint.FillShape(gtx.Ops, bg, clip.Rect{Max: sz}.Op())
-	glow(gtx, sz.X/5, sz.Y/6, sz.Y*2/3, tone, 0.5)
+	glow(gtx, sz.X/5, sz.Y/6, sz.Y*3/4, tone, 0.6)
 	glow(gtx, sz.X*9/10, sz.Y, sz.Y*2/3, mix(tone, rgb(0x1C6E8C), 0.5), 0.4)
 
 	white := rgb(0xF2F3F5)
@@ -430,13 +431,14 @@ func (u *UI) moreMenu(gtx C, white color.NRGBA) {
 							bg = rgb(0x2A2D33)
 						}
 						return surface(gtx, bg, 12, func(gtx C) D {
-							gtx.Constraints.Min.Y = gtx.Dp(50)
-							return layout.Inset{Left: 12, Right: 12}.Layout(gtx, func(gtx C) D {
-								return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-									layout.Rigid(func(gtx C) D { return drawIcon(gtx, ic, 20, white, false) }),
-									layout.Rigid(layout.Spacer{Width: 12}.Layout),
-									layout.Flexed(1, func(gtx C) D { return layout.W.Layout(gtx, u.label(txt, 14, font.Bold, white).Layout) }),
-								)
+							return minHeight(gtx, 50, func(gtx C) D {
+								return layout.Inset{Left: 12, Right: 12}.Layout(gtx, func(gtx C) D {
+									return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+										layout.Rigid(func(gtx C) D { return drawIcon(gtx, ic, 20, white, false) }),
+										layout.Rigid(layout.Spacer{Width: 12}.Layout),
+										layout.Flexed(1, func(gtx C) D { return layout.W.Layout(gtx, u.label(txt, 14, font.Bold, white).Layout) }),
+									)
+								})
 							})
 						})
 					})

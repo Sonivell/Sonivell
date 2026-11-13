@@ -321,7 +321,6 @@ func (u *UI) sidebar(gtx C) D {
 			return layout.Inset{Bottom: 4}.Layout(gtx, func(gtx C) D {
 				return btn.Layout(gtx, func(gtx C) D {
 					gtx.Constraints.Min.X = gtx.Constraints.Max.X
-					gtx.Constraints.Min.Y = gtx.Dp(44)
 					bg := u.pal.SurfaceLow
 					switch {
 					case sel:
@@ -330,32 +329,33 @@ func (u *UI) sidebar(gtx C) D {
 						bg = u.pal.Surface
 					}
 					return surface(gtx, bg, 14, func(gtx C) D {
-						gtx.Constraints.Min.Y = gtx.Dp(44)
-						return layout.Inset{Left: 14, Right: 14}.Layout(gtx, func(gtx C) D {
-							return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-								layout.Rigid(func(gtx C) D {
-									if ic == nil {
+						return minHeight(gtx, 44, func(gtx C) D {
+							return layout.Inset{Left: 14, Right: 14}.Layout(gtx, func(gtx C) D {
+								return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+									layout.Rigid(func(gtx C) D {
+										if ic == nil {
+											c := u.pal.Text3
+											if sel {
+												c = u.pal.Accent
+											}
+											return drawWave(gtx, 20, c, 2.2)
+										}
 										c := u.pal.Text3
 										if sel {
-											c = u.pal.Accent
+											c = u.pal.Text
 										}
-										return drawWave(gtx, 20, c, 2.2)
-									}
-									c := u.pal.Text3
-									if sel {
-										c = u.pal.Text
-									}
-									return drawIcon(gtx, ic, 20, c, false)
-								}),
-								layout.Rigid(layout.Spacer{Width: 12}.Layout),
-								layout.Flexed(1, func(gtx C) D {
-									c, wgt := u.pal.Text3, font.SemiBold
-									if sel {
-										c, wgt = u.pal.Text, font.Bold
-									}
-									return layout.W.Layout(gtx, u.label(txt, 14, wgt, c).Layout)
-								}),
-							)
+										return drawIcon(gtx, ic, 20, c, false)
+									}),
+									layout.Rigid(layout.Spacer{Width: 12}.Layout),
+									layout.Flexed(1, func(gtx C) D {
+										c, wgt := u.pal.Text3, font.SemiBold
+										if sel {
+											c, wgt = u.pal.Text, font.Bold
+										}
+										return layout.W.Layout(gtx, u.label(txt, 14, wgt, c).Layout)
+									}),
+								)
+							})
 						})
 					})
 				})
@@ -393,27 +393,28 @@ func (u *UI) searchBox(gtx C) D {
 	}
 	gtx.Constraints.Min.X = gtx.Constraints.Max.X
 	return surface(gtx, u.pal.Surface, 14, func(gtx C) D {
-		gtx.Constraints.Min.Y = gtx.Dp(44)
-		return layout.Inset{Left: 14, Right: 8}.Layout(gtx, func(gtx C) D {
-			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-				layout.Rigid(func(gtx C) D { return drawIcon(gtx, IcMagnifyingGlass, 18, u.pal.Text2, false) }),
-				layout.Rigid(layout.Spacer{Width: 10}.Layout),
-				layout.Flexed(1, func(gtx C) D {
-					e := material.Editor(u.th, &u.search, i18n.T("search_hint"))
-					e.Font = font.Font{Typeface: typeface, Weight: font.Medium}
-					e.TextSize = 13
-					e.Color = u.pal.Text
-					e.HintColor = u.pal.Text2
-					e.SelectionColor = withAlpha(u.pal.Accent, 0x60)
-					return e.Layout(gtx)
-				}),
-				layout.Rigid(func(gtx C) D {
-					if u.search.Text() == "" {
-						return D{}
-					}
-					return u.iconButton(gtx, &u.clearSrch, IcX, 28, 14, u.pal.Text2, false)
-				}),
-			)
+		return minHeight(gtx, 44, func(gtx C) D {
+			return layout.Inset{Left: 14, Right: 8}.Layout(gtx, func(gtx C) D {
+				return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+					layout.Rigid(func(gtx C) D { return drawIcon(gtx, IcMagnifyingGlass, 18, u.pal.Text2, false) }),
+					layout.Rigid(layout.Spacer{Width: 10}.Layout),
+					layout.Flexed(1, func(gtx C) D {
+						e := material.Editor(u.th, &u.search, i18n.T("search_hint"))
+						e.Font = font.Font{Typeface: typeface, Weight: font.Medium}
+						e.TextSize = 13
+						e.Color = u.pal.Text
+						e.HintColor = u.pal.Text2
+						e.SelectionColor = withAlpha(u.pal.Accent, 0x60)
+						return e.Layout(gtx)
+					}),
+					layout.Rigid(func(gtx C) D {
+						if u.search.Text() == "" {
+							return D{}
+						}
+						return u.iconButton(gtx, &u.clearSrch, IcX, 28, 14, u.pal.Text2, false)
+					}),
+				)
+			})
 		})
 	})
 }

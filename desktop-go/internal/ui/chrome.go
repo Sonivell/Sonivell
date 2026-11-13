@@ -116,22 +116,24 @@ func (u *UI) titleBar(gtx C) D {
 	paint.FillShape(gtx.Ops, u.pal.Surface, clip.Rect{Min: image.Pt(0, h-gtx.Dp(1)), Max: size}.Op())
 	u.dragArea(gtx, size)
 
-	return layout.Inset{Left: 18, Right: 14}.Layout(gtx, func(gtx C) D {
-		return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-			layout.Rigid(func(gtx C) D {
-				return box(gtx, 20, 20, func(gtx C) D {
-					fillRRect(gtx, u.pal.SurfaceHigh, 6)
-					return layout.Center.Layout(gtx, func(gtx C) D { return drawWave(gtx, 16, u.pal.Accent, 2.4) })
-				})
-			}),
-			layout.Rigid(layout.Spacer{Width: 10}.Layout),
-			layout.Rigid(u.label(i18n.T("app_name"), 13, font.Bold, u.pal.Text).Layout),
-			layout.Rigid(layout.Spacer{Width: 6}.Layout),
-			layout.Flexed(1, u.label("· "+i18n.T("app_tagline"), 12, font.Medium, u.pal.Text2).Layout),
-			layout.Rigid(func(gtx C) D {
-				return u.windowButtons(gtx, 28, 12, u.pal.Surface, u.pal.SurfaceHigh, u.pal.Text2, true)
-			}),
-		)
+	return minHeight(gtx, 44, func(gtx C) D {
+		return layout.Inset{Left: 18, Right: 14}.Layout(gtx, func(gtx C) D {
+			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+				layout.Rigid(func(gtx C) D {
+					return box(gtx, 20, 20, func(gtx C) D {
+						fillRRect(gtx, u.pal.SurfaceHigh, 6)
+						return layout.Center.Layout(gtx, func(gtx C) D { return drawWave(gtx, 16, u.pal.Accent, 2.4) })
+					})
+				}),
+				layout.Rigid(layout.Spacer{Width: 10}.Layout),
+				layout.Rigid(u.label(i18n.T("app_name"), 13, font.Bold, u.pal.Text).Layout),
+				layout.Rigid(layout.Spacer{Width: 6}.Layout),
+				layout.Flexed(1, u.label("· "+i18n.T("app_tagline"), 12, font.Medium, u.pal.Text2).Layout),
+				layout.Rigid(func(gtx C) D {
+					return u.windowButtons(gtx, 28, 12, u.pal.Surface, u.pal.SurfaceHigh, u.pal.Text2, true)
+				}),
+			)
+		})
 	})
 }
 
@@ -213,16 +215,18 @@ func (u *UI) compactBar(gtx C) D {
 	u.dragArea(gtx, size)
 	glassBg := color.NRGBA{R: 255, G: 255, B: 255, A: 0x14}
 	glassHover := color.NRGBA{R: 255, G: 255, B: 255, A: 0x28}
-	return layout.Inset{Left: 14, Right: 10}.Layout(gtx, func(gtx C) D {
-		return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-			layout.Flexed(1, u.label(i18n.T("app_name"), 12, font.Bold, u.pal.Text2).Layout),
-			layout.Rigid(func(gtx C) D {
-				return u.roundButton(gtx, &u.compactBtn, IcArrowsOutSimple, 32, 14, glassBg, glassHover, u.pal.Text)
-			}),
-			layout.Rigid(layout.Spacer{Width: 4}.Layout),
-			layout.Rigid(func(gtx C) D {
-				return u.roundButton(gtx, &u.chrome.closeBtn, IcX, 32, 12, glassBg, rgb(0xE5484D), u.pal.Text)
-			}),
-		)
+	return minHeight(gtx, 40, func(gtx C) D {
+		return layout.Inset{Left: 14, Right: 10}.Layout(gtx, func(gtx C) D {
+			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+				layout.Flexed(1, u.label(i18n.T("app_name"), 12, font.Bold, u.pal.Text2).Layout),
+				layout.Rigid(func(gtx C) D {
+					return u.roundButton(gtx, &u.compactBtn, IcArrowsOutSimple, 32, 14, glassBg, glassHover, u.pal.Text)
+				}),
+				layout.Rigid(layout.Spacer{Width: 4}.Layout),
+				layout.Rigid(func(gtx C) D {
+					return u.roundButton(gtx, &u.chrome.closeBtn, IcX, 32, 12, glassBg, rgb(0xE5484D), u.pal.Text)
+				}),
+			)
+		})
 	})
 }

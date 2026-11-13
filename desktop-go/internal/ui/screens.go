@@ -254,17 +254,18 @@ func (u *UI) homeItems(gtx C, lib *core.Library, st player.State) []item {
 					layout.Rigid(func(gtx C) D {
 						txt := i18n.T("library_count", thousands(len(lib.Tracks)), thousands(len(lib.Albums)))
 						return surface(gtx, u.pal.Surface, 16, func(gtx C) D {
-							gtx.Constraints.Min.Y = gtx.Dp(32)
-							return layout.Inset{Left: 14, Right: 14}.Layout(gtx, func(gtx C) D {
-								return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-									layout.Rigid(func(gtx C) D {
-										return box(gtx, 8, 8, func(gtx C) D { return fillRRect(gtx, u.pal.Accent, 4) })
-									}),
-									layout.Rigid(layout.Spacer{Width: 8}.Layout),
-									layout.Rigid(func(gtx C) D {
-										return layout.W.Layout(gtx, u.label(txt, 12, font.Bold, u.pal.Text3).Layout)
-									}),
-								)
+							return minHeight(gtx, 32, func(gtx C) D {
+								return layout.Inset{Left: 14, Right: 14}.Layout(gtx, func(gtx C) D {
+									return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+										layout.Rigid(func(gtx C) D {
+											return box(gtx, 8, 8, func(gtx C) D { return fillRRect(gtx, u.pal.Accent, 4) })
+										}),
+										layout.Rigid(layout.Spacer{Width: 8}.Layout),
+										layout.Rigid(func(gtx C) D {
+											return layout.W.Layout(gtx, u.label(txt, 12, font.Bold, u.pal.Text3).Layout)
+										}),
+									)
+								})
 							})
 						})
 					}),
@@ -291,12 +292,25 @@ func (u *UI) homeItems(gtx C, lib *core.Library, st player.State) []item {
 		},
 	}
 
-	// Tocadas recentemente (sem histórico ainda: as adicionadas por último)
+	// Tocadas recentemente; enquanto o histórico tem menos de 6, completa com as adicionadas por último.
 	recent := u.recentlyPlayed(lib, 6)
 	title := i18n.T("recently_played")
 	if len(recent) == 0 {
-		recent = lib.RecentlyAdded(6)
 		title = i18n.T("recently_added")
+	}
+	if len(recent) < 6 {
+		seen := map[uint64]bool{}
+		for _, t := range recent {
+			seen[t.ID] = true
+		}
+		for _, t := range lib.RecentlyAdded(12) {
+			if len(recent) == 6 {
+				break
+			}
+			if !seen[t.ID] {
+				recent = append(recent, t)
+			}
+		}
 	}
 	items = append(items, func(gtx C) D {
 		return layout.Inset{Bottom: 14}.Layout(gtx, func(gtx C) D {
