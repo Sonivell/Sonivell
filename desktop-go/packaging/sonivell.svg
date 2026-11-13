@@ -1,0 +1,9 @@
+<!-- Ícone "Onda plana" do Sonivell: uma onda lima sobre grafite, sem gradiente, brilho ou sombra.
+     Referência vetorial: os PNGs (desktop/packaging/sonivell.png, desktop/src/main/resources/icon.png,
+     o ícone da Play e os mipmaps do Android) são gerados por tools/gen_app_icons.py. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 96 96">
+  <g transform="translate(2.4 2.4) scale(0.95)">
+    <rect width="96" height="96" rx="24" fill="#0E0F12"/>
+    <path d="M20,48C32,22 44,22 48,48C52,74 64,74 76,48" fill="none" stroke="#C6F24E" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

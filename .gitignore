@@ -10,3 +10,4 @@
 .cxx/
 *.apk
 *.aab
+/desktop-go/build/

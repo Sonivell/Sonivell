@@ -1,0 +1,116 @@
+name: Build Sonivell GO (.deb)
+
+# Sonivell GO: a versão Linux reescrita em Go (pasta desktop-go/). Protótipo, em paralelo ao
+# desktop em Kotlin (desktop.yml), que continua sendo o oficial por enquanto.
+on:
+  push:
+    branches: [ main, 'desktop-go/**' ]
+    paths:
+      - 'desktop-go/**'
+      - 'tools/desktop-go-*.sh'
+      - 'tools/gen_phosphor_go.py'
+      - 'version.properties'
+      - '.github/workflows/desktop-go.yml'
+  pull_request:
+    paths:
+      - 'desktop-go/**'
+      - 'tools/desktop-go-*.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deb:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: desktop-go/go.mod
+          cache: false
+
+      - name: Dependências de build (Gio, ALSA) e de teste (ffmpeg, Xvfb)
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            gcc pkg-config dpkg-dev fakeroot \
+            libwayland-dev libx11-dev libx11-xcb-dev libxkbcommon-x11-dev libgles2-mesa-dev libegl1-mesa-dev \
+            libffi-dev libxcursor-dev libxfixes-dev libvulkan-dev libasound2-dev \
+            ffmpeg xvfb xdotool imagemagick libgl1-mesa-dri libegl-mesa0
+
+      - name: Módulos Go
+        working-directory: desktop-go
+        run: |
+          if [ -f go.sum ]; then
+            go mod verify
+          else
+            # Primeiro build: o go.sum ainda não existe no repositório. Gera e guarda como artefato.
+            go mod tidy
+            echo "::warning::desktop-go/go.sum gerado no CI; baixe o artefato sonivell-go-modules e faça commit."
+          fi
+          mkdir -p ../modules && cp go.mod go.sum ../modules/
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: sonivell-go-modules
+          path: modules/
+
+      - name: Verificação (gofmt, vet, testes)
+        working-directory: desktop-go
+        run: |
+          set -o pipefail
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then echo "::error::sem gofmt: $unformatted"; exit 1; fi
+          go vet ./... 2>&1 | tee ../vet.log
+          go test ./... 2>&1 | tee ../test.log
+
+      - name: Gerar o .deb e o AppImage
+        run: |
+          set -o pipefail
+          tools/desktop-go-package.sh 2>&1 | tee package.log || {
+            tail -n 40 package.log | while IFS= read -r line; do echo "::error::${line}"; done
+            exit 1
+          }
+          mkdir -p dist && cp desktop-go/build/*.deb desktop-go/build/*.AppImage dist/
+          grep -E "^(binário|\.deb|AppImage):" package.log | while IFS= read -r line; do echo "::notice::${line}"; done
+
+      - name: Instalar o .deb e tirar capturas (Xvfb)
+        continue-on-error: true
+        run: |
+          mkdir -p screenshots
+          {
+            set -x
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ./dist/*.deb
+            dpkg -L sonivell-go
+            bash tools/desktop-go-screenshot.sh /usr/bin/sonivell-go "$GITHUB_WORKSPACE/screenshots"
+          } > screenshots/ci.log 2>&1
+          echo "rc=$?" >> screenshots/ci.log
+          cat screenshots/startup.txt 2>/dev/null | while IFS= read -r line; do echo "::notice::${line}"; done
+          tail -n 30 screenshots/ci.log
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: sonivell-go-deb
+          path: dist/*.deb
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: sonivell-go-appimage
+          path: dist/*.AppImage
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: sonivell-go-screenshots
+          path: |
+            screenshots/
+            vet.log
+            test.log
+          if-no-files-found: ignore
