@@ -17,9 +17,19 @@ VERSION=$(grep -oP '^versionName=\K\S+' version.properties)
 OUT="$ROOT/desktop-go/build"
 rm -rf "$OUT" && mkdir -p "$OUT"
 
-# 1. O binário (um só arquivo, sem JVM).
-(cd desktop-go && CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -X main.version=$VERSION" -o "$OUT/sonivell-go" .)
+# 1. O binário (um só arquivo, sem JVM). Sempre para x86-64 básico (v1), para rodar em
+#    processadores antigos: tanto o Go (GOAMD64) quanto o C do cgo (-march=x86-64).
+export GOAMD64=v1 CGO_ENABLED=1
+export CGO_CFLAGS="-O2 -march=x86-64 -mtune=generic"
+(cd desktop-go && go build -trimpath -ldflags "-s -w -X main.version=$VERSION" -o "$OUT/sonivell-go" .)
 "$OUT/sonivell-go" --version
+# O glibc recusa abrir binários marcados com um nível de ISA acima do processador
+# ("CPU ISA level is lower than required"). Confere que ficou no nível básico.
+readelf -n "$OUT/sonivell-go" | grep -i "ISA" || true
+if readelf -n "$OUT/sonivell-go" | grep -qiE "ISA needed: .*x86-64-v[234]"; then
+  echo "ERRO: o binário exige um nível de ISA acima do x86-64 básico" >&2
+  exit 1
+fi
 echo "binário: $(du -h "$OUT/sonivell-go" | cut -f1)"
 
 DESKTOP_ENTRY="[Desktop Entry]
