@@ -38,6 +38,8 @@ make 08.mp3 "Chuva de Sal" "Sal Grosso" "Sal Grosso" Eletrônica 2022 3 440 salg
 make 09.flac "Noites de Vidro" "Marina Ruído" "Vidro e Sal" Pop 2020 1 494 vidro flac
 make 10.mp3 "Vidro e Sal" "Marina Ruído" "Vidro e Sal" Pop 2020 2 523 vidro mp3
 make 11.mp3 "Janela Molhada" "Marina Ruído" "Vidro e Sal" Pop 2020 3 587 vidro mp3
+make 12.flac "Neblina" "Rio Acima" "Rio Acima" Jazz 1998 3 262 rioacima flac
+printf '#EXTM3U\n#PLAYLIST:Estrada\n06.flac\n01.flac\n09.flac\n04.mp3\n' > "$HOME/Music/estrada.m3u8"
 
 export LANG=pt_BR.UTF-8 LIBGL_ALWAYS_SOFTWARE=1
 export DISPLAY=:99
@@ -60,7 +62,7 @@ sleep 4
 grep -E "VmRSS|VmHWM" /proc/$PID/status | tee -a "$OUT/startup.txt" || true
 import -window root -crop 1280x820+0+0 +repage "$OUT/0-primeira-abertura.png"
 # Clique de verdade: Biblioteca na barra lateral.
-xdotool mousemove 120 206 click 1; sleep 1.5
+xdotool mousemove 120 192 click 1; sleep 1.5
 import -window root -crop 1280x820+0+0 +repage "$OUT/0b-clique-biblioteca.png"
 kill $PID; wait $PID 2>/dev/null || true
 
@@ -77,5 +79,7 @@ shot album 3-album 1280 820
 shot nowplaying 4-player-vidro 1280 820
 shot queue 5-fila 1280 820
 shot settings 6-ajustes 1280 820
+shot genres 6b-generos 1280 820
+shot playlists 6c-playlists 1280 820
 shot compact 7-compacto 380 600
 ls -la "$OUT"

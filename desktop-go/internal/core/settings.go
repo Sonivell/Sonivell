@@ -9,12 +9,14 @@ import (
 
 // Settings são as preferências salvas em ~/.config/sonivell-go/settings.json.
 type Settings struct {
-	MusicDirs []string `json:"musicDirs"`
-	Volume    float64  `json:"volume"`
-	Accent    string   `json:"accent"` // Lima, Azul, Laranja, Lilas, Rosa, Turquesa
-	Shuffle   bool     `json:"shuffle"`
-	Repeat    int      `json:"repeat"` // 0 desligado, 1 todas, 2 uma
-	Favorites []uint64 `json:"favorites"`
+	MusicDirs []string       `json:"musicDirs"`
+	Volume    float64        `json:"volume"`
+	Accent    string         `json:"accent"` // Lima, Azul, Laranja, Lilas, Rosa, Turquesa
+	Shuffle   bool           `json:"shuffle"`
+	Repeat    int            `json:"repeat"` // 0 desligado, 1 todas, 2 uma
+	Favorites []uint64       `json:"favorites"`
+	Recent    []uint64       `json:"recent"` // tocadas recentemente, da mais nova para a mais antiga
+	Plays     map[uint64]int `json:"plays"`  // quantas vezes cada faixa começou a tocar
 }
 
 // Store guarda os ajustes e grava no disco a cada mudança.
@@ -47,6 +49,11 @@ func (st *Store) Get() Settings {
 	s := st.s
 	s.MusicDirs = append([]string(nil), st.s.MusicDirs...)
 	s.Favorites = append([]uint64(nil), st.s.Favorites...)
+	s.Recent = append([]uint64(nil), st.s.Recent...)
+	s.Plays = make(map[uint64]int, len(st.s.Plays))
+	for k, v := range st.s.Plays {
+		s.Plays[k] = v
+	}
 	return s
 }
 

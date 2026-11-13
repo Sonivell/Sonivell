@@ -32,7 +32,7 @@ func ToolsAvailable() bool {
 	return e1 == nil && e2 == nil
 }
 
-const cacheName = "library-v1.tsv"
+const cacheName = "library-v2.tsv"
 
 // Scan varre as pastas e devolve as faixas. Arquivos já conhecidos (mesma data de modificação)
 // vêm do índice em cache; só os novos passam pelo ffprobe. progress recebe (feitas, total).
@@ -129,9 +129,12 @@ type probeOut struct {
 		Tags     map[string]string `json:"tags"`
 	} `json:"format"`
 	Streams []struct {
-		CodecType string            `json:"codec_type"`
-		CodecName string            `json:"codec_name"`
-		Tags      map[string]string `json:"tags"`
+		CodecType     string            `json:"codec_type"`
+		CodecName     string            `json:"codec_name"`
+		SampleRate    string            `json:"sample_rate"`
+		BitsRaw       string            `json:"bits_per_raw_sample"`
+		BitsPerSample int               `json:"bits_per_sample"`
+		Tags          map[string]string `json:"tags"`
 	} `json:"streams"`
 }
 
@@ -145,7 +148,7 @@ func Probe(path string, mtime int64) (Track, bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), probeTimeout)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "ffprobe", "-v", "error",
-		"-show_entries", "format=duration,bit_rate:format_tags:stream=codec_type,codec_name:stream_tags",
+		"-show_entries", "format=duration,bit_rate:format_tags:stream=codec_type,codec_name,sample_rate,bits_per_raw_sample,bits_per_sample:stream_tags",
 		"-of", "json", path).Output()
 	if err != nil {
 		return Track{}, false
@@ -156,12 +159,18 @@ func Probe(path string, mtime int64) (Track, bool) {
 	}
 	tags := map[string]string{}
 	codec := ""
+	rate, bits := 0, 0
 	for _, s := range p.Streams {
 		if s.CodecType != "audio" {
 			continue
 		}
 		if codec == "" {
 			codec = s.CodecName
+			rate, _ = strconv.Atoi(s.SampleRate)
+			bits, _ = strconv.Atoi(s.BitsRaw)
+			if bits == 0 {
+				bits = s.BitsPerSample
+			}
 		}
 		for k, v := range s.Tags { // Ogg/Opus guardam as etiquetas no fluxo
 			tags[strings.ToLower(k)] = strings.TrimSpace(v)
@@ -201,7 +210,17 @@ func Probe(path string, mtime int64) (Track, bool) {
 		ID: TrackID(path), Path: path, Title: title, Artist: artist, AlbumArtist: albumArtist,
 		Album: tags["album"], Genre: tags["genre"], Year: year, TrackNo: trackNo,
 		DurationMs: int64(dur * 1000), Format: formatName(codec), BitrateKbps: int(br / 1000), AddedMs: mtime,
+		SampleRate: rate, BitDepth: losslessBits(codec, bits),
 	}, true
+}
+
+// losslessBits só vale para formatos sem perda (num MP3 o "bits" é do decodificador, não do arquivo).
+func losslessBits(codec string, bits int) int {
+	switch {
+	case codec == "flac", codec == "alac", codec == "wavpack", codec == "ape", strings.HasPrefix(codec, "pcm"):
+		return bits
+	}
+	return 0
 }
 
 func firstNonEmpty(a, b string) string {
@@ -265,9 +284,15 @@ func loadCache() map[string]cached {
 		dur, _ := strconv.ParseInt(c[9], 10, 64)
 		br, _ := strconv.Atoi(c[11])
 		added, _ := strconv.ParseInt(c[12], 10, 64)
+		var rate, bits int
+		if len(c) >= 15 {
+			rate, _ = strconv.Atoi(c[13])
+			bits, _ = strconv.Atoi(c[14])
+		}
 		out[c[0]] = cached{mt, Track{
 			ID: TrackID(c[0]), Path: c[0], Title: c[2], Artist: c[3], AlbumArtist: c[4], Album: c[5], Genre: c[6],
 			Year: year, TrackNo: no, DurationMs: dur, Format: c[10], BitrateKbps: br, AddedMs: added,
+			SampleRate: rate, BitDepth: bits,
 		}}
 	}
 	return out
@@ -289,6 +314,7 @@ func saveCache(tracks []Track, mtimes map[string]int64) {
 			t.Path, strconv.FormatInt(mtimes[t.Path], 10), t.Title, t.Artist, t.AlbumArtist, t.Album, t.Genre,
 			strconv.Itoa(t.Year), strconv.Itoa(t.TrackNo), strconv.FormatInt(t.DurationMs, 10), t.Format,
 			strconv.Itoa(t.BitrateKbps), strconv.FormatInt(t.AddedMs, 10),
+			strconv.Itoa(t.SampleRate), strconv.Itoa(t.BitDepth),
 		}
 		for i, s := range fields {
 			if i > 0 {

@@ -35,6 +35,7 @@ type State struct {
 	Volume  float64
 	Queue   []*core.Track // na ordem em que vão tocar, a partir da atual
 	Index   int
+	Source  string // de onde a fila veio ("Mix do dia", o nome do álbum…)
 }
 
 // Controller cuida da fila e manda o Output tocar.
@@ -50,6 +51,7 @@ type Controller struct {
 	repeat   Repeat
 	volume   float64
 	favs     map[uint64]bool
+	source   string
 	onChange []func()
 }
 
@@ -84,7 +86,7 @@ func (c *Controller) notify() {
 func (c *Controller) State() State {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	st := State{Playing: c.playing, Shuffle: c.shuffle, Repeat: c.repeat, Volume: c.volume}
+	st := State{Playing: c.playing, Shuffle: c.shuffle, Repeat: c.repeat, Volume: c.volume, Source: c.source}
 	if cur := c.currentLocked(); cur != nil {
 		st.Current = cur
 		for i := c.pos; i < len(c.order); i++ {
@@ -119,6 +121,44 @@ func (c *Controller) buildOrder(start int) {
 	}
 }
 
+// load manda o Output tocar e, se a faixa começou do zero, conta no histórico.
+func (c *Controller) load(t *core.Track, fromMs int64, play bool) {
+	c.out.Load(t.Path, fromMs, play)
+	if fromMs != 0 || !play {
+		return
+	}
+	id := t.ID
+	c.store.Update(func(s *core.Settings) {
+		recent := []uint64{id}
+		for _, r := range s.Recent {
+			if r != id && len(recent) < 60 {
+				recent = append(recent, r)
+			}
+		}
+		s.Recent = recent
+		if s.Plays == nil {
+			s.Plays = map[uint64]int{}
+		}
+		s.Plays[id]++
+	})
+}
+
+// PlayFrom toca a lista a partir de start, lembrando de onde ela veio.
+func (c *Controller) PlayFrom(source string, list []*core.Track, start int) {
+	c.mu.Lock()
+	c.source = source
+	c.mu.Unlock()
+	c.PlayList(list, start)
+}
+
+// PlayShuffledFrom é o PlayShuffled lembrando a origem.
+func (c *Controller) PlayShuffledFrom(source string, list []*core.Track) {
+	c.mu.Lock()
+	c.source = source
+	c.mu.Unlock()
+	c.PlayShuffled(list)
+}
+
 // PlayList toca a lista a partir de start.
 func (c *Controller) PlayList(list []*core.Track, start int) {
 	if len(list) == 0 {
@@ -133,7 +173,7 @@ func (c *Controller) PlayList(list []*core.Track, start int) {
 	c.playing = true
 	t := c.currentLocked()
 	c.mu.Unlock()
-	c.out.Load(t.Path, 0, true)
+	c.load(t, 0, true)
 	c.notify()
 }
 
@@ -181,7 +221,7 @@ func (c *Controller) advance(natural bool) {
 	if natural && c.repeat == RepeatOne {
 		t := c.currentLocked()
 		c.mu.Unlock()
-		c.out.Load(t.Path, 0, true)
+		c.load(t, 0, true)
 		c.notify()
 		return
 	}
@@ -192,7 +232,7 @@ func (c *Controller) advance(natural bool) {
 			c.pos = 0
 			t := c.currentLocked()
 			c.mu.Unlock()
-			c.out.Load(t.Path, 0, false)
+			c.load(t, 0, false)
 			c.notify()
 			return
 		}
@@ -202,7 +242,7 @@ func (c *Controller) advance(natural bool) {
 	c.playing = true
 	t := c.currentLocked()
 	c.mu.Unlock()
-	c.out.Load(t.Path, 0, true)
+	c.load(t, 0, true)
 	c.notify()
 }
 
@@ -224,7 +264,7 @@ func (c *Controller) Previous() {
 	c.playing = true
 	t := c.currentLocked()
 	c.mu.Unlock()
-	c.out.Load(t.Path, 0, true)
+	c.load(t, 0, true)
 	c.notify()
 }
 
@@ -239,7 +279,7 @@ func (c *Controller) JumpTo(i int) {
 	c.playing = true
 	t := c.currentLocked()
 	c.mu.Unlock()
-	c.out.Load(t.Path, 0, true)
+	c.load(t, 0, true)
 	c.notify()
 }
 
@@ -258,7 +298,7 @@ func (c *Controller) SeekTo(ms int64) {
 	if t.DurationMs > 0 && ms > t.DurationMs-500 {
 		ms = t.DurationMs - 500
 	}
-	c.out.Load(t.Path, ms, playing)
+	c.out.Load(t.Path, ms, playing) // buscar não conta como nova execução
 	c.notify()
 }
 

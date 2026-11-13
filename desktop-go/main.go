@@ -25,6 +25,7 @@ import (
 	"github.com/Sonivell/sonivell/desktop-go/internal/mpris"
 	"github.com/Sonivell/sonivell/desktop-go/internal/player"
 	"github.com/Sonivell/sonivell/desktop-go/internal/ui"
+	"github.com/Sonivell/sonivell/desktop-go/internal/winx"
 )
 
 // version vem do build (-ldflags "-X main.version=1.3.1").
@@ -69,7 +70,10 @@ func run() error {
 	store := core.LoadStore()
 
 	w := new(app.Window)
-	w.Option(app.Title("Sonivell GO"), app.Size(fullW, fullH), app.MinSize(360, 520))
+	// Sem a barra do sistema: o Sonivell GO desenha a sua (a do mockup). No X11 o Gio ignora
+	// Decorated(false), então a moldura sai pelo winx (Motif hints) quando a janela aparece.
+	w.Option(app.Title("Sonivell GO"), app.Size(fullW, fullH), app.MinSize(360, 520), app.Decorated(false))
+	var xwin winx.Window
 
 	// O som abre em segundo plano: se o ALSA demorar (ou travar, com o dispositivo ocupado),
 	// a janela abre do mesmo jeito e o som entra assim que ficar pronto.
@@ -119,7 +123,8 @@ func run() error {
 					w.Invalidate()
 				}
 			})
-			view.SetLibrary(core.NewLibrary(tracks))
+			lib := core.NewLibrary(tracks)
+			view.SetLibrary(lib, core.FindPlaylists(store.Get().MusicDirs, lib))
 			if demo := os.Getenv("SONIVELL_GO_DEMO"); demo != "" {
 				demoOnce.Do(func() { view.Demo(demo) })
 			}
@@ -127,19 +132,49 @@ func run() error {
 		}()
 	}
 
+	// Modo compacto: se a janela estiver maximizada, primeiro restaura (senão o gerenciador de
+	// janelas ignora o novo tamanho) e só então encolhe; ao sair, volta como estava.
+	var (
+		maximized      bool
+		pendingCompact bool
+		wasMaximized   bool
+	)
+	applyCompactSize := func() { w.Option(app.Size(compactW, compactH)) }
 	view = ui.New(ctl, store, covers, ui.Hooks{
 		Invalidate: w.Invalidate,
 		Rescan:     rescan,
 		PickFolder: pickFolder(),
 		SetCompact: func(compact bool) {
 			if compact {
-				w.Perform(system.ActionUnmaximize)
-				w.Option(app.Size(compactW, compactH))
-			} else {
-				w.Option(app.Size(fullW, fullH))
+				wasMaximized = maximized
+				if maximized {
+					pendingCompact = true
+					w.Perform(system.ActionUnmaximize)
+					time.AfterFunc(400*time.Millisecond, w.Invalidate)
+				} else {
+					applyCompactSize()
+				}
+				return
+			}
+			pendingCompact = false
+			w.Option(app.Size(fullW, fullH))
+			if wasMaximized {
+				w.Perform(system.ActionMaximize)
 			}
 		},
+		Minimize: func() { w.Perform(system.ActionMinimize) },
+		ToggleMaximize: func() {
+			if maximized {
+				w.Perform(system.ActionUnmaximize)
+			} else {
+				w.Perform(system.ActionMaximize)
+			}
+		},
+		Close:       func() { w.Perform(system.ActionClose) },
+		StartMove:   func() { xwin.MoveResize(winx.Move) },
+		StartResize: func(dir int) { xwin.MoveResize(dir) },
 	})
+	view.SetAudioServer(audioServer())
 	ctl.OnChange(w.Invalidate)
 
 	if srv, err := mpris.Start(ctl, func() { w.Perform(system.ActionRaise) }); err != nil {
@@ -163,7 +198,24 @@ func run() error {
 				return fmt.Errorf("janela: %w", e.Err)
 			}
 			return nil
+		case app.X11ViewEvent:
+			if e.Valid() {
+				xwin.Set(e.Display, e.Window)
+			}
+			view.SetX11(e.Valid())
+		case app.ConfigEvent:
+			maximized = e.Config.Mode == app.Maximized
+			view.SetMaximized(maximized)
+			if pendingCompact && !maximized {
+				pendingCompact = false
+				applyCompactSize()
+			}
+			w.Invalidate()
 		case app.FrameEvent:
+			if pendingCompact && !maximized {
+				pendingCompact = false
+				applyCompactSize()
+			}
 			gtx := app.NewContext(&ops, e)
 			view.Layout(gtx)
 			e.Frame(gtx.Ops)
@@ -272,4 +324,19 @@ func notifyFailure(err error) {
 	} else if p, e := exec.LookPath("kdialog"); e == nil {
 		_ = exec.Command(p, "--error", msg, "--title", "Sonivell GO").Run()
 	}
+}
+
+// audioServer descobre por onde o som sai (mostrado no player Vidro, como no mockup).
+func audioServer() string {
+	dir := os.Getenv("XDG_RUNTIME_DIR")
+	if dir == "" {
+		dir = fmt.Sprintf("/run/user/%d", os.Getuid())
+	}
+	if _, err := os.Stat(filepath.Join(dir, "pipewire-0")); err == nil {
+		return "PipeWire"
+	}
+	if _, err := os.Stat(filepath.Join(dir, "pulse", "native")); err == nil {
+		return "PulseAudio"
+	}
+	return "ALSA"
 }

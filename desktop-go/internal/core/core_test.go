@@ -122,3 +122,27 @@ func TestStoreRoundTrip(t *testing.T) {
 		t.Fatalf("ajustes não persistiram: %+v", again)
 	}
 }
+
+func TestPlaylistsAndQuality(t *testing.T) {
+	dir := t.TempDir()
+	a := &Track{ID: 1, Path: filepath.Join(dir, "a.flac"), Year: 1994, Format: "FLAC", BitDepth: 24, SampleRate: 96000}
+	b := &Track{ID: 2, Path: filepath.Join(dir, "sub", "b.mp3"), Year: 2011, Format: "MP3", BitrateKbps: 320, SampleRate: 44100}
+	lib := NewLibrary([]Track{*a, *b})
+	m3u := "#EXTM3U\n#PLAYLIST:Estrada\na.flac\n" + filepath.Join(dir, "sub", "b.mp3") + "\nnao-existe.mp3\n"
+	if err := os.WriteFile(filepath.Join(dir, "x.m3u8"), []byte(m3u), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	pls := FindPlaylists([]string{dir}, lib)
+	if len(pls) != 1 || pls[0].Name != "Estrada" || len(pls[0].Tracks) != 2 {
+		t.Fatalf("playlists: %+v", pls)
+	}
+	if d := lib.Decades(); len(d) != 2 || d[0].Name != "1990s" {
+		t.Fatalf("décadas: %+v", d)
+	}
+	if q := a.Quality(); q != "FLAC · 24 bit · 96 kHz" {
+		t.Fatalf("qualidade = %q", q)
+	}
+	if q := b.Quality(); q != "MP3 · 320 kbps · 44,1 kHz" {
+		t.Fatalf("qualidade = %q", q)
+	}
+}

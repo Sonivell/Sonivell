@@ -26,6 +26,37 @@ type Track struct {
 	Format      string // "FLAC", "MP3", "OPUS"…
 	BitrateKbps int
 	AddedMs     int64 // data de modificação do arquivo
+	SampleRate  int   // Hz
+	BitDepth    int   // 0 quando não se aplica (MP3, AAC…)
+}
+
+// Quality descreve o arquivo como no mockup: "FLAC · 24 bit · 96 kHz" (ou "MP3 · 320 kbps").
+func (t *Track) Quality() string {
+	parts := []string{t.Format}
+	if t.BitDepth > 0 {
+		parts = append(parts, fmt.Sprintf("%d bit", t.BitDepth))
+	} else if t.BitrateKbps > 0 {
+		parts = append(parts, fmt.Sprintf("%d kbps", t.BitrateKbps))
+	}
+	if t.SampleRate > 0 {
+		khz := float64(t.SampleRate) / 1000
+		if khz == float64(int(khz)) {
+			parts = append(parts, fmt.Sprintf("%d kHz", int(khz)))
+		} else {
+			parts = append(parts, strings.Replace(fmt.Sprintf("%.1f kHz", khz), ".", ",", 1))
+		}
+	}
+	out := ""
+	for _, p := range parts {
+		if p == "" {
+			continue
+		}
+		if out != "" {
+			out += " · "
+		}
+		out += p
+	}
+	return out
 }
 
 // Folder é a pasta do arquivo.

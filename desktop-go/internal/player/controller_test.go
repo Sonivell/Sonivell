@@ -109,3 +109,18 @@ func TestFavoritesAndVolumePersist(t *testing.T) {
 		t.Fatal("favoritas/volume não foram salvos")
 	}
 }
+
+func TestHistoryAndSource(t *testing.T) {
+	c, _, list := setup(t)
+	c.PlayFrom("Mix do dia", list, 0)
+	c.Next()
+	c.SeekTo(0) // buscar não conta
+	st := c.State()
+	if st.Source != "Mix do dia" {
+		t.Fatalf("origem = %q", st.Source)
+	}
+	s := c.store.Get()
+	if len(s.Recent) != 2 || s.Recent[0] != list[1].ID || s.Plays[list[1].ID] != 1 {
+		t.Fatalf("histórico: %+v %+v", s.Recent, s.Plays)
+	}
+}

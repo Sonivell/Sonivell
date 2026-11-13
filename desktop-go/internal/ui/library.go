@@ -19,6 +19,12 @@ import (
 
 // trackRow é uma linha de faixa: número, capa, título/artista, álbum, formato e duração.
 func (u *UI) trackRow(gtx C, btn *widget.Clickable, t *core.Track, n int, current, showAlbum bool) D {
+	return u.trackRowStyled(gtx, btn, t, n, current, showAlbum, true)
+}
+
+// trackRowStyled é a trackRow com a escolha de marcar a faixa atual com a onda (nas listas) ou
+// só com o fundo (na "A seguir" do Para você, como no mockup).
+func (u *UI) trackRowStyled(gtx C, btn *widget.Clickable, t *core.Track, n int, current, showAlbum, wave bool) D {
 	return layout.Inset{Bottom: 2}.Layout(gtx, func(gtx C) D {
 		return btn.Layout(gtx, func(gtx C) D {
 			pointer.CursorPointer.Add(gtx.Ops)
@@ -31,7 +37,7 @@ func (u *UI) trackRow(gtx C, btn *widget.Clickable, t *core.Track, n int, curren
 				bg = u.pal.SurfaceLow
 			}
 			titleCol := u.pal.Text
-			if current {
+			if current && wave {
 				titleCol = u.pal.Accent
 			}
 			return surface(gtx, bg, 14, func(gtx C) D {
@@ -40,7 +46,7 @@ func (u *UI) trackRow(gtx C, btn *widget.Clickable, t *core.Track, n int, curren
 						layout.Rigid(func(gtx C) D {
 							gtx.Constraints.Min.X = gtx.Dp(26)
 							gtx.Constraints.Max.X = gtx.Dp(26)
-							if current {
+							if current && wave {
 								return layout.Center.Layout(gtx, func(gtx C) D { return drawWave(gtx, 18, u.pal.Accent, 2.4) })
 							}
 							l := u.label(strconv.Itoa(n), 13, font.Bold, u.pal.Text2)
@@ -86,7 +92,7 @@ func (u *UI) trackItems(list []*core.Track, ctx string, st player.State, showAlb
 		out = append(out, func(gtx C) D {
 			btn := u.rows.get(fmt.Sprintf("%s:%d", ctx, t.ID))
 			if btn.Clicked(gtx) {
-				u.ctl.PlayList(list, i)
+				u.ctl.PlayFrom(u.sourceName(ctx), list, i)
 			}
 			cur := st.Current != nil && st.Current.ID == t.ID
 			n := i + 1
@@ -141,7 +147,7 @@ func (u *UI) albumGridRows(gtx C, albums []*core.Album, maxCols int, ctx string)
 func (u *UI) albumCard(gtx C, a *core.Album, ctx string) D {
 	btn := u.rows.get(ctx + ":album:" + a.Key)
 	if btn.Clicked(gtx) {
-		u.album, u.artist = a, nil
+		u.album, u.group = a, nil
 		u.search.SetText("")
 		if u.route != RouteLibrary {
 			u.route = RouteLibrary
@@ -236,8 +242,7 @@ func (u *UI) libraryItems(gtx C, lib *core.Library, st player.State) []item {
 func (u *UI) artistRow(gtx C, g *core.Group) D {
 	btn := u.rows.get("artist:" + g.Name)
 	if btn.Clicked(gtx) {
-		u.artist, u.album = g, nil
-		u.mainList.Position = layout.Position{}
+		u.openGroup(g, i18n.T("kicker_artist"))
 	}
 	return layout.Inset{Bottom: 2}.Layout(gtx, func(gtx C) D {
 		return btn.Layout(gtx, func(gtx C) D {
@@ -276,10 +281,10 @@ func (u *UI) artistRow(gtx C, g *core.Group) D {
 func (u *UI) detailHeader(cover func(gtx C) D, kicker, title, sub string, tracks []*core.Track) item {
 	return func(gtx C) D {
 		if u.playAll.Clicked(gtx) {
-			u.ctl.PlayList(tracks, 0)
+			u.ctl.PlayFrom(title, tracks, 0)
 		}
 		if u.shufAll.Clicked(gtx) {
-			u.ctl.PlayShuffled(tracks)
+			u.ctl.PlayShuffledFrom(title, tracks)
 		}
 		return layout.Inset{Bottom: 26}.Layout(gtx, func(gtx C) D {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
@@ -339,16 +344,25 @@ func (u *UI) albumItems(a *core.Album, st player.State) []item {
 	return append(items, u.trackItems(a.Tracks, "album", st, false)...)
 }
 
-func (u *UI) artistItems(g *core.Group, st player.State) []item {
+// groupItems é a tela de um artista, gênero, década ou playlist: avatar com as iniciais e as faixas.
+func (u *UI) groupItems(g *core.Group, kind string, st player.State) []item {
 	cover := func(gtx C) D {
+		if kind != i18n.T("kicker_artist") && len(g.Tracks) > 0 {
+			return u.coverArt(gtx, g.Tracks[0], 200, 22)
+		}
 		return box(gtx, 200, 200, func(gtx C) D {
 			tone := coverTones[int(core.TrackID(g.Name)%uint64(len(coverTones)))]
 			fillRRect(gtx, tone, 100)
 			return layout.Center.Layout(gtx, u.label(core.Initials(g.Name), 64, font.ExtraBold, u.pal.OnAccent).Layout)
 		})
 	}
-	items := []item{u.detailHeader(cover, upper(i18n.T("kicker_artist")), g.Name, i18n.T("tracks_n", len(g.Tracks)), g.Tracks)}
-	return append(items, u.trackItems(g.Tracks, "artist", st, true)...)
+	var total int64
+	for _, t := range g.Tracks {
+		total += t.DurationMs
+	}
+	sub := i18n.T("tracks_n", len(g.Tracks)) + " · " + core.FormatTime(total)
+	items := []item{u.detailHeader(cover, upper(kind), g.Name, sub, g.Tracks)}
+	return append(items, u.trackItems(g.Tracks, "group", st, true)...)
 }
 
 func (u *UI) favoritesItems(lib *core.Library, st player.State) []item {
@@ -381,3 +395,20 @@ func (u *UI) searchItems(lib *core.Library, q string) []item {
 }
 
 func upper(s string) string { return strings.ToUpper(s) }
+
+// sourceName é o nome da origem mostrado em "A seguir no …" e "Tocando de".
+func (u *UI) sourceName(ctx string) string {
+	switch {
+	case u.album != nil:
+		return u.album.Title
+	case u.group != nil:
+		return u.group.Name
+	case ctx == "fav":
+		return i18n.T("nav_favorites")
+	case ctx == "search":
+		return i18n.T("search_source")
+	case ctx == "recentall":
+		return i18n.T("recently_played")
+	}
+	return i18n.T("nav_library")
+}

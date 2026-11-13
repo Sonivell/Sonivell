@@ -20,6 +20,7 @@ arrow-left caret-down caret-right x check plus trash magnifying-glass gear-six d
 play pause skip-back skip-forward shuffle repeat repeat-once heart queue vinyl-record user
 music-notes music-note squares-four folder-open folder-plus speaker-high speaker-low speaker-x
 picture-in-picture arrows-out-simple sparkle clock arrow-clockwise info palette
+books playlist minus square copy
 """.split()
 
 WEIGHTS = ["regular", "fill"]
