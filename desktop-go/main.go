@@ -4,9 +4,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,9 +39,19 @@ func main() {
 	}
 	ui.Version = version
 	app.ID = "sonivell-go"
+	setupLog()
+	log.Printf("Sonivell GO %s iniciando (sessão %q, WAYLAND_DISPLAY=%q, DISPLAY=%q)",
+		version, os.Getenv("XDG_SESSION_TYPE"), os.Getenv("WAYLAND_DISPLAY"), os.Getenv("DISPLAY"))
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("pânico: %v\n%s", r, debug.Stack())
+				os.Exit(2)
+			}
+		}()
 		if err := run(); err != nil {
 			log.Println(err)
+			notifyFailure(err)
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -58,18 +71,30 @@ func run() error {
 	w := new(app.Window)
 	w.Option(app.Title("Sonivell GO"), app.Size(fullW, fullH), app.MinSize(360, 520))
 
-	var out player.Output = silent{}
-	eng, err := audio.New()
-	if err != nil {
-		log.Printf("sem saída de som: %v", err)
-	} else {
-		out = eng
-	}
+	// O som abre em segundo plano: se o ALSA demorar (ou travar, com o dispositivo ocupado),
+	// a janela abre do mesmo jeito e o som entra assim que ficar pronto.
+	out := &lazyOutput{}
 	ctl := player.New(out, store)
-	if eng != nil {
+	go func() {
+		done := make(chan struct{})
+		go func() {
+			select {
+			case <-done:
+			case <-time.After(4 * time.Second):
+				log.Printf("som: o ALSA ainda não respondeu depois de 4 s (dispositivo ocupado?)")
+			}
+		}()
+		eng, err := audio.New()
+		close(done)
+		if err != nil {
+			log.Printf("sem saída de som: %v", err)
+			return
+		}
 		eng.OnEnd = ctl.TrackEnded
 		eng.OnError = func(err error) { log.Println(err) }
-	}
+		out.set(eng)
+		log.Printf("som pronto")
+	}()
 
 	covers := core.NewCovers(w.Invalidate)
 	var scanning atomic.Bool
@@ -133,10 +158,11 @@ func run() error {
 	for {
 		switch e := w.Event().(type) {
 		case app.DestroyEvent:
-			if eng != nil {
-				eng.Stop()
+			out.Stop()
+			if e.Err != nil {
+				return fmt.Errorf("janela: %w", e.Err)
 			}
-			return e.Err
+			return nil
 		case app.FrameEvent:
 			gtx := app.NewContext(&ops, e)
 			view.Layout(gtx)
@@ -166,13 +192,84 @@ func pickFolder() func() (string, bool) {
 	}
 }
 
-// silent é a saída usada quando não há placa de som (o app abre e mostra a biblioteca).
-type silent struct{}
+// lazyOutput repassa para o motor de som quando ele estiver pronto (até lá, fica em silêncio).
+type lazyOutput struct {
+	mu     sync.Mutex
+	eng    *audio.Engine
+	volume float64
+}
 
-func (silent) Load(string, int64, bool) {}
-func (silent) SetPlaying(bool)          {}
-func (silent) PositionMs() int64        { return 0 }
-func (silent) SetVolume(float64)        {}
-func (silent) Stop()                    {}
+func (o *lazyOutput) set(e *audio.Engine) {
+	o.mu.Lock()
+	o.eng = e
+	v := o.volume
+	o.mu.Unlock()
+	e.SetVolume(v)
+}
+
+func (o *lazyOutput) get() *audio.Engine {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return o.eng
+}
+
+func (o *lazyOutput) Load(p string, ms int64, play bool) {
+	if e := o.get(); e != nil {
+		e.Load(p, ms, play)
+	}
+}
+
+func (o *lazyOutput) SetPlaying(p bool) {
+	if e := o.get(); e != nil {
+		e.SetPlaying(p)
+	}
+}
+
+func (o *lazyOutput) PositionMs() int64 {
+	if e := o.get(); e != nil {
+		return e.PositionMs()
+	}
+	return 0
+}
+
+func (o *lazyOutput) SetVolume(v float64) {
+	o.mu.Lock()
+	o.volume = v
+	e := o.eng
+	o.mu.Unlock()
+	if e != nil {
+		e.SetVolume(v)
+	}
+}
+
+func (o *lazyOutput) Stop() {
+	if e := o.get(); e != nil {
+		e.Stop()
+	}
+}
+
+// setupLog grava o log em ~/.cache/sonivell-go/sonivell-go.log além do terminal.
+func setupLog() {
+	dir := core.CacheDir()
+	if os.MkdirAll(dir, 0o755) != nil {
+		return
+	}
+	f, err := os.OpenFile(filepath.Join(dir, "sonivell-go.log"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		return
+	}
+	log.SetOutput(io.MultiWriter(os.Stderr, f))
+	log.SetFlags(log.Ltime | log.Lmicroseconds)
+}
 
 var _ = unit.Dp(0)
+
+// notifyFailure mostra o erro numa janelinha do sistema (quando a nossa janela nem abriu).
+func notifyFailure(err error) {
+	msg := fmt.Sprintf("O Sonivell GO não conseguiu abrir:\n%v\n\nDetalhes em %s", err, filepath.Join(core.CacheDir(), "sonivell-go.log"))
+	if p, e := exec.LookPath("zenity"); e == nil {
+		_ = exec.Command(p, "--error", "--title=Sonivell GO", "--text="+msg).Run()
+	} else if p, e := exec.LookPath("kdialog"); e == nil {
+		_ = exec.Command(p, "--error", msg, "--title", "Sonivell GO").Run()
+	}
+}
