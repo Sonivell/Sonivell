@@ -68,6 +68,8 @@ var pt = map[string]string{
 	"cd_volume":         "Volume",
 	"albums_n":          "%d álbuns",
 	"unknown_artist":    "Artista desconhecido",
+	"kicker_album":      "Álbum",
+	"kicker_artist":     "Artista",
 }
 
 var en = map[string]string{
@@ -130,6 +132,8 @@ var en = map[string]string{
 	"cd_volume":         "Volume",
 	"albums_n":          "%d albums",
 	"unknown_artist":    "Unknown artist",
+	"kicker_album":      "Album",
+	"kicker_artist":     "Artist",
 }
 
 var current = pick()

@@ -43,7 +43,7 @@ jobs:
             gcc pkg-config dpkg-dev fakeroot \
             libwayland-dev libx11-dev libx11-xcb-dev libxkbcommon-x11-dev libgles2-mesa-dev libegl1-mesa-dev \
             libffi-dev libxcursor-dev libxfixes-dev libvulkan-dev libasound2-dev \
-            ffmpeg xvfb xdotool imagemagick libgl1-mesa-dri libegl-mesa0
+            ffmpeg xvfb xdotool imagemagick libgl1-mesa-dri libegl-mesa0 dbus
 
       - name: Módulos Go
         working-directory: desktop-go
@@ -69,7 +69,7 @@ jobs:
           unformatted=$(gofmt -l .)
           if [ -n "$unformatted" ]; then echo "::error::sem gofmt: $unformatted"; exit 1; fi
           go vet ./... 2>&1 | tee ../vet.log
-          go test ./... 2>&1 | tee ../test.log
+          dbus-run-session -- go test ./... 2>&1 | tee ../test.log
 
       - name: Gerar o .deb e o AppImage
         run: |

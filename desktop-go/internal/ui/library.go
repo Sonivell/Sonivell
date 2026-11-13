@@ -335,7 +335,7 @@ func (u *UI) albumItems(a *core.Album, st player.State) []item {
 	}
 	sub += " · " + i18n.T("tracks_n", len(a.Tracks)) + " · " + core.FormatTime(total)
 	items := []item{u.detailHeader(func(gtx C) D { return u.coverArt(gtx, first, 200, 22) },
-		upper(i18n.T("tab_albums")), a.Title, sub, a.Tracks)}
+		upper(i18n.T("kicker_album")), a.Title, sub, a.Tracks)}
 	return append(items, u.trackItems(a.Tracks, "album", st, false)...)
 }
 
@@ -347,7 +347,7 @@ func (u *UI) artistItems(g *core.Group, st player.State) []item {
 			return layout.Center.Layout(gtx, u.label(core.Initials(g.Name), 64, font.ExtraBold, u.pal.OnAccent).Layout)
 		})
 	}
-	items := []item{u.detailHeader(cover, upper(i18n.T("tab_artists")), g.Name, i18n.T("tracks_n", len(g.Tracks)), g.Tracks)}
+	items := []item{u.detailHeader(cover, upper(i18n.T("kicker_artist")), g.Name, i18n.T("tracks_n", len(g.Tracks)), g.Tracks)}
 	return append(items, u.trackItems(g.Tracks, "artist", st, true)...)
 }
 

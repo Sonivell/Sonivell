@@ -262,14 +262,14 @@ func glass(gtx C, radius unit.Dp, alpha uint8, w layout.Widget) D {
 		r := gtx.Dp(radius)
 		rr := clip.UniformRRect(image.Rectangle{Max: sz}, r)
 		paint.FillShape(gtx.Ops, color.NRGBA{R: 255, G: 255, B: 255, A: alpha}, rr.Op(gtx.Ops))
-		paint.FillShape(gtx.Ops, color.NRGBA{R: 255, G: 255, B: 255, A: 0x24}, clip.Stroke{Path: rr.Path(gtx.Ops), Width: float32(gtx.Dp(1))}.Op())
+		paint.FillShape(gtx.Ops, color.NRGBA{R: 255, G: 255, B: 255, A: 0x1E}, clip.Stroke{Path: rr.Path(gtx.Ops), Width: float32(gtx.Dp(1))}.Op())
 		return D{Size: sz}
 	}, w)
 }
 
 // glow imita um brilho difuso (círculos concêntricos bem transparentes; o Gio não tem desfoque).
 func glow(gtx C, cx, cy, radius int, col color.NRGBA, strength float32) {
-	const steps = 14
+	const steps = 48
 	for i := steps; i >= 1; i-- {
 		r := radius * i / steps
 		a := uint8(strength * 255 / steps)
@@ -378,7 +378,7 @@ func (u *UI) vidroPanel(gtx C, st player.State, white, soft color.NRGBA) D {
 		}),
 		layout.Rigid(layout.Spacer{Height: 22}.Layout),
 		layout.Rigid(func(gtx C) D {
-			return glass(gtx, 28, 0x14, func(gtx C) D {
+			return glass(gtx, 28, 0x0E, func(gtx C) D {
 				return layout.Inset{Top: 22, Bottom: 22, Left: 26, Right: 26}.Layout(gtx, func(gtx C) D {
 					return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 						layout.Rigid(func(gtx C) D { return u.seekBar(gtx, st, color.NRGBA{R: 255, G: 255, B: 255, A: 0x30}, white) }),
@@ -443,7 +443,7 @@ func (u *UI) vidroPanel(gtx C, st player.State, white, soft color.NRGBA) D {
 				s := s
 				chips = append(chips, layout.Rigid(func(gtx C) D {
 					return layout.Inset{Right: 8}.Layout(gtx, func(gtx C) D {
-						return glass(gtx, 17, 0x1A, func(gtx C) D {
+						return glass(gtx, 17, 0x12, func(gtx C) D {
 							return layout.Inset{Top: 8, Bottom: 8, Left: 14, Right: 14}.Layout(gtx, u.label(s, 12, font.ExtraBold, white).Layout)
 						})
 					})
@@ -456,7 +456,7 @@ func (u *UI) vidroPanel(gtx C, st player.State, white, soft color.NRGBA) D {
 			if len(st.Queue) < 2 {
 				return D{}
 			}
-			return glass(gtx, 22, 0x0F, func(gtx C) D {
+			return glass(gtx, 22, 0x0A, func(gtx C) D {
 				return layout.Inset{Top: 14, Bottom: 10, Left: 18, Right: 18}.Layout(gtx, func(gtx C) D {
 					ch := []layout.FlexChild{layout.Rigid(func(gtx C) D {
 						return layout.Inset{Bottom: 8}.Layout(gtx, u.label(upper(i18n.T("up_next")), 12, font.ExtraBold, soft).Layout)
@@ -557,7 +557,8 @@ func (u *UI) compactView(gtx C, st player.State) D {
 			layout.Rigid(func(gtx C) D { return u.seekBar(gtx, st, color.NRGBA{R: 255, G: 255, B: 255, A: 0x30}, white) }),
 			layout.Rigid(layout.Spacer{Height: 6}.Layout),
 			layout.Rigid(func(gtx C) D {
-				return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+				gtx.Constraints.Min.X = gtx.Constraints.Max.X
+				return layout.Flex{Alignment: layout.Middle, Spacing: layout.SpaceSides}.Layout(gtx,
 					layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.prevBtn, IcSkipBack, 48, 24, white, false) }),
 					layout.Rigid(layout.Spacer{Width: 14}.Layout),
 					layout.Rigid(func(gtx C) D { return u.playButton(gtx, &u.playBtn, st.Playing, 60, u.pal.Accent, u.pal.OnAccent) }),

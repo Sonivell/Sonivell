@@ -154,12 +154,14 @@ func (u *UI) coverArt(gtx C, t *core.Track, size unit.Dp, radius unit.Dp) D {
 				return widget.Image{Src: img, Fit: widget.Cover, Position: layout.Center}.Layout(gtx)
 			}
 		}
-		tone := u.pal.SurfaceHigh
-		initials := "♪"
-		if t != nil {
-			tone = coverTones[int(t.ID%uint64(len(coverTones)))]
-			initials = core.Initials(firstNonEmpty(t.Album, t.Title))
+		if t == nil {
+			paint.FillShape(gtx.Ops, u.pal.Surface, clip.Rect{Max: sz}.Op())
+			return layout.Center.Layout(gtx, func(gtx C) D {
+				return drawWave(gtx, unit.Dp(gtx.Metric.PxToDp(sz.X))*0.5, u.pal.Text2, 2)
+			})
 		}
+		tone := coverTones[int(t.ID%uint64(len(coverTones)))]
+		initials := core.Initials(firstNonEmpty(t.Album, t.Title))
 		paint.FillShape(gtx.Ops, tone, clip.Rect{Max: sz}.Op())
 		ts := unit.Sp(float32(gtx.Metric.PxToDp(sz.X)) * 0.28)
 		return layout.Center.Layout(gtx, u.label(initials, ts, font.ExtraBold, withAlpha(u.pal.Bg, 0xD0)).Layout)

@@ -267,15 +267,26 @@ func (u *UI) mixCard(gtx C, btn *widget.Clickable, title, sub, meta string, tone
 						sz := gtx.Constraints.Min
 						defer clip.UniformRRect(image.Rectangle{Max: sz}, gtx.Dp(16)).Push(gtx.Ops).Pop()
 						paint.FillShape(gtx.Ops, tone, clip.Rect{Max: sz}.Op())
-						// mosaico de até 3 capas à direita, sobre o tom do mix
+						// leque de capas à direita (sólidas, com uma borda no tom do mix)
 						if n := len(tracks); n > 0 {
-							cs := unit.Dp(gtx.Metric.PxToDp(h)) * 0.62
-							for k := 0; k < 3 && k < n; k++ {
-								t := tracks[(k*7)%n]
-								x := sz.X - gtx.Dp(cs) - gtx.Dp(14) - k*gtx.Dp(cs*0.42)
-								offset(gtx, x, gtx.Dp(14)+k*gtx.Dp(6), func(gtx C) D {
-									return opacity(gtx, 1-float32(k)*0.18, func(gtx C) D { return u.coverArt(gtx, t, cs, 12) })
+							cs := unit.Dp(gtx.Metric.PxToDp(h)) * 0.56
+							count := 3
+							if gtx.Metric.PxToDp(sz.X) < 300 {
+								count = 2
+							}
+							if count > n {
+								count = n
+							}
+							step := gtx.Dp(cs * 0.38)
+							for k := count - 1; k >= 0; k-- {
+								t := tracks[(k*5)%n]
+								x := sz.X - gtx.Dp(cs) - gtx.Dp(16) - k*step
+								y := gtx.Dp(16) + k*gtx.Dp(8)
+								b := gtx.Dp(3)
+								offset(gtx, x-b, y-b, func(gtx C) D {
+									return box(gtx, cs+6, cs+6, func(gtx C) D { return fillRRect(gtx, tone, 14) })
 								})
+								offset(gtx, x, y, func(gtx C) D { return u.coverArt(gtx, t, cs, 12) })
 							}
 						}
 						// onda + nome no canto
