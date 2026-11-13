@@ -22,7 +22,9 @@ permissions:
 
 jobs:
   deb:
-    runs-on: ubuntu-latest
+    # Fixo no 24.04: o ubuntu-latest passou para o Ubuntu 26, cujas bibliotecas exigem x86-64-v3
+    # (AVX2), e o binário deixava de abrir em processadores como o i5 de 3ª geração.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: bash
