@@ -1,0 +1,8 @@
+?   	github.com/Sonivell/sonivell/desktop-go	[no test files]
+?   	github.com/Sonivell/sonivell/desktop-go/internal/audio	[no test files]
+ok  	github.com/Sonivell/sonivell/desktop-go/internal/core	0.395s
+?   	github.com/Sonivell/sonivell/desktop-go/internal/i18n	[no test files]
+ok  	github.com/Sonivell/sonivell/desktop-go/internal/mpris	0.017s
+ok  	github.com/Sonivell/sonivell/desktop-go/internal/player	0.016s
+ok  	github.com/Sonivell/sonivell/desktop-go/internal/ui	0.004s
+?   	github.com/Sonivell/sonivell/desktop-go/internal/winx	[no test files]

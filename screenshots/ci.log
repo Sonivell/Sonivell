@@ -1,0 +1,689 @@
++ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ./dist/sonivell-go_1.3.1_amd64.deb
+Selecting previously unselected package libproxy1v5:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 220405 files and directories currently installed.)
+Preparing to unpack .../00-libproxy1v5_0.5.4-4build1_amd64.deb ...
+Unpacking libproxy1v5:amd64 (0.5.4-4build1) ...
+Selecting previously unselected package glib-networking-common.
+Preparing to unpack .../01-glib-networking-common_2.80.0-1build1_all.deb ...
+Unpacking glib-networking-common (2.80.0-1build1) ...
+Selecting previously unselected package glib-networking-services.
+Preparing to unpack .../02-glib-networking-services_2.80.0-1build1_amd64.deb ...
+Unpacking glib-networking-services (2.80.0-1build1) ...
+Selecting previously unselected package session-migration.
+Preparing to unpack .../03-session-migration_0.3.9build1_amd64.deb ...
+Unpacking session-migration (0.3.9build1) ...
+Selecting previously unselected package gsettings-desktop-schemas.
+Preparing to unpack .../04-gsettings-desktop-schemas_46.1-0ubuntu1_all.deb ...
+Unpacking gsettings-desktop-schemas (46.1-0ubuntu1) ...
+Selecting previously unselected package glib-networking:amd64.
+Preparing to unpack .../05-glib-networking_2.80.0-1build1_amd64.deb ...
+Unpacking glib-networking:amd64 (2.80.0-1build1) ...
+Selecting previously unselected package libgraphene-1.0-0:amd64.
+Preparing to unpack .../06-libgraphene-1.0-0_1.10.8-3build2_amd64.deb ...
+Unpacking libgraphene-1.0-0:amd64 (1.10.8-3build2) ...
+Selecting previously unselected package liborc-0.4-0t64:amd64.
+Preparing to unpack .../07-liborc-0.4-0t64_1%3a0.4.38-1ubuntu0.1_amd64.deb ...
+Unpacking liborc-0.4-0t64:amd64 (1:0.4.38-1ubuntu0.1) ...
+Selecting previously unselected package libgstreamer-plugins-base1.0-0:amd64.
+Preparing to unpack .../08-libgstreamer-plugins-base1.0-0_1.24.2-1ubuntu0.6_amd64.deb ...
+Unpacking libgstreamer-plugins-base1.0-0:amd64 (1.24.2-1ubuntu0.6) ...
+Selecting previously unselected package libgstreamer-gl1.0-0:amd64.
+Preparing to unpack .../09-libgstreamer-gl1.0-0_1.24.2-1ubuntu0.6_amd64.deb ...
+Unpacking libgstreamer-gl1.0-0:amd64 (1.24.2-1ubuntu0.6) ...
+Selecting previously unselected package gstreamer1.0-gl:amd64.
+Preparing to unpack .../10-gstreamer1.0-gl_1.24.2-1ubuntu0.6_amd64.deb ...
+Unpacking gstreamer1.0-gl:amd64 (1.24.2-1ubuntu0.6) ...
+Selecting previously unselected package libcdparanoia0:amd64.
+Preparing to unpack .../11-libcdparanoia0_3.10.2+debian-14build3_amd64.deb ...
+Unpacking libcdparanoia0:amd64 (3.10.2+debian-14build3) ...
+Selecting previously unselected package libvisual-0.4-0:amd64.
+Preparing to unpack .../12-libvisual-0.4-0_0.4.2-2build1_amd64.deb ...
+Unpacking libvisual-0.4-0:amd64 (0.4.2-2build1) ...
+Selecting previously unselected package gstreamer1.0-plugins-base:amd64.
+Preparing to unpack .../13-gstreamer1.0-plugins-base_1.24.2-1ubuntu0.6_amd64.deb ...
+Unpacking gstreamer1.0-plugins-base:amd64 (1.24.2-1ubuntu0.6) ...
+Selecting previously unselected package libcairo-script-interpreter2:amd64.
+Preparing to unpack .../14-libcairo-script-interpreter2_1.18.0-3build1_amd64.deb ...
+Unpacking libcairo-script-interpreter2:amd64 (1.18.0-3build1) ...
+Selecting previously unselected package libgtk-4-common.
+Preparing to unpack .../15-libgtk-4-common_4.14.5+ds-0ubuntu0.10_all.deb ...
+Unpacking libgtk-4-common (4.14.5+ds-0ubuntu0.10) ...
+Selecting previously unselected package libgtk-4-1:amd64.
+Preparing to unpack .../16-libgtk-4-1_4.14.5+ds-0ubuntu0.10_amd64.deb ...
+Unpacking libgtk-4-1:amd64 (4.14.5+ds-0ubuntu0.10) ...
+Selecting previously unselected package libadwaita-1-0:amd64.
+Preparing to unpack .../17-libadwaita-1-0_1.5.0-1ubuntu2_amd64.deb ...
+Unpacking libadwaita-1-0:amd64 (1.5.0-1ubuntu2) ...
+Selecting previously unselected package libgtk-4-bin.
+Preparing to unpack .../18-libgtk-4-bin_4.14.5+ds-0ubuntu0.10_amd64.deb ...
+Unpacking libgtk-4-bin (4.14.5+ds-0ubuntu0.10) ...
+Selecting previously unselected package libgtk-4-media-gstreamer.
+Preparing to unpack .../19-libgtk-4-media-gstreamer_4.14.5+ds-0ubuntu0.10_amd64.deb ...
+Unpacking libgtk-4-media-gstreamer (4.14.5+ds-0ubuntu0.10) ...
+Selecting previously unselected package libwebrtc-audio-processing1:amd64.
+Preparing to unpack .../20-libwebrtc-audio-processing1_0.3.1-0ubuntu6_amd64.deb ...
+Unpacking libwebrtc-audio-processing1:amd64 (0.3.1-0ubuntu6) ...
+Selecting previously unselected package libspa-0.2-modules:amd64.
+Preparing to unpack .../21-libspa-0.2-modules_1.0.5-1ubuntu3.3_amd64.deb ...
+Unpacking libspa-0.2-modules:amd64 (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package libpipewire-0.3-0t64:amd64.
+Preparing to unpack .../22-libpipewire-0.3-0t64_1.0.5-1ubuntu3.3_amd64.deb ...
+Unpacking libpipewire-0.3-0t64:amd64 (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package libpipewire-0.3-common.
+Preparing to unpack .../23-libpipewire-0.3-common_1.0.5-1ubuntu3.3_all.deb ...
+Unpacking libpipewire-0.3-common (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package libspeexdsp1:amd64.
+Preparing to unpack .../24-libspeexdsp1_1.2.1-1ubuntu3_amd64.deb ...
+Unpacking libspeexdsp1:amd64 (1.2.1-1ubuntu3) ...
+Selecting previously unselected package libroc0.3:amd64.
+Preparing to unpack .../25-libroc0.3_0.3.0+dfsg-7ubuntu2_amd64.deb ...
+Unpacking libroc0.3:amd64 (0.3.0+dfsg-7ubuntu2) ...
+Selecting previously unselected package libsoup-3.0-common.
+Preparing to unpack .../26-libsoup-3.0-common_3.4.4-5ubuntu0.11_all.deb ...
+Unpacking libsoup-3.0-common (3.4.4-5ubuntu0.11) ...
+Selecting previously unselected package libsoup-3.0-0:amd64.
+Preparing to unpack .../27-libsoup-3.0-0_3.4.4-5ubuntu0.11_amd64.deb ...
+Unpacking libsoup-3.0-0:amd64 (3.4.4-5ubuntu0.11) ...
+Selecting previously unselected package libsnapd-glib-2-1:amd64.
+Preparing to unpack .../28-libsnapd-glib-2-1_1.64-0ubuntu5_amd64.deb ...
+Unpacking libsnapd-glib-2-1:amd64 (1.64-0ubuntu5) ...
+Selecting previously unselected package libpipewire-0.3-modules:amd64.
+Preparing to unpack .../29-libpipewire-0.3-modules_1.0.5-1ubuntu3.3_amd64.deb ...
+Unpacking libpipewire-0.3-modules:amd64 (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package libwireplumber-0.4-0:amd64.
+Preparing to unpack .../30-libwireplumber-0.4-0_0.4.17-1ubuntu4.1_amd64.deb ...
+Unpacking libwireplumber-0.4-0:amd64 (0.4.17-1ubuntu4.1) ...
+Selecting previously unselected package pipewire-bin.
+Preparing to unpack .../31-pipewire-bin_1.0.5-1ubuntu3.3_amd64.deb ...
+Unpacking pipewire-bin (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package pipewire:amd64.
+Preparing to unpack .../32-pipewire_1.0.5-1ubuntu3.3_amd64.deb ...
+Unpacking pipewire:amd64 (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package pipewire-alsa:amd64.
+Preparing to unpack .../33-pipewire-alsa_1.0.5-1ubuntu3.3_amd64.deb ...
+Unpacking pipewire-alsa:amd64 (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package pipewire-pulse.
+Preparing to unpack .../34-pipewire-pulse_1.0.5-1ubuntu3.3_amd64.deb ...
+Unpacking pipewire-pulse (1.0.5-1ubuntu3.3) ...
+Selecting previously unselected package rtkit.
+Preparing to unpack .../35-rtkit_0.13-5build1_amd64.deb ...
+Unpacking rtkit (0.13-5build1) ...
+Selecting previously unselected package sonivell-go.
+Preparing to unpack .../36-sonivell-go_1.3.1_amd64.deb ...
+Unpacking sonivell-go (1.3.1) ...
+Selecting previously unselected package wireplumber.
+Preparing to unpack .../37-wireplumber_0.4.17-1ubuntu4.1_amd64.deb ...
+Unpacking wireplumber (0.4.17-1ubuntu4.1) ...
+Selecting previously unselected package zenity-common.
+Preparing to unpack .../38-zenity-common_4.0.1-1build3_all.deb ...
+Unpacking zenity-common (4.0.1-1build3) ...
+Selecting previously unselected package zenity.
+Preparing to unpack .../39-zenity_4.0.1-1build3_amd64.deb ...
+Unpacking zenity (4.0.1-1build3) ...
+Setting up libpipewire-0.3-common (1.0.5-1ubuntu3.3) ...
+Setting up libcairo-script-interpreter2:amd64 (1.18.0-3build1) ...
+Setting up libcdparanoia0:amd64 (3.10.2+debian-14build3) ...
+Setting up session-migration (0.3.9build1) ...
+Created symlink /etc/systemd/user/graphical-session-pre.target.wants/session-migration.service → /usr/lib/systemd/user/session-migration.service.
+Setting up rtkit (0.13-5build1) ...
+Setting up libproxy1v5:amd64 (0.5.4-4build1) ...
+Setting up libvisual-0.4-0:amd64 (0.4.2-2build1) ...
+Setting up libwebrtc-audio-processing1:amd64 (0.3.1-0ubuntu6) ...
+Setting up libsoup-3.0-common (3.4.4-5ubuntu0.11) ...
+Setting up liborc-0.4-0t64:amd64 (1:0.4.38-1ubuntu0.1) ...
+Setting up libspa-0.2-modules:amd64 (1.0.5-1ubuntu3.3) ...
+Setting up sonivell-go (1.3.1) ...
+Setting up zenity-common (4.0.1-1build3) ...
+Setting up libspeexdsp1:amd64 (1.2.1-1ubuntu3) ...
+Setting up libgtk-4-common (4.14.5+ds-0ubuntu0.10) ...
+Setting up glib-networking-common (2.80.0-1build1) ...
+Setting up libpipewire-0.3-0t64:amd64 (1.0.5-1ubuntu3.3) ...
+Setting up libgraphene-1.0-0:amd64 (1.10.8-3build2) ...
+Setting up gsettings-desktop-schemas (46.1-0ubuntu1) ...
+Setting up glib-networking-services (2.80.0-1build1) ...
+Setting up libwireplumber-0.4-0:amd64 (0.4.17-1ubuntu4.1) ...
+Setting up libroc0.3:amd64 (0.3.0+dfsg-7ubuntu2) ...
+Setting up libgstreamer-plugins-base1.0-0:amd64 (1.24.2-1ubuntu0.6) ...
+Setting up libgstreamer-gl1.0-0:amd64 (1.24.2-1ubuntu0.6) ...
+Setting up gstreamer1.0-plugins-base:amd64 (1.24.2-1ubuntu0.6) ...
+Setting up gstreamer1.0-gl:amd64 (1.24.2-1ubuntu0.6) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Not building database; man-db/auto-update is not 'true'.
+Processing triggers for libglib2.0-0t64:amd64 (2.80.0-6ubuntu3.10) ...
+Processing triggers for dbus (1.14.10-4ubuntu4.1) ...
+Setting up libgtk-4-1:amd64 (4.14.5+ds-0ubuntu0.10) ...
+Setting up libgtk-4-bin (4.14.5+ds-0ubuntu0.10) ...
+Setting up glib-networking:amd64 (2.80.0-1build1) ...
+Processing triggers for hicolor-icon-theme (0.17-2) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Setting up libsoup-3.0-0:amd64 (3.4.4-5ubuntu0.11) ...
+Setting up libadwaita-1-0:amd64 (1.5.0-1ubuntu2) ...
+Setting up zenity (4.0.1-1build3) ...
+Setting up libsnapd-glib-2-1:amd64 (1.64-0ubuntu5) ...
+Setting up libgtk-4-media-gstreamer (4.14.5+ds-0ubuntu0.10) ...
+Setting up libpipewire-0.3-modules:amd64 (1.0.5-1ubuntu3.3) ...
+Setting up pipewire-bin (1.0.5-1ubuntu3.3) ...
+Setting up pipewire:amd64 (1.0.5-1ubuntu3.3) ...
+Created symlink /etc/systemd/user/default.target.wants/filter-chain.service → /usr/lib/systemd/user/filter-chain.service.
+Created symlink /etc/systemd/user/sockets.target.wants/pipewire.socket → /usr/lib/systemd/user/pipewire.socket.
+Created symlink /etc/systemd/user/default.target.wants/pipewire.service → /usr/lib/systemd/user/pipewire.service.
+Setting up pipewire-alsa:amd64 (1.0.5-1ubuntu3.3) ...
+Setting up wireplumber (0.4.17-1ubuntu4.1) ...
+Created symlink /etc/systemd/user/pipewire.service.wants/wireplumber.service → /usr/lib/systemd/user/wireplumber.service.
+Setting up pipewire-pulse (1.0.5-1ubuntu3.3) ...
+Created symlink /etc/systemd/user/default.target.wants/pipewire-pulse.service → /usr/lib/systemd/user/pipewire-pulse.service.
+Created symlink /etc/systemd/user/sockets.target.wants/pipewire-pulse.socket → /usr/lib/systemd/user/pipewire-pulse.socket.
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+
+Running kernel seems to be up-to-date.
+
+No services need to be restarted.
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
++ dpkg -L sonivell-go
+/.
+/usr
+/usr/bin
+/usr/bin/sonivell-go
+/usr/share
+/usr/share/applications
+/usr/share/applications/sonivell-go.desktop
+/usr/share/doc
+/usr/share/doc/sonivell-go
+/usr/share/doc/sonivell-go/copyright
+/usr/share/icons
+/usr/share/icons/hicolor
+/usr/share/icons/hicolor/512x512
+/usr/share/icons/hicolor/512x512/apps
+/usr/share/icons/hicolor/512x512/apps/sonivell-go.png
+/usr/share/icons/hicolor/scalable
+/usr/share/icons/hicolor/scalable/apps
+/usr/share/icons/hicolor/scalable/apps/sonivell-go.svg
++ bash tools/desktop-go-screenshot.sh /usr/bin/sonivell-go /home/runner/work/Sonivell/Sonivell/screenshots
+++ readlink -f /usr/bin/sonivell-go
++ APP=/usr/bin/sonivell-go
+++ readlink -m /home/runner/work/Sonivell/Sonivell/screenshots
++ OUT=/home/runner/work/Sonivell/Sonivell/screenshots
++ mkdir -p /home/runner/work/Sonivell/Sonivell/screenshots
+++ mktemp -d
++ DEMO_HOME=/tmp/tmp.tD8RVVEnaH
++ export HOME=/tmp/tmp.tD8RVVEnaH
++ HOME=/tmp/tmp.tD8RVVEnaH
++ export XDG_CONFIG_HOME=/tmp/tmp.tD8RVVEnaH/.config XDG_DATA_HOME=/tmp/tmp.tD8RVVEnaH/.local/share XDG_CACHE_HOME=/tmp/tmp.tD8RVVEnaH/.cache
++ XDG_CONFIG_HOME=/tmp/tmp.tD8RVVEnaH/.config
++ XDG_DATA_HOME=/tmp/tmp.tD8RVVEnaH/.local/share
++ XDG_CACHE_HOME=/tmp/tmp.tD8RVVEnaH/.cache
++ mkdir -p /tmp/tmp.tD8RVVEnaH/Music /tmp/tmp.tD8RVVEnaH/.config/sonivell-go /tmp/tmp.tD8RVVEnaH/covers
++ cat
++ cover horizonte 1B2A26 5FE3D0
++ ffmpeg -loglevel error -y -f lavfi -i color=c=0x1B2A26:s=600x600,drawbox=x=150:y=150:w=300:h=300:color=0x5FE3D0@0.55:t=fill,drawbox=x=250:y=250:w=100:h=100:color=0x5FE3D0:t=fill -frames:v 1 /tmp/tmp.tD8RVVEnaH/covers/horizonte.png
++ cover rioacima 2A1D30 C98BE8
++ ffmpeg -loglevel error -y -f lavfi -i color=c=0x2A1D30:s=600x600,drawbox=x=150:y=150:w=300:h=300:color=0xC98BE8@0.55:t=fill,drawbox=x=250:y=250:w=100:h=100:color=0xC98BE8:t=fill -frames:v 1 /tmp/tmp.tD8RVVEnaH/covers/rioacima.png
++ cover salgrosso 3A2A14 FFC46B
++ ffmpeg -loglevel error -y -f lavfi -i color=c=0x3A2A14:s=600x600,drawbox=x=150:y=150:w=300:h=300:color=0xFFC46B@0.55:t=fill,drawbox=x=250:y=250:w=100:h=100:color=0xFFC46B:t=fill -frames:v 1 /tmp/tmp.tD8RVVEnaH/covers/salgrosso.png
++ cover vidro 1F2A3D 8FB8FF
++ ffmpeg -loglevel error -y -f lavfi -i color=c=0x1F2A3D:s=600x600,drawbox=x=150:y=150:w=300:h=300:color=0x8FB8FF@0.55:t=fill,drawbox=x=250:y=250:w=100:h=100:color=0x8FB8FF:t=fill -frames:v 1 /tmp/tmp.tD8RVVEnaH/covers/vidro.png
++ make 01.flac 'Maré Alta' 'Lua Norte' Horizonte Indie 2023 1 220 horizonte flac
++ local f=/tmp/tmp.tD8RVVEnaH/Music/01.flac
++ '[' flac = flac ']'
++ local 'codec=-c:a flac'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=220:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/horizonte.png -map 0:a -map 1:v -c:a flac -c:v copy -disposition:v attached_pic -metadata 'title=Maré Alta' -metadata 'artist=Lua Norte' -metadata album=Horizonte -metadata genre=Indie -metadata date=2023 -metadata track=1 /tmp/tmp.tD8RVVEnaH/Music/01.flac
++ make 02.flac Âncora 'Lua Norte' Horizonte Indie 2023 2 247 horizonte flac
++ local f=/tmp/tmp.tD8RVVEnaH/Music/02.flac
++ '[' flac = flac ']'
++ local 'codec=-c:a flac'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=247:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/horizonte.png -map 0:a -map 1:v -c:a flac -c:v copy -disposition:v attached_pic -metadata title=Âncora -metadata 'artist=Lua Norte' -metadata album=Horizonte -metadata genre=Indie -metadata date=2023 -metadata track=2 /tmp/tmp.tD8RVVEnaH/Music/02.flac
++ make 03.mp3 'Madrugada Azul' 'Lua Norte' Horizonte Indie 2023 3 262 horizonte mp3
++ local f=/tmp/tmp.tD8RVVEnaH/Music/03.mp3
++ '[' mp3 = flac ']'
++ local 'codec=-c:a libmp3lame -b:a 192k -id3v2_version 3'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=262:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/horizonte.png -map 0:a -map 1:v -c:a libmp3lame -b:a 192k -id3v2_version 3 -c:v copy -disposition:v attached_pic -metadata 'title=Madrugada Azul' -metadata 'artist=Lua Norte' -metadata album=Horizonte -metadata genre=Indie -metadata date=2023 -metadata track=3 /tmp/tmp.tD8RVVEnaH/Music/03.mp3
++ make 04.mp3 'Casa de Vento' 'Rio Acima' 'Rio Acima' Folk 2021 1 294 rioacima mp3
++ local f=/tmp/tmp.tD8RVVEnaH/Music/04.mp3
++ '[' mp3 = flac ']'
++ local 'codec=-c:a libmp3lame -b:a 192k -id3v2_version 3'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=294:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/rioacima.png -map 0:a -map 1:v -c:a libmp3lame -b:a 192k -id3v2_version 3 -c:v copy -disposition:v attached_pic -metadata 'title=Casa de Vento' -metadata 'artist=Rio Acima' -metadata 'album=Rio Acima' -metadata genre=Folk -metadata date=2021 -metadata track=1 /tmp/tmp.tD8RVVEnaH/Music/04.mp3
++ make 05.mp3 'Pedra e Pó' 'Rio Acima' 'Rio Acima' Folk 2021 2 330 rioacima mp3
++ local f=/tmp/tmp.tD8RVVEnaH/Music/05.mp3
++ '[' mp3 = flac ']'
++ local 'codec=-c:a libmp3lame -b:a 192k -id3v2_version 3'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=330:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/rioacima.png -map 0:a -map 1:v -c:a libmp3lame -b:a 192k -id3v2_version 3 -c:v copy -disposition:v attached_pic -metadata 'title=Pedra e Pó' -metadata 'artist=Rio Acima' -metadata 'album=Rio Acima' -metadata genre=Folk -metadata date=2021 -metadata track=2 /tmp/tmp.tD8RVVEnaH/Music/05.mp3
++ make 06.flac Farol 'Sal Grosso' 'Sal Grosso' Eletrônica 2022 1 349 salgrosso flac
++ local f=/tmp/tmp.tD8RVVEnaH/Music/06.flac
++ '[' flac = flac ']'
++ local 'codec=-c:a flac'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=349:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/salgrosso.png -map 0:a -map 1:v -c:a flac -c:v copy -disposition:v attached_pic -metadata title=Farol -metadata 'artist=Sal Grosso' -metadata 'album=Sal Grosso' -metadata genre=Eletrônica -metadata date=2022 -metadata track=1 /tmp/tmp.tD8RVVEnaH/Music/06.flac
++ make 07.flac 'Brasa Lenta' 'Sal Grosso' 'Sal Grosso' Eletrônica 2022 2 392 salgrosso flac
++ local f=/tmp/tmp.tD8RVVEnaH/Music/07.flac
++ '[' flac = flac ']'
++ local 'codec=-c:a flac'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=392:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/salgrosso.png -map 0:a -map 1:v -c:a flac -c:v copy -disposition:v attached_pic -metadata 'title=Brasa Lenta' -metadata 'artist=Sal Grosso' -metadata 'album=Sal Grosso' -metadata genre=Eletrônica -metadata date=2022 -metadata track=2 /tmp/tmp.tD8RVVEnaH/Music/07.flac
++ make 08.mp3 'Chuva de Sal' 'Sal Grosso' 'Sal Grosso' Eletrônica 2022 3 440 salgrosso mp3
++ local f=/tmp/tmp.tD8RVVEnaH/Music/08.mp3
++ '[' mp3 = flac ']'
++ local 'codec=-c:a libmp3lame -b:a 192k -id3v2_version 3'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=440:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/salgrosso.png -map 0:a -map 1:v -c:a libmp3lame -b:a 192k -id3v2_version 3 -c:v copy -disposition:v attached_pic -metadata 'title=Chuva de Sal' -metadata 'artist=Sal Grosso' -metadata 'album=Sal Grosso' -metadata genre=Eletrônica -metadata date=2022 -metadata track=3 /tmp/tmp.tD8RVVEnaH/Music/08.mp3
++ make 09.flac 'Noites de Vidro' 'Marina Ruído' 'Vidro e Sal' Pop 2020 1 494 vidro flac
++ local f=/tmp/tmp.tD8RVVEnaH/Music/09.flac
++ '[' flac = flac ']'
++ local 'codec=-c:a flac'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=494:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/vidro.png -map 0:a -map 1:v -c:a flac -c:v copy -disposition:v attached_pic -metadata 'title=Noites de Vidro' -metadata 'artist=Marina Ruído' -metadata 'album=Vidro e Sal' -metadata genre=Pop -metadata date=2020 -metadata track=1 /tmp/tmp.tD8RVVEnaH/Music/09.flac
++ make 10.mp3 'Vidro e Sal' 'Marina Ruído' 'Vidro e Sal' Pop 2020 2 523 vidro mp3
++ local f=/tmp/tmp.tD8RVVEnaH/Music/10.mp3
++ '[' mp3 = flac ']'
++ local 'codec=-c:a libmp3lame -b:a 192k -id3v2_version 3'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=523:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/vidro.png -map 0:a -map 1:v -c:a libmp3lame -b:a 192k -id3v2_version 3 -c:v copy -disposition:v attached_pic -metadata 'title=Vidro e Sal' -metadata 'artist=Marina Ruído' -metadata 'album=Vidro e Sal' -metadata genre=Pop -metadata date=2020 -metadata track=2 /tmp/tmp.tD8RVVEnaH/Music/10.mp3
++ make 11.mp3 'Janela Molhada' 'Marina Ruído' 'Vidro e Sal' Pop 2020 3 587 vidro mp3
++ local f=/tmp/tmp.tD8RVVEnaH/Music/11.mp3
++ '[' mp3 = flac ']'
++ local 'codec=-c:a libmp3lame -b:a 192k -id3v2_version 3'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=587:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/vidro.png -map 0:a -map 1:v -c:a libmp3lame -b:a 192k -id3v2_version 3 -c:v copy -disposition:v attached_pic -metadata 'title=Janela Molhada' -metadata 'artist=Marina Ruído' -metadata 'album=Vidro e Sal' -metadata genre=Pop -metadata date=2020 -metadata track=3 /tmp/tmp.tD8RVVEnaH/Music/11.mp3
++ make 12.flac Neblina 'Rio Acima' 'Rio Acima' Jazz 1998 3 262 rioacima flac
++ local f=/tmp/tmp.tD8RVVEnaH/Music/12.flac
++ '[' flac = flac ']'
++ local 'codec=-c:a flac'
++ ffmpeg -loglevel error -y -f lavfi -i sine=f=262:d=95 -i /tmp/tmp.tD8RVVEnaH/covers/rioacima.png -map 0:a -map 1:v -c:a flac -c:v copy -disposition:v attached_pic -metadata title=Neblina -metadata 'artist=Rio Acima' -metadata 'album=Rio Acima' -metadata genre=Jazz -metadata date=1998 -metadata track=3 /tmp/tmp.tD8RVVEnaH/Music/12.flac
++ printf '#EXTM3U\n#PLAYLIST:Estrada\n06.flac\n01.flac\n09.flac\n04.mp3\n'
++ export LANG=pt_BR.UTF-8 LIBGL_ALWAYS_SOFTWARE=1
++ LANG=pt_BR.UTF-8
++ LIBGL_ALWAYS_SOFTWARE=1
++ export DISPLAY=:99
++ DISPLAY=:99
++ XVFB=12402
++ Xvfb :99 -screen 0 1400x900x24
++ trap 'kill $XVFB 2>/dev/null || true' EXIT
++ sleep 2
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
+++ date +%s%N
++ start=1794614010354857756
++ PID=12407
++ /usr/bin/sonivell-go
+++ seq 1 200
++ for _ in $(seq 1 200)
++ xdotool search --name 'Sonivell GO'
++ sleep 0.05
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ for _ in $(seq 1 200)
++ xdotool search --name 'Sonivell GO'
++ sleep 0.05
++ for _ in $(seq 1 200)
++ xdotool search --name 'Sonivell GO'
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ sleep 0.05
++ for _ in $(seq 1 200)
++ xdotool search --name 'Sonivell GO'
++ break
+++ date +%s%N
++ end=1794614010621329138
++ tee /home/runner/work/Sonivell/Sonivell/screenshots/startup.txt
++ echo 'janela em 266 ms'
+janela em 266 ms
++ sleep 4
++ grep -E 'VmRSS|VmHWM' /proc/12407/status
++ tee -a /home/runner/work/Sonivell/Sonivell/screenshots/startup.txt
+VmHWM:	  202056 kB
+VmRSS:	  191976 kB
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/0-primeira-abertura.png
++ xdotool mousemove 120 192 click 1
++ sleep 1.5
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/0b-clique-biblioteca.png
++ kill 12407
++ wait 12407
++ true
++ shot home 1-para-voce 1280 820
++ local pid=12749
++ sleep 6
++ SONIVELL_GO_DEMO=home
++ /usr/bin/sonivell-go
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/1-para-voce.png
++ kill 12749
++ wait 12749
++ true
++ shot library 2-biblioteca 1280 820
++ local pid=12799
++ SONIVELL_GO_DEMO=library
++ sleep 6
++ /usr/bin/sonivell-go
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/2-biblioteca.png
++ kill 12799
++ wait 12799
++ true
++ shot album 3-album 1280 820
++ local pid=12836
++ sleep 6
++ SONIVELL_GO_DEMO=album
++ /usr/bin/sonivell-go
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/3-album.png
++ kill 12836
++ wait 12836
++ true
++ shot nowplaying 4-player-vidro 1280 820
++ local pid=12887
++ SONIVELL_GO_DEMO=nowplaying
++ sleep 6
++ /usr/bin/sonivell-go
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/4-player-vidro.png
++ kill 12887
++ wait 12887
++ true
++ shot queue 5-fila 1280 820
++ local pid=12938
++ sleep 6
++ SONIVELL_GO_DEMO=queue
++ /usr/bin/sonivell-go
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/5-fila.png
++ kill 12938
++ wait 12938
++ true
++ shot settings 6-ajustes 1280 820
++ local pid=13013
++ sleep 6
++ SONIVELL_GO_DEMO=settings
++ /usr/bin/sonivell-go
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/6-ajustes.png
++ kill 13013
++ wait 13013
++ true
++ shot genres 6b-generos 1280 820
++ local pid=13048
++ SONIVELL_GO_DEMO=genres
++ /usr/bin/sonivell-go
++ sleep 6
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/6b-generos.png
++ kill 13048
++ wait 13048
++ true
++ shot playlists 6c-playlists 1280 820
++ local pid=13087
++ SONIVELL_GO_DEMO=playlists
++ /usr/bin/sonivell-go
++ sleep 6
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ import -window root -crop 1280x820+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/6c-playlists.png
++ kill 13087
++ wait 13087
++ true
++ shot compact 7-compacto 380 600
++ local pid=13123
++ SONIVELL_GO_DEMO=compact
++ /usr/bin/sonivell-go
++ sleep 6
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server
++ import -window root -crop 380x600+0+0 +repage /home/runner/work/Sonivell/Sonivell/screenshots/7-compacto.png
++ kill 13123
++ wait 13123
++ true
++ ls -la /home/runner/work/Sonivell/Sonivell/screenshots
+total 1024
+drwxr-xr-x  2 runner runner   4096 Nov 13 23:54 .
+drwxr-xr-x 16 runner runner   4096 Nov 13 23:53 ..
+-rw-r--r--  1 runner runner 111714 Nov 13 23:53 0-primeira-abertura.png
+-rw-r--r--  1 runner runner 105639 Nov 13 23:53 0b-clique-biblioteca.png
+-rw-r--r--  1 runner runner 114037 Nov 13 23:53 1-para-voce.png
+-rw-r--r--  1 runner runner  62101 Nov 13 23:53 2-biblioteca.png
+-rw-r--r--  1 runner runner  71024 Nov 13 23:53 3-album.png
+-rw-r--r--  1 runner runner  83363 Nov 13 23:54 4-player-vidro.png
+-rw-r--r--  1 runner runner 148563 Nov 13 23:54 5-fila.png
+-rw-r--r--  1 runner runner 100699 Nov 13 23:54 6-ajustes.png
+-rw-r--r--  1 runner runner  69239 Nov 13 23:54 6b-generos.png
+-rw-r--r--  1 runner runner  49642 Nov 13 23:54 6c-playlists.png
+-rw-r--r--  1 runner runner  12402 Nov 13 23:54 7-compacto.png
+-rw-r--r--  1 runner runner    119 Nov 13 23:53 app-album.log
+-rw-r--r--  1 runner runner    119 Nov 13 23:54 app-compact.log
+-rw-r--r--  1 runner runner    119 Nov 13 23:54 app-genres.log
+-rw-r--r--  1 runner runner    119 Nov 13 23:53 app-home.log
+-rw-r--r--  1 runner runner    119 Nov 13 23:53 app-library.log
+-rw-r--r--  1 runner runner    119 Nov 13 23:53 app-nowplaying.log
+-rw-r--r--  1 runner runner    119 Nov 13 23:54 app-playlists.log
+-rw-r--r--  1 runner runner    119 Nov 13 23:54 app-queue.log
+-rw-r--r--  1 runner runner    119 Nov 13 23:54 app-settings.log
+-rw-r--r--  1 runner runner    119 Nov 13 23:53 app-startup.log
+-rw-r--r--  1 runner runner  39086 Nov 13 23:54 ci.log
+-rw-r--r--  1 runner runner     55 Nov 13 23:53 startup.txt
++ kill 12402
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Could not resolve keysym XF86CameraAccessEnable
+> Warning:          Could not resolve keysym XF86CameraAccessDisable
+> Warning:          Could not resolve keysym XF86CameraAccessToggle
+> Warning:          Could not resolve keysym XF86NextElement
+> Warning:          Could not resolve keysym XF86PreviousElement
+> Warning:          Could not resolve keysym XF86AutopilotEngageToggle
+> Warning:          Could not resolve keysym XF86MarkWaypoint
+> Warning:          Could not resolve keysym XF86Sos
+> Warning:          Could not resolve keysym XF86NavChart
+> Warning:          Could not resolve keysym XF86FishingChart
+> Warning:          Could not resolve keysym XF86SingleRangeRadar
+> Warning:          Could not resolve keysym XF86DualRangeRadar
+> Warning:          Could not resolve keysym XF86RadarOverlay
+> Warning:          Could not resolve keysym XF86TraditionalSonar
+> Warning:          Could not resolve keysym XF86ClearvuSonar
+> Warning:          Could not resolve keysym XF86SidevuSonar
+> Warning:          Could not resolve keysym XF86NavInfo
+Errors from xkbcomp are not fatal to the X server

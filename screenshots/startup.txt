@@ -1,0 +1,3 @@
+janela em 266 ms
+VmHWM:	  202056 kB
+VmRSS:	  191976 kB
