@@ -114,3 +114,38 @@ jobs:
             vet.log
             test.log
           if-no-files-found: ignore
+
+  capturas:
+    # Publica capturas, logs e o go.sum gerado na branch desktop-go-screenshots (como o desktop.yml
+    # faz com as do Kotlin). Só este job escreve no repositório, e nunca em PRs.
+    needs: deb
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: write # push -f da branch desktop-go-screenshots
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: sonivell-go-screenshots
+          path: out
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: sonivell-go-modules
+          path: out/modules
+
+      - name: Publicar na branch desktop-go-screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          [ -d out ] || exit 0
+          cd out
+          git init -q -b desktop-go-screenshots
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Capturas do Sonivell GO (${GITHUB_SHA::7})"
+          git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" desktop-go-screenshots
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
