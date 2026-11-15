@@ -24,6 +24,7 @@ import com.juscelino.sonivell.ui.components.SortMenuButton
 @Composable
 fun LibrarySortButton(state: LibraryState, tab: LibraryTab, actions: LibraryActions) {
     val s = state.sorts
+    @Composable
     fun group(options: List<GroupSort>, selected: GroupSort, target: SortTarget) = SortMenuButton(
         options, selected, { it.label }, target in s.reversed,
         { actions.onSetGroupSort(target, it) }, { actions.onToggleSortReversed(target) },
