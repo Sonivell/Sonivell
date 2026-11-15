@@ -247,7 +247,7 @@ private fun iconsaxIcons(w: Weight): SonivellIcons {
         trendUp = line("trendUp", X.TrendUp),
         trendDown = line("trendDown", X.TrendDown),
         fresh = line("fresh", X.Star),
-        recent = line("recent", X.Clock),
+        recent = line("recent", X.Clock1),
         star = line("star", X.Star1),
         starFilled = solid("star", X.Star1),
         image = line("image", X.Gallery),
@@ -263,7 +263,8 @@ private fun iconsaxIcons(w: Weight): SonivellIcons {
         transitions = line("transitions", X.ArrowSwapHorizontal),
         history = line("history", X.Chart),
         backup = line("backup", X.CloudChange),
-        info = line("info", X.InfoCircle),
+        // O Iconsax só tem o "!" no círculo: girado, vira o "i".
+        info = line("info", X.InfoCircle, rotate = 180f),
     )
 }
 

@@ -16,7 +16,7 @@ import re
 import sys
 
 NAMES = """
-add arrow-left arrow-left-1 arrow-right-1 arrow-swap-horizontal car category cd chart clock close-circle
+add arrow-left arrow-left-1 arrow-right-1 arrow-swap-horizontal car category cd chart clock-1 close-circle
 cloud-change colorfilter edit-2 export folder folder-open gallery gallery-slash heart home-2 info-circle
 magic-star menu microphone-2 minus minus-cirlce mobile moon more music-filter music-library-2 music-square
 music-square-add musicnote next notification-bing pause play play-add play-circle previous profile-circle
