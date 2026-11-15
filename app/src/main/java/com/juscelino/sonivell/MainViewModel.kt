@@ -105,6 +105,34 @@ enum class SortOrder(@StringRes val label: Int) {
     Recentes(R.string.sort_recent),
 }
 
+/** Ordem das listas agrupadas (álbuns, artistas, pastas). Nem toda opção vale para toda lista. */
+enum class GroupSort(@StringRes val label: Int) {
+    Nome(R.string.sort_name),
+    Artista(R.string.sort_artist),
+    Ano(R.string.sort_year),
+    Recentes(R.string.sort_recent_added),
+    Faixas(R.string.sort_track_count),
+}
+
+/** Opções válidas de cada lista agrupada, na ordem do menu. */
+val ALBUM_SORTS = listOf(GroupSort.Nome, GroupSort.Artista, GroupSort.Ano, GroupSort.Recentes, GroupSort.Faixas)
+val ARTIST_SORTS = listOf(GroupSort.Nome, GroupSort.Recentes, GroupSort.Faixas)
+val FOLDER_SORTS = listOf(GroupSort.Nome, GroupSort.Recentes, GroupSort.Faixas)
+
+/** Lista cuja ordem o usuário escolhe na biblioteca. */
+enum class SortTarget { Musicas, Albuns, Artistas, Pastas }
+
+/**
+ * Ordens das listas agrupadas e a "ordem inversa" de cada lista. A ordem natural de cada opção é a
+ * esperada (nomes de A a Z; recentes, ano, duração e nº de músicas do maior para o menor).
+ */
+data class LibrarySorts(
+    val albums: GroupSort = GroupSort.Nome,
+    val artists: GroupSort = GroupSort.Nome,
+    val folders: GroupSort = GroupSort.Nome,
+    val reversed: Set<SortTarget> = emptySet(),
+)
+
 /** O que a tela do equalizador mostra. Níveis em milibéis; [preset] null = ajuste próprio. */
 data class EqualizerState(
     val info: EqualizerInfo? = null,
@@ -134,6 +162,7 @@ data class LibraryState(
     val query: String = "",
     val tab: LibraryTab = LibraryTab.Tudo,
     val sort: SortOrder = SortOrder.Titulo,
+    val sorts: LibrarySorts = LibrarySorts(),
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -259,6 +288,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val sort = MutableStateFlow(
         SortOrder.entries.getOrElse(prefs.getInt("sort", 0)) { SortOrder.Titulo }
     )
+    private val sorts = MutableStateFlow(
+        LibrarySorts(
+            albums = GroupSort.entries.getOrElse(prefs.getInt("sort_albums", 0)) { GroupSort.Nome },
+            artists = GroupSort.entries.getOrElse(prefs.getInt("sort_artists", 0)) { GroupSort.Nome },
+            folders = GroupSort.entries.getOrElse(prefs.getInt("sort_folders", 0)) { GroupSort.Nome },
+            reversed = prefs.getStringSet("sort_reversed", emptySet()).orEmpty()
+                .mapNotNull { n -> SortTarget.entries.firstOrNull { it.name == n } }.toSet(),
+        )
+    )
 
     private val _favorites = MutableStateFlow(
         prefs.getStringSet("favorites", emptySet()).orEmpty().mapNotNull { it.toLongOrNull() }.toSet()
@@ -282,8 +320,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         query.debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS },
         tab,
         sort,
-    ) { all, q, t, s ->
-        if (all == null) return@combine LibraryState(loading = true, query = q, tab = t, sort = s)
+        sorts,
+    ) { all, q, t, s, gs ->
+        if (all == null) return@combine LibraryState(loading = true, query = q, tab = t, sort = s, sorts = gs)
         val keys = SortKeys()
         // Busca tolerante (sem acentos, fora de ordem, pequenos erros, anos/décadas).
         val parsed = Search.parse(q)
@@ -301,19 +340,25 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             SortOrder.Duracao -> filtered.sortedByDescending { it.durationMs }
             SortOrder.Ano -> filtered.sortedWith(compareByDescending<Track> { it.year ?: 0 }.thenBy { it.album.lowercase() })
             SortOrder.Recentes -> filtered.sortedByDescending { it.dateAdded }
-        }
+        }.let { if (scored == null && SortTarget.Musicas in gs.reversed) it.asReversed() else it }
         // Artista de cada álbum pela biblioteca inteira (não só pelas faixas que a busca achou).
         val allByAlbum = all.groupBy { it.albumId }
         val albums = filtered.groupBy { it.albumId }.map { (id, ts) ->
             Album(id, ts.first().album, albumArtistOf(allByAlbum[id] ?: ts, variousArtists), ts)
-        }.sortedBy { keys.of(it.title) }
+        }
         LibraryState(
             loading = false,
             allTracks = all,
             tracks = sorted,
-            albums = albums,
-            artists = filtered.groupBy { it.artist }.map { (n, ts) -> Artist(n, ts) }.sortedBy { keys.of(it.name) },
-            folders = filtered.groupBy { it.folder }.map { (p, ts) -> Folder(p, ts) }.sortedBy { keys.of(it.name) },
+            albums = sortGroups(albums, gs.albums, SortTarget.Albuns in gs.reversed, { keys.of(it.title) }, { keys.of(it.artist) }, { it.tracks }),
+            artists = sortGroups(
+                filtered.groupBy { it.artist }.map { (n, ts) -> Artist(n, ts) },
+                gs.artists, SortTarget.Artistas in gs.reversed, { keys.of(it.name) }, { keys.of(it.name) }, { it.tracks },
+            ),
+            folders = sortGroups(
+                filtered.groupBy { it.folder }.map { (p, ts) -> Folder(p, ts) },
+                gs.folders, SortTarget.Pastas in gs.reversed, { keys.of(it.name) }, { keys.of(it.name) }, { it.tracks },
+            ),
             // Uma faixa pode ter vários gêneros na mesma tag ("Rock; Indie").
             genres = filtered
                 .flatMap { t -> t.genre.orEmpty().split(';', '/', ',').map { it.trim() }.filter { it.isNotEmpty() }.map { it to t } }
@@ -330,6 +375,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             query = q,
             tab = t,
             sort = s,
+            sorts = gs,
         )
     }.flowOn(Dispatchers.Default)
 
@@ -715,6 +761,29 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setQuery(q: String) { query.value = q }
     fun setTab(t: LibraryTab) { tab.value = t }
+    fun setSort(order: SortOrder) {
+        sort.value = order
+        prefs.edit().putInt("sort", order.ordinal).apply()
+    }
+
+    fun setGroupSort(target: SortTarget, order: GroupSort) {
+        sorts.update {
+            when (target) {
+                SortTarget.Albuns -> it.copy(albums = order)
+                SortTarget.Artistas -> it.copy(artists = order)
+                SortTarget.Pastas -> it.copy(folders = order)
+                SortTarget.Musicas -> it
+            }
+        }
+        val key = when (target) { SortTarget.Albuns -> "sort_albums"; SortTarget.Artistas -> "sort_artists"; SortTarget.Pastas -> "sort_folders"; SortTarget.Musicas -> return }
+        prefs.edit().putInt(key, order.ordinal).apply()
+    }
+
+    fun toggleSortReversed(target: SortTarget) {
+        sorts.update { it.copy(reversed = if (target in it.reversed) it.reversed - target else it.reversed + target) }
+        prefs.edit().putStringSet("sort_reversed", sorts.value.reversed.map { it.name }.toSet()).apply()
+    }
+
     fun cycleSort() {
         sort.update { SortOrder.entries[(it.ordinal + 1) % SortOrder.entries.size] }
         prefs.edit().putInt("sort", sort.value.ordinal).apply()
@@ -1077,4 +1146,27 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         player.release()
         super.onCleared()
     }
+}
+
+/**
+ * Ordena álbuns, artistas ou pastas. "Recentes" usa a faixa adicionada por último do grupo; "Ano",
+ * o ano mais novo; empates caem no nome. [artist] só conta para álbuns.
+ */
+private fun <T> sortGroups(
+    items: List<T>,
+    order: GroupSort,
+    reversed: Boolean,
+    name: (T) -> String,
+    artist: (T) -> String,
+    tracks: (T) -> List<Track>,
+): List<T> {
+    val byName = compareBy(name)
+    val cmp: Comparator<T> = when (order) {
+        GroupSort.Nome -> byName
+        GroupSort.Artista -> compareBy(artist).then(compareByDescending<T> { tracks(it).maxOf { t -> t.year ?: 0 } }).then(byName)
+        GroupSort.Ano -> compareByDescending<T> { tracks(it).maxOf { t -> t.year ?: 0 } }.then(byName)
+        GroupSort.Recentes -> compareByDescending<T> { tracks(it).maxOf { t -> t.dateAdded } }.then(byName)
+        GroupSort.Faixas -> compareByDescending<T> { tracks(it).size }.then(byName)
+    }
+    return items.sortedWith(if (reversed) cmp.reversed() else cmp)
 }

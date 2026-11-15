@@ -21,6 +21,11 @@
     <string name="sort_artist">Artist</string>
     <string name="sort_recent">Date added</string>
     <string name="cd_sort_by">Sort by: %1$s</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_recent_added">Recently added</string>
+    <string name="sort_track_count">Number of songs</string>
+    <string name="sort_reverse">Reverse order</string>
+    <string name="sort_menu_title">Sort by</string>
 
     <!-- Fallbacks for missing metadata -->
     <string name="unknown_title">Untitled</string>
@@ -45,6 +50,14 @@
     <plurals name="albums_count">
         <item quantity="one">%,d album</item>
         <item quantity="other">%,d albums</item>
+    </plurals>
+    <plurals name="artists_count">
+        <item quantity="one">%,d artist</item>
+        <item quantity="other">%,d artists</item>
+    </plurals>
+    <plurals name="folders_count">
+        <item quantity="one">%,d folder</item>
+        <item quantity="other">%,d folders</item>
     </plurals>
     <plurals name="results_count">
         <item quantity="one">%,d result</item>

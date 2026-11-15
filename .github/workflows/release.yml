@@ -173,16 +173,22 @@ jobs:
           {
             echo "## What's new in Sonivell $NOME"
             echo
-            echo "- New app icon: a lime wave on graphite, on Android and PC"
-            echo "- PC: one clean layout, Essential, with large covers. The five styles stay on Android"
+            echo "- New Glass look: blurred, translucent surfaces in every style and theme"
+            echo "- Glass player is now the default: background tinted by the album cover"
+            echo "- New light theme with an iOS-style palette (white background, light gray surfaces)"
+            echo "- New icon pack (Phosphor), with a choice of icon weights"
+            echo "- Spatial audio: Sonivell's own spatial sound plus the device's spatial audio"
+            echo "- Library: Sort by for songs, albums, artists and folders (recently added, name, year, number of songs...), with reverse order"
+            echo "- Editions renamed: Sonivell (with SMART) and Sonivell LITE; Sonivell is the default style"
+            echo "- Splash screen with the official Sonivell icon"
             echo "- Version $NOME everywhere: Android (lite and SMART), .deb and AppImage (versionCode $CODIGO)"
             echo
             echo "## Downloads"
             echo
             echo "| File | For |"
             echo "|---|---|"
-            echo "| \`Sonivell-$NOME-lite.apk\` | Android: player only, lightweight |"
-            echo "| \`Sonivell-$NOME-smart.apk\` | Android (64-bit ARM): with SMART recommendations |"
+            echo "| \`Sonivell-$NOME-lite.apk\` | Android: Sonivell LITE, player only, lightweight |"
+            echo "| \`Sonivell-$NOME-smart.apk\` | Android (64-bit ARM): Sonivell, with SMART recommendations |"
             echo "| \`Sonivell-$NOME-amd64.deb\` | Debian/Ubuntu PC (\`sudo apt install ./Sonivell-$NOME-amd64.deb\`) |"
             echo "| \`Sonivell-$NOME-x86_64.AppImage\` | Any Linux distro (\`chmod +x\`, then open) |"
             echo

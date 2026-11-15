@@ -10,6 +10,10 @@ data class LibraryActions(
     val onQuery: (String) -> Unit,
     val onTab: (LibraryTab) -> Unit,
     val onSort: () -> Unit,
+    /** Escolha direta da ordem (menu "Ordenar por" do tema Sonivell). */
+    val onSetSort: (com.juscelino.sonivell.SortOrder) -> Unit = {},
+    val onSetGroupSort: (com.juscelino.sonivell.SortTarget, com.juscelino.sonivell.GroupSort) -> Unit = { _, _ -> },
+    val onToggleSortReversed: (com.juscelino.sonivell.SortTarget) -> Unit = {},
     val onRefresh: () -> Unit,
     val onPlay: (tracks: List<Track>, index: Int, source: String) -> Unit,
     val onShuffleAll: () -> Unit,
