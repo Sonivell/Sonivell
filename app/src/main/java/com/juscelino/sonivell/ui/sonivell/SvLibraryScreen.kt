@@ -80,26 +80,8 @@ fun SvLibraryScreen(
     val resources = androidx.compose.ui.platform.LocalContext.current.resources
     val songs = { n: Int -> resources.getString(R.string.sv_songs_count, n) }
 
-    // Playlists na ordem escolhida (a lista é curta: ordena aqui mesmo). As inteligentes não têm
-    // datas nem contagem fixa: seguem o nome quando a ordem é por nome e a de criação nas outras.
-    val playlistSort = state.sorts.playlists
-    val playlistsReversed = SortTarget.Playlists in state.sorts.reversed
-    val sortedPlaylists = androidx.compose.runtime.remember(playlists, playlistSort, playlistsReversed) {
-        val keys = com.juscelino.sonivell.data.SortKeys()
-        val sorted = when (playlistSort) {
-            PlaylistSort.Padrao -> playlists
-            PlaylistSort.Nome -> playlists.sortedBy { keys.of(it.name) }
-            PlaylistSort.Criadas -> playlists.sortedByDescending { it.createdAt }
-            PlaylistSort.Atualizadas -> playlists.sortedByDescending { it.updatedAt }
-            PlaylistSort.Faixas -> playlists.sortedByDescending { it.trackIds.size }
-        }
-        if (playlistsReversed) sorted.asReversed() else sorted
-    }
-    val sortedSmart = androidx.compose.runtime.remember(smartPlaylists, playlistSort, playlistsReversed) {
-        val keys = com.juscelino.sonivell.data.SortKeys()
-        val sorted = if (playlistSort == PlaylistSort.Nome) smartPlaylists.sortedBy { keys.of(it.name) } else smartPlaylists
-        if (playlistsReversed) sorted.asReversed() else sorted
-    }
+    val sortedPlaylists = androidx.compose.runtime.remember(playlists, state.sorts) { com.juscelino.sonivell.ui.library.sortPlaylists(playlists, state.sorts) }
+    val sortedSmart = androidx.compose.runtime.remember(smartPlaylists, state.sorts) { com.juscelino.sonivell.ui.library.sortSmartPlaylists(smartPlaylists, state.sorts) }
 
     LazyColumn(
         Modifier.fillMaxWidth(),
