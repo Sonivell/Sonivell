@@ -35,14 +35,10 @@ import com.juscelino.sonivell.LibraryState
 import com.juscelino.sonivell.ALBUM_SORTS
 import com.juscelino.sonivell.ARTIST_SORTS
 import com.juscelino.sonivell.FOLDER_SORTS
+import com.juscelino.sonivell.GENRE_SORTS
+import com.juscelino.sonivell.PlaylistSort
 import com.juscelino.sonivell.SortOrder
 import com.juscelino.sonivell.SortTarget
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.horizontalScroll
@@ -83,6 +79,27 @@ fun SvLibraryScreen(
     val tabs = listOf(R.string.sv_all, R.string.tab_songs, R.string.sv_albums, R.string.sv_artists, R.string.sv_genres, R.string.tab_folders)
     val resources = androidx.compose.ui.platform.LocalContext.current.resources
     val songs = { n: Int -> resources.getString(R.string.sv_songs_count, n) }
+
+    // Playlists na ordem escolhida (a lista é curta: ordena aqui mesmo). As inteligentes não têm
+    // datas nem contagem fixa: seguem o nome quando a ordem é por nome e a de criação nas outras.
+    val playlistSort = state.sorts.playlists
+    val playlistsReversed = SortTarget.Playlists in state.sorts.reversed
+    val sortedPlaylists = androidx.compose.runtime.remember(playlists, playlistSort, playlistsReversed) {
+        val keys = com.juscelino.sonivell.data.SortKeys()
+        val sorted = when (playlistSort) {
+            PlaylistSort.Padrao -> playlists
+            PlaylistSort.Nome -> playlists.sortedBy { keys.of(it.name) }
+            PlaylistSort.Criadas -> playlists.sortedByDescending { it.createdAt }
+            PlaylistSort.Atualizadas -> playlists.sortedByDescending { it.updatedAt }
+            PlaylistSort.Faixas -> playlists.sortedByDescending { it.trackIds.size }
+        }
+        if (playlistsReversed) sorted.asReversed() else sorted
+    }
+    val sortedSmart = androidx.compose.runtime.remember(smartPlaylists, playlistSort, playlistsReversed) {
+        val keys = com.juscelino.sonivell.data.SortKeys()
+        val sorted = if (playlistSort == PlaylistSort.Nome) smartPlaylists.sortedBy { keys.of(it.name) } else smartPlaylists
+        if (playlistsReversed) sorted.asReversed() else sorted
+    }
 
     LazyColumn(
         Modifier.fillMaxWidth(),
@@ -138,16 +155,21 @@ fun SvLibraryScreen(
         when (tab) {
             0 -> {
                 item {
-                    SvSection(stringResource(R.string.sv_collections), Modifier.padding(top = 10.dp))
+                    SvSection(stringResource(R.string.sv_collections), Modifier.padding(top = 10.dp)) {
+                        if (playlists.size + smartPlaylists.size > 1) com.juscelino.sonivell.ui.components.SortMenuButton(
+                            PlaylistSort.entries, state.sorts.playlists, { it.label }, SortTarget.Playlists in state.sorts.reversed,
+                            actions.onSetPlaylistSort, { actions.onToggleSortReversed(SortTarget.Playlists) },
+                        )
+                    }
                 }
                 // Cada coleção com o seu ícone e a sua cor (antes todas tinham a mesma onda).
                 item { collection(stringResource(R.string.source_liked), songs(favorites.size), icons.liked, nc.accent) { actions.onOpenAuto("curtidas") } }
                 item { collection(stringResource(R.string.auto_most), stringResource(R.string.sv_most_sub), icons.trendUp, collectionAmber()) { actions.onOpenAuto("mais-ouvidas") } }
                 item { collection(stringResource(R.string.auto_recent_added), "", icons.recent, collectionBlue()) { actions.onOpenAuto("recentes") } }
-                items(smartPlaylists, key = { "s${it.id}" }) { sp ->
+                items(sortedSmart, key = { "s${it.id}" }) { sp ->
                     collection(sp.name, stringResource(R.string.smart_playlists), icons.smart, collectionPurple()) { actions.onOpenSmartPlaylist(sp.id) }
                 }
-                items(playlists, key = { "p${it.id}" }) { p ->
+                items(sortedPlaylists, key = { "p${it.id}" }) { p ->
                     collection(p.name, songs(p.trackIds.size), icons.musicNote, nc.textSecondary) { actions.onOpenPlaylist(p.id) }
                 }
                 if (state.artists.isNotEmpty()) {
@@ -199,7 +221,7 @@ fun SvLibraryScreen(
                     Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(songs(list.size), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = nc.textSecondary, modifier = Modifier.weight(1f))
                         // Na busca a ordem é a da relevância; o menu só vale para a lista inteira.
-                        if (state.query.isBlank()) SvSortButton(
+                        if (state.query.isBlank()) com.juscelino.sonivell.ui.components.SortMenuButton(
                             SortOrder.entries, state.sort, { it.label }, SortTarget.Musicas in state.sorts.reversed,
                             actions.onSetSort, { actions.onToggleSortReversed(SortTarget.Musicas) },
                         )
@@ -233,7 +255,7 @@ fun SvLibraryScreen(
             2 -> {
                 item {
                     SvSortHeader(pluralStringResource(R.plurals.albums_count, state.albums.size, state.albums.size)) {
-                        SvSortButton(
+                        com.juscelino.sonivell.ui.components.SortMenuButton(
                             ALBUM_SORTS, state.sorts.albums, { it.label }, SortTarget.Albuns in state.sorts.reversed,
                             { actions.onSetGroupSort(SortTarget.Albuns, it) }, { actions.onToggleSortReversed(SortTarget.Albuns) },
                         )
@@ -246,7 +268,7 @@ fun SvLibraryScreen(
             3 -> {
                 item {
                     SvSortHeader(pluralStringResource(R.plurals.artists_count, state.artists.size, state.artists.size)) {
-                        SvSortButton(
+                        com.juscelino.sonivell.ui.components.SortMenuButton(
                             ARTIST_SORTS, state.sorts.artists, { it.label }, SortTarget.Artistas in state.sorts.reversed,
                             { actions.onSetGroupSort(SortTarget.Artistas, it) }, { actions.onToggleSortReversed(SortTarget.Artistas) },
                         )
@@ -257,6 +279,14 @@ fun SvLibraryScreen(
                 }
             }
             4 -> {
+                item {
+                    SvSortHeader(pluralStringResource(R.plurals.genres_count, state.genres.size, state.genres.size)) {
+                        com.juscelino.sonivell.ui.components.SortMenuButton(
+                            GENRE_SORTS, state.sorts.genres, { it.label }, SortTarget.Generos in state.sorts.reversed,
+                            { actions.onSetGroupSort(SortTarget.Generos, it) }, { actions.onToggleSortReversed(SortTarget.Generos) },
+                        )
+                    }
+                }
                 // Cartões de dois por linha, em superfície neutra, com a onda curta (a cor fica para ação e estado).
                 val rows = state.genres.chunked(2)
                 itemsIndexed(rows, key = { _, r -> "g-" + r.first().name }) { r, pair ->
@@ -284,7 +314,7 @@ fun SvLibraryScreen(
             else -> {
                 item {
                     SvSortHeader(pluralStringResource(R.plurals.folders_count, state.folders.size, state.folders.size)) {
-                        SvSortButton(
+                        com.juscelino.sonivell.ui.components.SortMenuButton(
                             FOLDER_SORTS, state.sorts.folders, { it.label }, SortTarget.Pastas in state.sorts.reversed,
                             { actions.onSetGroupSort(SortTarget.Pastas, it) }, { actions.onToggleSortReversed(SortTarget.Pastas) },
                         )
@@ -333,67 +363,5 @@ private fun SvSortHeader(count: String, sortButton: @Composable () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(count, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = SonivellTheme.colors.textSecondary, modifier = Modifier.weight(1f))
         sortButton()
-    }
-}
-
-/**
- * Botão "ordenar" em cápsula neutra (ícone + ordem atual); abre um menu com as opções da lista,
- * a atual marcada, e a opção de inverter a ordem.
- */
-@Composable
-private fun <T> SvSortButton(
-    options: List<T>,
-    selected: T,
-    label: (T) -> Int,
-    reversed: Boolean,
-    onSelect: (T) -> Unit,
-    onToggleReversed: () -> Unit,
-) {
-    val nc = SonivellTheme.colors
-    val icons = SonivellTheme.icons
-    var open by remember { mutableStateOf(false) }
-    val current = stringResource(label(selected))
-    Box {
-        Row(
-            Modifier
-                .height(36.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(nc.surface)
-                .clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_sort_by, current)) { open = true }
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Icon(icons.sort, null, Modifier.size(16.dp), tint = nc.textSecondary)
-            Text(current, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = nc.textPrimary, maxLines = 1)
-        }
-        DropdownMenu(
-            expanded = open,
-            onDismissRequest = { open = false },
-            shape = RoundedCornerShape(16.dp),
-            containerColor = nc.surface,
-        ) {
-            Text(
-                stringResource(R.string.sort_menu_title),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = nc.textSecondary,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-            )
-            options.forEach { o ->
-                val on = o == selected
-                DropdownMenuItem(
-                    text = { Text(stringResource(label(o)), fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Medium, color = nc.textPrimary) },
-                    trailingIcon = { if (on) Icon(icons.check, null, Modifier.size(18.dp), tint = nc.accent) },
-                    onClick = { open = false; if (!on) onSelect(o) },
-                )
-            }
-            androidx.compose.material3.HorizontalDivider(Modifier.padding(vertical = 4.dp), color = nc.outline)
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.sort_reverse), fontWeight = if (reversed) FontWeight.ExtraBold else FontWeight.Medium, color = nc.textPrimary) },
-                trailingIcon = { if (reversed) Icon(icons.check, null, Modifier.size(18.dp), tint = nc.accent) },
-                onClick = { open = false; onToggleReversed() },
-            )
-        }
     }
 }

@@ -26,6 +26,10 @@
     <string name="sort_track_count">Number of songs</string>
     <string name="sort_reverse">Reverse order</string>
     <string name="sort_menu_title">Sort by</string>
+    <string name="sort_default">Original order</string>
+    <string name="sort_created">Recently created</string>
+    <string name="sort_updated">Recently updated</string>
+    <string name="sort_drag_hint">To drag songs, go back to Original order</string>
 
     <!-- Fallbacks for missing metadata -->
     <string name="unknown_title">Untitled</string>
@@ -58,6 +62,10 @@
     <plurals name="folders_count">
         <item quantity="one">%,d folder</item>
         <item quantity="other">%,d folders</item>
+    </plurals>
+    <plurals name="genres_count">
+        <item quantity="one">%,d genre</item>
+        <item quantity="other">%,d genres</item>
     </plurals>
     <plurals name="results_count">
         <item quantity="one">%,d result</item>

@@ -118,9 +118,37 @@ enum class GroupSort(@StringRes val label: Int) {
 val ALBUM_SORTS = listOf(GroupSort.Nome, GroupSort.Artista, GroupSort.Ano, GroupSort.Recentes, GroupSort.Faixas)
 val ARTIST_SORTS = listOf(GroupSort.Nome, GroupSort.Recentes, GroupSort.Faixas)
 val FOLDER_SORTS = listOf(GroupSort.Nome, GroupSort.Recentes, GroupSort.Faixas)
+val GENRE_SORTS = listOf(GroupSort.Nome, GroupSort.Recentes, GroupSort.Faixas)
+
+/** Ordem da lista de playlists (aba Todas). [Padrao] é a ordem em que foram criadas. */
+enum class PlaylistSort(@StringRes val label: Int) {
+    Padrao(R.string.sort_default),
+    Nome(R.string.sort_name),
+    Criadas(R.string.sort_created),
+    Atualizadas(R.string.sort_updated),
+    Faixas(R.string.sort_track_count),
+}
+
+/**
+ * Ordem das faixas dentro de uma coleção (playlist, álbum, artista, gênero, pasta, automática).
+ * [Padrao] é a ordem própria da coleção: a da playlist, a das faixas do disco etc.
+ */
+enum class CollectionSort(@StringRes val label: Int) {
+    Padrao(R.string.sort_default),
+    Titulo(R.string.sort_title),
+    Artista(R.string.sort_artist),
+    Album(R.string.sort_album),
+    Duracao(R.string.sort_duration),
+    Ano(R.string.sort_year),
+    Recentes(R.string.sort_recent_added),
+}
+
+data class CollectionSortPref(val order: CollectionSort = CollectionSort.Padrao, val reversed: Boolean = false) {
+    val isDefault: Boolean get() = order == CollectionSort.Padrao && !reversed
+}
 
 /** Lista cuja ordem o usuário escolhe na biblioteca. */
-enum class SortTarget { Musicas, Albuns, Artistas, Pastas }
+enum class SortTarget { Musicas, Albuns, Artistas, Pastas, Generos, Playlists }
 
 /**
  * Ordens das listas agrupadas e a "ordem inversa" de cada lista. A ordem natural de cada opção é a
@@ -130,6 +158,8 @@ data class LibrarySorts(
     val albums: GroupSort = GroupSort.Nome,
     val artists: GroupSort = GroupSort.Nome,
     val folders: GroupSort = GroupSort.Nome,
+    val genres: GroupSort = GroupSort.Nome,
+    val playlists: PlaylistSort = PlaylistSort.Padrao,
     val reversed: Set<SortTarget> = emptySet(),
 )
 
@@ -293,6 +323,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             albums = GroupSort.entries.getOrElse(prefs.getInt("sort_albums", 0)) { GroupSort.Nome },
             artists = GroupSort.entries.getOrElse(prefs.getInt("sort_artists", 0)) { GroupSort.Nome },
             folders = GroupSort.entries.getOrElse(prefs.getInt("sort_folders", 0)) { GroupSort.Nome },
+            genres = GroupSort.entries.getOrElse(prefs.getInt("sort_genres", 0)) { GroupSort.Nome },
+            playlists = PlaylistSort.entries.getOrElse(prefs.getInt("sort_playlists", 0)) { PlaylistSort.Padrao },
             reversed = prefs.getStringSet("sort_reversed", emptySet()).orEmpty()
                 .mapNotNull { n -> SortTarget.entries.firstOrNull { it.name == n } }.toSet(),
         )
@@ -360,11 +392,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 gs.folders, SortTarget.Pastas in gs.reversed, { keys.of(it.name) }, { keys.of(it.name) }, { it.tracks },
             ),
             // Uma faixa pode ter vários gêneros na mesma tag ("Rock; Indie").
-            genres = filtered
-                .flatMap { t -> t.genre.orEmpty().split(';', '/', ',').map { it.trim() }.filter { it.isNotEmpty() }.map { it to t } }
-                .groupBy({ it.first.lowercase() }, { it })
-                .map { (_, pairs) -> Genre(pairs.first().first, pairs.map { it.second }.distinctBy { it.id }) }
-                .sortedBy { keys.of(it.name) },
+            genres = sortGroups(
+                filtered
+                    .flatMap { t -> t.genre.orEmpty().split(';', '/', ',').map { it.trim() }.filter { it.isNotEmpty() }.map { it to t } }
+                    .groupBy({ it.first.lowercase() }, { it })
+                    .map { (_, pairs) -> Genre(pairs.first().first, pairs.map { it.second }.distinctBy { it.id }) },
+                gs.genres, SortTarget.Generos in gs.reversed, { keys.of(it.name) }, { keys.of(it.name) }, { it.tracks },
+            ),
             recentAlbums = all.sortedByDescending { it.dateAdded }
                 .distinctBy { it.albumId }
                 .take(6)
@@ -772,11 +806,44 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 SortTarget.Albuns -> it.copy(albums = order)
                 SortTarget.Artistas -> it.copy(artists = order)
                 SortTarget.Pastas -> it.copy(folders = order)
-                SortTarget.Musicas -> it
+                SortTarget.Generos -> it.copy(genres = order)
+                SortTarget.Musicas, SortTarget.Playlists -> it
             }
         }
-        val key = when (target) { SortTarget.Albuns -> "sort_albums"; SortTarget.Artistas -> "sort_artists"; SortTarget.Pastas -> "sort_folders"; SortTarget.Musicas -> return }
+        val key = when (target) {
+            SortTarget.Albuns -> "sort_albums"
+            SortTarget.Artistas -> "sort_artists"
+            SortTarget.Pastas -> "sort_folders"
+            SortTarget.Generos -> "sort_genres"
+            SortTarget.Musicas, SortTarget.Playlists -> return
+        }
         prefs.edit().putInt(key, order.ordinal).apply()
+    }
+
+    fun setPlaylistSort(order: PlaylistSort) {
+        sorts.update { it.copy(playlists = order) }
+        prefs.edit().putInt("sort_playlists", order.ordinal).apply()
+    }
+
+    /** Ordem escolhida dentro de cada tipo de coleção ("playlist", "album", "artist"…), salva por tipo. */
+    private val _collectionSorts = MutableStateFlow(
+        COLLECTION_KINDS.associateWith { kind ->
+            val raw = prefs.getString("csort_$kind", null).orEmpty().split(':')
+            CollectionSortPref(
+                order = CollectionSort.entries.firstOrNull { it.name == raw.getOrNull(0) } ?: CollectionSort.Padrao,
+                reversed = raw.getOrNull(1) == "1",
+            )
+        }
+    )
+    val collectionSorts: StateFlow<Map<String, CollectionSortPref>> = _collectionSorts.asStateFlow()
+
+    fun setCollectionSort(kind: String, order: CollectionSort) = updateCollectionSort(kind) { it.copy(order = order) }
+    fun toggleCollectionReversed(kind: String) = updateCollectionSort(kind) { it.copy(reversed = !it.reversed) }
+
+    private fun updateCollectionSort(kind: String, change: (CollectionSortPref) -> CollectionSortPref) {
+        _collectionSorts.update { it + (kind to change(it[kind] ?: CollectionSortPref())) }
+        val p = _collectionSorts.value.getValue(kind)
+        prefs.edit().putString("csort_$kind", "${p.order.name}:${if (p.reversed) 1 else 0}").apply()
     }
 
     fun toggleSortReversed(target: SortTarget) {
@@ -1169,4 +1236,26 @@ private fun <T> sortGroups(
         GroupSort.Faixas -> compareByDescending<T> { tracks(it).size }.then(byName)
     }
     return items.sortedWith(if (reversed) cmp.reversed() else cmp)
+}
+
+/** Tipos de coleção com ordem própria salva. */
+val COLLECTION_KINDS = listOf("playlist", "smart", "auto", "album", "artist", "genre", "folder")
+
+/**
+ * Posições (na lista original) das faixas de uma coleção na ordem escolhida. Com [CollectionSort.Padrao]
+ * é a ordem da própria coleção; "Ordem inversa" vira qualquer uma de cabeça para baixo.
+ */
+fun collectionOrder(tracks: List<Track>, pref: CollectionSortPref): List<Int> {
+    val keys = com.juscelino.sonivell.data.SortKeys()
+    val idx = tracks.indices.toList()
+    val sorted = when (pref.order) {
+        CollectionSort.Padrao -> idx
+        CollectionSort.Titulo -> idx.sortedBy { keys.of(tracks[it].title) }
+        CollectionSort.Artista -> idx.sortedWith(compareBy({ keys.of(tracks[it].artist) }, { keys.of(tracks[it].album) }, { tracks[it].discNumber ?: 0 }, { tracks[it].trackNumber ?: 0 }))
+        CollectionSort.Album -> idx.sortedWith(compareBy({ keys.of(tracks[it].album) }, { tracks[it].discNumber ?: 0 }, { tracks[it].trackNumber ?: 0 }, { keys.of(tracks[it].title) }))
+        CollectionSort.Duracao -> idx.sortedByDescending { tracks[it].durationMs }
+        CollectionSort.Ano -> idx.sortedWith(compareByDescending<Int> { tracks[it].year ?: 0 }.thenBy { keys.of(tracks[it].album) })
+        CollectionSort.Recentes -> idx.sortedByDescending { tracks[it].dateAdded }
+    }
+    return if (pref.reversed) sorted.asReversed() else sorted
 }
