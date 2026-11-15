@@ -64,6 +64,10 @@ data class CollectionActions(
     val onMore: (() -> Unit)? = null,
     /** Reordenar faixas (só playlists); null desliga o arrasto. */
     val onMove: ((from: Int, to: Int) -> Unit)? = null,
+    /** Ordem escolhida; null esconde o botão "Ordenar por". */
+    val sort: com.juscelino.sonivell.CollectionSortPref? = null,
+    val onSort: (com.juscelino.sonivell.CollectionSort) -> Unit = {},
+    val onToggleReversed: () -> Unit = {},
 )
 
 /**
@@ -141,6 +145,20 @@ fun CollectionScreen(
                     actions.onPlay(0)
                 }
                 PillButton(stringResource(R.string.shuffle), SonivellTheme.icons.shuffle, filled = false, enabled = tracks.isNotEmpty(), modifier = Modifier.weight(1f), onClick = actions.onShuffle)
+            }
+        }
+        val sort = actions.sort
+        if (sort != null && tracks.size > 1) {
+            item(key = "sort") {
+                Row(Modifier.fillMaxWidth().padding(bottom = 8.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // Com outra ordem, o arrasto da playlist fica desligado: avisa como voltar a ele.
+                    val hint = if (!sort.isDefault && emptyText != null) stringResource(R.string.sort_drag_hint) else ""
+                    Text(hint, style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 2, modifier = Modifier.weight(1f).padding(end = 8.dp))
+                    com.juscelino.sonivell.ui.components.SortMenuButton(
+                        com.juscelino.sonivell.CollectionSort.entries, sort.order, { it.label }, sort.reversed,
+                        actions.onSort, actions.onToggleReversed,
+                    )
+                }
             }
         }
         if (tracks.isEmpty() && emptyText != null) {

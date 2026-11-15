@@ -288,6 +288,8 @@ private data class CollectionData(
     val smart: SmartPlaylist? = null,
     /** Automática (sem edição): oferece "Salvar como playlist". */
     val automatic: Boolean = false,
+    /** Tipo para a ordem salva: "playlist", "smart", "auto", "album", "artist", "genre", "folder". */
+    val kind: String = "album",
 )
 
 @Composable
@@ -297,6 +299,7 @@ private fun MainContent(vm: MainViewModel) {
     val route = backStack?.destination?.route
 
     val library by vm.library.collectAsStateWithLifecycle()
+    val collectionSorts by vm.collectionSorts.collectAsStateWithLifecycle()
     val player by vm.playerState.collectAsStateWithLifecycle()
     val current by vm.currentTrack.collectAsStateWithLifecycle()
     val favorites by vm.favorites.collectAsStateWithLifecycle()
@@ -447,6 +450,7 @@ private fun MainContent(vm: MainViewModel) {
         onSetSort = vm::setSort,
         onSetGroupSort = vm::setGroupSort,
         onToggleSortReversed = vm::toggleSortReversed,
+        onSetPlaylistSort = vm::setPlaylistSort,
         onRefresh = vm::refresh,
         onPlay = { tracks, index, src ->
             commitSearch()
@@ -622,10 +626,14 @@ private fun MainContent(vm: MainViewModel) {
                 return
             }
             val playlist = data.playlist
+            // Ordem escolhida para este tipo de coleção; [order] leva cada posição exibida à original.
+            val sortPref = collectionSorts[data.kind] ?: com.juscelino.sonivell.CollectionSortPref()
+            val order = remember(data.tracks, sortPref) { com.juscelino.sonivell.collectionOrder(data.tracks, sortPref) }
+            val shown = remember(data.tracks, order) { order.map { data.tracks[it] } }
             CollectionScreen(
                 title = data.title,
                 subtitle = data.subtitle,
-                tracks = data.tracks,
+                tracks = shown,
                 currentId = current?.id,
                 contentPadding = listPadding,
                 emptyText = if (playlist != null) stringResource(R.string.playlist_empty) else null,
@@ -633,22 +641,26 @@ private fun MainContent(vm: MainViewModel) {
                     onBack = { nav.popBackStack() },
                     onPlay = { index ->
                         source = data.title
-                        vm.playFrom(data.tracks, index)
+                        vm.playFrom(shown, index)
                     },
                     onShuffle = {
                         source = data.title
-                        vm.playShuffled(data.tracks)
+                        vm.playShuffled(shown)
                     },
                     onTrackMenu = { track, index ->
                         val ctx = if (playlist != null && data.storeIndices != null) {
-                            MenuContext.InPlaylist(playlist.id, data.storeIndices[index])
+                            MenuContext.InPlaylist(playlist.id, data.storeIndices[order[index]])
                         } else MenuContext.None
                         menuFor = track to ctx
                     },
-                    onMore = { collectionMenu = data },
-                    onMove = if (playlist == null || data.storeIndices == null) null else { from, to ->
+                    onMore = { collectionMenu = data.copy(tracks = shown) },
+                    // Arrastar só faz sentido na ordem da própria playlist.
+                    onMove = if (playlist == null || data.storeIndices == null || !sortPref.isDefault) null else { from, to ->
                         vm.movePlaylistItem(playlist.id, data.storeIndices[from], data.storeIndices[to])
                     },
+                    sort = sortPref,
+                    onSort = { vm.setCollectionSort(data.kind, it) },
+                    onToggleReversed = { vm.toggleCollectionReversed(data.kind) },
                 ),
             )
         }
@@ -842,24 +854,24 @@ private fun MainContent(vm: MainViewModel) {
                     val id = entry.arguments?.getLong("id")
                     val tracks = library.allTracks.filter { it.albumId == id }
                         .sortedWith(compareBy({ it.discNumber ?: 0 }, { it.trackNumber ?: 0 }, { it.title.lowercase() }))
-                    Collection(tracks.firstOrNull()?.let { CollectionData(it.album, it.albumArtist ?: it.artist, tracks) })
+                    Collection(tracks.firstOrNull()?.let { CollectionData(it.album, it.albumArtist ?: it.artist, tracks, kind = "album") })
                 }
                 composable(Routes.ARTIST) { entry ->
                     val name = entry.arguments?.getString("name")
                     val tracks = library.allTracks.filter { it.artist == name }
                         .sortedWith(compareBy({ it.album.lowercase() }, { it.discNumber ?: 0 }, { it.trackNumber ?: 0 }))
                     val albums = tracks.map { it.albumId }.distinct().size
-                    Collection(if (name == null || tracks.isEmpty()) null else CollectionData(name, pluralStringResource(R.plurals.albums_count, albums, albums), tracks))
+                    Collection(if (name == null || tracks.isEmpty()) null else CollectionData(name, pluralStringResource(R.plurals.albums_count, albums, albums), tracks, kind = "artist"))
                 }
                 composable(Routes.GENRE) { entry ->
                     val name = entry.arguments?.getString("name")
                     val genre = library.genres.firstOrNull { it.name.equals(name, ignoreCase = true) }
-                    Collection(genre?.let { CollectionData(it.name, stringResource(R.string.tab_genres), it.tracks) })
+                    Collection(genre?.let { CollectionData(it.name, stringResource(R.string.tab_genres), it.tracks, kind = "genre") })
                 }
                 composable(Routes.FOLDER) { entry ->
                     val path = entry.arguments?.getString("path")
                     val folder = library.folders.firstOrNull { it.path == path }
-                    Collection(folder?.let { CollectionData(it.name, it.path, it.tracks) })
+                    Collection(folder?.let { CollectionData(it.name, it.path, it.tracks, kind = "folder") })
                 }
                 composable(Routes.PLAYLIST, arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->
                     val id = entry.arguments?.getLong("id")
@@ -873,6 +885,7 @@ private fun MainContent(vm: MainViewModel) {
                             tracks = shown.map { it.second },
                             storeIndices = shown.map { it.first },
                             playlist = p,
+                            kind = "playlist",
                         )
                     }
                     // Enquanto as playlists carregam, não volta da tela.
@@ -906,14 +919,14 @@ private fun MainContent(vm: MainViewModel) {
                     }
                     // Curtidas é feita pelo usuário: rótulo "Coleção", não "Automáticas".
                     val kindLabel = stringResource(if (key == "curtidas") R.string.label_collection else R.string.auto_playlists)
-                    Collection(CollectionData(title, kindLabel, tracks, automatic = true))
+                    Collection(CollectionData(title, kindLabel, tracks, automatic = true, kind = "auto"))
                 }
                 composable(Routes.SMARTLIST, arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->
                     val id = entry.arguments?.getLong("id")
                     val sp = smartPlaylists.firstOrNull { it.id == id }
                     if (sp == null && smartPlaylists.isEmpty()) return@composable
                     Collection(sp?.let {
-                        CollectionData(it.name, stringResource(R.string.smart_playlists), SmartPlaylists.evaluate(it, library.allTracks, playStats, favorites), smart = it)
+                        CollectionData(it.name, stringResource(R.string.smart_playlists), SmartPlaylists.evaluate(it, library.allTracks, playStats, favorites), smart = it, kind = "smart")
                     })
                 }
                 composable(Routes.SMART_EDIT, arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->

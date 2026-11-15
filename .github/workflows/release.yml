@@ -178,7 +178,7 @@ jobs:
             echo "- New light theme with an iOS-style palette (white background, light gray surfaces)"
             echo "- New icon pack (Phosphor), with a choice of icon weights"
             echo "- Spatial audio: Sonivell's own spatial sound plus the device's spatial audio"
-            echo "- Library: Sort by for songs, albums, artists and folders (recently added, name, year, number of songs...), with reverse order"
+            echo "- Sort by everywhere: every Library tab (songs, albums, artists, genres, folders, playlists) and inside playlists, albums, artists and other collections, with reverse order"
             echo "- Editions renamed: Sonivell (with SMART) and Sonivell LITE; Sonivell is the default style"
             echo "- Splash screen with the official Sonivell icon"
             echo "- Version $NOME everywhere: Android (lite and SMART), .deb and AppImage (versionCode $CODIGO)"

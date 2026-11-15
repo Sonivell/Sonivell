@@ -241,9 +241,8 @@ fun LibraryScreenContraste(
                 if (state.tab == LibraryTab.Musicas) {
                     item(key = "sort") {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
-                            SortButton(stringResource(state.sort.label), actions.onSort)
-                            Spacer(Modifier.weight(1f))
-                            Text(pluralStringResource(R.plurals.songs_count, state.tracks.size, state.tracks.size), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
+                            Text(pluralStringResource(R.plurals.songs_count, state.tracks.size, state.tracks.size), style = MaterialTheme.typography.labelMedium, color = c.textSecondary, modifier = Modifier.weight(1f))
+                            LibrarySortButton(state, state.tab, actions)
                         }
                     }
                     itemsIndexed(state.tracks, key = { _, t -> t.id }) { i, t ->
@@ -259,6 +258,7 @@ fun LibraryScreenContraste(
                                 }
                             } else {
                                 Spacer(Modifier.weight(1f))
+                                LibrarySortButton(state, state.tab, actions)
                             }
                             IconBtn(
                                 if (grid) icons.list else icons.grid,
@@ -267,6 +267,13 @@ fun LibraryScreenContraste(
                                 tint = c.textSecondary,
                                 iconSize = 20.dp,
                             )
+                        }
+                    }
+                    if (state.tab == LibraryTab.Playlists && playlists.size + smartPlaylists.size > 1) {
+                        item(key = "pl-sort") {
+                            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp), horizontalArrangement = Arrangement.End) {
+                                LibrarySortButton(state, state.tab, actions)
+                            }
                         }
                     }
                     if (state.tab == LibraryTab.Generos && state.genres.isEmpty()) {
@@ -320,10 +327,10 @@ private fun buildLibraryItems(
         pinned = true,
         onClick = { actions.onOpenAuto("curtidas") },
     )
-    val smart = smartPlaylists.map { sp ->
+    val smart = sortSmartPlaylists(smartPlaylists, state.sorts).map { sp ->
         ContrasteItem("sp-${sp.id}", sp.name, res.getString(R.string.kind_smart), ContrasteArt.Symbol(ContrasteSymbol.Smart), onClick = { actions.onOpenSmartPlaylist(sp.id) })
     }
-    val own = playlists.map { p ->
+    val own = sortPlaylists(playlists, state.sorts).map { p ->
         val first = p.trackIds.firstNotNullOfOrNull(byId::get)
         ContrasteItem("pl-${p.id}", p.name, res.getString(R.string.kind_playlist, songs(res, p.trackIds.count { it in byId })), ContrasteArt.Of(first), onClick = { actions.onOpenPlaylist(p.id) })
     }
@@ -427,23 +434,6 @@ private fun ItemGrid(row: List<ContrasteItem>, modifier: Modifier = Modifier) {
             }
         }
         repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-    }
-}
-
-@Composable
-private fun SortButton(label: String, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    Row(
-        Modifier
-            .height(40.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .clickable(onClickLabel = stringResource(R.string.cd_sort_by, label), onClick = onClick)
-            .padding(end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Icon(SonivellTheme.icons.sort, null, Modifier.size(16.dp), tint = c.textPrimary)
-        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = c.textPrimary)
     }
 }
 

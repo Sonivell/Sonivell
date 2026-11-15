@@ -26,6 +26,10 @@
     <string name="sort_track_count">Number of songs</string>
     <string name="sort_reverse">Reverse order</string>
     <string name="sort_menu_title">Sort by</string>
+    <string name="sort_default">Original order</string>
+    <string name="sort_created">Recently created</string>
+    <string name="sort_updated">Recently updated</string>
+    <string name="sort_drag_hint">To drag songs, go back to Original order</string>
 
     <!-- Fallbacks for missing metadata -->
     <string name="unknown_title">Untitled</string>
@@ -58,6 +62,10 @@
     <plurals name="folders_count">
         <item quantity="one">%,d folder</item>
         <item quantity="other">%,d folders</item>
+    </plurals>
+    <plurals name="genres_count">
+        <item quantity="one">%,d genre</item>
+        <item quantity="other">%,d genres</item>
     </plurals>
     <plurals name="results_count">
         <item quantity="one">%,d result</item>
@@ -484,8 +492,6 @@
     <string name="ess_search_hint">What do you want to hear?</string>
     <string name="ess_recent">Recent</string>
     <string name="ess_recent_sub">Added</string>
-    <string name="ess_sort_az">A to Z</string>
-    <string name="ess_sort_added">Recently added</string>
     <string name="thanks_title">Acknowledgements</string>
     <string name="thanks_message">The Smart engine was only possible in this project thanks to the work of Nikita-sud and the LatentJam project.\nMy sincere thanks.</string>
     <string name="thanks_link">See LatentJam on GitHub</string>

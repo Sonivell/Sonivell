@@ -167,8 +167,9 @@ fun LibraryScreenOndas(
 
     val listState = rememberLazyListState()
     // Letras do índice A–Z: uma por linha do fim da lista, só nas listas em ordem alfabética.
-    val scrollLetters = remember(mode, state.tab, state.tracks, state.sort, libItems, grid) {
-        if (mode != LibraryMode.Biblioteca) emptyList()
+    val scrollLetters = remember(mode, state.tab, state.tracks, state.sort, state.sorts, libItems, grid) {
+        // Só nas listas em ordem alfabética crescente (com outra ordem, as letras não batem).
+        if (mode != LibraryMode.Biblioteca || !state.alphabetical(state.tab)) emptyList()
         else when (state.tab) {
             LibraryTab.Musicas -> when (state.sort) {
                 SortOrder.Titulo -> state.tracks.map { indexLetter(it.title) }
@@ -275,9 +276,8 @@ fun LibraryScreenOndas(
                 if (state.tab == LibraryTab.Musicas) {
                     item(key = "sort") {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
-                            SortButton(stringResource(state.sort.label), actions.onSort)
-                            Spacer(Modifier.weight(1f))
-                            Text(pluralStringResource(R.plurals.songs_count, state.tracks.size, state.tracks.size), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
+                            Text(pluralStringResource(R.plurals.songs_count, state.tracks.size, state.tracks.size), style = MaterialTheme.typography.labelMedium, color = c.textSecondary, modifier = Modifier.weight(1f))
+                            LibrarySortButton(state, state.tab, actions)
                         }
                     }
                     itemsIndexed(state.tracks, key = { _, t -> t.id }) { i, t ->
@@ -299,6 +299,7 @@ fun LibraryScreenOndas(
                                     modifier = Modifier.weight(1f),
                                 )
                             }
+                            if (state.tab != LibraryTab.Playlists) LibrarySortButton(state, state.tab, actions)
                             Box(
                                 Modifier
                                     .size(44.dp)
@@ -307,6 +308,13 @@ fun LibraryScreenOndas(
                                 contentAlignment = Alignment.CenterEnd,
                             ) {
                                 Icon(if (grid) icons.list else icons.grid, stringResource(if (grid) R.string.cd_view_list else R.string.cd_view_grid), Modifier.size(20.dp), tint = c.textSecondary)
+                            }
+                        }
+                    }
+                    if (state.tab == LibraryTab.Playlists && playlists.size + smartPlaylists.size > 1) {
+                        item(key = "pl-sort") {
+                            Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp), horizontalArrangement = Arrangement.End) {
+                                LibrarySortButton(state, state.tab, actions)
                             }
                         }
                     }
@@ -358,10 +366,10 @@ private fun buildItems(
     actions: LibraryActions,
 ): List<OndasItem> {
     val byId = state.allTracks.associateBy { it.id }
-    val smart = smartPlaylists.map { sp ->
+    val smart = sortSmartPlaylists(smartPlaylists, state.sorts).map { sp ->
         OndasItem("sp-${sp.id}", sp.name, res.getString(R.string.kind_smart), OndasArt.Symbol(OndasSymbol.Smart), onClick = { actions.onOpenSmartPlaylist(sp.id) })
     }
-    val own = playlists.map { p ->
+    val own = sortPlaylists(playlists, state.sorts).map { p ->
         OndasItem(
             "pl-${p.id}", p.name,
             res.getString(R.string.kind_playlist, songsText(res, p.trackIds.count { it in byId })),
@@ -573,23 +581,6 @@ private fun ItemGrid(row: List<OndasItem>, modifier: Modifier = Modifier) {
             }
         }
         repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-    }
-}
-
-@Composable
-private fun SortButton(label: String, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    Row(
-        Modifier
-            .height(40.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClickLabel = stringResource(R.string.cd_sort_by, label), onClick = onClick)
-            .padding(end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Icon(SonivellTheme.icons.sort, null, Modifier.size(16.dp), tint = c.textTertiary)
-        Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.ExtraBold, color = c.textTertiary)
     }
 }
 

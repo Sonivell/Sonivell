@@ -246,14 +246,13 @@ fun LibraryScreenClassica(
                         item(key = "all-label") {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 SectionLabel(stringResource(R.string.all_songs, state.tracks.size), Modifier.weight(1f))
-                                Text(stringResource(state.sort.label), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
-                                IconBtn(SonivellTheme.icons.sort, stringResource(R.string.cd_sort_by, stringResource(state.sort.label)), actions.onSort, tint = c.textSecondary, iconSize = 18.dp)
+                                if (state.query.isBlank()) LibrarySortButton(state, LibraryTab.Musicas, actions)
                             }
                         }
                         trackList(state.tracks, currentId, labels.library, false, actions)
                     }
                     LibraryTab.Albuns -> {
-                        item(key = "albums-label") { SectionLabel(pluralStringResource(R.plurals.albums_count, state.albums.size, state.albums.size), Modifier.padding(bottom = 12.dp)) }
+                        item(key = "albums-label") { SortLabelRow(pluralStringResource(R.plurals.albums_count, state.albums.size, state.albums.size)) { LibrarySortButton(state, LibraryTab.Albuns, actions) } }
                         state.albums.chunked(3).forEachIndexed { i, row ->
                             item(key = "albums-$i") { AlbumGrid(row, actions, Modifier.padding(bottom = 12.dp)) }
                         }
@@ -288,12 +287,17 @@ fun LibraryScreenClassica(
                                 Chip(stringResource(R.string.new_smart_playlist), selected = false, onClick = actions.onNewSmartPlaylist)
                             }
                         }
-                        items(smartPlaylists, key = { "sp-" + it.id }) { sp ->
+                        items(sortSmartPlaylists(smartPlaylists, state.sorts), key = { "sp-" + it.id }) { sp ->
                             GroupRow(SonivellTheme.icons.smart, sp.name, pluralStringResource(R.plurals.rules_count, sp.rules.size, sp.rules.size)) {
                                 actions.onOpenSmartPlaylist(sp.id)
                             }
                         }
-                        item(key = "own-label") { SectionLabel(stringResource(R.string.your_playlists), Modifier.padding(top = 12.dp, bottom = 4.dp)) }
+                        item(key = "own-label") {
+                            Row(Modifier.padding(top = 12.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                SectionLabel(stringResource(R.string.your_playlists), Modifier.weight(1f))
+                                if (playlists.size + smartPlaylists.size > 1) LibrarySortButton(state, LibraryTab.Playlists, actions)
+                            }
+                        }
                         if (playlists.isEmpty()) {
                             item(key = "pl-empty") {
                                 Text(
@@ -304,9 +308,10 @@ fun LibraryScreenClassica(
                                 )
                             }
                         }
-                        items(playlists, key = { "pl-" + it.id }) { p -> PlaylistRow(p, trackById, actions) }
+                        items(sortPlaylists(playlists, state.sorts), key = { "pl-" + it.id }) { p -> PlaylistRow(p, trackById, actions) }
                     }
                     LibraryTab.Artistas -> {
+                        item(key = "artists-label") { SortLabelRow(pluralStringResource(R.plurals.artists_count, state.artists.size, state.artists.size)) { LibrarySortButton(state, LibraryTab.Artistas, actions) } }
                         items(state.artists, key = { "ar-" + it.name }) { a ->
                             GroupRow(SonivellTheme.icons.artist, a.name, pluralStringResource(R.plurals.albums_count, a.albumCount, a.albumCount) + " · " + pluralStringResource(R.plurals.songs_count, a.tracks.size, a.tracks.size)) {
                                 actions.onOpenArtist(a.name)
@@ -319,6 +324,9 @@ fun LibraryScreenClassica(
                                 Text(stringResource(R.string.genres_empty), style = MaterialTheme.typography.bodyLarge, color = c.textSecondary, modifier = Modifier.padding(vertical = 16.dp))
                             }
                         }
+                        if (state.genres.isNotEmpty()) {
+                            item(key = "genres-label") { SortLabelRow(pluralStringResource(R.plurals.genres_count, state.genres.size, state.genres.size)) { LibrarySortButton(state, LibraryTab.Generos, actions) } }
+                        }
                         items(state.genres, key = { "g-" + it.name.lowercase() }) { g ->
                             GroupRow(SonivellTheme.icons.genre, g.name, pluralStringResource(R.plurals.songs_count, g.tracks.size, g.tracks.size)) {
                                 actions.onOpenGenre(g.name)
@@ -326,6 +334,7 @@ fun LibraryScreenClassica(
                         }
                     }
                     LibraryTab.Pastas -> {
+                        item(key = "folders-label") { SortLabelRow(pluralStringResource(R.plurals.folders_count, state.folders.size, state.folders.size)) { LibrarySortButton(state, LibraryTab.Pastas, actions) } }
                         items(state.folders, key = { "f-" + it.path }) { f ->
                             GroupRow(SonivellTheme.icons.folder, f.name, pluralStringResource(R.plurals.songs_count, f.tracks.size, f.tracks.size) + " · " + f.path) {
                                 actions.onOpenFolder(f.path)
@@ -658,5 +667,14 @@ private fun GroupRow(icon: ImageVector, title: String, subtitle: String, onClick
             Text(title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+    }
+}
+
+/** Rótulo de seção com o botão de ordenar à direita. */
+@Composable
+private fun SortLabelRow(label: String, sortButton: @Composable () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        SectionLabel(label, Modifier.weight(1f))
+        sortButton()
     }
 }

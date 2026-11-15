@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.juscelino.sonivell.ui.components.FastScroller
-import com.juscelino.sonivell.data.sortKey
 import com.juscelino.sonivell.data.indexLetter
 import com.juscelino.sonivell.SortOrder
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -95,7 +94,6 @@ import com.juscelino.sonivell.ui.theme.cardSurface
 private const val SIDE = 20
 
 /** Chave de ordenação que ignora símbolos no começo ("!Tchau radar!", "#…", "(…"). */
-private enum class EssAlbumMode { AZ, Added }
 
 private enum class EssResultFilter { All, Songs, Albums, Artists, Lyrics }
 
@@ -131,13 +129,13 @@ fun LibraryScreenEssencial(
 
     val listState = rememberLazyListState()
     // Letras do índice A–Z: uma por linha do fim da lista (as grades contam uma por fileira de 3).
-    val albumMode = EssAlbumSort.value
-    val scrollLetters = remember(mode, state.tab, state.tracks, state.sort, state.albums, state.artists, state.folders, albumMode) {
-        if (mode != LibraryMode.Biblioteca) emptyList()
+    val scrollLetters = remember(mode, state.tab, state.tracks, state.sort, state.sorts, state.albums, state.artists, state.folders) {
+        // Só nas listas em ordem alfabética crescente (com outra ordem, as letras não batem).
+        val tab = if (state.tab == LibraryTab.Tudo) LibraryTab.Albuns else state.tab
+        if (mode != LibraryMode.Biblioteca || !state.alphabetical(tab)) emptyList()
         else when (state.tab) {
-            LibraryTab.Albuns, LibraryTab.Tudo ->
-                if (albumMode == EssAlbumMode.AZ) essSortAlbums(state.albums, albumMode).chunked(3).map { indexLetter(it.first().title) } else emptyList()
-            LibraryTab.Artistas -> state.artists.sortedBy { sortKey(it.name) }.chunked(3).map { indexLetter(it.first().name) }
+            LibraryTab.Albuns, LibraryTab.Tudo -> state.albums.chunked(3).map { indexLetter(it.first().title) }
+            LibraryTab.Artistas -> state.artists.chunked(3).map { indexLetter(it.first().name) }
             LibraryTab.Pastas -> state.folders.map { indexLetter(it.name) }
             LibraryTab.Musicas -> when (state.sort) {
                 SortOrder.Titulo -> state.tracks.map { indexLetter(it.title) }
@@ -801,27 +799,28 @@ private fun LazyListScope.essLibrary(
 
     when (state.tab) {
         LibraryTab.Albuns, LibraryTab.Tudo -> {
-            item(key = "l-sort") { EssAlbumSortRow(state.albums.size) }
-            val sorted = essSortAlbums(state.albums, EssAlbumSort.value)
-            essCoverGrid("al", sorted, { it.id }) { a, mod ->
+            item(key = "l-sort") { EssSortRow(pluralStringResource(R.plurals.albums_count, state.albums.size, state.albums.size)) { LibrarySortButton(state, LibraryTab.Albuns, actions) } }
+            essCoverGrid("al", state.albums, { it.id }) { a, mod ->
                 EssCoverCard(a.title, a.artist, mod, corner = 14.dp, onClick = { actions.onOpenAlbum(a.id) }) { m -> AlbumArt(a.tracks.firstOrNull(), m, corner = 14.dp) }
             }
         }
         LibraryTab.Artistas -> {
-            val sorted = state.artists.sortedBy { sortKey(it.name) }
-            essCoverGrid("ar", sorted, { it.name }) { a, mod ->
+            item(key = "ar-sort") { EssSortRow(pluralStringResource(R.plurals.artists_count, state.artists.size, state.artists.size)) { LibrarySortButton(state, LibraryTab.Artistas, actions) } }
+            essCoverGrid("ar", state.artists, { it.name }) { a, mod ->
                 EssCoverCard(a.name, null, mod, round = true, onClick = { actions.onOpenArtist(a.name) }) { m -> AlbumArt(a.tracks.firstOrNull(), m, corner = 999.dp) }
             }
         }
         LibraryTab.Generos -> {
             if (state.genres.isEmpty()) item(key = "g-empty") { EssMuted(stringResource(R.string.genres_empty), Modifier.padding(horizontal = SIDE.dp)) }
-            essCoverGrid("ge", state.genres.sortedByDescending { it.tracks.size }, { it.name }) { g, mod ->
+            else item(key = "ge-sort") { EssSortRow(pluralStringResource(R.plurals.genres_count, state.genres.size, state.genres.size)) { LibrarySortButton(state, LibraryTab.Generos, actions) } }
+            essCoverGrid("ge", state.genres, { it.name }) { g, mod ->
                 val res = LocalContext.current.resources
                 EssCoverCard(g.name, res.getQuantityString(R.plurals.songs_count, g.tracks.size, g.tracks.size), mod, corner = 14.dp, onClick = { actions.onOpenGenre(g.name) }) { m -> EssCollage(g.tracks, m, 14.dp) }
             }
         }
         LibraryTab.Playlists -> essPlaylistRows(state, playlists, smartPlaylists, actions)
         LibraryTab.Pastas -> {
+            item(key = "f-sort") { EssSortRow(pluralStringResource(R.plurals.folders_count, state.folders.size, state.folders.size)) { LibrarySortButton(state, LibraryTab.Pastas, actions) } }
             items(state.folders, key = { "f-${it.path}" }) { f ->
                 val res = LocalContext.current.resources
                 EssListRow(f.name, res.getQuantityString(R.plurals.songs_count, f.tracks.size, f.tracks.size), onClick = { actions.onOpenFolder(f.path) }) {
@@ -833,10 +832,8 @@ private fun LazyListScope.essLibrary(
         }
         LibraryTab.Musicas -> {
             item(key = "m-sort") {
-                Row(Modifier.padding(horizontal = SIDE.dp).padding(bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    EssSortLabel(stringResource(state.sort.label), actions.onSort)
-                    Spacer(Modifier.weight(1f))
-                    Text(pluralStringResource(R.plurals.songs_count, state.tracks.size, state.tracks.size), style = MaterialTheme.typography.labelMedium, color = SonivellTheme.colors.textSecondary)
+                EssSortRow(pluralStringResource(R.plurals.songs_count, state.tracks.size, state.tracks.size)) {
+                    if (state.query.isBlank()) LibrarySortButton(state, LibraryTab.Musicas, actions)
                 }
             }
             itemsIndexed(state.tracks, key = { _, t -> "m-${t.id}" }) { i, t ->
@@ -848,35 +845,12 @@ private fun LazyListScope.essLibrary(
     }
 }
 
-private object EssAlbumSort {
-    var value by mutableStateOf(EssAlbumMode.AZ)
-}
-
-private fun essSortAlbums(albums: List<Album>, sort: EssAlbumMode): List<Album> = when (sort) {
-    EssAlbumMode.AZ -> albums.sortedBy { sortKey(it.title) }
-    EssAlbumMode.Added -> albums.sortedByDescending { a -> a.tracks.maxOfOrNull { it.dateAdded } ?: 0L }
-}
-
+/** Contagem à esquerda e o botão de ordenar à direita, acima de cada lista. */
 @Composable
-private fun EssAlbumSortRow(count: Int) {
-    val label = stringResource(if (EssAlbumSort.value == EssAlbumMode.AZ) R.string.ess_sort_az else R.string.ess_sort_added)
+private fun EssSortRow(count: String, sortButton: @Composable () -> Unit) {
     Row(Modifier.padding(horizontal = SIDE.dp).padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        EssSortLabel(label) { EssAlbumSort.value = if (EssAlbumSort.value == EssAlbumMode.AZ) EssAlbumMode.Added else EssAlbumMode.AZ }
-        Spacer(Modifier.weight(1f))
-        Text(pluralStringResource(R.plurals.albums_count, count, count), style = MaterialTheme.typography.labelMedium, color = SonivellTheme.colors.textSecondary)
-    }
-}
-
-@Composable
-private fun EssSortLabel(label: String, onClick: () -> Unit) {
-    val c = SonivellTheme.colors
-    Row(
-        Modifier.heightIn(min = 44.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onClick).padding(end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Icon(SonivellTheme.icons.sort, null, Modifier.size(16.dp), tint = c.textTertiary)
-        Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = c.textTertiary)
+        Text(count, style = MaterialTheme.typography.labelMedium, color = SonivellTheme.colors.textSecondary, modifier = Modifier.weight(1f))
+        sortButton()
     }
 }
 
@@ -922,7 +896,13 @@ private fun LazyListScope.essPlaylistRows(state: LibraryState, playlists: List<P
     if (playlists.isEmpty() && smartPlaylists.isEmpty()) {
         item(key = "pl-empty") { EssMuted(stringResource(R.string.playlists_empty), Modifier.padding(horizontal = SIDE.dp)) }
     }
-    items(playlists, key = { "pl-${it.id}" }) { p ->
+    if (playlists.size + smartPlaylists.size > 1) {
+        item(key = "pl-sort") {
+            val n = playlists.size + smartPlaylists.size
+            EssSortRow(LocalContext.current.resources.getString(R.string.tab_playlists) + " · $n") { LibrarySortButton(state, LibraryTab.Playlists, actions) }
+        }
+    }
+    items(sortPlaylists(playlists, state.sorts), key = { "pl-${it.id}" }) { p ->
         val byId = remember(state.allTracks) { state.allTracks.associateBy { it.id } }
         val tracks = remember(p, byId) { p.trackIds.mapNotNull(byId::get) }
         val res = LocalContext.current.resources
@@ -930,7 +910,7 @@ private fun LazyListScope.essPlaylistRows(state: LibraryState, playlists: List<P
             EssCollage(tracks, Modifier.size(52.dp), 12.dp)
         }
     }
-    items(smartPlaylists, key = { "sp-${it.id}" }) { sp ->
+    items(sortSmartPlaylists(smartPlaylists, state.sorts), key = { "sp-${it.id}" }) { sp ->
         EssListRow(sp.name, stringResource(R.string.kind_smart), onClick = { actions.onOpenSmartPlaylist(sp.id) }) {
             Box(Modifier.size(52.dp).cardSurface(RoundedCornerShape(12.dp), elevation = 0.dp), contentAlignment = Alignment.Center) {
                 Icon(SonivellTheme.icons.smart, null, Modifier.size(22.dp), tint = SonivellTheme.colors.accent)
