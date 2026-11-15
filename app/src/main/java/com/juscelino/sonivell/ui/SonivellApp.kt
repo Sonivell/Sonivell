@@ -444,6 +444,9 @@ private fun MainContent(vm: MainViewModel) {
         onQuery = vm::setQuery,
         onTab = vm::setTab,
         onSort = vm::cycleSort,
+        onSetSort = vm::setSort,
+        onSetGroupSort = vm::setGroupSort,
+        onToggleSortReversed = vm::toggleSortReversed,
         onRefresh = vm::refresh,
         onPlay = { tracks, index, src ->
             commitSearch()
