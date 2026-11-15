@@ -239,7 +239,7 @@
     <string name="settings_version">Sonivell %1$s</string>
     <string name="settings_privacy">Tudo acontece neste celular: sem conta, sem internet, nada é enviado para lugar nenhum.</string>
     <string name="settings_credits_smart">O Smart usa o motor do LatentJam (Apache License 2.0).</string>
-    <string name="settings_credits_icons">Ícones do Phosphor (MIT License), Copyright (c) 2023 Phosphor Icons.</string>
+    <string name="settings_credits_icons">Ícones do Iconsax (iconsax.io), da Lusaxweb, de uso gratuito pessoal e comercial.</string>
     <string name="settings_reset">Restaurar ajustes padrão</string>
     <string name="reset_title">Restaurar os ajustes padrão?</string>
     <string name="reset_message">Tema, cor e comportamento voltam ao que eram. Histórico, playlists e curtidas continuam.</string>

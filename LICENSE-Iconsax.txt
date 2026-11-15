@@ -1,0 +1,13 @@
+Iconsax — https://iconsax.io — https://github.com/lusaxweb/iconsax
+Copyright (c) Lusaxweb / Vuesax
+
+Licença (resumo dos termos publicados em iconsax.io / no componente License do repositório):
+os ícones do Iconsax são os ícones oficiais do framework Vuesax e podem ser usados de graça em
+projetos pessoais e comerciais. Não podem ser vendidos nem distribuídos com outro nome, nem
+usados para criar templates ou UI kits sem permissão; para esses usos, contate
+https://lusaxweb.net/contact.
+
+No Sonivell, os caminhos dos ícones usados pelo app estão em
+app/src/main/java/com/juscelino/sonivell/ui/theme/IconsaxIcons.kt, gerado por
+tools/gen_iconsax_icons.py a partir dos SVGs oficiais. O "aleatório" e o "check" são desenho
+próprio do Sonivell no mesmo traço, porque a versão gratuita não os tem.

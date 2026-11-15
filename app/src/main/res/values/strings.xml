@@ -246,7 +246,7 @@
     <string name="settings_version">Sonivell %1$s</string>
     <string name="settings_privacy">Everything happens on this phone: no account, no internet, nothing is sent anywhere.</string>
     <string name="settings_credits_smart">Smart uses the LatentJam engine (Apache License 2.0).</string>
-    <string name="settings_credits_icons">Icons by Phosphor (MIT License), Copyright (c) 2023 Phosphor Icons.</string>
+    <string name="settings_credits_icons">Icons by Iconsax (iconsax.io), by Lusaxweb, free for personal and commercial use.</string>
     <string name="settings_reset">Restore default settings</string>
     <string name="reset_title">Restore default settings?</string>
     <string name="reset_message">Theme, color and behavior go back to how they were. History, playlists and likes stay.</string>

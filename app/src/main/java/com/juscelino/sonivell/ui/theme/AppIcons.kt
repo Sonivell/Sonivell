@@ -4,12 +4,14 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
 
 /**
- * Estilo dos ícones escolhido em Aparência: o peso do traço do Phosphor (phosphoricons.com).
+ * Estilo dos ícones: o peso do traço (no teste do Iconsax, a espessura do Linear).
  * Os nomes das constantes ficam os de antes para a escolha salva continuar valendo.
  */
 enum class IconStyle {
@@ -113,124 +115,162 @@ class SonivellIcons(
     val info: ImageVector,
 )
 
-/** Peso do Phosphor de cada estilo e a espessura da onda que combina com ele. */
-private enum class Weight(val wave: Float, val waveActive: Float) {
-    LIGHT(1.3f, 2.1f),
-    REGULAR(1.6f, 2.4f),
-    BOLD(2.2f, 2.8f),
+/**
+ * Espessura do traço do Iconsax Linear em cada estilo (o original é 1,5) e a da onda que combina.
+ * TESTE (branch android/icones-iconsax): o Iconsax no lugar do Phosphor.
+ */
+private enum class Weight(val stroke: Float, val wave: Float, val waveActive: Float) {
+    LIGHT(1.25f, 1.3f, 2.1f),
+    REGULAR(1.5f, 1.6f, 2.4f),
+    BOLD(2f, 2.2f, 2.8f),
 }
 
-private fun PhosphorPath.at(w: Weight): String = when (w) {
-    Weight.LIGHT -> light
-    Weight.REGULAR -> regular
-    Weight.BOLD -> bold
-}
+/** Ícones que o Iconsax gratuito não tem, desenhados no mesmo traço (24×24, 1,5, pontas redondas). */
+private object IxExtra {
+    private fun stroke(vararg d: String) = d.map { IxPart(it, false, 1.5f, 'r', 'r', 1f) }
 
-/** Monta um vetor a partir de um caminho do Phosphor (viewBox 0 0 256 256, área cheia). */
-private fun vector(name: String, path: String, autoMirror: Boolean = false): ImageVector =
-    ImageVector.Builder(
-        name = "Phosphor.$name",
-        defaultWidth = 24.dp,
-        defaultHeight = 24.dp,
-        viewportWidth = 256f,
-        viewportHeight = 256f,
-        autoMirror = autoMirror,
-    )
-        .addPath(pathData = addPathNodes(path), fill = SolidColor(Color.Black))
-        .build()
+    val Check = stroke("M5 12.5L9.5 17L19 7.5").let { IxIcon(it, it) }
+    val Shuffle = stroke(
+        "M3 17H5.6C7 17 8.3 16.25 9 15.05L12.9 8.95C13.6 7.75 14.9 7 16.3 7H21.5",
+        "M19 4.5L21.5 7L19 9.5",
+        "M3 7H5.6C7 7 8.3 7.75 9 8.95L9.75 10.25",
+        "M14.25 13.75L15 15.05C15.7 16.25 17 17 18.4 17H21.5",
+        "M19 14.5L21.5 17L19 19.5",
+    ).let { IxIcon(it, it) }
+}
 
 /**
- * O conjunto inteiro num peso. Estados ativos (aba atual, curtida, estrela marcada) e os
- * controles de reprodução usam o Fill do Phosphor, como num player: cheios leem melhor.
+ * Monta um vetor com as partes de um ícone do Iconsax (viewBox 0 0 24 24). [strokeScale] engrossa
+ * ou afina os traços; [rotate] gira o desenho em torno do centro (X a partir do +, ⋮ a partir do ⋯).
  */
-private fun phosphorIcons(w: Weight): SonivellIcons {
-    val P = Phosphor
-    fun line(name: String, p: PhosphorPath, autoMirror: Boolean = false) = vector("${w.name}.$name", p.at(w), autoMirror)
-    fun solid(name: String, p: PhosphorPath) = vector("Fill.$name", p.fill)
+private fun ixVector(
+    name: String,
+    parts: List<IxPart>,
+    shift: Pair<Float, Float>,
+    strokeScale: Float = 1f,
+    rotate: Float = 0f,
+    autoMirror: Boolean = false,
+): ImageVector {
+    val b = ImageVector.Builder(
+        name = "Iconsax.$name",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+        autoMirror = autoMirror,
+    )
+    b.addGroup(rotate = rotate, pivotX = 12f, pivotY = 12f, translationX = shift.first, translationY = shift.second)
+    parts.forEach { p ->
+        b.addPath(
+            pathData = addPathNodes(p.d),
+            fill = if (p.fill) SolidColor(Color.Black) else null,
+            fillAlpha = p.alpha,
+            stroke = if (p.stroke > 0f) SolidColor(Color.Black) else null,
+            strokeAlpha = p.alpha,
+            strokeLineWidth = p.stroke * strokeScale,
+            strokeLineCap = when (p.cap) { 'r' -> StrokeCap.Round; 's' -> StrokeCap.Square; else -> StrokeCap.Butt },
+            strokeLineJoin = when (p.join) { 'r' -> StrokeJoin.Round; 'b' -> StrokeJoin.Bevel; else -> StrokeJoin.Miter },
+            strokeLineMiter = 10f,
+        )
+    }
+    b.clearGroup()
+    return b.build()
+}
+
+/**
+ * O conjunto inteiro num peso. Linear (traço) no geral; estados ativos (aba atual, curtida, estrela
+ * marcada) e os controles de reprodução usam o Bold do Iconsax, como num player: cheios leem melhor.
+ */
+private fun iconsaxIcons(w: Weight): SonivellIcons {
+    val X = Iconsax
+    val scale = w.stroke / 1.5f
+    fun line(name: String, i: IxIcon, rotate: Float = 0f, autoMirror: Boolean = false) =
+        ixVector("${w.name}.$name", i.linear, i.linearShift, scale, rotate, autoMirror)
+    fun solid(name: String, i: IxIcon) = ixVector("Bold.$name", i.bold, i.boldShift)
     return SonivellIcons(
-        back = line("back", P.ArrowLeft, autoMirror = true),
-        close = line("close", P.X),
-        check = line("check", P.Check),
-        add = line("add", P.Plus),
-        remove = line("remove", P.Minus),
-        search = line("search", P.MagnifyingGlass),
-        searchActive = solid("search", P.MagnifyingGlass),
-        settings = line("settings", P.GearSix),
-        more = line("more", P.DotsThreeVertical),
-        moreHoriz = line("moreHoriz", P.DotsThree),
-        collapse = line("collapse", P.CaretDown),
-        chevron = line("chevron", P.CaretRight, autoMirror = true),
-        play = solid("play", P.Play),
-        pause = solid("pause", P.Pause),
-        skipPrevious = solid("skipPrevious", P.SkipBack),
-        skipNext = solid("skipNext", P.SkipForward),
-        shuffle = line("shuffle", P.Shuffle),
-        smart = line("smart", P.Sparkle),
-        repeat = line("repeat", P.Repeat),
-        repeatOne = line("repeatOne", P.RepeatOnce),
-        like = line("like", P.Heart),
-        liked = solid("liked", P.Heart),
-        queue = line("queue", P.Queue),
-        playNext = line("playNext", P.RowsPlusTop),
-        addToPlaylist = line("addToPlaylist", P.ListPlus),
-        removeItem = line("removeItem", P.MinusCircle),
-        dragHandle = line("dragHandle", P.DotsSixVertical),
-        album = line("album", P.VinylRecord),
-        artist = line("artist", P.User),
-        genre = line("genre", P.Guitar),
-        folder = line("folder", P.Folder),
-        folderOpen = line("folderOpen", P.FolderOpen),
-        share = line("share", P.ShareNetwork),
-        edit = line("edit", P.PencilSimple),
-        delete = line("delete", P.Trash),
-        export = line("export", P.Export),
-        sleep = line("sleep", P.Moon),
-        timer = line("timer", P.Timer),
-        timerOff = line("timerOff", P.XCircle),
-        musicNote = line("musicNote", P.MusicNote),
-        lyrics = line("lyrics", P.MicrophoneStage),
-        nowPlaying = line("nowPlaying", P.Equalizer),
-        device = line("device", P.DeviceMobile),
-        volumeUp = line("volumeUp", P.SpeakerHigh),
-        volumeDown = line("volumeDown", P.SpeakerLow),
-        sort = line("sort", P.ArrowsDownUp),
-        home = line("home", P.House),
-        homeActive = solid("home", P.House),
-        library = line("library", P.MusicNotes),
-        libraryActive = solid("library", P.MusicNotes),
+        back = line("back", X.ArrowLeft, autoMirror = true),
+        close = line("close", X.Add, rotate = 45f),
+        check = line("check", IxExtra.Check),
+        add = line("add", X.Add),
+        remove = line("remove", X.Minus),
+        search = line("search", X.SearchNormal1),
+        searchActive = solid("search", X.SearchNormal1),
+        settings = line("settings", X.Setting2),
+        more = line("more", X.More, rotate = 90f),
+        moreHoriz = line("moreHoriz", X.More),
+        collapse = line("collapse", X.ArrowLeft1, rotate = -90f),
+        chevron = line("chevron", X.ArrowRight1, autoMirror = true),
+        play = solid("play", X.Play),
+        pause = solid("pause", X.Pause),
+        skipPrevious = solid("skipPrevious", X.Previous),
+        skipNext = solid("skipNext", X.Next),
+        shuffle = line("shuffle", IxExtra.Shuffle),
+        smart = line("smart", X.MagicStar),
+        repeat = line("repeat", X.RepeateMusic),
+        repeatOne = line("repeatOne", X.RepeateOne),
+        like = line("like", X.Heart),
+        liked = solid("liked", X.Heart),
+        queue = line("queue", X.MusicFilter),
+        playNext = line("playNext", X.PlayAdd),
+        addToPlaylist = line("addToPlaylist", X.MusicSquareAdd),
+        removeItem = line("removeItem", X.MinusCirlce),
+        dragHandle = line("dragHandle", X.Menu),
+        album = line("album", X.Cd),
+        artist = line("artist", X.User),
+        genre = line("genre", X.MusicSquare),
+        folder = line("folder", X.Folder),
+        folderOpen = line("folderOpen", X.FolderOpen),
+        share = line("share", X.Share),
+        edit = line("edit", X.Edit2),
+        delete = line("delete", X.Trash),
+        export = line("export", X.Export),
+        sleep = line("sleep", X.Moon),
+        timer = line("timer", X.Timer1),
+        timerOff = line("timerOff", X.CloseCircle),
+        musicNote = line("musicNote", X.Musicnote),
+        lyrics = line("lyrics", X.Microphone2),
+        nowPlaying = line("nowPlaying", X.Sound),
+        device = line("device", X.Mobile),
+        volumeUp = line("volumeUp", X.VolumeHigh),
+        volumeDown = line("volumeDown", X.VolumeLow1),
+        sort = line("sort", X.Sort),
+        home = line("home", X.Home2),
+        homeActive = solid("home", X.Home2),
+        library = line("library", X.MusicLibrary2),
+        libraryActive = solid("library", X.MusicLibrary2),
         forYou = waveIcon("${w.name}.forYou", w.wave),
         forYouActive = waveIcon("${w.name}.forYouActive", w.waveActive),
-        grid = line("grid", P.SquaresFour),
-        list = line("list", P.List),
-        profile = line("profile", P.UserCircle),
-        profileActive = solid("profile", P.UserCircle),
-        trendUp = line("trendUp", P.TrendUp),
-        trendDown = line("trendDown", P.TrendDown),
-        fresh = line("fresh", P.StarFour),
-        recent = line("recent", P.Clock),
-        star = line("star", P.Star),
-        starFilled = solid("star", P.Star),
-        image = line("image", P.Image),
-        imageRemove = line("imageRemove", P.ImageBroken),
-        ringtone = line("ringtone", P.BellRinging),
-        block = line("block", P.Prohibit),
-        blockArtist = line("blockArtist", P.UserMinus),
-        rules = line("rules", P.SlidersHorizontal),
-        save = line("save", P.FloppyDisk),
-        appearance = line("appearance", P.Palette),
-        car = line("car", P.Car),
-        playback = line("playback", P.PlayCircle),
-        transitions = line("transitions", P.ArrowsLeftRight),
-        history = line("history", P.ChartLineUp),
-        backup = line("backup", P.CloudArrowUp),
-        info = line("info", P.Info),
+        grid = line("grid", X.Category),
+        list = line("list", X.TextalignJustifyleft),
+        profile = line("profile", X.ProfileCircle),
+        profileActive = solid("profile", X.ProfileCircle),
+        trendUp = line("trendUp", X.TrendUp),
+        trendDown = line("trendDown", X.TrendDown),
+        fresh = line("fresh", X.Star),
+        recent = line("recent", X.Clock),
+        star = line("star", X.Star1),
+        starFilled = solid("star", X.Star1),
+        image = line("image", X.Gallery),
+        imageRemove = line("imageRemove", X.GallerySlash),
+        ringtone = line("ringtone", X.NotificationBing),
+        block = line("block", X.Slash),
+        blockArtist = line("blockArtist", X.UserMinus),
+        rules = line("rules", X.Setting4),
+        save = line("save", X.SaveAdd),
+        appearance = line("appearance", X.Colorfilter),
+        car = line("car", X.Car),
+        playback = line("playback", X.PlayCircle),
+        transitions = line("transitions", X.ArrowSwapHorizontal),
+        history = line("history", X.Chart),
+        backup = line("backup", X.CloudChange),
+        info = line("info", X.InfoCircle),
     )
 }
 
 /** Cada peso é montado só quando usado pela primeira vez. */
-private val LightIcons: SonivellIcons by lazy { phosphorIcons(Weight.LIGHT) }
-private val RegularIcons: SonivellIcons by lazy { phosphorIcons(Weight.REGULAR) }
-private val BoldIcons: SonivellIcons by lazy { phosphorIcons(Weight.BOLD) }
+private val LightIcons: SonivellIcons by lazy { iconsaxIcons(Weight.LIGHT) }
+private val RegularIcons: SonivellIcons by lazy { iconsaxIcons(Weight.REGULAR) }
+private val BoldIcons: SonivellIcons by lazy { iconsaxIcons(Weight.BOLD) }
 
 fun IconStyle.icons(): SonivellIcons = when (this) {
     IconStyle.FINO -> LightIcons
