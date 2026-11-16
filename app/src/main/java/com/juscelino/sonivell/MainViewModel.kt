@@ -603,6 +603,33 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun playNext(tracks: List<Track>) = player.playNext(tracks)
     fun addToQueue(tracks: List<Track>) = player.append(tracks)
     fun removeFromQueue(index: Int) = player.removeItem(index)
+    fun insertInQueue(index: Int, track: Track) = player.insertAt(index, track)
+
+    /**
+     * Sugestões para a fila do Cápsula ("Sugeridas"): pelo som da [seed] na edição SMART; na lite, do
+     * mesmo artista e do mesmo gênero. Nunca as que já estão na fila ([excluding]).
+     */
+    suspend fun suggestionsFor(seed: Track, excluding: Set<Long>, limit: Int = 12): List<Track> {
+        val all = allTracks.value.orEmpty()
+        if (smart.isAvailable) {
+            val byId = all.associateBy { it.id }
+            val found = runCatching {
+                smart.startQueue(seed, recommendable(), limit + excluding.size, history.recent(SMART_HISTORY_LIMIT))
+            }.getOrDefault(emptyList())
+                .filter { it != seed.id && it !in excluding }
+                .mapNotNull(byId::get)
+                .take(limit)
+            if (found.isNotEmpty()) return found
+        }
+        return withContext(Dispatchers.Default) {
+            all.asSequence()
+                .filter { it.id != seed.id && it.id !in excluding }
+                .filter { it.artist == seed.artist || (seed.genre != null && it.genre == seed.genre) }
+                .shuffled()
+                .take(limit)
+                .toList()
+        }
+    }
 
     // ---- Playlists ----
 
@@ -617,6 +644,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun renamePlaylist(id: Long, name: String) { viewModelScope.launch { playlistStore.rename(id, name) } }
     fun deletePlaylist(id: Long) { viewModelScope.launch { playlistStore.delete(id) } }
+    fun restorePlaylist(playlist: Playlist, index: Int) { viewModelScope.launch { playlistStore.restore(playlist, index) } }
     fun addToPlaylist(id: Long, tracks: List<Track>) {
         viewModelScope.launch { playlistStore.addTracks(id, tracks.map { it.id }) }
     }

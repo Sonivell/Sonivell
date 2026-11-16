@@ -329,7 +329,7 @@ private fun collectionPurple(): Color = if (SonivellTheme.colors.isDark) Color(0
 
 /** Linha acima das listas: a contagem à esquerda e o botão de ordenar à direita. */
 @Composable
-private fun SvSortHeader(count: String, sortButton: @Composable () -> Unit) {
+internal fun SvSortHeader(count: String, sortButton: @Composable () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(count, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = SonivellTheme.colors.textSecondary, modifier = Modifier.weight(1f))
         sortButton()
@@ -341,7 +341,7 @@ private fun SvSortHeader(count: String, sortButton: @Composable () -> Unit) {
  * a atual marcada, e a opção de inverter a ordem.
  */
 @Composable
-private fun <T> SvSortButton(
+internal fun <T> SvSortButton(
     options: List<T>,
     selected: T,
     label: (T) -> Int,

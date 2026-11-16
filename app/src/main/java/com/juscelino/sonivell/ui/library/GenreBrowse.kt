@@ -270,7 +270,7 @@ private fun SignatureBars(seedText: String, color: Color, modifier: Modifier = M
 
 @Composable
 /** [total]: a contagem única de gêneros ([com.juscelino.sonivell.data.realGenreCount]), igual em todas as telas. */
-private fun GenreMosaic(genres: List<Genre>, total: Int, actions: LibraryActions) {
+internal fun GenreMosaic(genres: List<Genre>, total: Int, actions: LibraryActions) {
     var showAll by rememberSaveable { mutableStateOf(false) }
     val shown = if (showAll) genres else genres.take(GRID_LIMIT)
     val gap = 10.dp

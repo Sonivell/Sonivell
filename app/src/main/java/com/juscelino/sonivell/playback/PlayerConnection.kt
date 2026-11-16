@@ -201,6 +201,13 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
         append(tracks)
     }
 
+    /** Põe [track] de volta na posição [index] da fila (o "Desfazer" depois de tirar da fila). */
+    fun insertAt(index: Int, track: Track) {
+        val c = controller ?: return
+        if (c.mediaItemCount == 0) return play(listOf(track), 0)
+        c.addMediaItem(index.coerceIn(0, c.mediaItemCount), track.toMediaItem())
+    }
+
     fun addNext(track: Track) {
         val c = controller ?: return
         if (c.mediaItemCount == 0) return play(listOf(track), 0)

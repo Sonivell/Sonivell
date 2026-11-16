@@ -28,6 +28,28 @@ enum class UiStyle {
      * tema) com as telas de descoberta: sensações, Flow, Mapa, Momentos, Respira e Perfil.
      */
     SONIVELL,
+
+    /**
+     * Cápsula: vidro e a capa desfocada em toda parte, a barra de baixo em duas pílulas soltas (mini
+     * player com a capa desfocada e as abas), Início com atalhos e seções escolhidas em "Mostrar no
+     * início", e o player com o painel de modo de reprodução.
+     */
+    CAPSULA,
+}
+
+/** Temas que abrem no Início (Para você), não na Biblioteca. */
+val UiStyle.startsAtHome: Boolean
+    get() = this == UiStyle.SONIVELL || this == UiStyle.CAPSULA
+
+/** Seções do Início do Cápsula que podem ser escondidas em "Mostrar no início". */
+object CapsulaSection {
+    const val CONTINUE = "continuar"
+    const val FAVORITES = "favoritos"
+    const val PLAYLISTS = "playlists"
+    const val ALBUMS = "albuns"
+    const val ARTISTS = "artistas"
+    const val MIXES = "mixes"
+    val ALL = setOf(CONTINUE, FAVORITES, PLAYLISTS, ALBUMS, ARTISTS, MIXES)
 }
 
 /**
@@ -98,6 +120,8 @@ data class AppSettings(
     val artBackdrop: Boolean = true,
     /** Troca todo o vidro (fundo da capa, desfoque e cartões translúcidos) por superfícies sólidas. */
     val reduceTransparency: Boolean = false,
+    /** Seções visíveis no Início do Cápsula ([CapsulaSection]). */
+    val capsulaHome: Set<String> = CapsulaSection.ALL,
 )
 
 /** Velocidades oferecidas. */
@@ -148,6 +172,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
             .putBoolean(KEY_VISUALIZER, next.visualizer)
             .putBoolean(KEY_ART_BACKDROP, next.artBackdrop)
             .putBoolean(KEY_REDUCE_TRANSPARENCY, next.reduceTransparency)
+            .putStringSet(KEY_CAPSULA_HOME, next.capsulaHome)
             .apply()
     }
 
@@ -186,6 +211,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         visualizer = prefs.getBoolean(KEY_VISUALIZER, false),
         artBackdrop = prefs.getBoolean(KEY_ART_BACKDROP, true),
         reduceTransparency = prefs.getBoolean(KEY_REDUCE_TRANSPARENCY, false),
+        capsulaHome = prefs.getStringSet(KEY_CAPSULA_HOME, null)?.toSet() ?: CapsulaSection.ALL,
     )
 
     companion object {
@@ -219,6 +245,7 @@ class SettingsStore(private val prefs: SharedPreferences) {
         const val KEY_VISUALIZER = "visualizer"
         const val KEY_ART_BACKDROP = "art_backdrop"
         const val KEY_REDUCE_TRANSPARENCY = "reduce_transparency"
+        const val KEY_CAPSULA_HOME = "capsula_home"
         /** Escrita pelo MainViewModel: a fila atual é do SMART. */
         const val KEY_SMART_MODE = "smart_mode"
     }

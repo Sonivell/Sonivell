@@ -124,12 +124,17 @@ fun SettingsScreen(
     tasteStatus: TasteModel.Status = TasteModel.Status(),
     /** Todas as pastas com áudio (inclusive as ignoradas). */
     folders: List<String> = emptyList(),
+    /** Abrir já numa página (nome de [SettingsPage]); voltar dela sai dos ajustes. */
+    initialPage: String? = null,
 ) {
     val c = SonivellTheme.colors
-    var pageName by rememberSaveable { mutableStateOf(SettingsPage.Index.name) }
+    val direct = remember(initialPage) { SettingsPage.entries.firstOrNull { it.name == initialPage } }
+    var pageName by rememberSaveable { mutableStateOf((direct ?: SettingsPage.Index).name) }
     val page = SettingsPage.valueOf(pageName)
     fun open(p: SettingsPage) { pageName = p.name }
-    BackHandler(enabled = page != SettingsPage.Index) { open(SettingsPage.Index) }
+    // Aberta direto numa página, voltar sai dos ajustes (quem abriu é outra tela, não o índice).
+    val backLeaves = page == SettingsPage.Index || page == direct
+    BackHandler(enabled = !backLeaves) { open(SettingsPage.Index) }
 
     Column(
         Modifier
@@ -145,7 +150,7 @@ fun SettingsScreen(
             IconBtn(
                 SonivellTheme.icons.back,
                 stringResource(R.string.cd_back),
-                { if (page == SettingsPage.Index) actions.onBack() else open(SettingsPage.Index) },
+                { if (backLeaves) actions.onBack() else open(SettingsPage.Index) },
                 background = c.surface,
             )
             Text(
@@ -235,6 +240,7 @@ private fun IndexPage(
             UiStyle.CONTRASTE -> R.string.layout_contrast
             UiStyle.CLASSICA -> R.string.layout_classic
             UiStyle.SONIVELL -> R.string.layout_sonivell
+            UiStyle.CAPSULA -> R.string.layout_capsula
         }
     )
     val theme = stringResource(
@@ -386,6 +392,7 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(
                 Triple(UiStyle.SONIVELL, R.string.layout_sonivell, R.string.layout_sonivell_hint),
+                Triple(UiStyle.CAPSULA, R.string.layout_capsula, R.string.layout_capsula_hint),
                 Triple(UiStyle.ONDAS, R.string.layout_ondas, R.string.layout_ondas_hint),
                 Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
                 Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
