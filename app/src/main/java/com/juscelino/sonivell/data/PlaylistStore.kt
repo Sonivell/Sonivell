@@ -51,6 +51,12 @@ class PlaylistStore(context: Context) {
 
     suspend fun delete(id: Long) = edit { list -> list.filterNot { it.id == id } to Unit }
 
+    /** Devolve uma playlist apagada à posição [index] (o "Desfazer"); nada se o id já voltou. */
+    suspend fun restore(playlist: Playlist, index: Int) = edit { list ->
+        if (list.any { it.id == playlist.id }) list to Unit
+        else list.toMutableList().apply { add(index.coerceIn(0, size), playlist) } to Unit
+    }
+
     suspend fun addTracks(id: Long, trackIds: List<Long>) = update(id) { it.copy(trackIds = it.trackIds + trackIds) }
 
     suspend fun removeAt(id: Long, index: Int) = update(id) { p ->

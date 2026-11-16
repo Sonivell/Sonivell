@@ -61,6 +61,35 @@ fun ArtBackdrop(track: Track?, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * A capa de [track] desfocada, preenchendo o espaço (sem véu): o fundo das pílulas do Cápsula (mini
+ * player, faixa tocando na fila). Usa o mesmo bitmap pequeno e já desfocado do [ArtBackdrop], então
+ * custa uma imagem do cache. Sem capa, fica no [fallback].
+ */
+@Composable
+fun ArtBlur(track: Track?, modifier: Modifier = Modifier, fallback: androidx.compose.ui.graphics.Color = SonivellTheme.colors.surfaceHigh) {
+    val context = LocalContext.current
+    Box(modifier.background(fallback)) {
+        Crossfade(targetState = track?.artUri, animationSpec = tween(CROSSFADE_MS), label = "capaDesfocada") { uri: Uri? ->
+            if (uri != null) {
+                val request = remember(uri) {
+                    ImageRequest.Builder(context)
+                        .data(uri)
+                        .size(SOURCE_PX)
+                        .transformations(BackdropBlur(dark = true))
+                        .build()
+                }
+                AsyncImage(
+                    model = request,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+    }
+}
+
 private const val CROSSFADE_MS = 700
 private const val SOURCE_PX = 128
 

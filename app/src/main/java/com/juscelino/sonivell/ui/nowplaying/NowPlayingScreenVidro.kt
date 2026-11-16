@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,6 +79,10 @@ fun NowPlayingScreenVidro(
     spatialLabel: String? = null,
     reason: PlayReason = PlayReason.Chosen,
     visualizer: Boolean = false,
+    /** Cápsula: painel "Modo de reprodução" sob os controles e a pílula "A seguir" no rodapé. */
+    capsula: Boolean = false,
+    /** A próxima faixa da fila, para a pílula "A seguir" do Cápsula. */
+    nextTrack: Track? = null,
 ) {
     val c = SonivellTheme.colors
     val icons = SonivellTheme.icons
@@ -186,7 +191,7 @@ fun NowPlayingScreenVidro(
                 spatialLabel?.let { Chip(it, c.textTertiary, c.textPrimary.copy(alpha = 0.08f)) }
                 track.formatLabel?.let { Chip(it, c.textTertiary, c.textPrimary.copy(alpha = 0.08f)) }
                 Box(Modifier.weight(1f))
-                if (smartAvailable) {
+                if (smartAvailable && !capsula) {
                     val on = shuffleMode == ShuffleMode.SMART
                     SmartChip(on) { actions.onSetShuffle(if (on) ShuffleMode.OFF else ShuffleMode.SMART) }
                 }
@@ -211,12 +216,127 @@ fun NowPlayingScreenVidro(
             )
         }
 
-        // Rodapé simples: Este telefone · Letra · Fila, sem painel (o Smart subiu para os selos).
         val context = LocalContext.current
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            GlassPill(icons.device, stringResource(R.string.this_phone), Modifier.weight(1f)) { openOutputSwitcher(context) }
-            GlassPill(icons.lyrics, stringResource(R.string.lyrics_label), Modifier.weight(1f), actions.onLyrics)
-            GlassPill(icons.queue, stringResource(R.string.np_queue), Modifier.weight(1f), actions.onQueue)
+        if (capsula) {
+            PlayModePanel(shuffleMode, smartAvailable, actions.onSetShuffle)
+            // Rodapé do Cápsula: a próxima faixa numa pílula que abre a fila, a letra e a saída de som.
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                UpNextPill(nextTrack, Modifier.weight(1f), actions.onQueue)
+                GlassRound(icons.lyrics, stringResource(R.string.lyrics_label), actions.onLyrics)
+                GlassRound(icons.device, stringResource(R.string.this_phone), { openOutputSwitcher(context) })
+            }
+        } else {
+            // Rodapé simples: Este telefone · Letra · Fila, sem painel (o Smart subiu para os selos).
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                GlassPill(icons.device, stringResource(R.string.this_phone), Modifier.weight(1f)) { openOutputSwitcher(context) }
+                GlassPill(icons.lyrics, stringResource(R.string.lyrics_label), Modifier.weight(1f), actions.onLyrics)
+                GlassPill(icons.queue, stringResource(R.string.np_queue), Modifier.weight(1f), actions.onQueue)
+            }
+        }
+    }
+}
+
+/**
+ * Painel "Modo de reprodução" do Cápsula: Normal (na ordem) ou Aleatório (só as suas músicas), com
+ * a escolha marcada, e o "Aleatório inteligente" (o SMART, que mistura faixas parecidas pelo som)
+ * num interruptor à parte, só na edição SMART.
+ */
+@Composable
+private fun PlayModePanel(mode: ShuffleMode, smartAvailable: Boolean, onSet: (ShuffleMode) -> Unit) {
+    val c = SonivellTheme.colors
+    val icons = SonivellTheme.icons
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .glassSurface(RoundedCornerShape(24.dp), c.surface, c.outline, elevation = 8.dp, surfaceAlpha = 0.55f)
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            stringResource(R.string.cap_play_mode).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.ExtraBold,
+            color = c.textSecondary,
+            modifier = Modifier.padding(start = 10.dp, top = 4.dp, bottom = 4.dp),
+        )
+        ModeRow(icons.list, stringResource(R.string.cap_mode_normal), mode == ShuffleMode.OFF) { onSet(ShuffleMode.OFF) }
+        ModeRow(icons.shuffle, stringResource(R.string.cap_mode_shuffle), mode == ShuffleMode.ON) { onSet(ShuffleMode.ON) }
+        if (smartAvailable) {
+            val on = mode == ShuffleMode.SMART
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .toggleable(value = on, role = Role.Switch, onValueChange = { onSet(if (on) ShuffleMode.OFF else ShuffleMode.SMART) })
+                    .padding(horizontal = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(icons.smart, null, Modifier.size(20.dp), tint = if (on) c.accent else c.textPrimary)
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.cap_mode_smart), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = c.textPrimary)
+                    Text(stringResource(R.string.cap_mode_smart_hint), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
+                }
+                com.juscelino.sonivell.ui.capsula.CapsulaSwitch(on)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModeRow(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
+    val c = SonivellTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 46.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) c.textPrimary.copy(alpha = 0.09f) else Color.Transparent)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Icon(icon, null, Modifier.size(20.dp), tint = c.textPrimary)
+        Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = c.textPrimary, modifier = Modifier.weight(1f))
+        if (selected) Icon(SonivellTheme.icons.check, null, Modifier.size(18.dp), tint = c.accent)
+    }
+}
+
+/** "A seguir": a próxima faixa numa pílula de vidro; tocar abre a fila. */
+@Composable
+private fun UpNextPill(next: Track?, modifier: Modifier, onOpenQueue: () -> Unit) {
+    val c = SonivellTheme.colors
+    val label = stringResource(R.string.np_queue)
+    Row(
+        modifier
+            .heightIn(min = 56.dp)
+            .glassSurface(RoundedCornerShape(percent = 50), c.surface, c.outline, elevation = 6.dp, surfaceAlpha = 0.55f)
+            .clickable(role = Role.Button, onClickLabel = label, onClick = onOpenQueue)
+            .padding(start = 6.dp, end = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        if (next != null) AlbumArt(next, Modifier.size(42.dp), corner = 21.dp)
+        Column(Modifier.weight(1f).padding(start = if (next == null) 12.dp else 0.dp)) {
+            Text(stringResource(R.string.up_next), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
+            Text(
+                next?.let { it.title + " · " + it.artist } ?: stringResource(R.string.cap_queue_end),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = c.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Row(
+            Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(percent = 50)).background(c.textPrimary.copy(alpha = 0.10f)).padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(SonivellTheme.icons.queue, null, Modifier.size(16.dp), tint = c.textPrimary)
+            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
         }
     }
 }

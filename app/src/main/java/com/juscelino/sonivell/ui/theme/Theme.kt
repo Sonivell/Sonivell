@@ -114,6 +114,13 @@ fun styleDarkColors(style: UiStyle, accent: Color): SonivellColors = when (style
         textPrimary = Color(0xFFF4F5F7), textSecondary = Color(0xFF9FA4AE), textTertiary = Color(0xFFC9CDD3),
         accent = accent, onAccent = Color(0xFF101113), miniPlayer = Color(0xFF191A1E),
     )
+    // Cápsula: o grafite esverdeado do mockup, com superfícies um pouco mais claras para o vidro.
+    UiStyle.CAPSULA -> SonivellColors(
+        background = Color(0xFF0A0D0C), surface = Color(0xFF151B19), surfaceLow = Color(0xFF111614),
+        surfaceHigh = Color(0xFF1F2825), outline = Color(0xFF26302C), track = Color(0xFF3A4440),
+        textPrimary = Color(0xFFF2F5F3), textSecondary = Color(0xFFA3AFAA), textTertiary = Color(0xFFD5DDD9),
+        accent = accent, onAccent = Color(0xFF04130B), miniPlayer = Color(0xFF17201D),
+    )
     UiStyle.ONDAS -> SonivellColors(
         background = Color(0xFF0D0F12), surface = Color(0xFF15181D), surfaceLow = Color(0xFF121418),
         surfaceHigh = Color(0xFF1D2026), outline = Color(0xFF252830), track = Color(0xFF3A3E47),
@@ -253,7 +260,7 @@ object SonivellTheme {
     val glass: Boolean
         @Composable get() = LocalGlass.current
 
-    /** Estilo visual atual (Sonivell, Ondas, Essencial, Contraste, Clássico). */
+    /** Estilo visual atual (Sonivell, Ondas, Essencial, Contraste, Clássico, Cápsula). */
     val style: UiStyle
         @Composable get() = LocalUiStyle.current
 }
