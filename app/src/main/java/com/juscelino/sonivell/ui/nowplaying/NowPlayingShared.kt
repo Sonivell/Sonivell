@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import com.juscelino.sonivell.ui.components.SvSwitch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,6 +53,7 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.data.formatDuration
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Ações do player, as mesmas em todos os estilos. */
 data class NowPlayingActions(
@@ -144,7 +146,7 @@ fun PlayerModeToggle(
 ) {
     Column(
         Modifier
-            .clip(RoundedCornerShape(14.dp))
+            .clip(rounded(14.dp))
             .toggleable(value = on, role = Role.Switch, onValueChange = { onClick() })
             .semantics { contentDescription = label }
             .heightIn(min = 44.dp)
@@ -184,7 +186,7 @@ fun SmartQueueSwitch(
         Icon(SonivellTheme.icons.smart, null, Modifier.size(18.dp), tint = if (on) accent else secondary)
         Text(stringResource(R.string.np_queue_by_sound), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = textColor, modifier = Modifier.weight(1f))
         Text(stringResource(R.string.np_smart), style = MaterialTheme.typography.bodyMedium, color = secondary)
-        Switch(
+        SvSwitch(
             checked = on,
             onCheckedChange = null,
             colors = SwitchDefaults.colors(
@@ -228,7 +230,7 @@ private fun FooterItem(icon: ImageVector, label: String, color: Color, modifier:
     }) {
         Row(
             Modifier
-                .clip(RoundedCornerShape(12.dp))
+                .clip(rounded(12.dp))
                 .clickable(role = Role.Button, onClick = onClick)
                 .heightIn(min = 44.dp)
                 .padding(horizontal = 10.dp),
@@ -350,7 +352,7 @@ fun SpatialBadge(label: String?, modifier: Modifier = Modifier, tint: androidx.c
     Box(
         modifier
             .padding(top = 4.dp)
-            .clip(RoundedCornerShape(999.dp))
+            .clip(rounded(999.dp))
             .background(tint.copy(alpha = 0.14f))
             .padding(horizontal = 8.dp, vertical = 2.dp),
     ) {

@@ -8,6 +8,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
@@ -49,6 +50,7 @@ import com.juscelino.sonivell.data.Track
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import com.juscelino.sonivell.ui.components.SvSwitch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -82,6 +84,7 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.ThemeMode
 import com.juscelino.sonivell.ui.theme.cardSurface
 import com.juscelino.sonivell.ui.components.SonivellSheet
+import com.juscelino.sonivell.ui.theme.rounded
 
 data class SettingsActions(
     val onBack: () -> Unit,
@@ -235,6 +238,7 @@ private fun IndexPage(
             UiStyle.CONTRASTE -> R.string.layout_contrast
             UiStyle.CLASSICA -> R.string.layout_classic
             UiStyle.SONIVELL -> R.string.layout_sonivell
+            UiStyle.FLUENT -> R.string.layout_fluent
         }
     )
     val theme = stringResource(
@@ -353,7 +357,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit) {
     val c = SonivellTheme.colors
     val label = stringResource(R.string.settings_search)
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).cardSurface(RoundedCornerShape(999.dp)).padding(horizontal = 16.dp),
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).cardSurface(rounded(999.dp)).padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -390,6 +394,7 @@ private fun AppearancePage(settings: AppSettings, actions: SettingsActions) {
                 Triple(UiStyle.ESSENCIAL, R.string.layout_essencial, R.string.layout_essencial_hint),
                 Triple(UiStyle.CONTRASTE, R.string.layout_contrast, R.string.layout_contrast_hint),
                 Triple(UiStyle.CLASSICA, R.string.layout_classic, R.string.layout_classic_hint),
+                Triple(UiStyle.FLUENT, R.string.layout_fluent, R.string.layout_fluent_hint),
             ).forEach { (style, name, hint) ->
                 LayoutOption(stringResource(name), stringResource(hint), settings.uiStyle == style) {
                     actions.onUpdate { it.copy(uiStyle = style) }
@@ -706,18 +711,18 @@ private fun IgnoredFolders(folders: List<String>, ignored: Set<String>, onToggle
 private fun AppearancePreview() {
     val c = SonivellTheme.colors
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(c.surfaceLow).padding(14.dp),
+        Modifier.fillMaxWidth().clip(rounded(24.dp)).background(c.surfaceLow).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.settings_preview).uppercase(), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, letterSpacing = 0.7.sp), color = c.textSecondary)
-        Row(Modifier.cardSurface(RoundedCornerShape(18.dp)).padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(56.dp).clip(RoundedCornerShape(14.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
+        Row(Modifier.cardSurface(rounded(18.dp)).padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(56.dp).clip(rounded(14.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
                 Icon(SonivellTheme.icons.musicNote, null, Modifier.size(22.dp), tint = c.textSecondary)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(stringResource(R.string.settings_preview_title), style = MaterialTheme.typography.titleSmall, color = c.textPrimary, maxLines = 1)
                 Text(stringResource(R.string.settings_preview_artist), style = MaterialTheme.typography.labelMedium, color = c.textSecondary, maxLines = 1)
-                Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+                Box(Modifier.fillMaxWidth().height(4.dp).clip(rounded(2.dp)).background(c.track)) {
                     Box(Modifier.fillMaxWidth(0.4f).height(4.dp).background(c.accent))
                 }
             }
@@ -726,10 +731,10 @@ private fun AppearancePreview() {
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Box(Modifier.height(30.dp).clip(RoundedCornerShape(999.dp)).background(c.accent).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+            Box(Modifier.height(30.dp).clip(rounded(999.dp)).background(c.accent).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.nav_home), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = c.onAccent)
             }
-            Box(Modifier.height(30.dp).cardSurface(RoundedCornerShape(999.dp)).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+            Box(Modifier.height(30.dp).cardSurface(rounded(999.dp)).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.nav_search), style = MaterialTheme.typography.labelMedium, color = c.textTertiary)
             }
         }
@@ -743,7 +748,7 @@ private val iconStyleNames = listOf(R.string.icon_style_fine, R.string.icon_styl
 @Composable
 private fun LayoutOption(name: String, hint: String, selected: Boolean, onClick: () -> Unit) {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(16.dp)
+    val shape = rounded(16.dp)
     Row(
         Modifier
             .fillMaxWidth()
@@ -774,7 +779,7 @@ private fun IconStyleOption(
 ) {
     val c = SonivellTheme.colors
     val icons = style.icons()
-    val shape = RoundedCornerShape(16.dp)
+    val shape = rounded(16.dp)
     Column(
         modifier
             .cardSurface(shape, if (selected) c.surfaceHigh else c.surface, elevation = 0.dp)
@@ -819,13 +824,70 @@ private fun Group(label: String, content: @Composable ColumnScope.() -> Unit) {
 /** Cartão com linhas de ajuste encostadas umas nas outras. */
 @Composable
 private fun Card(content: @Composable ColumnScope.() -> Unit) {
+    if (SonivellTheme.style == UiStyle.FLUENT) {
+        FluentTiles(content)
+        return
+    }
     Column(
         Modifier
             .fillMaxWidth()
-            .cardSurface(RoundedCornerShape(22.dp))
+            .cardSurface(rounded(22.dp))
             .padding(vertical = 4.dp),
         content = content,
     )
+}
+
+/**
+ * Cartão do estilo Fluent: cada linha vira um bloco próprio, separado do seguinte por 2 dp, como
+ * nas Configurações do Windows 11. O primeiro bloco arredonda em cima e o último embaixo.
+ */
+@Composable
+private fun FluentTiles(content: @Composable ColumnScope.() -> Unit) {
+    val c = SonivellTheme.colors
+    val tiles = remember { mutableListOf<Pair<Float, Float>>() }
+    Column(Modifier.fillMaxWidth()) {
+        val scope = this
+        androidx.compose.ui.layout.Layout(
+            content = { scope.content() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    val big = androidx.compose.ui.geometry.CornerRadius(8.dp.toPx())
+                    val small = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
+                    val stroke = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx())
+                    tiles.forEachIndexed { i, (top, height) ->
+                        val first = i == 0
+                        val last = i == tiles.lastIndex
+                        val rect = androidx.compose.ui.geometry.RoundRect(
+                            left = 0f, top = top, right = size.width, bottom = top + height,
+                            topLeftCornerRadius = if (first) big else small,
+                            topRightCornerRadius = if (first) big else small,
+                            bottomLeftCornerRadius = if (last) big else small,
+                            bottomRightCornerRadius = if (last) big else small,
+                        )
+                        val path = androidx.compose.ui.graphics.Path().apply { addRoundRect(rect) }
+                        drawPath(path, c.surface)
+                        drawPath(path, c.outline.copy(alpha = 0.6f), style = stroke)
+                    }
+                },
+        ) { measurables, constraints ->
+            val gap = 2.dp.roundToPx()
+            val placeables = measurables.map { it.measure(constraints.copy(minHeight = 0)) }.filter { it.height > 0 }
+            tiles.clear()
+            var y = 0
+            placeables.forEach {
+                tiles += y.toFloat() to it.height.toFloat()
+                y += it.height + gap
+            }
+            layout(constraints.maxWidth, (y - gap).coerceAtLeast(0)) {
+                var top = 0
+                placeables.forEach {
+                    it.place(0, top)
+                    top += it.height + gap
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -863,7 +925,7 @@ private fun NavRow(icon: ImageVector?, title: String, summary: String?, accent: 
     ) {
         if (icon != null) {
             Box(
-                Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(c.surfaceHigh),
+                Modifier.size(38.dp).clip(rounded(12.dp)).background(c.surfaceHigh),
                 contentAlignment = Alignment.Center,
             ) {
                 // Todos os tiles iguais e neutros: a cor de destaque é sinal, não decoração.
@@ -899,7 +961,7 @@ private fun SwitchRow(title: String, hint: String?, checked: Boolean, onChange: 
             )
             if (hint != null) Hint(hint)
         }
-        Switch(
+        SvSwitch(
             checked = checked,
             onCheckedChange = onChange,
             modifier = Modifier.semantics { contentDescription = title },
@@ -951,7 +1013,7 @@ private fun ChoiceRow(title: String, hint: String?, options: List<String>, selec
                         Modifier
                             .fillMaxWidth()
                             .heightIn(min = 52.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(rounded(16.dp))
                             .background(if (on) c.accent.copy(alpha = 0.16f) else Color.Transparent)
                             .clickable(role = Role.RadioButton) { onPick(i); open = false }
                             .semantics { this.selected = on }

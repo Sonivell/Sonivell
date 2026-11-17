@@ -53,6 +53,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.SheetState
 import androidx.compose.ui.graphics.Color
 import com.juscelino.sonivell.ui.theme.glassSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Uma opção de menu: ícone, texto e ação. [value] mostra o estado atual à direita (ex.: Temporizador "Desligado"). */
 data class MenuOption(val icon: ImageVector, val label: String, val value: String? = null, val onClick: () -> Unit)
@@ -96,14 +97,14 @@ fun SonivellSheet(
                 // Consome as barras do sistema aqui: o conteúdo de dentro não soma o espaço de novo.
                 .navigationBarsPadding()
                 .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
-                .glassSurface(RoundedCornerShape(28.dp), c.surface, c.outline, elevation = 16.dp, surfaceAlpha = 1f),
+                .glassSurface(rounded(28.dp), c.surface, c.outline, elevation = 16.dp, surfaceAlpha = 1f),
         ) {
             Box(
                 Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(top = 10.dp, bottom = 6.dp)
                     .size(width = 36.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
+                    .clip(rounded(2.dp))
                     .background(c.outline),
             )
             content()
@@ -230,7 +231,7 @@ private fun SheetRow(icon: ImageVector, title: String, subtitle: String?, onClic
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Box(
-            Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(c.surfaceHigh),
+            Modifier.size(40.dp).clip(rounded(10.dp)).background(c.surfaceHigh),
             contentAlignment = Alignment.Center,
         ) { Icon(icon, null, Modifier.size(20.dp), tint = c.textTertiary) }
         Column(Modifier.weight(1f)) {

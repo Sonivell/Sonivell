@@ -161,6 +161,7 @@ import com.juscelino.sonivell.ui.theme.glassBar
 import com.juscelino.sonivell.ui.components.ArtBackdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
+import com.juscelino.sonivell.ui.theme.rounded
 
 private object Routes {
     const val HOME = "inicio"
@@ -556,7 +557,7 @@ private fun MainContent(vm: MainViewModel) {
                 Column(
                     Modifier
                         .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp)
-                        .cardSurface(RoundedCornerShape(24.dp), SonivellTheme.colors.miniPlayer, elevation = 12.dp),
+                        .cardSurface(rounded(24.dp), SonivellTheme.colors.miniPlayer, elevation = 12.dp),
                 ) {
                 CompositionLocalProvider(LocalInDock provides true) {
                     current?.let { t ->
@@ -590,7 +591,7 @@ private fun MainContent(vm: MainViewModel) {
                                 onOpen = { nav.navigate(Routes.PLAYER) },
                                 onTogglePlay = vm.player::togglePlay,
                             )
-                            UiStyle.SONIVELL -> MiniPlayerSonivell(
+                            UiStyle.SONIVELL, UiStyle.FLUENT -> MiniPlayerSonivell(
                                 track = t,
                                 isPlaying = player.isPlaying,
                                 progress = progress,
@@ -605,7 +606,7 @@ private fun MainContent(vm: MainViewModel) {
                     when (uiStyle) {
                         UiStyle.CONTRASTE -> BottomNav(activeTab, goToTab)
                         UiStyle.CLASSICA -> BottomNavClassica(activeTab, goToTab)
-                        UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL -> BottomNavSonivell(activeTab, svTabs, goToTab)
+                        UiStyle.ONDAS, UiStyle.ESSENCIAL, UiStyle.SONIVELL, UiStyle.FLUENT -> BottomNavSonivell(activeTab, svTabs, goToTab)
                     }
                 }
                 }
@@ -701,7 +702,7 @@ private fun MainContent(vm: MainViewModel) {
                                 recentSearches = recentSearches, tagBannerCount = tagBannerCount,
                                 lyricHits = lyricHits,
                             )
-                            UiStyle.SONIVELL -> when (mode) {
+                            UiStyle.SONIVELL, UiStyle.FLUENT -> when (mode) {
                                 LibraryMode.Inicio -> {
                                     // Início é a raiz do tema: voltar daqui sai do app, não cai na biblioteca
                                     // (o destino inicial do grafo), que deixou de ser uma aba.
@@ -772,6 +773,7 @@ private fun MainContent(vm: MainViewModel) {
                                 UiStyle.CONTRASTE -> R.string.layout_contrast
                                 UiStyle.CLASSICA -> R.string.layout_classic
                                 UiStyle.SONIVELL -> R.string.layout_sonivell
+                                UiStyle.FLUENT -> R.string.layout_fluent
                             },
                         ),
                         contentPadding = listPadding,
@@ -1458,7 +1460,7 @@ private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
             // No dock a barra divide a superfície com o mini player: sem margem nem cartão próprios.
             .then(
                 if (LocalInDock.current) Modifier
-                else Modifier.padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 8.dp).cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp),
+                else Modifier.padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 8.dp).cardSurface(rounded(22.dp), elevation = 12.dp),
             )
             .padding(4.dp),
     ) {
@@ -1470,7 +1472,7 @@ private fun BottomNav(route: String?, onSelect: (String) -> Unit) {
                 Modifier
                     .weight(1f)
                     .height(56.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(rounded(16.dp))
                     .clickable(role = Role.Tab, onClick = { onSelect(tab.route) }),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -1499,7 +1501,7 @@ private fun BottomNavClassica(route: String?, onSelect: (String) -> Unit) {
             // No dock a barra divide a superfície com o mini player: sem margem nem cartão próprios.
             .then(
                 if (LocalInDock.current) Modifier
-                else Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp).cardSurface(RoundedCornerShape(22.dp), elevation = 12.dp),
+                else Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 12.dp).cardSurface(rounded(22.dp), elevation = 12.dp),
             )
             .padding(4.dp),
     ) {
@@ -1510,7 +1512,7 @@ private fun BottomNavClassica(route: String?, onSelect: (String) -> Unit) {
                 Modifier
                     .weight(1f)
                     .height(56.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(rounded(16.dp))
                     .clickable(role = Role.Tab, onClick = { onSelect(tab.route) }),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -1540,7 +1542,7 @@ private fun StarRow(stars: Int, onRate: (Int) -> Unit) {
             Box(
                 Modifier
                     .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(rounded(12.dp))
                     .clickable(role = Role.Button, onClickLabel = label) { onRate(n) }
                     .semantics { contentDescription = label },
                 contentAlignment = Alignment.Center,

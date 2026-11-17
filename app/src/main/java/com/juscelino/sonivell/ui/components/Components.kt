@@ -41,6 +41,7 @@ import com.juscelino.sonivell.ui.theme.glassAccent
 import com.juscelino.sonivell.ui.theme.glassSurface
 import com.juscelino.sonivell.ui.theme.LocalInDock
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Botão de ícone com área de toque de no mínimo 44 dp. */
 @Composable
@@ -76,6 +77,11 @@ fun IconBtn(
 
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) {
+    // Fluent: título de seção em letra normal e semibold, como nas Configurações do Windows.
+    if (SonivellTheme.style == com.juscelino.sonivell.data.UiStyle.FLUENT) {
+        Text(text, modifier = modifier, style = MaterialTheme.typography.titleSmall, color = SonivellTheme.colors.textPrimary)
+        return
+    }
     Text(
         text.uppercase(),
         modifier = modifier,
@@ -88,7 +94,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
 fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     val glass = SonivellTheme.glass
-    val shape = RoundedCornerShape(18.dp)
+    val shape = rounded(18.dp)
     Box(
         Modifier
             .height(36.dp)
@@ -130,7 +136,7 @@ fun TrackRow(
         modifier
             .fillMaxWidth()
             .heightIn(min = 60.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(rounded(12.dp))
             .combinedClickable(onClick = onClick, onLongClick = onMore)
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -195,7 +201,7 @@ fun MiniPlayer(
     val docked = LocalInDock.current
     Box(
         if (docked) modifier.then(if (tone != null) Modifier.background(tone) else Modifier)
-        else modifier.padding(horizontal = 8.dp).cardSurface(RoundedCornerShape(12.dp), tone ?: c.miniPlayer, elevation = 12.dp),
+        else modifier.padding(horizontal = 8.dp).cardSurface(rounded(12.dp), tone ?: c.miniPlayer, elevation = 12.dp),
     ) {
         Row(
             Modifier
@@ -272,7 +278,7 @@ fun MiniPlayerClassica(
         modifier
             .padding(horizontal = if (docked) 0.dp else 12.dp)
             .fillMaxWidth()
-            .then(if (docked) Modifier else Modifier.cardSurface(RoundedCornerShape(16.dp), c.miniPlayer, elevation = 12.dp))
+            .then(if (docked) Modifier else Modifier.cardSurface(rounded(16.dp), c.miniPlayer, elevation = 12.dp))
             .clickable(onClickLabel = openPlayer, onClick = onOpen),
     ) {
         Row(
@@ -300,7 +306,7 @@ fun MiniPlayerClassica(
                 .padding(start = 14.dp, end = 14.dp, bottom = 6.dp)
                 .fillMaxWidth()
                 .height(3.dp)
-                .clip(RoundedCornerShape(2.dp))
+                .clip(rounded(2.dp))
                 .background(c.track)
         ) {
             Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(3.dp).background(c.accent))
@@ -315,7 +321,7 @@ fun MiniPlayerClassica(
 @Composable
 fun LabeledPill(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier, primary: Boolean = false) {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(999.dp)
+    val shape = rounded(999.dp)
     Row(
         modifier
             .height(40.dp)

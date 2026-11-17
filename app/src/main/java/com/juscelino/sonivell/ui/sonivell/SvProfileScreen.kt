@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /**
  * Aba Perfil, a mesma em todos os estilos: três números neutros, "Descobrir" (mapa musical, Momentos,
@@ -84,7 +85,7 @@ fun SvProfileScreen(
             if (analysisTotal > 0 && analysed >= analysisTotal) {
                 Row(
                     Modifier
-                        .clip(RoundedCornerShape(999.dp))
+                        .clip(rounded(999.dp))
                         .background(nc.accent.copy(alpha = 0.14f))
                         .clickable(role = Role.Button, onClick = onAnalysis)
                         .heightIn(min = 32.dp)
@@ -133,7 +134,7 @@ fun SvProfileScreen(
 private fun Stat(value: String, label: String, modifier: Modifier = Modifier) {
     val highlight = false
     val nc = SonivellTheme.colors
-    val shape = RoundedCornerShape(18.dp)
+    val shape = rounded(18.dp)
     Column(
         modifier
             .then(
@@ -175,7 +176,7 @@ private fun AnalysisItem(analysed: Int, total: Int, onClick: () -> Unit) {
             SvIconTile(SonivellTheme.icons.smart)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(stringResource(R.string.sv_analysis_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1)
-                Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(nc.track)) {
+                Box(Modifier.fillMaxWidth().height(4.dp).clip(rounded(2.dp)).background(nc.track)) {
                     Box(Modifier.fillMaxWidth(fraction).height(4.dp).background(nc.accent))
                 }
                 Text(stringResource(R.string.sv_analysis_count, analysed, total), style = MaterialTheme.typography.bodyMedium, color = nc.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)

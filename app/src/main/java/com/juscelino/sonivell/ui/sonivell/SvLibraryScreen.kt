@@ -59,6 +59,7 @@ import com.juscelino.sonivell.data.SmartPlaylist
 import com.juscelino.sonivell.ui.library.LibraryActions
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /**
  * Biblioteca do tema Sonivell: filtros em cápsula, coleções e uma fileira de artistas. Não é mais uma aba:
@@ -118,7 +119,7 @@ fun SvLibraryScreen(
                     Box(
                         Modifier
                             .height(36.dp)
-                            .clip(RoundedCornerShape(18.dp))
+                            .clip(rounded(18.dp))
                             .background(if (on) nc.textPrimary else nc.surface)
                             .clickable(role = Role.Tab) { onTab(i) }
                             .padding(horizontal = 14.dp),
@@ -158,7 +159,7 @@ fun SvLibraryScreen(
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             items(state.artists.take(30), key = { it.name }) { artist ->
                                 Column(
-                                    Modifier.clip(RoundedCornerShape(16.dp)).clickable(role = Role.Button) { actions.onOpenArtist(artist.name) }.padding(4.dp),
+                                    Modifier.clip(rounded(16.dp)).clickable(role = Role.Button) { actions.onOpenArtist(artist.name) }.padding(4.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(6.dp),
                                 ) {
@@ -179,7 +180,7 @@ fun SvLibraryScreen(
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             row.forEach { album ->
                                 Column(
-                                    Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) { actions.onOpenAlbum(album.id) },
+                                    Modifier.weight(1f).clip(rounded(12.dp)).clickable(role = Role.Button) { actions.onOpenAlbum(album.id) },
                                     verticalArrangement = Arrangement.spacedBy(6.dp),
                                 ) {
                                     com.juscelino.sonivell.ui.components.AlbumArt(album.tracks.firstOrNull(), Modifier.fillMaxWidth().aspectRatio(1f), corner = 12.dp)
@@ -204,7 +205,7 @@ fun SvLibraryScreen(
                             actions.onSetSort, { actions.onToggleSortReversed(SortTarget.Musicas) },
                         )
                         Box(
-                            Modifier.height(36.dp).clip(RoundedCornerShape(12.dp)).background(nc.accent)
+                            Modifier.height(36.dp).clip(rounded(12.dp)).background(nc.accent)
                                 .clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_shuffle_all), onClick = actions.onShuffleAll)
                                 .padding(horizontal = 12.dp),
                             contentAlignment = Alignment.Center,
@@ -213,7 +214,7 @@ fun SvLibraryScreen(
                 }
                 itemsIndexed(list, key = { _, t -> t.id }) { i, t ->
                     Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable { actions.onPlay(list, i, source) }.padding(vertical = 4.dp),
+                        Modifier.fillMaxWidth().clip(rounded(14.dp)).clickable { actions.onPlay(list, i, source) }.padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
@@ -224,7 +225,7 @@ fun SvLibraryScreen(
                         }
                         Text(formatDuration(t.durationMs), style = MaterialTheme.typography.labelMedium, color = nc.textSecondary)
                         Box(
-                            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_more_options)) { actions.onTrackMenu(t) },
+                            Modifier.size(40.dp).clip(rounded(12.dp)).clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_more_options)) { actions.onTrackMenu(t) },
                             contentAlignment = Alignment.Center,
                         ) { Icon(icons.more, null, Modifier.size(20.dp), tint = nc.textSecondary) }
                     }
@@ -263,7 +264,7 @@ fun SvLibraryScreen(
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         pair.forEachIndexed { col, genre ->
                             // Redesign: cada gênero com a sua cor (a mesma do Explorar), sem a onda decorativa.
-                            val genreShape = RoundedCornerShape(18.dp)
+                            val genreShape = rounded(18.dp)
                             Box(
                                 Modifier.weight(1f).height(96.dp)
                                     .clip(genreShape)
@@ -309,7 +310,7 @@ private fun collection(title: String, subtitle: String, icon: androidx.compose.u
     SvRow(
         title, subtitle, onClick,
         art = {
-            Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(tint.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(48.dp).clip(rounded(14.dp)).background(tint.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
                 Icon(icon, null, Modifier.size(22.dp), tint = tint)
             }
         },
@@ -357,7 +358,7 @@ private fun <T> SvSortButton(
         Row(
             Modifier
                 .height(36.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(rounded(12.dp))
                 .background(nc.surface)
                 .clickable(role = Role.Button, onClickLabel = stringResource(R.string.cd_sort_by, current)) { open = true }
                 .padding(horizontal = 12.dp),
@@ -370,7 +371,7 @@ private fun <T> SvSortButton(
         DropdownMenu(
             expanded = open,
             onDismissRequest = { open = false },
-            shape = RoundedCornerShape(16.dp),
+            shape = rounded(16.dp),
             containerColor = nc.surface,
         ) {
             Text(

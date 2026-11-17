@@ -1,6 +1,8 @@
 package com.juscelino.sonivell.ui.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import android.os.Build
 import androidx.compose.material3.darkColorScheme
@@ -14,10 +16,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.DeviceFontFamilyName
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.UiStyle
@@ -120,7 +124,31 @@ fun styleDarkColors(style: UiStyle, accent: Color): SonivellColors = when (style
         textPrimary = Color(0xFFF2F3F5), textSecondary = Color(0xFF9BA1A9), textTertiary = Color(0xFFC9CCD3),
         accent = accent, onAccent = Color(0xFF0D0F12), miniPlayer = Color(0xFF1A1D22),
     )
+    // Neutros do Fluent 2 no escuro: fundo #1C1C1C, cartões #2B2B2B, traço #3D3D3D.
+    UiStyle.FLUENT -> SonivellColors(
+        background = Color(0xFF1C1C1C), surface = Color(0xFF2B2B2B), surfaceLow = Color(0xFF242424),
+        surfaceHigh = Color(0xFF333333), outline = Color(0xFF3D3D3D), track = Color(0xFF4A4A4A),
+        textPrimary = Color(0xFFFFFFFF), textSecondary = Color(0xFFC4C4C4), textTertiary = Color(0xFFD6D6D6),
+        accent = accent, onAccent = Color(0xFF000000), miniPlayer = Color(0xFF2B2B2B),
+    )
 }
+
+/** Fluent no modo claro: fundo #F5F5F5, cartões brancos e traço cinza-claro, como no Windows 11. */
+fun fluentLightColors(accent: Color) = SonivellColors(
+    background = Color(0xFFF5F5F5),
+    surface = Color(0xFFFFFFFF),
+    surfaceLow = Color(0xFFFAFAFA),
+    surfaceHigh = Color(0xFFEBEBEB),
+    outline = Color(0xFFE0E0E0),
+    track = Color(0xFFD1D1D1),
+    textPrimary = Color(0xFF1A1A1A),
+    textSecondary = Color(0xFF5C5C5C),
+    textTertiary = Color(0xFF3D3D3D),
+    accent = accent,
+    onAccent = Color(0xFFFFFFFF),
+    miniPlayer = Color(0xFFFFFFFF),
+    isDark = false,
+)
 
 /** Estilo visual atual, para os componentes comuns ajustarem a assinatura (capa vazia, progresso…). */
 val LocalUiStyle = staticCompositionLocalOf { UiStyle.SONIVELL }
@@ -240,6 +268,44 @@ private val SonivellTypography = Typography(
     labelSmall = TextStyle(fontFamily = Manrope, fontFeatureSettings = "tnum", fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.4.sp),
 )
 
+/**
+ * Fonte do sistema (Roboto, a mesma do Fluent no Android) para o estilo Fluent. Todos os pesos de
+ * Bold para cima caem no "medium": o Fluent usa títulos em semibold, nunca extra-negrito, e assim
+ * os pesos fixos das telas seguem discretos sem mexer em cada uma.
+ */
+private val FluentFont = FontFamily(
+    Font(DeviceFontFamilyName("sans-serif-light"), FontWeight.Light),
+    Font(DeviceFontFamilyName("sans-serif"), FontWeight.Normal),
+    Font(DeviceFontFamilyName("sans-serif-medium"), FontWeight.Medium),
+    Font(DeviceFontFamilyName("sans-serif-medium"), FontWeight.SemiBold),
+    Font(DeviceFontFamilyName("sans-serif-medium"), FontWeight.Bold),
+    Font(DeviceFontFamilyName("sans-serif-medium"), FontWeight.ExtraBold),
+    Font(DeviceFontFamilyName("sans-serif-medium"), FontWeight.Black),
+)
+
+/** A tipografia do app com a fonte do Fluent e sem o espaçamento negativo dos títulos. */
+private val FluentTypography = Typography(
+    displaySmall = SonivellTypography.displaySmall.copy(fontFamily = FluentFont, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, letterSpacing = 0.sp),
+    headlineSmall = SonivellTypography.headlineSmall.copy(fontFamily = FluentFont, fontWeight = FontWeight.SemiBold, fontSize = 24.sp, letterSpacing = 0.sp),
+    titleLarge = SonivellTypography.titleLarge.copy(fontFamily = FluentFont, fontWeight = FontWeight.SemiBold),
+    titleMedium = SonivellTypography.titleMedium.copy(fontFamily = FluentFont, fontWeight = FontWeight.SemiBold),
+    titleSmall = SonivellTypography.titleSmall.copy(fontFamily = FluentFont, fontWeight = FontWeight.SemiBold),
+    bodyLarge = SonivellTypography.bodyLarge.copy(fontFamily = FluentFont, fontWeight = FontWeight.Normal),
+    bodyMedium = SonivellTypography.bodyMedium.copy(fontFamily = FluentFont, fontWeight = FontWeight.Normal),
+    labelLarge = SonivellTypography.labelLarge.copy(fontFamily = FluentFont, fontWeight = FontWeight.SemiBold),
+    labelMedium = SonivellTypography.labelMedium.copy(fontFamily = FluentFont, fontWeight = FontWeight.Medium),
+    labelSmall = SonivellTypography.labelSmall.copy(fontFamily = FluentFont, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp),
+)
+
+/** Cantos dos componentes do Material (menus, diálogos, folhas) no estilo Fluent. */
+private val FluentShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(4.dp),
+    medium = RoundedCornerShape(8.dp),
+    large = RoundedCornerShape(8.dp),
+    extraLarge = RoundedCornerShape(8.dp),
+)
+
 val LocalSonivellColors = staticCompositionLocalOf { SonivellColors() }
 
 object SonivellTheme {
@@ -288,8 +354,12 @@ fun SonivellTheme(
         darkTheme -> accent.dark
         else -> accent.light
     }
+    val fluent = style == UiStyle.FLUENT
+    // Os cantos são lidos fora da composição também (ver SvShapes): atualiza antes das telas lerem.
+    if (SvShapes.fluent != fluent) SvShapes.fluent = fluent
     val base = when {
         tintedBackground -> tintedColors(accentColor, darkTheme)
+        !darkTheme && fluent -> fluentLightColors(accentColor)
         !darkTheme -> lightColors(accentColor)
         darkBackground == DarkBackground.Preto -> blackColors(accentColor)
         else -> styleDarkColors(style, accentColor)
@@ -329,6 +399,10 @@ fun SonivellTheme(
         LocalGlassMaterial provides material,
         LocalUiStyle provides style,
     ) {
-        MaterialTheme(colorScheme = scheme, typography = SonivellTypography, content = content)
+        if (fluent) {
+            MaterialTheme(colorScheme = scheme, typography = FluentTypography, shapes = FluentShapes, content = content)
+        } else {
+            MaterialTheme(colorScheme = scheme, typography = SonivellTypography, content = content)
+        }
     }
 }

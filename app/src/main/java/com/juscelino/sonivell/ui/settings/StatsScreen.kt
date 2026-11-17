@@ -44,6 +44,7 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.text.DateFormatSymbols
 import com.juscelino.sonivell.ui.theme.cardSurface
 import com.juscelino.sonivell.ui.theme.glassSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 @Composable
 fun StatsScreen(
@@ -78,7 +79,7 @@ fun StatsScreen(
 
         if (onRetro != null && !stats.isEmpty) {
             val glass = SonivellTheme.glass
-            val bannerShape = RoundedCornerShape(20.dp)
+            val bannerShape = rounded(20.dp)
             Column(
                 Modifier
                     .fillMaxWidth()
@@ -149,7 +150,7 @@ private fun formatListening(ms: Long): String {
 private fun BigNumber(value: String, label: String, modifier: Modifier = Modifier, note: String? = null) {
     val c = SonivellTheme.colors
     Column(
-        modifier.cardSurface(RoundedCornerShape(18.dp)).padding(16.dp),
+        modifier.cardSurface(rounded(18.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(value, style = MaterialTheme.typography.headlineSmall, color = c.textPrimary, maxLines = 1)
@@ -162,7 +163,7 @@ private fun BigNumber(value: String, label: String, modifier: Modifier = Modifie
 private fun TrackLine(position: Int, ranked: Ranked<Track>, onPlay: (Track) -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { onPlay(ranked.item) }.padding(vertical = 4.dp),
+        Modifier.fillMaxWidth().clip(rounded(12.dp)).clickable { onPlay(ranked.item) }.padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -189,7 +190,7 @@ private fun RankList(title: String, items: List<Pair<String, Int>>) {
                     Text("${i + 1}. $name", style = MaterialTheme.typography.bodyLarge, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     Text(pluralStringResource(R.plurals.plays_count, plays, plays), style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
                 }
-                Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+                Box(Modifier.fillMaxWidth().height(4.dp).clip(rounded(2.dp)).background(c.track)) {
                     Box(Modifier.fillMaxWidth(plays.toFloat() / top).height(4.dp).background(c.accent))
                 }
             }
@@ -204,7 +205,7 @@ private fun Bars(values: List<Long>, labels: List<String>) {
     val max = (values.maxOrNull() ?: 0L).coerceAtLeast(1L)
     val minutesLabel = stringResource(R.string.stats_minutes_label)
     Row(
-        Modifier.fillMaxWidth().height(120.dp).cardSurface(RoundedCornerShape(18.dp)).padding(12.dp),
+        Modifier.fillMaxWidth().height(120.dp).cardSurface(rounded(18.dp)).padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
@@ -218,7 +219,7 @@ private fun Bars(values: List<Long>, labels: List<String>) {
                     Modifier
                         .fillMaxWidth()
                         .fillMaxHeight((v.toFloat() / max).coerceIn(0.02f, 1f) * 0.8f)
-                        .clip(RoundedCornerShape(3.dp))
+                        .clip(rounded(3.dp))
                         .background(if (v == max) c.accent else c.textSecondary.copy(alpha = 0.5f))
                 )
                 Text(labels.getOrElse(i) { "" }, style = MaterialTheme.typography.labelSmall, color = c.textSecondary, maxLines = 1)

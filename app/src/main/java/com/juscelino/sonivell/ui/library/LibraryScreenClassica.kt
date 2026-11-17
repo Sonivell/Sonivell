@@ -67,6 +67,7 @@ import com.juscelino.sonivell.ui.components.TrackRow
 import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 
 /** 1.0 (Clássica). Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
@@ -453,7 +454,7 @@ private fun TrackCard(track: Track, subtitle: String, title: String = track.titl
         AlbumArt(track, Modifier.size(140.dp), corner = 10.dp)
         // "Ficou pela metade": barra de 3 dp sob a capa mostra por que a faixa está ali.
         if (progress != null) {
-            Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+            Box(Modifier.fillMaxWidth().height(3.dp).clip(rounded(2.dp)).background(c.track)) {
                 Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(3.dp).background(c.accent))
             }
         }
@@ -492,7 +493,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .padding(bottom = 24.dp)
-            .cardSurface(RoundedCornerShape(20.dp))
+            .cardSurface(rounded(20.dp))
             .clickable(onClick = onPlay)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -521,7 +522,7 @@ private fun SmartAnalysisCard(progress: SmartProgress) {
         Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)
-            .cardSurface(RoundedCornerShape(16.dp))
+            .cardSurface(rounded(16.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -540,7 +541,7 @@ private fun SmartAnalysisCard(progress: SmartProgress) {
             )
         }
         val fraction = if (progress.total > 0) progress.analysed.toFloat() / progress.total else 0f
-        Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+        Box(Modifier.fillMaxWidth().height(4.dp).clip(rounded(2.dp)).background(c.track)) {
             Box(Modifier.fillMaxWidth(fraction).height(4.dp).background(c.accent))
         }
     }
@@ -554,7 +555,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Mod
         modifier
             .fillMaxWidth()
             .height(48.dp)
-            .cardSurface(RoundedCornerShape(16.dp))
+            .cardSurface(rounded(16.dp))
             .padding(start = 16.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -586,7 +587,7 @@ private fun AlbumGrid(albums: List<Album>, actions: LibraryActions, modifier: Mo
             Column(
                 Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(rounded(14.dp))
                     .clickable { actions.onOpenAlbum(album.id) },
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
@@ -619,7 +620,7 @@ private fun PlaylistRow(playlist: Playlist, trackById: Map<Long, Track>, actions
         Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(rounded(12.dp))
             .clickable { actions.onOpenPlaylist(playlist.id) }
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -644,14 +645,14 @@ private fun GroupRow(icon: ImageVector, title: String, subtitle: String, onClick
         Modifier
             .fillMaxWidth()
             .heightIn(min = 60.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(rounded(12.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
-            Modifier.size(48.dp).cardSurface(RoundedCornerShape(10.dp)),
+            Modifier.size(48.dp).cardSurface(rounded(10.dp)),
             contentAlignment = Alignment.Center,
         ) { Icon(icon, null, tint = c.textSecondary) }
         Column(Modifier.weight(1f)) {

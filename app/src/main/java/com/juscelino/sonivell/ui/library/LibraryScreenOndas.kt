@@ -101,6 +101,7 @@ import java.util.Calendar
 import kotlin.math.PI
 import kotlin.math.sin
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Rótulos já traduzidos, usados como "Tocando de …" ao iniciar a reprodução. */
 private data class OndasLabels(val search: String, val library: String, val liked: String, val forYou: String)
@@ -302,7 +303,7 @@ fun LibraryScreenOndas(
                             Box(
                                 Modifier
                                     .size(44.dp)
-                                    .clip(RoundedCornerShape(12.dp))
+                                    .clip(rounded(12.dp))
                                     .clickable(role = Role.Button, onClickLabel = stringResource(if (grid) R.string.cd_view_list else R.string.cd_view_grid)) { grid = !grid },
                                 contentAlignment = Alignment.CenterEnd,
                             ) {
@@ -410,7 +411,7 @@ private fun albumItem(res: Resources, a: Album, actions: LibraryActions) =
 @Composable
 private fun OutlinedSquare(icon: ImageVector, label: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(14.dp)
+    val shape = rounded(14.dp)
     Box(
         Modifier.size(44.dp).clip(shape).background(c.surface).clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
             .semantics { contentDescription = label },
@@ -422,7 +423,7 @@ private fun OutlinedSquare(icon: ImageVector, label: String, onClick: () -> Unit
 private fun FilledSquare(icon: ImageVector, label: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
     Box(
-        Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(c.accent).clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
+        Modifier.size(44.dp).clip(rounded(14.dp)).background(c.accent).clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) { Icon(icon, null, Modifier.size(20.dp), tint = c.onAccent) }
@@ -431,7 +432,7 @@ private fun FilledSquare(icon: ImageVector, label: String, onClick: () -> Unit) 
 @Composable
 private fun SmallOutlined(label: String, onClick: () -> Unit) {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(12.dp)
+    val shape = rounded(12.dp)
     Box(
         Modifier.height(36.dp).clip(shape).background(c.surface).clickable(role = Role.Button, onClick = onClick).padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
@@ -445,7 +446,7 @@ private fun Segmented(tabs: List<LibraryTab>, selected: LibraryTab, onSelect: (L
     Row(
         modifier
             .fillMaxWidth()
-            .cardSurface(RoundedCornerShape(16.dp))
+            .cardSurface(rounded(16.dp))
             .horizontalScroll(rememberScrollState())
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -455,7 +456,7 @@ private fun Segmented(tabs: List<LibraryTab>, selected: LibraryTab, onSelect: (L
             Box(
                 Modifier
                     .height(36.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(rounded(12.dp))
                     .background(if (on) c.surfaceHigh else Color.Transparent)
                     .clickable(role = Role.Tab) { onSelect(t) }
                     .semantics { this.selected = on }
@@ -480,7 +481,7 @@ private fun LikedHero(favs: List<Track>, modifier: Modifier = Modifier, onOpen: 
     Row(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(rounded(22.dp))
             .background(c.surface)
             .clickable(onClick = onOpen)
             .padding(start = 16.dp, top = 14.dp, bottom = 14.dp, end = 14.dp),
@@ -515,7 +516,7 @@ private fun LikedHero(favs: List<Track>, modifier: Modifier = Modifier, onOpen: 
 @Composable
 private fun ArtBox(art: OndasArt, size: Dp?, round: Boolean, corner: Dp = 16.dp) {
     val c = SonivellTheme.colors
-    val shape = if (round) CircleShape else RoundedCornerShape(corner)
+    val shape = if (round) CircleShape else rounded(corner)
     val m = (if (size != null) Modifier.size(size) else Modifier.fillMaxWidth().aspectRatio(1f)).clip(shape)
     when (art) {
         is OndasArt.Of -> AlbumArt(art.track, m, corner = if (round) 999.dp else corner)
@@ -543,7 +544,7 @@ private fun ItemRow(item: OndasItem) {
         Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(rounded(14.dp))
             .clickable(onClick = item.onClick)
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -563,7 +564,7 @@ private fun ItemGrid(row: List<OndasItem>, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         row.forEach { item ->
             Column(
-                Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).clickable(onClick = item.onClick),
+                Modifier.weight(1f).clip(rounded(16.dp)).clickable(onClick = item.onClick),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
                 horizontalAlignment = if (item.round) Alignment.CenterHorizontally else Alignment.Start,
             ) {
@@ -582,7 +583,7 @@ private fun SortButton(label: String, onClick: () -> Unit) {
     Row(
         Modifier
             .height(40.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(rounded(12.dp))
             .clickable(onClickLabel = stringResource(R.string.cd_sort_by, label), onClick = onClick)
             .padding(end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -747,7 +748,7 @@ private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouS
                         Modifier
                             .weight(1f)
                             .height(60.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(rounded(16.dp))
                             .background(bg)
                             .clickable(onClick = q.onClick)
                             .padding(start = 12.dp, end = 8.dp),
@@ -759,7 +760,7 @@ private fun QuickGrid(state: LibraryState, favorites: Set<Long>, forYou: ForYouS
                             Text(q.meta, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp), fontWeight = FontWeight.SemiBold, color = meta, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         if (q.liked) {
-                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
+                            Box(Modifier.size(40.dp).clip(rounded(12.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
                                 Icon(SonivellTheme.icons.liked, null, Modifier.size(18.dp), tint = c.textPrimary)
                             }
                         } else {
@@ -781,7 +782,7 @@ private fun ContinueCard(track: Track, resumeAtMs: Long, onPlay: (Long) -> Unit)
     Column(
         Modifier
             .fillMaxWidth()
-            .cardSurface(RoundedCornerShape(20.dp))
+            .cardSurface(rounded(20.dp))
             .clickable { onPlay(resumeAtMs) }
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -810,7 +811,7 @@ private fun PickCard(track: Track, neverPlayed: Boolean, onPlay: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
-            .cardSurface(RoundedCornerShape(20.dp))
+            .cardSurface(rounded(20.dp))
             .clickable(onClick = onPlay)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -861,7 +862,7 @@ private fun AnalysisCard(progress: SmartProgress) {
     val c = SonivellTheme.colors
     val fraction = if (progress.total > 0) progress.analysed.toFloat() / progress.total else 0f
     Column(
-        Modifier.fillMaxWidth().padding(bottom = 12.dp).cardSurface(RoundedCornerShape(20.dp)).padding(14.dp),
+        Modifier.fillMaxWidth().padding(bottom = 12.dp).cardSurface(rounded(20.dp)).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -982,7 +983,7 @@ private fun LazyListScope.search(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = SonivellTheme.colors.accent,
-                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onShowAll).padding(vertical = 10.dp),
+                    modifier = Modifier.clip(rounded(12.dp)).clickable(onClick = onShowAll).padding(vertical = 10.dp),
                 )
             }
         }
@@ -1026,7 +1027,7 @@ private fun LazyListScope.search(
     if (extra.isNotEmpty()) {
         item(key = "s-sem") {
             val c = SonivellTheme.colors
-            val shape = RoundedCornerShape(22.dp)
+            val shape = rounded(22.dp)
             Column(
                 Modifier.padding(top = 16.dp).fillMaxWidth().clip(shape).background(c.surface).padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -1038,7 +1039,7 @@ private fun LazyListScope.search(
                 }
                 extra.forEachIndexed { i, t ->
                     Row(
-                        Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(RoundedCornerShape(12.dp)).clickable { actions.onPlay(extra, i, labels.search) },
+                        Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(rounded(12.dp)).clickable { actions.onPlay(extra, i, labels.search) },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
@@ -1061,7 +1062,7 @@ private fun Token(text: String, onRemove: () -> Unit) {
     Row(
         Modifier
             .height(32.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(rounded(10.dp))
             .drawBehind {
                 val w = 1.dp.toPx()
                 drawRoundRect(
@@ -1096,7 +1097,7 @@ private fun BestCard(title: String, subtitle: String, track: Track?, round: Bool
     Row(
         Modifier
             .fillMaxWidth()
-            .cardSurface(RoundedCornerShape(22.dp))
+            .cardSurface(rounded(22.dp))
             .clickable(onClick = onOpen)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1123,7 +1124,7 @@ private fun OndasSearchField(value: String, onChange: (String) -> Unit, modifier
     val c = SonivellTheme.colors
     var focused by remember { mutableStateOf(false) }
     val searchLabel = stringResource(R.string.cd_search)
-    val shape = RoundedCornerShape(16.dp)
+    val shape = rounded(16.dp)
     Row(
         modifier
             .fillMaxWidth()

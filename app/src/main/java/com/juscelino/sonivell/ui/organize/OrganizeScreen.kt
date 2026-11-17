@@ -45,6 +45,7 @@ import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Locale
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 data class OrganizeActions(
     val onBack: () -> Unit,
@@ -96,7 +97,7 @@ fun OrganizeScreen(
                     stringResource(R.string.duplicates_reset),
                     style = MaterialTheme.typography.labelLarge,
                     color = c.accent,
-                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button, onClick = actions.onResetIgnored).padding(vertical = 8.dp),
+                    modifier = Modifier.clip(rounded(8.dp)).clickable(role = Role.Button, onClick = actions.onResetIgnored).padding(vertical = 8.dp),
                 )
             }
         } else {
@@ -115,7 +116,7 @@ fun OrganizeScreen(
                             .fillMaxWidth()
                             .heightIn(min = 52.dp)
                             // Item de lista longa: vidro sem sombra (a sombra por item pesa na rolagem).
-                            .cardSurface(RoundedCornerShape(14.dp), elevation = 0.dp)
+                            .cardSurface(rounded(14.dp), elevation = 0.dp)
                             .clickable(enabled = tracks.isNotEmpty()) { openIssue = if (openIssue == i) -1 else i }
                             .padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -138,7 +139,7 @@ fun OrganizeScreen(
 private fun DuplicateCard(g: DuplicateGroup, canDelete: Boolean, actions: OrganizeActions) {
     val c = SonivellTheme.colors
     Column(
-        Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(18.dp)).padding(14.dp),
+        Modifier.fillMaxWidth().cardSurface(rounded(18.dp)).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(g.keep.title, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -148,8 +149,8 @@ private fun DuplicateCard(g: DuplicateGroup, canDelete: Boolean, actions: Organi
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .then(if (keep) Modifier.border(1.dp, c.accent, RoundedCornerShape(12.dp)) else Modifier)
+                    .clip(rounded(12.dp))
+                    .then(if (keep) Modifier.border(1.dp, c.accent, rounded(12.dp)) else Modifier)
                     .clickable { actions.onPlay(t) }
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -166,7 +167,7 @@ private fun DuplicateCard(g: DuplicateGroup, canDelete: Boolean, actions: Organi
                     Text(t.folder.ifBlank { t.fileName.orEmpty() }, style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 if (keep) {
-                    Box(Modifier.clip(RoundedCornerShape(6.dp)).background(c.accent).padding(horizontal = 6.dp, vertical = 2.dp)) {
+                    Box(Modifier.clip(rounded(6.dp)).background(c.accent).padding(horizontal = 6.dp, vertical = 2.dp)) {
                         Text(stringResource(R.string.keep), style = MaterialTheme.typography.labelMedium, color = c.onAccent)
                     }
                 }

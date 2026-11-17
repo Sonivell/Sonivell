@@ -57,6 +57,7 @@ import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassSurface
 import java.util.Calendar
+import com.juscelino.sonivell.ui.theme.rounded
 
 /**
  * Início do tema Sonivell (redesign): capas logo no topo, numa grade de atalhos (coleções e álbuns
@@ -149,7 +150,7 @@ fun SvHomeScreen(
         Box(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
+                .clip(rounded(24.dp))
                 .background(lerp(nc.surface, nc.accent, 0.10f))
                 .clickable(role = Role.Button, onClickLabel = flowLabel, onClick = onOpenFlow),
         ) {
@@ -189,7 +190,7 @@ fun SvHomeScreen(
                     com.juscelino.sonivell.ui.components.AlbumArt(t, Modifier.size(56.dp), corner = 12.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(t.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = nc.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Box(Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(nc.track)) {
+                        Box(Modifier.fillMaxWidth().height(3.dp).clip(rounded(2.dp)).background(nc.track)) {
                             Box(Modifier.fillMaxWidth(fraction).height(3.dp).background(nc.textPrimary))
                         }
                         Text(
@@ -270,7 +271,7 @@ private fun QuickTile(item: SvQuick, modifier: Modifier = Modifier) {
     Row(
         modifier
             .height(60.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(rounded(14.dp))
             .background(nc.surface)
             .clickable(role = Role.Button, onClick = item.onClick),
         verticalAlignment = Alignment.CenterVertically,

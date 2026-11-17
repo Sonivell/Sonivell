@@ -31,6 +31,7 @@ import com.juscelino.sonivell.data.ForYouState
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Seu Flow de hoje: uma sequência do "Para você" (o que você ouve neste horário), com um botão só. */
 @Composable
@@ -60,7 +61,7 @@ fun SvFlowScreen(
         Box(Modifier.fillMaxWidth().aspectRatio(1.6f), contentAlignment = Alignment.Center) {
             AlbumArt(flow.firstOrNull(), Modifier.fillMaxWidth().aspectRatio(1.6f), corner = 24.dp, detailed = true)
             Box(
-                Modifier.size(64.dp).clip(RoundedCornerShape(20.dp)).background(nc.accent).clickable(role = Role.Button) { if (flow.isNotEmpty()) onPlay(flow, 0) },
+                Modifier.size(64.dp).clip(rounded(20.dp)).background(nc.accent).clickable(role = Role.Button) { if (flow.isNotEmpty()) onPlay(flow, 0) },
                 contentAlignment = Alignment.Center,
             ) { Icon(icons.play, stringResource(R.string.cd_play), Modifier.size(28.dp), tint = nc.onAccent) }
         }

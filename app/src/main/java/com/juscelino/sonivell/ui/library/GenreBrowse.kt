@@ -74,6 +74,7 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Gêneros que não dizem nada ("Genre:", "Music", "Other"…): vão para "Tags para arrumar", não para a grade. */
 internal object GenreTags {
@@ -151,7 +152,7 @@ private fun Heading(text: String, trailing: String? = null) {
 private fun LoadingCard() {
     val c = SonivellTheme.colors
     Row(
-        Modifier.padding(top = 8.dp).fillMaxWidth().cardSurface(RoundedCornerShape(22.dp)).padding(18.dp),
+        Modifier.padding(top = 8.dp).fillMaxWidth().cardSurface(rounded(22.dp)).padding(18.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -179,7 +180,7 @@ private fun HeroCard(genre: Genre, isMonth: Boolean, listenedMs: Long, onOpen: (
     Box(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(rounded(24.dp))
             .background(genreTone(genre.name))
             .clickable(onClick = onOpen),
     ) {
@@ -304,7 +305,7 @@ private fun GenreMosaic(genres: List<Genre>, total: Int, actions: LibraryActions
                 fontWeight = FontWeight.ExtraBold,
                 color = c.accent,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(rounded(12.dp))
                     .clickable(role = Role.Button) { showAll = !showAll }
                     .heightIn(min = 44.dp)
                     .padding(horizontal = 4.dp, vertical = 12.dp),
@@ -316,7 +317,7 @@ private fun GenreMosaic(genres: List<Genre>, total: Int, actions: LibraryActions
 @Composable
 private fun GenreTile(genre: Genre, index: Int, tall: Boolean, actions: LibraryActions, modifier: Modifier) {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(20.dp)
+    val shape = rounded(20.dp)
     // Redesign: cada gênero com a sua cor e uma capa dele no canto; sem o ponto e a onda decorativos.
     val cover = remember(genre) { genre.tracks.firstOrNull() }
     Box(
@@ -423,7 +424,7 @@ private fun DecadeBar(short: String, count: Int, fraction: Float, highlighted: B
     Column(
         Modifier
             .width(56.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(rounded(12.dp))
             .clickable(role = Role.Button, onClick = onClick)
             .semantics(mergeDescendants = true) { contentDescription = description }
             .padding(vertical = 4.dp),
@@ -441,7 +442,7 @@ private fun DecadeBar(short: String, count: Int, fraction: Float, highlighted: B
             Modifier
                 .fillMaxWidth()
                 .height(6.dp + 104.dp * fraction.coerceIn(0f, 1f))
-                .clip(RoundedCornerShape(10.dp))
+                .clip(rounded(10.dp))
                 .background(if (highlighted) c.accent else c.surfaceHigh),
         )
         Text(short, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = c.textPrimary)
@@ -458,7 +459,7 @@ private fun GenericTagsCard(generic: List<Genre>, actions: LibraryActions) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(rounded(22.dp))
             .background(c.surface)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -472,7 +473,7 @@ private fun GenericTagsCard(generic: List<Genre>, actions: LibraryActions) {
                 Modifier
                     // Botão secundário (contorno), não um quarto estilo de botão.
                     .heightIn(min = 44.dp)
-                    .clip(RoundedCornerShape(999.dp))
+                    .clip(rounded(999.dp))
                     .background(c.surfaceHigh)
                     .clickable(role = Role.Button, onClick = actions.onOpenOrganize)
                     .padding(horizontal = 18.dp),
@@ -486,7 +487,7 @@ private fun GenericTagsCard(generic: List<Genre>, actions: LibraryActions) {
                 Box(
                     Modifier
                         .height(32.dp)
-                        .clip(RoundedCornerShape(999.dp))
+                        .clip(rounded(999.dp))
                         .background(c.surfaceHigh)
                         .clickable { actions.onOpenGenre(g.name) }
                         .padding(horizontal = 12.dp),

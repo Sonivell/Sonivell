@@ -40,6 +40,7 @@ import com.juscelino.sonivell.ui.theme.ArtTones
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.data.UiStyle
 import kotlin.math.abs
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Abaixo desta largura a capa gerada não mostra o painel de vidro com texto. */
 private val GlassTextMinWidth = 110.dp
@@ -176,7 +177,7 @@ internal fun initialsOf(name: String): String =
 @Composable
 fun InitialsArt(name: String, toneKey: String, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
-    val frosted = SonivellTheme.style == UiStyle.SONIVELL && c.isDark
+    val frosted = (SonivellTheme.style == UiStyle.SONIVELL || SonivellTheme.style == UiStyle.FLUENT) && c.isDark
     val bg = if (frosted) FrostedTones[OndaSeed.cor(toneKey)] else c.surfaceHigh
     val fg = if (frosted) Color(0xFFF3F4F6).copy(alpha = 0.92f) else c.textSecondary
     BoxWithConstraints(modifier.background(bg), contentAlignment = Alignment.Center) {
@@ -205,7 +206,7 @@ fun AlbumArt(
     corner: Dp = 10.dp,
     @Suppress("UNUSED_PARAMETER") detailed: Boolean = false,
 ) {
-    val shape = RoundedCornerShape(corner)
+    val shape = rounded(corner)
     val ondas = SonivellTheme.style == UiStyle.ONDAS
     Box(modifier.clip(shape)) {
         if (track == null) {
@@ -244,7 +245,7 @@ fun AlbumArt(
 @Composable
 fun CoverCollage(tracks: List<Track>, modifier: Modifier = Modifier, corner: Dp = 20.dp) {
     val covers = tracks.distinctBy { it.albumId }.take(4)
-    Box(modifier.clip(RoundedCornerShape(corner))) {
+    Box(modifier.clip(rounded(corner))) {
         if (covers.size < 4) {
             AlbumArt(covers.firstOrNull(), Modifier.fillMaxSize(), corner = 0.dp)
         } else {

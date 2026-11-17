@@ -56,6 +56,7 @@ import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.components.WaveSeekBar
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Por que a faixa atual está tocando ("Por que tocou", no menu de opções). */
 sealed interface PlayReason {
@@ -166,7 +167,7 @@ fun NowPlayingScreenOndas(
                 }
                 AlbumArt(
                     track,
-                    Modifier.fillMaxSize().border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(corner)),
+                    Modifier.fillMaxSize().border(1.dp, Color.White.copy(alpha = 0.08f), rounded(corner)),
                     corner = corner,
                     detailed = true,
                 )
@@ -241,7 +242,7 @@ fun NowPlayingScreenOndas(
             onLyrics = actions.onLyrics,
             onQueue = actions.onQueue,
             modifier = if (essencial) Modifier else Modifier
-                .glassSurface(RoundedCornerShape(20.dp), c.surface, c.outline, tone = tone, elevation = 8.dp)
+                .glassSurface(rounded(20.dp), c.surface, c.outline, tone = tone, elevation = 8.dp)
                 .padding(horizontal = 4.dp),
         )
     }
@@ -283,7 +284,7 @@ private fun TimeLabel(text: String) {
 fun WhyContent(reason: PlayReason, sourceLabel: String, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(36.dp).clip(rounded(12.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
             Icon(
                 when (reason) {
                     is PlayReason.Smart, PlayReason.MixStart -> SonivellTheme.icons.smart

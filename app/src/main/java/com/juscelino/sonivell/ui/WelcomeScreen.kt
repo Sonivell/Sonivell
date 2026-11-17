@@ -42,6 +42,7 @@ import com.juscelino.sonivell.ui.sonivell.SvCard
 import com.juscelino.sonivell.ui.sonivell.SvIconTile
 import com.juscelino.sonivell.ui.sonivell.SvPill
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.rounded
 
 /*
  * As duas telas da primeira abertura (pedir acesso e boas-vindas), no mesmo desenho do resto do app:
@@ -161,8 +162,8 @@ internal fun WelcomeScreen(
                         Text(stringResource(R.string.welcome_smart_listening), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = c.textPrimary, modifier = Modifier.weight(1f))
                         Text("${(fraction * 100).toInt()}%", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = c.accent)
                     }
-                    Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(c.track)) {
-                        Box(Modifier.fillMaxWidth(fraction).height(6.dp).clip(RoundedCornerShape(3.dp)).background(c.accent))
+                    Box(Modifier.fillMaxWidth().height(6.dp).clip(rounded(3.dp)).background(c.track)) {
+                        Box(Modifier.fillMaxWidth(fraction).height(6.dp).clip(rounded(3.dp)).background(c.accent))
                     }
                     Text(
                         stringResource(R.string.welcome_smart_count, progress.analysed, progress.total),

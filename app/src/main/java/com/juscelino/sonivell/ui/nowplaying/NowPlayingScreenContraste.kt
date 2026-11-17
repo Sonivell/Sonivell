@@ -75,6 +75,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import android.graphics.Color as AColor
+import com.juscelino.sonivell.ui.theme.rounded
 
 
 /** Texto do player 2.0: sempre claro, sobre o fundo tingido pela capa. */
@@ -196,7 +197,7 @@ fun NowPlayingScreenContraste(
             onLyrics = actions.onLyrics,
             onQueue = actions.onQueue,
             color = OnTint,
-            modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(Color.Black.copy(alpha = 0.22f)).padding(horizontal = 4.dp),
+            modifier = Modifier.clip(rounded(18.dp)).background(Color.Black.copy(alpha = 0.22f)).padding(horizontal = 4.dp),
         )
     }
 }

@@ -40,6 +40,7 @@ import com.juscelino.sonivell.ui.theme.SonivellTheme
 import java.util.Locale
 import kotlin.math.abs
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Estado da letra da faixa atual. */
 sealed interface LyricsState {
@@ -141,7 +142,7 @@ private fun SyncedLyrics(lyrics: Lyrics, positionMs: Long, modifier: Modifier, o
                 color = color,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(rounded(10.dp))
                     .clickable(role = Role.Button) { onLine(line.timeMs) }
                     .padding(vertical = 4.dp),
             )
@@ -176,7 +177,7 @@ private fun PlainLyrics(lyrics: Lyrics, modifier: Modifier) {
 private fun OffsetBar(offsetMs: Long, onOffset: (Long) -> Unit) {
     val c = SonivellTheme.colors
     Row(
-        Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(16.dp)).padding(horizontal = 8.dp),
+        Modifier.fillMaxWidth().cardSurface(rounded(16.dp)).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconBtn(SonivellTheme.icons.remove, stringResource(R.string.lyrics_earlier), { onOffset(-500) }, tint = c.textPrimary)

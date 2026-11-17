@@ -51,6 +51,7 @@ import com.juscelino.sonivell.ui.theme.glassAccent
 import com.juscelino.sonivell.ui.theme.glassSurface
 import kotlin.math.PI
 import kotlin.math.sin
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Sensações da tela Início do tema Sonivell. Cada uma é uma descrição que o SMART compara com o som. */
 enum class SvMood(@StringRes val label: Int, val query: String, val top: Color, val bottom: Color) {
@@ -148,7 +149,7 @@ fun SvCard(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val nc = SonivellTheme.colors
-    val shape = RoundedCornerShape(20.dp)
+    val shape = rounded(20.dp)
     Box(
         modifier
             .then(
@@ -164,7 +165,7 @@ fun SvCard(
 @Composable
 fun SvPill(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, filled: Boolean = true) {
     val nc = SonivellTheme.colors
-    val shape = RoundedCornerShape(16.dp)
+    val shape = rounded(16.dp)
     Box(
         modifier
             .heightIn(min = 52.dp)
@@ -182,7 +183,7 @@ fun SvPill(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, fi
 fun SvSquare(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier, filled: Boolean = false) {
     val nc = SonivellTheme.colors
     val glass = SonivellTheme.glass
-    val shape = RoundedCornerShape(14.dp)
+    val shape = rounded(14.dp)
     Box(
         modifier
             .size(44.dp)
@@ -290,8 +291,8 @@ fun BottomNavSonivell(route: String?, tabs: List<SvTab>, onSelect: (String) -> U
     val nc = SonivellTheme.colors
     val glass = SonivellTheme.glass
     val docked = LocalInDock.current
-    val barShape = RoundedCornerShape(22.dp)
-    val tabShape = RoundedCornerShape(16.dp)
+    val barShape = rounded(22.dp)
+    val tabShape = rounded(16.dp)
     Row(
         Modifier
             .fillMaxWidth()

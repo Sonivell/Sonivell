@@ -47,6 +47,7 @@ import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 private enum class Kind { Text, Number, Bool }
 
@@ -177,7 +178,7 @@ fun SmartPlaylistEditor(initial: SmartPlaylist, contentPadding: PaddingValues, a
         Box(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
+                .clip(rounded(16.dp))
                 .background(if (draft.name.isNotBlank()) c.accent else c.surfaceHigh)
                 .clickable(enabled = draft.name.isNotBlank(), role = Role.Button) {
                     actions.onSave(draft.copy(name = draft.name.trim()))
@@ -195,7 +196,7 @@ private fun RuleEditor(rule: SmartRule, onChange: (SmartRule) -> Unit, onRemove:
     val c = SonivellTheme.colors
     var fieldMenu by remember { mutableStateOf(false) }
     Column(
-        Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(16.dp)).padding(12.dp),
+        Modifier.fillMaxWidth().cardSurface(rounded(16.dp)).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

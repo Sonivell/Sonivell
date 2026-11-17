@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
+import com.juscelino.sonivell.ui.components.SvSwitch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +44,7 @@ import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.roundToInt
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 data class EqualizerActions(
     val onBack: () -> Unit,
@@ -80,13 +82,13 @@ fun EqualizerScreen(state: EqualizerState, contentPadding: PaddingValues, action
         Row(
             Modifier
                 .fillMaxWidth()
-                .cardSurface(RoundedCornerShape(18.dp))
+                .cardSurface(rounded(18.dp))
                 .clickable(role = Role.Switch) { actions.onEnabled(!state.enabled) }
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(R.string.equalizer_on), style = MaterialTheme.typography.titleMedium, color = c.textPrimary, modifier = Modifier.weight(1f))
-            Switch(
+            SvSwitch(
                 checked = state.enabled,
                 onCheckedChange = null,
                 colors = SwitchDefaults.colors(
@@ -122,7 +124,7 @@ fun EqualizerScreen(state: EqualizerState, contentPadding: PaddingValues, action
 
         SectionLabel(stringResource(R.string.eq_bands))
         Column(
-            Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(18.dp)).padding(16.dp),
+            Modifier.fillMaxWidth().cardSurface(rounded(18.dp)).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             info.bandFrequencies.forEachIndexed { band, hz ->
@@ -139,7 +141,7 @@ fun EqualizerScreen(state: EqualizerState, contentPadding: PaddingValues, action
 
         if (info.bassSupported) {
             SectionLabel(stringResource(R.string.eq_bass))
-            Column(Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(18.dp)).padding(16.dp)) {
+            Column(Modifier.fillMaxWidth().cardSurface(rounded(18.dp)).padding(16.dp)) {
                 var bass by remember(state.bass) { mutableStateOf(state.bass.toFloat()) }
                 Text("${(bass / 10).roundToInt()}%", style = MaterialTheme.typography.labelMedium, color = c.textSecondary)
                 val bassLabel = stringResource(R.string.eq_bass)

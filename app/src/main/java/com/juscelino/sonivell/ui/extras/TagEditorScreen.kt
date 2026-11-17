@@ -46,6 +46,7 @@ import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /**
  * Editor de tags: corrige título, artista, álbum, gênero e ano. As correções ficam no
@@ -89,7 +90,7 @@ fun TagEditorScreen(
             IconBtn(SonivellTheme.icons.back, stringResource(R.string.cd_back), onBack, background = c.surface)
             Text(stringResource(R.string.tags_title), style = MaterialTheme.typography.headlineSmall, color = c.textPrimary, modifier = Modifier.weight(1f))
             Box(
-                Modifier.heightIn(min = 44.dp).clip(RoundedCornerShape(999.dp)).background(c.accent)
+                Modifier.heightIn(min = 44.dp).clip(rounded(999.dp)).background(c.accent)
                     .clickable(role = Role.Button) { onSave(edit()); onBack() }.padding(horizontal = 18.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -123,7 +124,7 @@ fun TagEditorScreen(
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = c.accent,
-                modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) { onSave(TagEdit()); onBack() }
+                modifier = Modifier.clip(rounded(12.dp)).clickable(role = Role.Button) { onSave(TagEdit()); onBack() }
                     .heightIn(min = 44.dp).padding(vertical = 12.dp),
             )
         }
@@ -133,7 +134,7 @@ fun TagEditorScreen(
 @Composable
 private fun Field(label: String, value: String, warning: String?, number: Boolean = false, onChange: (String) -> Unit) {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(14.dp)
+    val shape = rounded(14.dp)
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = c.textSecondary)
         Row(

@@ -37,6 +37,7 @@ import com.juscelino.sonivell.data.Genre
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.cos
 import kotlin.math.sin
+import com.juscelino.sonivell.ui.theme.rounded
 
 /**
  * Mapa musical do tema: o centro é você e cada "mundo" é um gênero da sua biblioteca, do maior para o menor.
@@ -78,7 +79,7 @@ fun SvMapScreen(
                     Modifier
                         .align(Alignment.Center)
                         .offset(x = radius * cos(a).toFloat(), y = radius * sin(a).toFloat())
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(rounded(16.dp))
                         .clickable(role = Role.Button) { onOpenGenre(genre.name) }
                         .padding(4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -96,7 +97,7 @@ fun SvMapScreen(
                     Text(stringResource(R.string.sv_map_explore), style = MaterialTheme.typography.titleMedium, color = nc.textPrimary)
                     Text(stringResource(R.string.sv_map_hint), style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp), color = nc.textSecondary)
                 }
-                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(nc.accent), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(44.dp).clip(rounded(14.dp)).background(nc.accent), contentAlignment = Alignment.Center) {
                     Icon(icons.chevron, null, Modifier.size(22.dp), tint = nc.onAccent)
                 }
             }

@@ -51,6 +51,7 @@ import com.juscelino.sonivell.ui.theme.glassSurface
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import com.juscelino.sonivell.ui.theme.rounded
 
 /**
  * Alturas (0..1) da onda de uma faixa. É um desenho estável por faixa (a mesma música tem
@@ -179,7 +180,7 @@ fun MiniPlayerOndas(
 ) {
     val c = SonivellTheme.colors
     val openPlayer = stringResource(R.string.cd_open_player)
-    val shape = RoundedCornerShape(20.dp)
+    val shape = rounded(20.dp)
     // No dock a superfície é do próprio dock (mini player e abas num bloco só).
     val docked = LocalInDock.current
     Column(
@@ -215,7 +216,7 @@ fun MiniPlayerOndas(
             else PlaySquircle(isPlaying, onTogglePlay)
         }
         if (!wave) {
-            Box(Modifier.padding(horizontal = 14.dp).fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).background(c.track)) {
+            Box(Modifier.padding(horizontal = 14.dp).fillMaxWidth().height(3.dp).clip(rounded(2.dp)).background(c.track)) {
                 Box(Modifier.fillMaxWidth(progress.coerceIn(0f, 1f)).height(3.dp).background(c.accent))
             }
             Box(Modifier.height(6.dp))

@@ -48,13 +48,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Color
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Cartão da Biblioteca: "N músicas com tags para arrumar", leva ao Organizar. */
 @Composable
 internal fun TagsBanner(count: Int, onReview: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     val c = SonivellTheme.colors
     val dash = c.outline
-    val shape = RoundedCornerShape(18.dp)
+    val shape = rounded(18.dp)
     Row(
         modifier
             .fillMaxWidth()
@@ -74,7 +75,7 @@ internal fun TagsBanner(count: Int, onReview: () -> Unit, onDismiss: () -> Unit,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(36.dp).clip(rounded(12.dp)).background(c.surfaceHigh), contentAlignment = Alignment.Center) {
             Icon(SonivellTheme.icons.edit, null, Modifier.size(18.dp), tint = c.accent)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -114,7 +115,7 @@ internal fun RecentSearches(items: List<String>, onPick: (String) -> Unit, onRem
         )
         items.forEach { q ->
             Row(
-                Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).clickable { onPick(q) },
+                Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(rounded(12.dp)).clickable { onPick(q) },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -144,7 +145,7 @@ internal fun MoodRow(onPick: (Mood) -> Unit, modifier: Modifier = Modifier, cont
             Box(
                 Modifier
                     .heightIn(min = 56.dp)
-                    .clip(RoundedCornerShape(18.dp))
+                    .clip(rounded(18.dp))
                     // Neutro: a cor fica para as capas, ação e estado (proposta visual).
                     .background(SonivellTheme.colors.surface)
                     .clickable(role = Role.Button, onClickLabel = label) { onPick(mood) }
@@ -166,7 +167,7 @@ internal fun LyricHitCard(hit: LyricHit, query: String, onPlay: () -> Unit, modi
         modifier
             .fillMaxWidth()
             // Um cartão por resultado da busca nas letras: sem sombra, para a lista rolar leve.
-            .cardSurface(RoundedCornerShape(20.dp), elevation = 0.dp)
+            .cardSurface(rounded(20.dp), elevation = 0.dp)
             .clickable(role = Role.Button, onClick = onPlay)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),

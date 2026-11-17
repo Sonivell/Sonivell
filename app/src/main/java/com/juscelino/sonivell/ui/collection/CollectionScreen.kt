@@ -54,6 +54,7 @@ import com.juscelino.sonivell.ui.theme.LocalGlassMaterial
 import com.juscelino.sonivell.ui.theme.screenBackground
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.roundToInt
+import com.juscelino.sonivell.ui.theme.rounded
 
 data class CollectionActions(
     val onBack: () -> Unit,
@@ -158,7 +159,7 @@ fun CollectionScreen(
                     .zIndex(if (isDragging) 1f else 0f)
                     .offset { IntOffset(0, if (isDragging) dragOffset.roundToInt() else 0) }
                     .height(rowHeight)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(rounded(12.dp))
                     // Parada, a linha é transparente (deixa ver o fundo da capa); arrastada, ganha a superfície.
                     .background(if (isDragging) c.surface else rowBackground),
                 contentAlignment = Alignment.Center,
@@ -212,7 +213,7 @@ private fun PillButton(
     onClick: () -> Unit,
 ) {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(16.dp)
+    val shape = rounded(16.dp)
     Row(
         modifier
             .height(48.dp)

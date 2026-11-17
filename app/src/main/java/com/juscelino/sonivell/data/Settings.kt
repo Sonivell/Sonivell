@@ -28,6 +28,12 @@ enum class UiStyle {
      * tema) com as telas de descoberta: sensações, Flow, Mapa, Momentos, Respira e Perfil.
      */
     SONIVELL,
+
+    /**
+     * Fluent: as mesmas telas do tema Sonivell no visual Fluent (cantos de 4–8 dp, ajustes em blocos,
+     * interruptores finos, tipografia sem serifa do sistema e paleta neutra).
+     */
+    FLUENT,
 }
 
 /**
@@ -35,11 +41,11 @@ enum class UiStyle {
  * no Essencial, o estilo limpo.
  */
 val UiStyle.iconStyle: IconStyle
-    get() = if (this == UiStyle.ESSENCIAL) IconStyle.FINO else IconStyle.TRACO
+    get() = if (this == UiStyle.ESSENCIAL || this == UiStyle.FLUENT) IconStyle.FINO else IconStyle.TRACO
 
 /** Temas que usam as telas do Sonivell (Para você, Biblioteca pelos cartões, Perfil, Flow, Mapa…). */
 val UiStyle.usesSonivellScreens: Boolean
-    get() = this == UiStyle.SONIVELL
+    get() = this == UiStyle.SONIVELL || this == UiStyle.FLUENT
 
 data class AppSettings(
     val theme: ThemeMode = ThemeMode.AUTO,

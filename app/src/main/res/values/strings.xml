@@ -676,6 +676,8 @@
     <!-- Tema Sonivell -->
     <string name="layout_sonivell">Sonivell</string>
     <string name="layout_sonivell_hint">Expressive: cover collages, Flow up front and generous corners</string>
+    <string name="layout_fluent">Fluent</string>
+    <string name="layout_fluent_hint">Understated: small corners, settings in tiles, slim toggles and acrylic</string>
     <string name="nav_explore">Explore</string>
     <string name="nav_profile">Profile</string>
     <string name="sv_home_title">What shall we play now?</string>

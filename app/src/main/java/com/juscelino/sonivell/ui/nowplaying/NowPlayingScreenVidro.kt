@@ -56,6 +56,7 @@ import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.theme.LocalGlassMaterial
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.glassSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /**
  * Player padrão do Sonivell, em todos os estilos e temas ("Vidro"):
@@ -133,7 +134,7 @@ fun NowPlayingScreenVidro(
         // Capa: quadrada no maior tamanho que cabe, com sombra funda.
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             val side = minOf(maxWidth, maxHeight, 400.dp)
-            val shape = RoundedCornerShape(22.dp)
+            val shape = rounded(22.dp)
             Box(Modifier.size(side).shadow(if (c.isDark) 28.dp else 18.dp, shape, clip = false)) {
                 AlbumArt(
                     track,
@@ -248,7 +249,7 @@ private fun GlassPill(icon: ImageVector, label: String, modifier: Modifier, onCl
     Row(
         modifier
             .heightIn(min = 44.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .clip(rounded(18.dp))
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -267,7 +268,7 @@ private fun SmartChip(on: Boolean, onClick: () -> Unit) {
     Row(
         Modifier
             .heightIn(min = 32.dp)
-            .clip(RoundedCornerShape(999.dp))
+            .clip(rounded(999.dp))
             .background(if (on) c.accent.copy(alpha = 0.18f) else c.textPrimary.copy(alpha = 0.08f))
             .toggleable(value = on, role = Role.Switch, onValueChange = { onClick() })
             .padding(horizontal = 12.dp),
@@ -283,7 +284,7 @@ private fun SmartChip(on: Boolean, onClick: () -> Unit) {
 private fun Chip(text: String, color: Color, background: Color) {
     Box(
         Modifier
-            .clip(RoundedCornerShape(999.dp))
+            .clip(rounded(999.dp))
             .background(background)
             .padding(horizontal = 8.dp, vertical = 3.dp),
     ) {

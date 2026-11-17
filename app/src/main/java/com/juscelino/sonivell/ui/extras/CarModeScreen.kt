@@ -40,6 +40,7 @@ import com.juscelino.sonivell.R
 import com.juscelino.sonivell.data.Track
 import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.theme.SonivellTheme
+import com.juscelino.sonivell.ui.theme.rounded
 
 /**
  * Modo carro/academia: fundo preto, capa grande e botões enormes, para usar de relance.
@@ -72,7 +73,7 @@ fun CarModeScreen(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.car_mode).uppercase(), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold, color = c.accent, modifier = Modifier.weight(1f))
             Box(
-                Modifier.height(48.dp).clip(RoundedCornerShape(999.dp)).background(Color(0xFF1A1C1F)).clickable(role = Role.Button, onClick = onExit).padding(horizontal = 20.dp),
+                Modifier.height(48.dp).clip(rounded(999.dp)).background(Color(0xFF1A1C1F)).clickable(role = Role.Button, onClick = onExit).padding(horizontal = 20.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(stringResource(R.string.car_mode_exit), style = MaterialTheme.typography.titleSmall, color = Color.White)
@@ -101,7 +102,7 @@ private fun Big(icon: ImageVector, label: String, primary: Boolean, modifier: Mo
     Box(
         modifier
             .height(110.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .clip(rounded(28.dp))
             .background(if (primary) c.accent else Color(0xFF1A1C1F))
             .clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
             .semantics { contentDescription = label },
@@ -114,7 +115,7 @@ private fun Big(icon: ImageVector, label: String, primary: Boolean, modifier: Mo
 @Composable
 private fun Small(label: String, modifier: Modifier, onClick: () -> Unit) {
     Box(
-        modifier.height(64.dp).clip(RoundedCornerShape(22.dp)).background(Color(0xFF1A1C1F)).clickable(role = Role.Button, onClick = onClick),
+        modifier.height(64.dp).clip(rounded(22.dp)).background(Color(0xFF1A1C1F)).clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, color = Color.White)

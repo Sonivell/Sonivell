@@ -53,6 +53,7 @@ import com.juscelino.sonivell.ui.components.SectionLabel
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import kotlin.math.roundToInt
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 data class QueueActions(
     val onClose: () -> Unit,
@@ -95,7 +96,7 @@ fun QueueScreen(
             Box(
                 Modifier
                     .height(44.dp)
-                    .clip(RoundedCornerShape(22.dp))
+                    .clip(rounded(22.dp))
                     .clickable(enabled = upNext.isNotEmpty(), onClick = actions.onClear)
                     .padding(horizontal = 14.dp),
                 contentAlignment = Alignment.Center,
@@ -110,7 +111,7 @@ fun QueueScreen(
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .cardSurface(RoundedCornerShape(18.dp))
+                        .cardSurface(rounded(18.dp))
                         .padding(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -118,7 +119,7 @@ fun QueueScreen(
                     Box(Modifier.size(52.dp)) {
                         AlbumArt(current, Modifier.fillMaxSize(), corner = 12.dp)
                         Box(
-                            Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)).background(c.background.copy(alpha = 0.55f)),
+                            Modifier.fillMaxSize().clip(rounded(12.dp)).background(c.background.copy(alpha = 0.55f)),
                             contentAlignment = Alignment.Center,
                         ) { Icon(SonivellTheme.icons.nowPlaying, null, tint = c.accent) }
                     }
@@ -172,7 +173,7 @@ fun QueueScreen(
                             .offset { IntOffset(0, if (isDragging) dragOffset.roundToInt() else 0) }
                             .fillMaxWidth()
                             .height(rowHeight)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(rounded(12.dp))
                             .background(if (isDragging) c.surface else c.background)
                             .combinedClickable(
                                 onClick = { actions.onPlayAt(queueIndex) },
@@ -246,7 +247,7 @@ private fun WideButton(
     active: Boolean = false,
 ) {
     val c = SonivellTheme.colors
-    val shape = RoundedCornerShape(16.dp)
+    val shape = rounded(16.dp)
     Row(
         modifier
             .height(52.dp)

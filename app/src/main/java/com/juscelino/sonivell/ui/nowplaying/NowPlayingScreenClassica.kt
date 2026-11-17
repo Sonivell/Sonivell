@@ -60,6 +60,7 @@ import com.juscelino.sonivell.ui.components.AlbumArt
 import com.juscelino.sonivell.ui.components.IconBtn
 import com.juscelino.sonivell.ui.theme.SonivellTheme
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 
 /**
@@ -171,7 +172,7 @@ fun NowPlayingScreenClassica(
         PlayerFooter(
             onLyrics = actions.onLyrics,
             onQueue = actions.onQueue,
-            modifier = Modifier.cardSurface(RoundedCornerShape(16.dp), c.surfaceLow).padding(horizontal = 4.dp),
+            modifier = Modifier.cardSurface(rounded(16.dp), c.surfaceLow).padding(horizontal = 4.dp),
         )
     }
 }

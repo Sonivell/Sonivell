@@ -52,6 +52,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.juscelino.sonivell.ui.theme.cardSurface
+import com.juscelino.sonivell.ui.theme.rounded
 
 /** Retrospectiva dos últimos 30 dias: horas ouvidas, música, artista e gênero do mês. */
 @Composable
@@ -83,7 +84,7 @@ fun RetroScreen(stats: StatsState, contentPadding: PaddingValues, onBack: () -> 
         Column(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(28.dp))
+                .clip(rounded(28.dp))
                 .background(Brush.verticalGradient(listOf(c.accent.copy(alpha = 0.55f), c.surface)))
                 .padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -94,7 +95,7 @@ fun RetroScreen(stats: StatsState, contentPadding: PaddingValues, onBack: () -> 
         }
         if (topTrack != null) {
             Row(
-                Modifier.fillMaxWidth().cardSurface(RoundedCornerShape(22.dp)).clickable(role = Role.Button, onClick = onPlayTop).padding(14.dp),
+                Modifier.fillMaxWidth().cardSurface(rounded(22.dp)).clickable(role = Role.Button, onClick = onPlayTop).padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
@@ -111,7 +112,7 @@ fun RetroScreen(stats: StatsState, contentPadding: PaddingValues, onBack: () -> 
             topGenre?.let { Tile(stringResource(R.string.retro_top_genre), it, null, Modifier.weight(1f)) }
         }
         Box(
-            Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(RoundedCornerShape(999.dp)).background(c.accent)
+            Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(rounded(999.dp)).background(c.accent)
                 .clickable(role = Role.Button) {
                     shareRetro(
                         context, month, hours, topTrack?.let { "${it.title} · ${it.artist}" }, topArtist?.item, topGenre,
@@ -128,7 +129,7 @@ fun RetroScreen(stats: StatsState, contentPadding: PaddingValues, onBack: () -> 
 @Composable
 private fun Tile(label: String, value: String, extra: String?, modifier: Modifier) {
     val c = SonivellTheme.colors
-    Column(modifier.cardSurface(RoundedCornerShape(22.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier.cardSurface(rounded(22.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = c.accent)
         Text(value, style = MaterialTheme.typography.titleMedium, color = c.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
         extra?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = c.textSecondary) }
